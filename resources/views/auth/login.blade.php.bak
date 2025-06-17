@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Вход</title>
+</head>
+<body>
+    <h2>Войти</h2>
+
+    @if(session('error'))
+        <div style="color: red;">{{ session('error') }}</div>
+    @endif
+
+    <form method="POST" action="{{ route('login') }}">
+        @csrf
+
+        <label for="email">Email или Логин:</label><br>
+        <input type="text" name="login" required autofocus><br><br>
+
+        <label for="password">Пароль:</label><br>
+        <input type="password" name="password" required><br><br>
+
+        <button type="submit">Войти</button>
+    </form>
+</body>
+</html>

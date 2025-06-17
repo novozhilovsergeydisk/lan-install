@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class HomeController extends Controller
+{
+    public function index()
+    {
+        // Получаем текущего пользователя
+        $user = Auth::user();
+
+        // Делаем запрос к основной БД (pgsql)
+        $migrations = DB::table('migrations')->get();
+
+        // Делаем запрос к другой БД (pgsql_fursa)
+	$clients = DB::connection('pgsql_fursa')->select('SELECT * FROM clients');
+        // $clients = DB::connection('pgsql_fursa')->select('SELECT * FROM clients');
+
+        // Отдаем шаблон с данными
+        return view('welcome', [
+            'user' => $user,
+            'migrations' => $migrations,
+            'clients' => $clients,
+        ]);
+    }
+}
