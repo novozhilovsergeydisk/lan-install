@@ -18,6 +18,8 @@ class HomeController extends Controller
         $clients = DB::select('SELECT * FROM clients');
         $requestStatuses = DB::select('SELECT * FROM request_statuses');
 
+//dump($requestStatuses);
+
 	return view('welcome', compact('user', 'migrations', 'clients', 'requestStatuses'));
 
         /*return view('welcome', [
