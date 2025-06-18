@@ -59,7 +59,7 @@ class HomeController extends Controller
             LEFT JOIN brigades b ON r.brigade_id = b.id
             LEFT JOIN employees e ON b.leader_id = e.id
         ");
-//dd($requests);
+
         // Передаём всё в шаблон
         return view('welcome', compact(
             'user',
