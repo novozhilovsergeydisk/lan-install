@@ -53,29 +53,34 @@
             <div class="main-content">
                 <div class="container-fluid position-relative" style="min-height: 100vh; overflow-x: hidden;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h1 class="mb-0">Система управления заявками</h1>
+                        <div>
+                            <h1 class="mb-0">Система управления заявками</h1>
+                            @if(isset($user))
+                                <div class="text-muted small mt-1">
+                                    Добро пожаловать, <span class="fw-bold">{{ $user->name }}</span>!
+                                </div>
+                            @endif
+                        </div>
                         @if (session('success'))
                             <div style="color: green; font-weight: bold;">
                                 {{ session('success') }}
                             </div>
                         @endif
 
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center">
+                            <!-- Theme Toggle -->
+                            <div class="theme-toggle me-3" id="themeToggle">
+                                <i class="bi bi-sun theme-icon" id="sunIcon"></i>
+                                <i class="bi bi-moon-stars-fill theme-icon d-none" id="moonIcon"></i>
+                            </div>
 
                             <!-- Logout Button -->
                             <form action="{{ route('logout') }}" method="POST" class="mb-0">
                                 @csrf
-                                <button type="submit" class="btn btn-outline-danger btn-sm mr-5 px-3"
-                                    style="margin-right: 2rem;"><i class="bi bi-box-arrow-right me-1"></i>
-                                    Выход</button>
+                                <button type="submit" class="btn btn-outline-danger btn-sm px-3">
+                                    <i class="bi bi-box-arrow-right me-1"></i>Выход
+                                </button>
                             </form>
-
-                        </div>
-
-                        <div class="theme-toggle position-fixed" id="themeToggle"
-                            style="top: 1rem; right: 1rem; z-index: 1050;">
-                            <i class="bi bi-sun theme-icon" id="sunIcon"></i>
-                            <i class="bi bi-moon-stars-fill theme-icon d-none" id="moonIcon"></i>
                         </div>
                     </div>
 
