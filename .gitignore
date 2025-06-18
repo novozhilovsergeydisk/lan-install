@@ -1,3 +1,5 @@
+clear-cache
+db_lan_install.dump
 *.log
 .DS_Store
 .env

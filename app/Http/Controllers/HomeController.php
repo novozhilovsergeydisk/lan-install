@@ -13,16 +13,37 @@ class HomeController extends Controller
         // Получаем текущего пользователя
         $user = Auth::user();
 
-        // Запрашиваем все миграции (для теста)
-        $migrations = DB::select('SELECT * FROM migrations');
+        // Запрашиваем users
+        $users = DB::select('SELECT * FROM users');
 
-        // Запрашиваем всех клиентов
+        // Запрашиваем clients
         $clients = DB::select('SELECT * FROM clients');
 
-        // Запрашиваем статусы заявок
-        $requestStatuses = DB::select('SELECT * FROM request_statuses');
+        // Запрашиваем brigades
+        $brigades = DB::select('SELECT * FROM brigades');
 
-        // 🔽 Исправленный комплексный запрос с подключением к employees
+        // Запрашиваем employees
+        $employees = DB::select('SELECT * FROM employees');
+
+        // Запрашиваем addresses
+        $addresses = DB::select('SELECT * FROM addresses');
+
+        // Запрашиваем brigade_members
+        $brigade_members = DB::select('SELECT * FROM brigade_members');
+        
+        // Запрашиваем comments
+        $comments = DB::select('SELECT * FROM comments'); 
+        
+        // Запрашиваем request_addresses
+        $request_addresses = DB::select('SELECT * FROM request_addresses'); 
+        
+        // Запрашиваем request_statuses
+        $request_statuses = DB::select('SELECT * FROM request_statuses'); 
+
+        // Запрашиваем request_types
+        $requests_types = DB::select('SELECT * FROM request_types'); 
+
+        // 🔽 Комплексный запрос с подключением к employees
         $requests = DB::select("
             SELECT 
                 r.*,
@@ -42,10 +63,17 @@ class HomeController extends Controller
         // Передаём всё в шаблон
         return view('welcome', compact(
             'user',
-            'migrations',
+            'users',
             'clients',
-            'requestStatuses',
-            'requests'
+            'request_statuses',
+            'requests',
+            'brigades',
+            'employees',
+            'addresses',
+            'brigade_members',
+            'comments',
+            'request_addresses',
+            'requests_types'
         ));
     }
 }
