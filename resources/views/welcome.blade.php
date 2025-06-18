@@ -31,10 +31,10 @@
                         </div>
                     </div>
                 </div>
-                @if (!empty($requestStatuses))
+                @if (!empty($request_statuses))
                     <h4 class="mt-5 mb-3">Статусы заявок</h4>
                     <div class="d-flex flex-column gap-2">
-                        @foreach ($requestStatuses as $status)
+                        @foreach ($request_statuses as $status)
                             <div class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
                                 <div class="me-3 w-7 h-7 rounded-sm"
                                     style="width: 8rem; height: 2rem; background-color: {{ $status->color ?? '#ccc' }};">

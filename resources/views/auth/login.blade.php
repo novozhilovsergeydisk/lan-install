@@ -6,85 +6,13 @@
     <title>Вход</title>
 
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"  rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"> 
-
-    <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --text-color: #212529;
-            --card-bg: #fff;
-            --card-border: rgba(0,0,0,.125);
-        }
-
-        [data-bs-theme="dark"] {
-            --bg-color: #212529;
-            --text-color: #f8f9fa;
-            --card-bg: #2c3034;
-            --card-border: #495057;
-        }
-
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-        }
-
-        .container-center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .form-container {
-            max-width: 400px;
-            width: 100%;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            background-color: var(--card-bg);
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-            border: 1px solid var(--card-border);
-        }
-
-        .form-control, .form-select {
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            border-color: var(--card-border);
-        }
-
-        .form-control:focus, .form-select:focus {
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-        .theme-toggle {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 1050;
-            cursor: pointer;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .theme-toggle:hover {
-            transform: scale(1.1);
-        }
-
-        .theme-icon {
-            color: var(--text-color);
-            transition: all 0.3s ease;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Общие стили для аутентификации -->
+    <link href="{{ asset('css/auth.css') }}" rel="stylesheet">
 </head>
 <body class="text-center">
     <div class="container container-center">
