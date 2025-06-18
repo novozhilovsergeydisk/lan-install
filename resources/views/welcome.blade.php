@@ -56,8 +56,8 @@
                         <div>
                             <h1 class="mb-0">Система управления заявками</h1>
                             @if(isset($user))
-                                <div class="text-muted small mt-1">
-                                    Добро пожаловать, <span class="fw-bold">{{ $user->name }}</span>!
+                                <div class="text-success small mt-1 fw-bold">
+                                    Авторизован: {{ $user->name }}
                                 </div>
                             @endif
                         </div>
