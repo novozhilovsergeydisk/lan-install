@@ -13,20 +13,39 @@ class HomeController extends Controller
         // Получаем текущего пользователя
         $user = Auth::user();
 
-        // 🔽 Все данные теперь запрашиваем из основной БД
+        // Запрашиваем все миграции (для теста)
         $migrations = DB::select('SELECT * FROM migrations');
+
+        // Запрашиваем всех клиентов
         $clients = DB::select('SELECT * FROM clients');
+
+        // Запрашиваем статусы заявок
         $requestStatuses = DB::select('SELECT * FROM request_statuses');
 
-//dump($requestStatuses);
-
-	return view('welcome', compact('user', 'migrations', 'clients', 'requestStatuses'));
-
-        /*return view('welcome', [
-            'user' => $user,
-            'migrations' => $migrations,
-            'clients' => $clients,
-            'requestStatuses' => $requestStatuses
-        ]);*/
+        // 🔽 Исправленный комплексный запрос с подключением к employees
+        $requests = DB::select("
+            SELECT 
+                r.*,
+                c.fio AS client_fio,
+                c.phone AS client_phone,
+                rs.name AS status_name,
+                rs.color AS status_color,
+                b.name AS brigade_name,
+                e.fio AS brigade_lead
+            FROM requests r
+            LEFT JOIN clients c ON r.client_id = c.id
+            LEFT JOIN request_statuses rs ON r.status_id = rs.id
+            LEFT JOIN brigades b ON r.brigade_id = b.id
+            LEFT JOIN employees e ON b.leader_id = e.id
+        ");
+//dd($requests);
+        // Передаём всё в шаблон
+        return view('welcome', compact(
+            'user',
+            'migrations',
+            'clients',
+            'requestStatuses',
+            'requests'
+        ));
     }
 }
