@@ -66,8 +66,16 @@ $clients = DB::connection('pgsql_fursa')->select('SELECT * FROM clients');
 	    ->with('clients', $clients);*/ // Передача миграций
     }
 
-    throw ValidationException::withMessages([
-        'login' => [__('Неверные данные для входа')],
+    // Логируем попытку входа
+    \Log::warning('Неудачная попытка входа', [
+        'login' => $request->input('login'),
+        'ip' => $request->ip(),
+        'user_agent' => $request->userAgent()
     ]);
+
+    // Возвращаемся на страницу входа с ошибкой
+    return back()
+        ->withInput($request->only('login', 'remember'))
+        ->with('error', 'Неверное имя пользователя или пароль. Пожалуйста, попробуйте еще раз.');
     }
 }

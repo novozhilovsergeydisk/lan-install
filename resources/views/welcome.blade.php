@@ -51,7 +51,7 @@
 
             <!-- Main Content -->
             <div class="main-content">
-                <div class="container-fluid position-relative" style="min-height: 100vh;">
+                <div class="container-fluid position-relative" style="min-height: 100vh; overflow-x: hidden;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h1 class="mb-0">Система управления заявками</h1>
                         @if (session('success'))
@@ -113,66 +113,70 @@
                                 Вы сможете указать все необходимые детали, включая описание работ, адрес и приоритет.
                             </p>
 
-@if($requests)
-    <div class="table-responsive mt-4">
-        <table class="table table-hover align-middle mb-0">
-<thead class="bg-dark text-white">      
-                <tr>
-                    <th>ID</th>
-                    <th>Номер</th>
-                    <th>Клиент</th>
-                    <th>Статус</th>
-                    <th>Бригада</th>
-                    <th>Дата выполнения</th>
-                    <th>Время</th>
-                    <th>Создана</th>
-                    <th>Комментарий</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($requests as $request)
-                    <tr class="align-middle">
-                        <td>{{ $request->id }}</td>
-                        <td><strong>{{ $request->number ?? '—' }}</strong></td>
+                            @if ($requests)
+                                <div class="table-responsive mt-4" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                                    <table class="table table-hover align-middle mb-0" style="min-width: 992px;">
+                                        <thead class="bg-dark text-white">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Номер</th>
+                                                <th>Клиент</th>
+                                                <th>Статус</th>
+                                                <th>Бригада</th>
+                                                <th>Дата выполнения</th>
+                                                <th>Время</th>
+                                                <th>Создана</th>
+                                                <th>Комментарий</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($requests as $request)
+                                                <tr class="align-middle">
+                                                    <td>{{ $request->id }}</td>
+                                                    <td><strong>{{ $request->number ?? '—' }}</strong></td>
 
-                        <!-- Клиент -->
-                        <td>
-                            {{ $request->client_fio ?? 'Неизвестный клиент' }}<br>
-                            <small class="text-muted">{{ $request->client_phone ?? 'Нет телефона' }}</small>
-                        </td>
+                                                    <!-- Клиент -->
+                                                    <td>
+                                                        {{ $request->client_fio ?? 'Неизвестный клиент' }}<br>
+                                                        <small
+                                                            class="text-muted">{{ $request->client_phone ?? 'Нет телефона' }}</small>
+                                                    </td>
 
-                        <!-- Статус -->
-                        <td>
-                            <span 
-                                class="badge rounded-pill" 
-                                style="background-color: {{ $request->status_color ?? '#ccc' }}; color: #fff;">
-                                {{ $request->status_name ?? 'Не указано' }}
-                            </span>
-                        </td>
+                                                    <!-- Статус -->
+                                                    <td>
+                                                        <span class="badge rounded-pill"
+                                                            style="background-color: {{ $request->status_color ?? '#ccc' }}; color: #fff;">
+                                                            {{ $request->status_name ?? 'Не указано' }}
+                                                        </span>
+                                                    </td>
 
-                        <!-- Бригада -->
-                        <td>
-                            {{ $request->brigade_name ?? 'Не назначена' }}<br>
-                            <small class="text-muted">Руководитель: {{ $request->brigade_lead ?? 'Нет данных' }}</small>
-                        </td>
+                                                    <!-- Бригада -->
+                                                    <td>
+                                                        {{ $request->brigade_name ?? 'Не назначена' }}<br>
+                                                        <small class="text-muted">Руководитель:
+                                                            {{ $request->brigade_lead ?? 'Нет данных' }}</small>
+                                                    </td>
 
-                        <!-- Дата выполнения -->
-                        <td>{{ \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') }}</td>
-                        <td>{{ $request->execution_time ?? '—' }}</td>
+                                                    <!-- Дата выполнения -->
+                                                    <td>{{ \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') }}
+                                                    </td>
+                                                    <td>{{ $request->execution_time ?? '—' }}</td>
 
-                        <!-- Дата создания -->
-                        <td>{{ \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') }}</td>
+                                                    <!-- Дата создания -->
+                                                    <td>{{ \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') }}
+                                                    </td>
 
-                        <!-- Комментарий -->
-                        <td>{{ \Illuminate\Support\Str::limit($request->comment, 30) }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-@else
-    <p class="mt-4 text-muted">Нет заявок для отображения.</p>
-@endif
+                                                    <!-- Комментарий -->
+                                                    <td>{{ \Illuminate\Support\Str::limit($request->comment, 30) }}
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <p class="mt-4 text-muted">Нет заявок для отображения.</p>
+                            @endif
 
                             @if (session('user_data'))
                                 <ul>
@@ -262,7 +266,7 @@
                                 время. Доступны шаблоны отчетов для различных подразделений компании.</p>
                         </div>
                     </div>
-                    <div class="card">
+                    <div class="card mt-4">
                         <div class="card-body">
                             <h5 class="card-title">Выберите дату в календаре</h5>
                             <p class="card-text">Используйте календарь слева для выбора даты.</p>

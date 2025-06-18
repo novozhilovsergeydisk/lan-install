@@ -19,9 +19,17 @@
         <div class="form-container mx-auto">
             <h2 class="mb-4">Вход в систему</h2>
 
+            {{-- Отображение общих ошибок --}}
             @if(session('error'))
-                <div class="alert alert-danger mb-3" role="alert">
+                <div class="alert alert-danger mb-3">
                     {{ session('error') }}
+                </div>
+            @endif
+
+            {{-- Отображение успешных сообщений --}}
+            @if(session('status'))
+                <div class="alert alert-success mb-3">
+                    {{ session('status') }}
                 </div>
             @endif
 
@@ -31,17 +39,28 @@
                 <div class="mb-3 text-start">
                     <label for="login" class="form-label">Email или Логин:</label>
                     <input type="text" name="login" id="login"
-                           class="form-control"
+                           class="form-control @error('login') is-invalid @enderror"
                            placeholder="Введите логин или email"
+                           value="{{ old('login') }}"
                            required autofocus>
+                    @error('login')
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
+                    @enderror
                 </div>
 
                 <div class="mb-3 text-start">
                     <label for="password" class="form-label">Пароль:</label>
                     <input type="password" name="password" id="password"
-                           class="form-control"
+                           class="form-control @error('password') is-invalid @enderror"
                            placeholder="Введите пароль"
                            required>
+                    @error('password')
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
+                    @enderror
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100 mb-3">
