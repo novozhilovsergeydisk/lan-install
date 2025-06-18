@@ -126,7 +126,6 @@
                                                 <th>ID</th>
                                                 <th>Номер</th>
                                                 <th>Клиент</th>
-                                                <th>Статус</th>
                                                 <th>Бригада</th>
                                                 <th>Дата выполнения</th>
                                                 <th>Время</th>
@@ -135,31 +134,69 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            <style>
+                                                /* Цвет текста в таблице */
+                                                .table {
+                                                    --bs-table-color: #000000;
+                                                }
+                                                
+                                                /* Цвет текста при наведении */
+                                                .table-hover tbody tr:hover td,
+                                                .table-hover tbody tr:hover td * {
+                                                    color: #000000 !important;
+                                                }
+                                                .table-hover tbody tr:hover {
+                                                    --bs-table-color: #000000 !important;
+                                                    color: #000000 !important;
+                                                }
+                                                
+                                                /* Стили для статусов */
+                                                tr[style*="background-color: #BBDEFB"] { --bs-table-bg: #BBDEFB !important; } /* новая */
+                                                tr[style*="background-color: #FFECB3"] { --bs-table-bg: #FFECB3 !important; } /* в работе */
+                                                tr[style*="background-color: #FFCC80"] { --bs-table-bg: #FFCC80 !important; } /* ожидает клиента */
+                                                tr[style*="background-color: #C8E6C9"] { --bs-table-bg: #C8E6C9 !important; } /* выполнена */
+                                                tr[style*="background-color: #FFCDD2"] { --bs-table-bg: #FFCDD2 !important; } /* отменена */
+                                                tr[style*="background-color: #E0E0E0"] { --bs-table-bg: #E0E0E0 !important; } /* на уточнении */
+                                                tr[style*="background-color: #E1BEE7"] { --bs-table-bg: #E1BEE7 !important; } /* приостановлена */
+                                            </style>
+                                            @php
+                                                $statusColors = [
+                                                    'новая' => 'background-color: #BBDEFB;', /* голубой */
+                                                    'в работе' => 'background-color: #FFECB3;', /* желтый */
+                                                    'ожидает клиента' => 'background-color: #FFCC80;', /* оранжевый */
+                                                    'выполнена' => 'background-color: #C8E6C9;', /* зеленый */
+                                                    'отменена' => 'background-color: #FFCDD2;', /* красный */
+                                                    'на уточнении' => 'background-color: #E0E0E0;', /* серый */
+                                                    'приостановлена' => 'background-color: #E1BEE7;', /* фиолетовый */
+                                                ];
+                                            @endphp
+
                                             @foreach ($requests as $request)
-                                                <tr class="align-middle">
+                                                @php
+                                                    // Получаем статус и приводим к нижнему регистру
+                                                    $status = strtolower($request->status_name ?? '');
+                                                    $rowStyle = $statusColors[$status] ?? '';
+                                                @endphp
+                                                <tr class="align-middle" style="{{ $rowStyle }}">
                                                     <td>{{ $request->id }}</td>
                                                     <td><strong>{{ $request->number ?? '—' }}</strong></td>
 
                                                     <!-- Клиент -->
                                                     <td>
                                                         {{ $request->client_fio ?? 'Неизвестный клиент' }}<br>
-                                                        <small
-                                                            class="text-muted">{{ $request->client_phone ?? 'Нет телефона' }}</small>
+                                                        <small class="@if(isset($request->status_name) && $request->status_name === 'выполнена') text-success fw-bold @else text-black @endif">
+                                                            {{ $request->client_phone ?? 'Нет телефона' }}
+                                                        </small>
                                                     </td>
 
-                                                    <!-- Статус -->
-                                                    <td>
-                                                        <span class="badge rounded-pill"
-                                                            style="background-color: {{ $request->status_color ?? '#ccc' }}; color: #fff;">
-                                                            {{ $request->status_name ?? 'Не указано' }}
-                                                        </span>
-                                                    </td>
+
 
                                                     <!-- Бригада -->
                                                     <td>
                                                         {{ $request->brigade_name ?? 'Не назначена' }}<br>
-                                                        <small class="text-muted">Руководитель:
-                                                            {{ $request->brigade_lead ?? 'Нет данных' }}</small>
+                                                        <small class="@if(isset($request->status_name) && $request->status_name === 'выполнена') text-success fw-bold @else text-black @endif">
+                                                            Руководитель: {{ $request->brigade_lead ?? 'Нет данных' }}
+                                                        </small>
                                                     </td>
 
                                                     <!-- Дата выполнения -->
