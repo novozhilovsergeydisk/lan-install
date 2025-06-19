@@ -14,7 +14,9 @@ class HomeController extends Controller
         $user = Auth::user();
 
         // Запрашиваем users
+        //$users = DB::query('start transaction');
         $users = DB::select('SELECT * FROM users');
+        //$users = DB::query('commit');
 
         // Запрашиваем clients
         $clients = DB::select('SELECT * FROM clients');

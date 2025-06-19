@@ -136,8 +136,8 @@
                         </li>
                     </ul>
 
-                    <div id="tabs-content" class="tab-content" id="mainTabsContent">
-                        <div id="requests-tab-content" class="tab-pane fade show active" id="requests" role="tabpanel">
+                    <div class="tab-content" id="mainTabsContent">
+                        <div class="tab-pane fade show active" id="requests" role="tabpanel">
                             <h4>Заявки</h4>
                             <p>Здесь будет отображаться список заявок. Вы можете создавать, просматривать и управлять
                                 заявками на выполнение работ. Используйте фильтры для поиска нужных заявок по статусу,
