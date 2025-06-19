@@ -120,20 +120,12 @@
                                     <div id="request-filters" class="d-flex align-items-center" style="height: 2rem; border: 1px solid var(--card-border, #dee2e6); border-radius: 0.25rem 0 0 0.25rem; padding: 0 0.5rem; background-color: var(--card-bg, #ffffff);">
                                         <label class="me-2 mb-0">Фильтр заявок по:</label>
                                         <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" id="filter-types">
-                                            <label class="form-check-label" for="filter-types">типам</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" id="filter-statuses">
                                             <label class="form-check-label" for="filter-statuses">статусам</label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" id="filter-teams">
                                             <label class="form-check-label" for="filter-teams">бригадам</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" id="filter-time">
-                                            <label class="form-check-label" for="filter-time">времени</label>
                                         </div>
                                     </div>
                                     <button type="button" class="btn btn-outline-secondary btn-sm" id="reset-filters-button" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
@@ -417,6 +409,9 @@
     
     <!-- Custom Application JS -->
     <script src="{{ asset('js/app.js') }}"></script>
+    
+    <!-- Event Handlers -->
+    <script src="{{ asset('js/handler.js') }}"></script>
 </body>
 
 </html>
