@@ -185,7 +185,7 @@
                                         </style>
                                         <thead class="bg-dark">
                                             <tr>
-                                                <th>ID</th>
+                                                <th></th>
                                                 <th></th>
                                                 <th>Номер</th>
                                                 <th>Дата</th>
@@ -206,6 +206,11 @@
                                                 /* Цвет текста при наведении */
                                                 .table-hover tbody tr:hover td,
                                                 .table-hover tbody tr:hover td * {
+                                                    color: #000000 !important;
+                                                }
+
+                                                /* Стиль для текста бригадира - всегда черный */
+                                                .brigade-lead-text {
                                                     color: #000000 !important;
                                                 }
                                                 .table-hover tbody tr:hover {
@@ -269,10 +274,17 @@
 
                                                     <!-- Бригада -->
                                                     <td>
-                                                        {{ $request->brigade_name ?? 'Не назначена' }}<br>
-                                                        <small class="@if(isset($request->status_name) && $request->status_name !== 'выполнена') text-success_ fw-bold_ @else text-black @endif">
-                                                            Руководитель: {{ $request->brigade_lead ?? 'Нет данных' }}
-                                                        </small>
+                                                        @if($request->brigade_id)
+                                                            <a href="/brigade/{{ $request->brigade_id }}" class="text-decoration-none">
+                                                                <small class="text-muted brigade-lead-text">Бригадир:
+                                                                    @if($request->brigade_lead)
+                                                                        {{ $request->brigade_lead }}
+                                                                    @endif
+                                                                </small>
+                                                            </a>
+                                                        @else
+                                                            <small class="text-muted">Не назначена</small>
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @endforeach

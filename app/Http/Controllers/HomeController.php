@@ -30,8 +30,27 @@ class HomeController extends Controller
         // Запрашиваем addresses
         $addresses = DB::select('SELECT * FROM addresses');
 
-        // Запрашиваем brigade_members
-        $brigade_members = DB::select('SELECT * FROM brigade_members');
+        // Комплексный запрос для получения информации о членах бригад с данными о бригадах
+        $brigadeMembersWithDetails = DB::table('brigade_members')
+            ->join('brigades', 'brigade_members.brigade_id', '=', 'brigades.id')
+            ->leftJoin('employees', 'brigade_members.employee_id', '=', 'employees.id')
+            ->select(
+                'brigade_members.*',
+                'brigades.name as brigade_name',
+                'brigades.leader_id',
+                'employees.fio as employee_name',
+                'employees.phone as employee_phone',
+                'employees.group_role as employee_group_role',
+                'employees.sip as employee_sip',
+                'employees.position_id as employee_position_id'
+            )
+            // ->where('brigade_members.employee_id', $user->id)
+            ->get();
+            
+        // Выводим содержимое для отладки
+        // dd($brigadeMembersWithDetails);
+            
+        $brigade_members = DB::select('SELECT * FROM brigade_members'); // Оставляем старый запрос для обратной совместимости
         
         // Запрашиваем comments
         $comments = DB::select('SELECT * FROM comments'); 
@@ -75,7 +94,8 @@ class HomeController extends Controller
             'brigade_members',
             'comments',
             'request_addresses',
-            'requests_types'
+            'requests_types',
+            'brigadeMembersWithDetails'
         ));
     }
 }
