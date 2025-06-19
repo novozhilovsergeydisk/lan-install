@@ -16,10 +16,10 @@
 </head>
 
 <body>
-    <div class="container-fluid g-0">
-        <div class="row g-0" style="min-height: 100vh;">
+    <div id="app-container" class="container-fluid g-0">
+        <div id="main-layout" class="row g-0" style="min-height: 100vh;">
             <!-- Left Sidebar with Calendar -->
-            <div class="col-auto sidebar p-3">
+            <div id="sidebar" class="col-auto sidebar p-3">
                 <h4 class="mb-4">Календарь</h4>
                 <div id="datepicker"></div>
                 <div class="mt-3 d-none">
@@ -50,9 +50,9 @@
             </div>
 
             <!-- Main Content -->
-            <div class="main-content">
-                <div class="container-fluid position-relative" style="min-height: 100vh; overflow-x: hidden;">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
+            <div id="main-content" class="main-content">
+                <div id="content-wrapper" class="container-fluid position-relative" style="min-height: 100vh; overflow-x: hidden;">
+                    <div id="header-section" class="d-flex justify-content-between align-items-center mb-4">
                         <div>
                             <h1 class="mb-0">Система управления заявками</h1>
                             @if(isset($user))
@@ -84,6 +84,27 @@
                         </div>
                     </div>
 
+                    <!-- Filter Section -->
+                    <div id="request-filters" class="d-flex align-items-center mb-3" style="height: 2rem;">
+                        <label class="me-2 mb-0">Фильтр заявок по:</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="filter-types">
+                            <label class="form-check-label" for="filter-types">типам</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="filter-statuses">
+                            <label class="form-check-label" for="filter-statuses">статусам</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="filter-teams">
+                            <label class="form-check-label" for="filter-teams">бригадам</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="filter-time">
+                            <label class="form-check-label" for="filter-time">времени</label>
+                        </div>
+                    </div>
+
                     <!-- Tabs -->
                     <ul class="nav nav-tabs" id="mainTabs" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -108,8 +129,8 @@
                         </li>
                     </ul>
 
-                    <div class="tab-content" id="mainTabsContent">
-                        <div class="tab-pane fade show active" id="requests" role="tabpanel">
+                    <div id="tabs-content" class="tab-content" id="mainTabsContent">
+                        <div id="requests-tab-content" class="tab-pane fade show active" id="requests" role="tabpanel">
                             <h4>Заявки</h4>
                             <p>Здесь будет отображаться список заявок. Вы можете создавать, просматривать и управлять
                                 заявками на выполнение работ. Используйте фильтры для поиска нужных заявок по статусу,
@@ -119,7 +140,7 @@
                             </p>
 
                             @if ($requests)
-                                <div class="table-responsive mt-4" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                                <div id="requests-table-container" class="table-responsive mt-4" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                                     <table class="table table-hover align-middle mb-0" style="min-width: 992px;">
                                         <thead class="bg-dark text-white">
                                             <tr>
