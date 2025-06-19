@@ -31,21 +31,22 @@ class HomeController extends Controller
         $addresses = DB::select('SELECT * FROM addresses');
 
         // Комплексный запрос для получения информации о членах бригад с данными о бригадах
-        $brigadeMembersWithDetails = DB::table('brigade_members')
-            ->join('brigades', 'brigade_members.brigade_id', '=', 'brigades.id')
-            ->leftJoin('employees', 'brigade_members.employee_id', '=', 'employees.id')
-            ->select(
-                'brigade_members.*',
-                'brigades.name as brigade_name',
-                'brigades.leader_id',
-                'employees.fio as employee_name',
-                'employees.phone as employee_phone',
-                'employees.group_role as employee_group_role',
-                'employees.sip as employee_sip',
-                'employees.position_id as employee_position_id'
-            )
-            // ->where('brigade_members.employee_id', $user->id)
-            ->get();
+        $brigadeMembersWithDetails = DB::select(
+            "SELECT 
+                bm.*, 
+                b.name as brigade_name, 
+                b.leader_id, 
+                e.fio as employee_name, 
+                e.phone as employee_phone, 
+                e.group_role as employee_group_role, 
+                e.sip as employee_sip, 
+                e.position_id as employee_position_id 
+            FROM brigade_members bm
+            JOIN brigades b ON bm.brigade_id = b.id
+            LEFT JOIN employees e ON bm.employee_id = e.id"
+        );
+
+        // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
             
         // Выводим содержимое для отладки
         // dd($brigadeMembersWithDetails);
@@ -81,6 +82,18 @@ class HomeController extends Controller
             LEFT JOIN employees e ON b.leader_id = e.id
         ");
 
+        $flags = [
+            'new' => 'new',
+            'in_work' => 'in_work',
+            'waiting_for_client' => 'waiting_for_client',
+            'completed' => 'completed',
+            'cancelled' => 'cancelled',
+            'on_hold' => 'on_hold',
+            'under_review' => 'under_review',
+            'on_hold' => 'on_hold',
+            'on_hold' => 'on_hold',
+        ];
+
         // Передаём всё в шаблон
         return view('welcome', compact(
             'user',
@@ -95,7 +108,8 @@ class HomeController extends Controller
             'comments',
             'request_addresses',
             'requests_types',
-            'brigadeMembersWithDetails'
+            'brigadeMembersWithDetails',
+            'flags'
         ));
     }
 }

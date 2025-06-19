@@ -13,6 +13,69 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- Проверка загрузки Bootstrap -->
+    <script>
+        // Проверяем, загружен ли Bootstrap
+        window.addEventListener('load', function() {
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap не загружен!');
+                // Показываем уведомление пользователю
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger position-fixed top-0 start-0 w-100 rounded-0 m-0';
+                alertDiv.style.zIndex = '2000';
+                alertDiv.innerHTML = `
+                    <div class="container">
+                        <strong>Ошибка загрузки!</strong> Не удалось загрузить необходимые компоненты Bootstrap.
+                        Пожалуйста, обновите страницу или проверьте подключение к интернету.
+                    </div>`;
+                document.body.prepend(alertDiv);
+            } else {
+                console.log('Bootstrap успешно загружен:', bootstrap);
+            }
+        });
+    </script>
+    <style>
+        /* Styles for the dark theme in the modal window */
+        [data-bs-theme="dark"] .brigade-details,
+        [data-bs-theme="dark"] .brigade-details h4,
+        [data-bs-theme="dark"] .brigade-details h5,
+        [data-bs-theme="dark"] .brigade-details h6,
+        [data-bs-theme="dark"] .brigade-details p,
+        [data-bs-theme="dark"] .brigade-details .card,
+        [data-bs-theme="dark"] .brigade-details .card-body,
+        [data-bs-theme="dark"] .brigade-details .list-group-item {
+            color: #f8f9fa !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .text-muted {
+            color: #adb5bd !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .card {
+            background-color: #2b3035 !important;
+            border-color: #373b3e !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .card-header {
+            background-color: #212529 !important;
+            border-bottom-color: #373b3e !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .list-group-item {
+            background-color: #2b3035 !important;
+            border-color: #373b3e !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .list-group-item.bg-light {
+            background-color: #343a40 !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .card-header h5 {
+            color: #fff !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -275,13 +338,15 @@
                                                     <!-- Бригада -->
                                                     <td>
                                                         @if($request->brigade_id)
-                                                            <a href="/brigade/{{ $request->brigade_id }}" class="text-decoration-none">
-                                                                <small class="text-muted brigade-lead-text">Бригадир:
-                                                                    @if($request->brigade_lead)
-                                                                        {{ $request->brigade_lead }}
-                                                                    @endif
-                                                                </small>
-                                                            </a>
+                                                            <small class="text-muted brigade-lead-text">Бригадир:
+                                                                @if($request->brigade_lead)
+                                                                    {{ $request->brigade_lead }}
+                                                                @endif
+                                                            </small>
+                                                            <br>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary view-brigade-btn" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="{{ $request->brigade_id }}">
+                                                                <i class="bi bi-people me-1"></i>Состав бригады
+                                                            </button>
                                                         @else
                                                             <small class="text-muted">Не назначена</small>
                                                         @endif
@@ -424,6 +489,28 @@
     
     <!-- Event Handlers -->
     <script src="{{ asset('js/handler.js') }}"></script>
+    <!-- Modal for displaying brigade details -->
+    <div class="modal fade" id="brigadeModal" tabindex="-1" aria-labelledby="brigadeModalLabel" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="brigadeModalLabel">Состав бригады</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body" id="brigadeDetails">
+                    <div class="text-center my-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                        <p class="mt-2">Загрузка данных о бригаде...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
