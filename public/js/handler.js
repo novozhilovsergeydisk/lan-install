@@ -44,11 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            // Сбрасываем дату в календаре, если он инициализирован
-            if ($.fn.datepicker && $('#datepicker').datepicker('getDate') !== null) {
-                $('#datepicker').datepicker('clearDates');
-            }
-            
             console.log('Все фильтры сброшены');
         });
     }
