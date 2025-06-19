@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+
+git log --color=always --since="2 weeks ago" --pretty=format:"%C(yellow)%h%Creset %C(blue)%ad%Creset %C(green)%an%Creset %n└─ %C(white)%s%Creset" --date=short > git_log_colored.txt
+cat git_log_colored.txt
