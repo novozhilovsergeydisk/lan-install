@@ -141,7 +141,7 @@
 
                             @if ($requests)
                                 <div id="requests-table-container" class="table-responsive mt-4" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                                    <table class="table table-hover align-middle mb-0" style="min-width: 992px;">
+                                    <table class="table table-hover align-middle mb-0 border" style="min-width: 992px;">
                                         <style>
                                             [data-bs-theme="dark"] thead.bg-dark,
                                             [data-bs-theme="dark"] thead.bg-dark th,
@@ -149,8 +149,26 @@
                                                 color: #fff !important;
                                             }
                                             [data-bs-theme="dark"] thead.bg-dark {
-                                                --bs-table-bg: var(--bs-dark);
+                                                --bs-table-bg: #343a40; /* Более светлый оттенок серого */
                                                 --bs-table-color: #fff;
+                                                background-color: #343a40; /* Для совместимости */
+                                            }
+                                            /* Стили для чекбоксов */
+                                            .form-check-input {
+                                                border-color: #6c757d;
+                                                box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.1);
+                                            }
+                                            .form-check-input:checked {
+                                                background-color: #0d6efd;
+                                                border-color: #0d6efd;
+                                            }
+                                            [data-bs-theme="dark"] .form-check-input {
+                                                background-color: #2b3035;
+                                                border-color: #6c757d;
+                                            }
+                                            [data-bs-theme="dark"] .form-check-input:checked {
+                                                background-color: #0d6efd;
+                                                border-color: #0d6efd;
                                             }
                                         </style>
                                         <thead class="bg-dark">
@@ -251,45 +269,6 @@
                             @else
                                 <p class="mt-4 text-muted">Нет заявок для отображения.</p>
                             @endif
-
-                            @if (session('user_data'))
-                                <ul>
-                                    <li><strong>ID:</strong> {{ session('user_data')['id'] }}</li>
-                                    <li><strong>Имя:</strong> {{ session('user_data')['name'] }}</li>
-                                    <li><strong>Email:</strong> {{ session('user_data')['email'] }}</li>
-                                    <li><strong>Роль:</strong> {{ session('user_data')['role'] }}</li>
-                                    <li><strong>Дата регистрации:</strong> {{ session('user_data')['created_at'] }}
-                                    </li>
-                                </ul>
-                            @endif
-                            @if (session('migrations'))
-                                <h3>Список миграций:</h3>
-                                <ul>
-                                    @foreach (session('migrations') as $migration)
-                                        <li>
-                                            <strong>{{ $migration->migration }}</strong> (ID: {{ $migration->id }},
-                                            Batch: {{ $migration->batch }})
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @endif
-
-                            @if (session('clients'))
-                                <h3>Список клиентов:</h3>
-                                <ul class="list-group">
-                                    @foreach (session('clients') as $client)
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            {{ $client->fio ?? 'Без имени' }}
-                                            <span
-                                                class="badge bg-primary">{{ $client->phone ?? 'Нет телефона' }}</span>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @else
-                                <p>Нет данных о клиентах.</p>
-                            @endif
-
-
 
                         </div>
                         <div class="tab-pane fade" id="teams" role="tabpanel">
