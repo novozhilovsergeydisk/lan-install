@@ -161,26 +161,40 @@
                                                 background-color: #343a40; /* Для совместимости */
                                             }
                                             /* Стили для чекбоксов */
-                                            .form-check-input {
-                                                border-color: #6c757d;
-                                                box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.1);
+                                            .request-checkbox {
+                                                background-color: rgba(255, 255, 255, 0.5) !important;
+                                                border-color: rgba(0, 0, 0, 0.25) !important;
+                                                opacity: 0.7;
+                                                transition: opacity 0.2s ease;
                                             }
-                                            .form-check-input:checked {
-                                                background-color: #0d6efd;
-                                                border-color: #0d6efd;
+                                            
+                                            .request-checkbox:checked {
+                                                background-color: #0d6efd !important;
+                                                border-color: #0d6efd !important;
+                                                opacity: 1;
                                             }
-                                            [data-bs-theme="dark"] .form-check-input {
-                                                background-color: #2b3035;
-                                                border-color: #6c757d;
+                                            
+                                            .request-checkbox:not(:checked) {
+                                                background-color: transparent !important;
+                                                border-color: rgba(0, 0, 0, 0.25) !important;
                                             }
-                                            [data-bs-theme="dark"] .form-check-input:checked {
-                                                background-color: #0d6efd;
-                                                border-color: #0d6efd;
+                                            
+                                            tr:hover .request-checkbox {
+                                                opacity: 1;
                                             }
+                                            /* Стили для статусов */
+                                            tr[style*="background-color: #BBDEFB"] { --bs-table-bg: #BBDEFB !important; } /* новая */
+                                            tr[style*="background-color: #FFECB3"] { --bs-table-bg: #FFECB3 !important; } /* в работе */
+                                            tr[style*="background-color: #FFCC80"] { --bs-table-bg: #FFCC80 !important; } /* ожидает клиента */
+                                            tr[style*="background-color: #C8E6C9"] { --bs-table-bg: #C8E6C9 !important; } /* выполнена */
+                                            tr[style*="background-color: #FFCDD2"] { --bs-table-bg: #FFCDD2 !important; } /* отменена */
+                                            tr[style*="background-color: #E0E0E0"] { --bs-table-bg: #E0E0E0 !important; } /* на уточнении */
+                                            tr[style*="background-color: #E1BEE7"] { --bs-table-bg: #E1BEE7 !important; } /* приостановлена */
                                         </style>
                                         <thead class="bg-dark">
                                             <tr>
                                                 <th>ID</th>
+                                                <th></th>
                                                 <th>Номер</th>
                                                 <th>Клиент</th>
                                                 <th>Бригада</th>
@@ -236,6 +250,9 @@
                                                 @endphp
                                                 <tr class="align-middle" style="{{ $rowStyle }}">
                                                     <td>{{ $request->id }}</td>
+                                                    <td class="text-center">
+                                                        <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
+                                                    </td>
                                                     <td><strong>{{ $request->number ?? '—' }}</strong></td>
 
                                                     <!-- Клиент -->
@@ -404,6 +421,32 @@
 
     <script>
         $(document).ready(function() {
+            // Обработка выбора чекбокса (только один выбранный)
+            $('.request-checkbox').on('change', function() {
+                const currentCheckbox = $(this);
+                const currentRow = currentCheckbox.closest('tr');
+                
+                // Сначала снимаем выделение со всех чекбоксов
+                $('.request-checkbox').not(this).prop('checked', false);
+                $('tr').removeClass('row-selected');
+                
+                if (currentCheckbox.is(':checked')) {
+                    // Выделяем текущую строку, только если чекбокс выбран
+                    currentRow.addClass('row-selected');
+                } else {
+                    // Принудительно снимаем стили с текущего чекбокса
+                    currentCheckbox.css({
+                        'background-color': 'transparent',
+                        'border-color': 'rgba(0, 0, 0, 0.25)'
+                    });
+                }
+            });
+            
+            // Инициализируем состояние при загрузке
+            $('.request-checkbox:checked').each(function() {
+                $(this).closest('tr').addClass('row-selected');
+            });
+            
             // Initialize datepicker
             $('#datepicker').datepicker({
                 format: 'dd.mm.yyyy',
