@@ -85,7 +85,7 @@
                     </div>
 
                     <!-- Filter Section -->
-                    <div id="request-filters" class="d-flex align-items-center mb-3" style="height: 2rem;">
+                    <div id="request-filters" class="d-flex align-items-center mb-3" style="height: 2rem; border: 1px solid var(--card-border, #dee2e6); border-radius: 0.25rem; padding: 0 0.5rem; background-color: var(--card-bg, #ffffff);">
                         <label class="me-2 mb-0">Фильтр заявок по:</label>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="checkbox" id="filter-types">
@@ -142,7 +142,18 @@
                             @if ($requests)
                                 <div id="requests-table-container" class="table-responsive mt-4" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                                     <table class="table table-hover align-middle mb-0" style="min-width: 992px;">
-                                        <thead class="bg-dark text-white">
+                                        <style>
+                                            [data-bs-theme="dark"] thead.bg-dark,
+                                            [data-bs-theme="dark"] thead.bg-dark th,
+                                            [data-bs-theme="dark"] thead.bg-dark * {
+                                                color: #fff !important;
+                                            }
+                                            [data-bs-theme="dark"] thead.bg-dark {
+                                                --bs-table-bg: var(--bs-dark);
+                                                --bs-table-color: #fff;
+                                            }
+                                        </style>
+                                        <thead class="bg-dark">
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Номер</th>
