@@ -77,40 +77,14 @@
                             <!-- Logout Button -->
                             <form action="{{ route('logout') }}" method="POST" class="mb-0">
                                 @csrf
-                                <button type="submit" class="btn btn-outline-danger btn-sm px-3">
+                                <button type="submit" id="logout-button" class="btn btn-outline-danger btn-sm px-3">
                                     <i class="bi bi-box-arrow-right me-1"></i>Выход
                                 </button>
                             </form>
                         </div>
                     </div>
 
-                    <!-- Filter Section -->
-                    <div class="mb-3">
-                        <div class="d-flex" style="width: fit-content; max-width: 100%;">
-                            <div id="request-filters" class="d-flex align-items-center" style="height: 2rem; border: 1px solid var(--card-border, #dee2e6); border-radius: 0.25rem 0 0 0.25rem; padding: 0 0.5rem; background-color: var(--card-bg, #ffffff);">
-                                <label class="me-2 mb-0">Фильтр заявок по:</label>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="filter-types">
-                                    <label class="form-check-label" for="filter-types">типам</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="filter-statuses">
-                                    <label class="form-check-label" for="filter-statuses">статусам</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="filter-teams">
-                                    <label class="form-check-label" for="filter-teams">бригадам</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="filter-time">
-                                    <label class="form-check-label" for="filter-time">времени</label>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="reset-filters" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
-                                <i class="bi bi-arrow-counterclockwise me-1"></i>Сброс
-                            </button>
-                        </div>
-                    </div>
+
 
                     <!-- Tabs -->
                     <ul class="nav nav-tabs" id="mainTabs" role="tablist">
@@ -139,12 +113,38 @@
                     <div class="tab-content" id="mainTabsContent">
                         <div class="tab-pane fade show active" id="requests" role="tabpanel">
                             <h4>Заявки</h4>
-                            <p>Здесь будет отображаться список заявок. Вы можете создавать, просматривать и управлять
-                                заявками на выполнение работ. Используйте фильтры для поиска нужных заявок по статусу,
-                                дате или другим параметрам.</p>
-                            <p>Для создания новой заявки нажмите кнопку "Добавить заявку" в правом верхнем углу таблицы.
-                                Вы сможете указать все необходимые детали, включая описание работ, адрес и приоритет.
-                            </p>
+                            
+                            <!-- Filter Section -->
+                            <div class="mb-3">
+                                <div class="d-flex" style="width: fit-content; max-width: 100%;">
+                                    <div id="request-filters" class="d-flex align-items-center" style="height: 2rem; border: 1px solid var(--card-border, #dee2e6); border-radius: 0.25rem 0 0 0.25rem; padding: 0 0.5rem; background-color: var(--card-bg, #ffffff);">
+                                        <label class="me-2 mb-0">Фильтр заявок по:</label>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-types">
+                                            <label class="form-check-label" for="filter-types">типам</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-statuses">
+                                            <label class="form-check-label" for="filter-statuses">статусам</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-teams">
+                                            <label class="form-check-label" for="filter-teams">бригадам</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-time">
+                                            <label class="form-check-label" for="filter-time">времени</label>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="reset-filters-button" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Сброс
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                
+                            </div>
 
                             @if ($requests)
                                 <div id="requests-table-container" class="table-responsive mt-4" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
@@ -196,12 +196,12 @@
                                                 <th>ID</th>
                                                 <th></th>
                                                 <th>Номер</th>
-                                                <th>Клиент</th>
-                                                <th>Бригада</th>
-                                                <th>Дата выполнения</th>
+                                                <th>Дата</th>
                                                 <th>Время</th>
-                                                <th>Создана</th>
                                                 <th>Комментарий</th>
+                                                <th>Адрес/Телефон</th>
+                                                <th>Добавлено</th>
+                                                <th>Бригада</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -253,37 +253,34 @@
                                                     <td class="text-center">
                                                         <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
                                                     </td>
-                                                    <td><strong>{{ $request->number ?? '—' }}</strong></td>
+                                                    <td style="font-size: 0.85em; font-weight: bold;">{{ $request->number ?? '—' }}</td>
+                                                    
+                                                    <!-- Дата создания -->
+                                                    <td>{{ \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') }}</td>
+                                                    
+                                                    <!-- Время -->
+                                                    <td>{{ $request->execution_time ?? '—' }}</td>
+                                                    
+                                                    <!-- Комментарий -->
+                                                    <td>{{ \Illuminate\Support\Str::limit($request->comment, 30) }}</td>
 
                                                     <!-- Клиент -->
                                                     <td>
                                                         {{ $request->client_fio ?? 'Неизвестный клиент' }}<br>
-                                                        <small class="@if(isset($request->status_name) && $request->status_name === 'выполнена') text-success fw-bold @else text-black @endif">
+                                                        <small class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif">
                                                             {{ $request->client_phone ?? 'Нет телефона' }}
                                                         </small>
                                                     </td>
 
-
+                                                    <!-- Дата выполнения -->
+                                                    <td>{{ \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') }}</td>
 
                                                     <!-- Бригада -->
                                                     <td>
                                                         {{ $request->brigade_name ?? 'Не назначена' }}<br>
-                                                        <small class="@if(isset($request->status_name) && $request->status_name === 'выполнена') text-success fw-bold @else text-black @endif">
+                                                        <small class="@if(isset($request->status_name) && $request->status_name !== 'выполнена') text-success_ fw-bold_ @else text-black @endif">
                                                             Руководитель: {{ $request->brigade_lead ?? 'Нет данных' }}
                                                         </small>
-                                                    </td>
-
-                                                    <!-- Дата выполнения -->
-                                                    <td>{{ \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') }}
-                                                    </td>
-                                                    <td>{{ $request->execution_time ?? '—' }}</td>
-
-                                                    <!-- Дата создания -->
-                                                    <td>{{ \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') }}
-                                                    </td>
-
-                                                    <!-- Комментарий -->
-                                                    <td>{{ \Illuminate\Support\Str::limit($request->comment, 30) }}
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -416,107 +413,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Bootstrap Datepicker JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.ru.min.js">
-    </script>
-
-    <script>
-        $(document).ready(function() {
-            // Обработка выбора чекбокса (только один выбранный)
-            $('.request-checkbox').on('change', function() {
-                const currentCheckbox = $(this);
-                const currentRow = currentCheckbox.closest('tr');
-                
-                // Сначала снимаем выделение со всех чекбоксов
-                $('.request-checkbox').not(this).prop('checked', false);
-                $('tr').removeClass('row-selected');
-                
-                if (currentCheckbox.is(':checked')) {
-                    // Выделяем текущую строку, только если чекбокс выбран
-                    currentRow.addClass('row-selected');
-                } else {
-                    // Принудительно снимаем стили с текущего чекбокса
-                    currentCheckbox.css({
-                        'background-color': 'transparent',
-                        'border-color': 'rgba(0, 0, 0, 0.25)'
-                    });
-                }
-            });
-            
-            // Инициализируем состояние при загрузке
-            $('.request-checkbox:checked').each(function() {
-                $(this).closest('tr').addClass('row-selected');
-            });
-            
-            // Initialize datepicker
-            $('#datepicker').datepicker({
-                format: 'dd.mm.yyyy',
-                language: 'ru',
-                autoclose: true,
-                todayHighlight: true,
-                container: '#datepicker'
-            });
-
-            // Sync datepicker with input field
-            $('#datepicker').on('changeDate', function(e) {
-                $('#dateInput').val(e.format('dd.mm.yyyy'));
-                $('#selectedDate').text(e.format('dd.mm.yyyy'));
-            });
-
-            // Initialize input field datepicker
-            $('#dateInput').datepicker({
-                format: 'dd.mm.yyyy',
-                language: 'ru',
-                autoclose: true,
-                todayHighlight: true,
-                container: '#datepicker'
-            });
-
-            // Set today's date on load
-            let today = new Date();
-            let formattedDate = today.toLocaleDateString('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-            $('#datepicker').datepicker('update', today);
-            $('#dateInput').val(formattedDate);
-            $('#selectedDate').text(formattedDate);
-
-            // Theme toggle functionality
-            const themeToggle = document.getElementById('themeToggle');
-            const sunIcon = document.getElementById('sunIcon');
-            const moonIcon = document.getElementById('moonIcon');
-            const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-            const currentTheme = localStorage.getItem('theme');
-
-            // Check for saved theme preference or use system preference
-            if (currentTheme === 'dark' || (!currentTheme && prefersDarkScheme.matches)) {
-                document.documentElement.setAttribute('data-bs-theme', 'dark');
-                sunIcon.classList.remove('d-none'); // Show sun in dark mode
-                moonIcon.classList.add('d-none');
-            } else {
-                document.documentElement.setAttribute('data-bs-theme', 'light');
-                sunIcon.classList.add('d-none');
-                moonIcon.classList.remove('d-none'); // Show moon in light mode
-            }
-
-            // Toggle theme on icon click
-            themeToggle.addEventListener('click', () => {
-                const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-                if (currentTheme === 'dark') {
-                    document.documentElement.setAttribute('data-bs-theme', 'light');
-                    localStorage.setItem('theme', 'light');
-                    sunIcon.classList.add('d-none');
-                    moonIcon.classList.remove('d-none'); // Show moon in light mode
-                } else {
-                    document.documentElement.setAttribute('data-bs-theme', 'dark');
-                    localStorage.setItem('theme', 'dark');
-                    sunIcon.classList.remove('d-none'); // Show sun in dark mode
-                    moonIcon.classList.add('d-none');
-                }
-            });
-        });
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.ru.min.js"></script>
+    
+    <!-- Custom Application JS -->
+    <script src="{{ asset('js/app.js') }}"></script>
 </body>
 
 </html>
