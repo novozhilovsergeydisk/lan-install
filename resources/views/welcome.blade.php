@@ -203,18 +203,27 @@
                             </div>
 
                             @if ($requests)
-                                <div id="requests-table-container" class="table-responsive mt-4" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                                    <table class="table table-hover align-middle mb-0 border" style="min-width: 992px;">
+                                <div id="requests-table-container" class="table-responsive mt-4" style="max-height: 66vh; overflow: auto; -webkit-overflow-scrolling: touch; border: 1px solid #dee2e6; border-radius: 0.375rem;">
+                                    <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                         <style>
+                                            #requests-table-container thead th {
+                                                position: sticky;
+                                                top: 0;
+                                                background-color: #f8f9fa;
+                                                z-index: 10;
+                                            }
+                                            [data-bs-theme="dark"] #requests-table-container thead th {
+                                                background-color: #343a40;
+                                            }
                                             [data-bs-theme="dark"] thead.bg-dark,
                                             [data-bs-theme="dark"] thead.bg-dark th,
                                             [data-bs-theme="dark"] thead.bg-dark * {
                                                 color: #fff !important;
                                             }
                                             [data-bs-theme="dark"] thead.bg-dark {
-                                                --bs-table-bg: #343a40; /* Более светлый оттенок серого */
+                                                --bs-table-bg: #343a40;
                                                 --bs-table-color: #fff;
-                                                background-color: #343a40; /* Для совместимости */
+                                                background-color: #343a40;
                                             }
                                             /* Стили для чекбоксов */
                                             .request-checkbox {
@@ -339,12 +348,6 @@
                                                     <!-- Бригада -->
                                                     <td>
                                                         @if($request->brigade_id)
-                                                            <small class="text-muted brigade-lead-text">Бригадир:
-                                                                @if($request->brigade_lead)
-                                                                    {{ $request->brigade_lead }}
-                                                                @endif
-                                                            </small>
-                                                            <br>
                                                             <button type="button" class="btn btn-sm btn-outline-primary view-brigade-btn" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="{{ $request->brigade_id }}">
                                                                 <i class="bi bi-people me-1"></i>Состав бригады
                                                             </button>
