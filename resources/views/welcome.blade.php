@@ -33,7 +33,7 @@
                     </div>`;
                 document.body.prepend(alertDiv);
             } else {
-                console.log('Bootstrap успешно загружен:', bootstrap);
+                // console.log('Bootstrap успешно загружен:', bootstrap);
             }
         });
     </script>
@@ -392,8 +392,7 @@
                                     @foreach ($clients as $client)
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
                                             {{ $client->fio ?? 'Без имени' }}
-                                            <span
-                                                class="badge bg-primary">{{ $client->phone ?? 'Нет телефона' }}</span>
+                                            <span class="badge bg-primary">xx {{ $client->phone ?? 'Нет телефона' }}</span>
                                         </li>
                                     @endforeach
                                 </ul>
@@ -495,7 +494,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="brigadeModalLabel">Состав бригады</h5>
+                    <h5 class="modal-title" id="brigadeModalLabel">Состав бригады!</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                 </div>
                 <div class="modal-body" id="brigadeDetails">

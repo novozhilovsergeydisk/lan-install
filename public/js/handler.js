@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 // Простая проверка загрузки скрипта
-console.log('handler.js загружен');
+// console.log('handler.js загружен');
 
 // Обработчик клика по кнопке просмотра бригады
 document.addEventListener('click', function(event) {
@@ -95,11 +95,11 @@ document.addEventListener('click', function(event) {
     const btn = event.target.closest('.view-brigade-btn');
     if (!btn) return;
     
-    console.log('Нажата кнопка просмотра бригады');
+    // console.log('Нажата кнопка просмотра бригады');
     
     // Получаем ID бригады из атрибута data-brigade-id
     const brigadeId = btn.getAttribute('data-brigade-id');
-    console.log('ID бригады:', brigadeId);
+    // console.log('ID бригады:', brigadeId);
     
     if (!brigadeId) {
         console.error('Не указан ID бригады');
@@ -113,12 +113,29 @@ document.addEventListener('click', function(event) {
         return;
     }
     
+    // Сохраняем ссылку на кнопку, которая открыла модальное окно
+    const triggerElement = btn;
+    
     // Инициализируем модальное окно, если еще не инициализировано
     let modal = bootstrap.Modal.getInstance(modalElement);
     if (!modal) {
         modal = new bootstrap.Modal(modalElement, {
             backdrop: 'static',
-            keyboard: false
+            keyboard: true
+        });
+        
+        // Добавляем обработчик события скрытия модального окна
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            // Возвращаем фокус на кнопку, которая открыла модальное окно
+            if (triggerElement && triggerElement.focus) {
+                triggerElement.focus();
+            }
+            
+            // Очищаем содержимое модального окна
+            const modalBody = modalElement.querySelector('.modal-body');
+            if (modalBody) {
+                modalBody.innerHTML = '';
+            }
         });
     }
     
@@ -151,7 +168,7 @@ document.addEventListener('click', function(event) {
     .then(async response => {
         console.log('Ответ сервера:', response.status, response.statusText);
         const responseData = await response.text();
-        console.log('Данные ответа:', responseData);
+        // console.log('Данные ответа:', responseData);
         
         if (!response.ok) {
             throw new Error(`Ошибка HTTP: ${response.status}`);
@@ -272,7 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="brigade-details">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="mb-0">${brigade.name || 'Без названия'}</h4>
-                    <span class="badge bg-primary">ID: ${brigade.id}</span>
                 </div>
                 
                 ${leader ? `
