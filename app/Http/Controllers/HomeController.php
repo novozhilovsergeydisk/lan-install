@@ -80,6 +80,7 @@ class HomeController extends Controller
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
             LEFT JOIN brigades b ON r.brigade_id = b.id
             LEFT JOIN employees e ON b.leader_id = e.id
+            ORDER BY r.request_date DESC
         ");
 
         $flags = [

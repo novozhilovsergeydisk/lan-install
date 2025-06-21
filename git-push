@@ -1,7 +1,23 @@
 #!/bin/bash
 
-git st
-git add-all
-git st
-git ci -m "Change files"
-git push-all
+# Проверяем, был ли передан комментарий
+if [ -z "$1" ]; then
+  echo "Ошибка: не указан комментарий для коммита."
+  echo "Использование: $0 \"Ваш комментарий\""
+  if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    # Скрипт запущен напрямую
+    exit 1
+  else
+    # Скрипт вызван через source или .
+    return 1
+  fi
+fi
+
+comment="$1"
+
+# Git-команды
+git status
+git add .
+git status
+git commit -m "$comment"
+git push
