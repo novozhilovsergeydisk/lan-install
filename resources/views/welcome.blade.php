@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления заявками</title>
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Bootstrap Datepicker CSS -->
@@ -198,18 +198,16 @@
                                 </div>
                             </div>
 
-                            <div>
-                                
-                            </div>
+                            <!-- max-height: 33vh; overflow: auto; -webkit-overflow-scrolling: touch; -->
 
                             @if ($requests)
-                                <div id="requests-table-container" class="table-responsive mt-4" style="max-height: 66vh; overflow: auto; -webkit-overflow-scrolling: touch; border: 1px solid #dee2e6; border-radius: 0.375rem;">
+                                <div id="requests-table-container" class="table-responsive mt-4" style="border: 1px solid rgb(110, 113, 117); border-radius: 0.375rem;">
                                     <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                         <style>
                                             #requests-table-container thead th {
-                                                position: sticky;
-                                                top: 0;
-                                                background-color: #f8f9fa;
+                                                /* position: sticky;
+                                                top: 0; */
+                                                /* background-color: #f8f9fa; */
                                                 z-index: 10;
                                             }
                                             [data-bs-theme="dark"] #requests-table-container thead th {
@@ -225,6 +223,7 @@
                                                 --bs-table-color: #fff;
                                                 background-color: #343a40;
                                             }
+
                                             /* Стили для чекбоксов */
                                             .request-checkbox {
                                                 background-color: rgba(255, 255, 255, 0.5) !important;
@@ -247,14 +246,6 @@
                                             tr:hover .request-checkbox {
                                                 opacity: 1;
                                             }
-                                            /* Стили для статусов */
-                                            tr[style*="background-color: #BBDEFB"] { --bs-table-bg: #BBDEFB !important; } /* новая */
-                                            tr[style*="background-color: #FFECB3"] { --bs-table-bg: #FFECB3 !important; } /* в работе */
-                                            tr[style*="background-color: #FFCC80"] { --bs-table-bg: #FFCC80 !important; } /* ожидает клиента */
-                                            tr[style*="background-color: #C8E6C9"] { --bs-table-bg: #C8E6C9 !important; } /* выполнена */
-                                            tr[style*="background-color: #FFCDD2"] { --bs-table-bg: #FFCDD2 !important; } /* отменена */
-                                            tr[style*="background-color: #E0E0E0"] { --bs-table-bg: #E0E0E0 !important; } /* на уточнении */
-                                            tr[style*="background-color: #E1BEE7"] { --bs-table-bg: #E1BEE7 !important; } /* приостановлена */
                                         </style>
                                         <thead class="bg-dark">
                                             <tr>
@@ -284,41 +275,22 @@
 
                                                 /* Стиль для текста бригадира - всегда черный */
                                                 .brigade-lead-text {
-                                                    color: #000000 !important;
+                                                    /* color: #000000 !important; */
                                                 }
                                                 .table-hover tbody tr:hover {
-                                                    --bs-table-color: #000000 !important;
-                                                    color: #000000 !important;
+                                                    /* --bs-table-color: #000000 !important;
+                                                    color: #000000 !important; */
                                                 }
-                                                
-                                                /* Стили для статусов */
-                                                tr[style*="background-color: #BBDEFB"] { --bs-table-bg: #BBDEFB !important; } /* новая */
-                                                tr[style*="background-color: #FFECB3"] { --bs-table-bg: #FFECB3 !important; } /* в работе */
-                                                tr[style*="background-color: #FFCC80"] { --bs-table-bg: #FFCC80 !important; } /* ожидает клиента */
-                                                tr[style*="background-color: #C8E6C9"] { --bs-table-bg: #C8E6C9 !important; } /* выполнена */
-                                                tr[style*="background-color: #FFCDD2"] { --bs-table-bg: #FFCDD2 !important; } /* отменена */
-                                                tr[style*="background-color: #E0E0E0"] { --bs-table-bg: #E0E0E0 !important; } /* на уточнении */
-                                                tr[style*="background-color: #E1BEE7"] { --bs-table-bg: #E1BEE7 !important; } /* приостановлена */
+
+                                                .status-row {
+                                                    --bs-table-bg: var(--status-color);
+                                                    background-color: var(--status-color);
+                                                }
+
                                             </style>
-                                            @php
-                                                $statusColors = [
-                                                    'новая' => 'background-color: #BBDEFB;', /* голубой */
-                                                    'в работе' => 'background-color: #FFECB3;', /* желтый */
-                                                    'перенесена' => 'background-color: #FFCC80;', /* оранжевый */
-                                                    'выполнена' => 'background-color: #C8E6C9;', /* зеленый */
-                                                    'отменена' => 'background-color: #FFCDD2;', /* красный */
-                                                    'на уточнении' => 'background-color: #E0E0E0;', /* серый */
-                                                    'приостановлена' => 'background-color: #E1BEE7;', /* фиолетовый */
-                                                ];
-                                            @endphp
 
                                             @foreach ($requests as $request)
-                                                @php
-                                                    // Получаем статус и приводим к нижнему регистру
-                                                    $status = strtolower($request->status_name ?? '');
-                                                    $rowStyle = $statusColors[$status] ?? '';
-                                                @endphp
-                                                <tr class="align-middle" style="{{ $rowStyle }}">
+                                                <tr class="align-middle status-row" style="--status-color: {{ $request->status_color }}">
                                                     <td>{{ $request->id }}</td>
                                                     <td class="text-center">
                                                         <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
