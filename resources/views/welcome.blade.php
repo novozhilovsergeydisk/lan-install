@@ -208,7 +208,7 @@
                                                 /* position: sticky;
                                                 top: 0; */
                                                 /* background-color: #f8f9fa; */
-                                                z-index: 10;
+                                                /* z-index: 10; */
                                             }
                                             [data-bs-theme="dark"] #requests-table-container thead th {
                                                 background-color: #343a40;
