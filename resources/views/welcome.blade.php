@@ -304,7 +304,7 @@
                                                 $statusColors = [
                                                     'новая' => 'background-color: #BBDEFB;', /* голубой */
                                                     'в работе' => 'background-color: #FFECB3;', /* желтый */
-                                                    'ожидает клиента' => 'background-color: #FFCC80;', /* оранжевый */
+                                                    'перенесена' => 'background-color: #FFCC80;', /* оранжевый */
                                                     'выполнена' => 'background-color: #C8E6C9;', /* зеленый */
                                                     'отменена' => 'background-color: #FFCDD2;', /* красный */
                                                     'на уточнении' => 'background-color: #E0E0E0;', /* серый */
