@@ -226,12 +226,23 @@ class HomeController extends Controller
                 c.id,
                 c.comment,
                 c.created_at,
-                'Система' as author_name
+                'Система' as author_name,
+                c.created_at as formatted_date
             FROM request_comments rc
             JOIN comments c ON rc.comment_id = c.id
             WHERE rc.request_id = ?
             ORDER BY c.created_at DESC
         ", [$requestId]);
+        
+        // Format the date for each comment
+        foreach ($comments as &$comment) {
+            $date = new \DateTime($comment->created_at);
+            $comment->formatted_date = $date->format('d.m.Y');
+            if ($comment->author_name === 'Система') {
+                $comment->author_name = $comment->formatted_date;
+            }
+            unset($comment->formatted_date);
+        }
         
         return response()->json($comments);
     }

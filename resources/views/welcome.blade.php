@@ -73,6 +73,13 @@
             background-color: #343a40 !important;
         }
         
+        /* Стили для кнопки комментариев */
+        .comment-btn-hover:hover,
+        .comment-btn-hover:hover i {
+            color: white !important;
+            transition: color 0.2s ease-in-out;
+        }
+        
         [data-bs-theme="dark"] .brigade-details .card-header h5 {
             color: #fff !important;
         }
@@ -312,20 +319,23 @@
                                                                 {{ $commentText }}
                                                             </div>
                                                         @endif
-                                                        <div class="mt-1">
-                                                            <button type="button" 
-                                                                    class="btn btn-sm btn-outline-secondary view-comments-btn p-1" 
-                                                                    data-bs-toggle="modal" 
-                                                                    data-bs-target="#commentsModal"
-                                                                    data-request-id="{{ $request->id }}">
-                                                                <i class="bi bi-chat-left-text me-1"></i>Комментарии
-                                                                @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
+                                                        @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 1)
+                                                            <div class="mt-1">
+                                                                <button type="button" 
+                                                                        class="btn btn-sm btn-outline-secondary view-comments-btn p-1" 
+                                                                        data-bs-toggle="modal" 
+                                                                        data-bs-target="#commentsModal"
+                                                                        data-request-id="{{ $request->id }}"
+                                                                        style="position: relative; z-index: 1;"
+                                                                        onmouseover="this.style.setProperty('color', 'white', 'important'); this.querySelector('i').style.setProperty('color', 'white', 'important'); this.style.setProperty('background-color', '#6c757d', 'important'); this.style.setProperty('border-color', '#6c757d', 'important');"
+                                                                        onmouseout="this.style.removeProperty('color'); this.querySelector('i').style.removeProperty('color'); this.style.removeProperty('background-color'); this.style.removeProperty('border-color');">
+                                                                    <i class="bi bi-chat-left-text me-1"></i>Все комментарии
                                                                     <span class="badge bg-primary rounded-pill ms-1">
                                                                         {{ count($comments_by_request[$request->id]) }}
                                                                     </span>
-                                                                @endif
-                                                            </button>
-                                                        </div>
+                                                                </button>
+                                                            </div>
+                                                        @endif
                                                     </td>
 
                                                     <!-- Клиент -->
@@ -339,11 +349,11 @@
                                                     <!-- Дата выполнения -->
                                                     <td>{{ \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') }}</td>
 
-                                                    <!-- Бригада -->
+                                                    <!-- Состав бригады -->
                                                     <td>
                                                         @if($request->brigade_id)
                                                             <button type="button" class="btn btn-sm btn-outline-primary view-brigade-btn mb-1" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="{{ $request->brigade_id }}">
-                                                                <i class="bi bi-people me-1"></i>Бригада
+                                                                <i class="bi bi-people me-1"></i>Состав бригады
                                                             </button>
                                                         @else
                                                             <small class="text-muted d-block mb-1">Не назначена</small>
@@ -525,8 +535,10 @@
                     const requestIdSpan = commentsModal.querySelector('#commentsRequestId');
                     const commentRequestId = commentsModal.querySelector('#commentRequestId');
                     
-                    // Устанавливаем ID заявки в форму
-                    requestIdSpan.textContent = requestId;
+                    // Устанавливаем номер заявки в заголовок
+                    const requestRow = button.closest('tr');
+                    const requestNumber = requestRow.querySelector('td:nth-child(3) div:last-child').textContent.trim();
+                    requestIdSpan.textContent = requestNumber;
                     commentRequestId.value = requestId;
                     
                     // Загружаем комментарии
@@ -596,15 +608,22 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.length > 0) {
-                            let html = '<div class="comments-list">';
+                            let html = `
+                                <div class="comments-list">
+                                    <div class="mb-3">
+                                        <span class="fw-bold">Комментариев: ${data.length}</span>
+                                    </div>
+                            `;
                             
                             data.forEach(comment => {
                                 html += `
                                     <div class="card mb-3">
                                         <div class="card-body p-3">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span class="fw-bold">${comment.author_name || 'Система'}</span>
-                                                <small class="text-muted">${new Date(comment.created_at).toLocaleString()}</small>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-muted">
+                                                    ${new Date(comment.created_at).toLocaleDateString('ru-RU')} 
+                                                    ${new Date(comment.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
                                             </div>
                                             <p class="mb-0">${comment.comment}</p>
                                         </div>
