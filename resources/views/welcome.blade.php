@@ -249,13 +249,11 @@
                                         </style>
                                         <thead class="bg-dark">
                                             <tr>
-                                                <th></th>
-                                                <th></th>
-                                                <th>Номер</th>
-                                                <th>Дата</th>
-                                                <th>Время</th>
+                                                <th style="width: 1rem;"></th>
+                                                <th style="width: 1rem;"></th>
+                                                <th style="width: 10rem;">Дата</th>
                                                 <th>Комментарий</th>
-                                                <th>Адрес/Телефон</th>
+                                                <th style="width: 15rem;">Адрес/Телефон</th>
                                                 <th>Добавлено</th>
                                                 <th>Бригада</th>
                                             </tr>
@@ -291,25 +289,49 @@
 
                                             @foreach ($requests as $request)
                                                 <tr class="align-middle status-row" style="--status-color: {{ $request->status_color }}">
-                                                    <td>{{ $request->id }}</td>
-                                                    <td class="text-center">
+                                                    <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $request->id }}</td>
+                                                    <td class="text-center" style="width: 1rem;">
                                                         <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
                                                     </td>
-                                                    <td style="font-size: 0.85em; font-weight: bold;">{{ $request->number ?? '—' }}</td>
-                                                    
-                                                    <!-- Дата создания -->
-                                                    <td>{{ \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') }}</td>
-                                                    
-                                                    <!-- Время -->
-                                                    <td>{{ $request->execution_time ?? '—' }}</td>
+                                                    <!-- Дата и номер заявки -->
+                                                    <td>
+                                                        <div>{{ \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') }}</div>
+                                                        <div class="text-dark" style="font-size: 0.8rem;">{{ $request->number }}</div>
+                                                    </td>
                                                     
                                                     <!-- Комментарий -->
-                                                    <td>{{ \Illuminate\Support\Str::limit($request->comment, 30) }}</td>
+                                                    <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
+                                                        @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
+                                                            @php
+                                                                $firstComment = $comments_by_request[$request->id][0];
+                                                                $commentText = $firstComment->comment;
+                                                                $author = $firstComment->author_name;
+                                                                $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
+                                                            @endphp
+                                                            <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="{{ $commentText }}">
+                                                                {{ $commentText }}
+                                                            </div>
+                                                        @endif
+                                                        <div class="mt-1">
+                                                            <button type="button" 
+                                                                    class="btn btn-sm btn-outline-secondary view-comments-btn p-1" 
+                                                                    data-bs-toggle="modal" 
+                                                                    data-bs-target="#commentsModal"
+                                                                    data-request-id="{{ $request->id }}">
+                                                                <i class="bi bi-chat-left-text me-1"></i>Комментарии
+                                                                @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
+                                                                    <span class="badge bg-primary rounded-pill ms-1">
+                                                                        {{ count($comments_by_request[$request->id]) }}
+                                                                    </span>
+                                                                @endif
+                                                            </button>
+                                                        </div>
+                                                    </td>
 
                                                     <!-- Клиент -->
-                                                    <td>
-                                                        {{ $request->client_fio ?? 'Неизвестный клиент' }}<br>
-                                                        <small class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif">
+                                                    <td style="width: 10rem; max-width: 10rem; overflow: hidden; text-overflow: ellipsis;">
+                                                        <div class="text-truncate">{{ $request->client_fio ?? 'Неизвестный клиент' }}</div>
+                                                        <small class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
                                                             {{ $request->client_phone ?? 'Нет телефона' }}
                                                         </small>
                                                     </td>
@@ -320,12 +342,14 @@
                                                     <!-- Бригада -->
                                                     <td>
                                                         @if($request->brigade_id)
-                                                            <button type="button" class="btn btn-sm btn-outline-primary view-brigade-btn" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="{{ $request->brigade_id }}">
-                                                                <i class="bi bi-people me-1"></i>Состав бригады
+                                                            <button type="button" class="btn btn-sm btn-outline-primary view-brigade-btn mb-1" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="{{ $request->brigade_id }}">
+                                                                <i class="bi bi-people me-1"></i>Бригада
                                                             </button>
                                                         @else
-                                                            <small class="text-muted">Не назначена</small>
+                                                            <small class="text-muted d-block mb-1">Не назначена</small>
                                                         @endif
+                                                        
+
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -396,6 +420,38 @@
         </div>
     </div>
 
+    <!-- Модальное окно комментариев -->
+    <div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке #<span id="commentsRequestId"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="commentsContainer">
+                    <!-- Список комментариев будет загружен здесь -->
+                    <div class="text-center my-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <form id="addCommentForm" class="w-100">
+                        @csrf
+                        <input type="hidden" name="request_id" id="commentRequestId">
+                        <div class="input-group">
+                            <input type="text" name="comment" class="form-control" placeholder="Напишите комментарий..." required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Отправить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Divider -->
     <hr class="my-0 border-top border-2 border-opacity-10">
 
@@ -455,6 +511,160 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Обработка открытия модального окна комментариев
+        document.addEventListener('DOMContentLoaded', function() {
+            const commentsModal = document.getElementById('commentsModal');
+            
+            if (commentsModal) {
+                commentsModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const requestId = button.getAttribute('data-request-id');
+                    const modalTitle = commentsModal.querySelector('.modal-title');
+                    const requestIdSpan = commentsModal.querySelector('#commentsRequestId');
+                    const commentRequestId = commentsModal.querySelector('#commentRequestId');
+                    
+                    // Устанавливаем ID заявки в форму
+                    requestIdSpan.textContent = requestId;
+                    commentRequestId.value = requestId;
+                    
+                    // Загружаем комментарии
+                    loadComments(requestId);
+                });
+            }
+            
+            // Обработка отправки формы комментария
+            const commentForm = document.getElementById('addCommentForm');
+            if (commentForm) {
+                commentForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    const requestId = formData.get('request_id');
+                    
+                    fetch('{{ route('requests.comment') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams(formData)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Ошибка при отправке комментария');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // Обновляем список комментариев
+                            loadComments(requestId);
+                            // Очищаем поле ввода
+                            commentForm.querySelector('input[name="comment"]').value = '';
+                            
+                            // Показываем уведомление об успехе
+                            showAlert('Комментарий успешно добавлен', 'success');
+                            
+                            // Обновляем счетчик комментариев
+                            updateCommentsBadge(requestId);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        showAlert('Произошла ошибка при добавлении комментария', 'danger');
+                    });
+                });
+            }
+            
+            // Функция загрузки комментариев
+            function loadComments(requestId) {
+                const container = document.getElementById('commentsContainer');
+                
+                // Показываем индикатор загрузки
+                container.innerHTML = `
+                    <div class="text-center my-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Загружаем комментарии
+                fetch(`/api/requests/${requestId}/comments`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            let html = '<div class="comments-list">';
+                            
+                            data.forEach(comment => {
+                                html += `
+                                    <div class="card mb-3">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="fw-bold">${comment.author_name || 'Система'}</span>
+                                                <small class="text-muted">${new Date(comment.created_at).toLocaleString()}</small>
+                                            </div>
+                                            <p class="mb-0">${comment.comment}</p>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            
+                            html += '</div>';
+                            container.innerHTML = html;
+                        } else {
+                            container.innerHTML = '<div class="text-muted text-center py-4">Нет комментариев</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при загрузке комментариев:', error);
+                        container.innerHTML = `
+                            <div class="alert alert-danger">
+                                Не удалось загрузить комментарии. Пожалуйста, попробуйте позже.
+                            </div>
+                        `;
+                    });
+            }
+            
+            // Функция обновления счетчика комментариев
+            function updateCommentsBadge(requestId) {
+                const badge = document.querySelector(`button[data-request-id="${requestId}"] .badge`);
+                if (badge) {
+                    const currentCount = parseInt(badge.textContent.trim()) || 0;
+                    badge.textContent = currentCount + 1;
+                } else {
+                    const button = document.querySelector(`button[data-request-id="${requestId}"]`);
+                    if (button) {
+                        button.innerHTML += `
+                            <span class="badge bg-primary rounded-pill ms-1">1</span>
+                        `;
+                    }
+                }
+            }
+            
+            // Функция показа уведомлений
+            function showAlert(message, type = 'success') {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+                alertDiv.style.zIndex = '1060';
+                alertDiv.role = 'alert';
+                alertDiv.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                
+                document.body.appendChild(alertDiv);
+                
+                // Автоматически скрываем уведомление через 5 секунд
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alertDiv);
+                    bsAlert.close();
+                }, 5000);
+            }
+        });
+    </script>
     <!-- Bootstrap Datepicker JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.ru.min.js"></script>

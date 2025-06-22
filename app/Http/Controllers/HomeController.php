@@ -53,8 +53,35 @@ class HomeController extends Controller
             
         $brigade_members = DB::select('SELECT * FROM brigade_members'); // Оставляем старый запрос для обратной совместимости
         
-        // Запрашиваем comments
-        $comments = DB::select('SELECT * FROM comments'); 
+        // Запрашиваем комментарии с привязкой к заявкам
+        $requestComments = DB::select("
+            SELECT 
+                rc.request_id,
+                c.id as comment_id,
+                c.comment,
+                c.created_at,
+                'Система' as author_name
+            FROM request_comments rc
+            JOIN comments c ON rc.comment_id = c.id
+            ORDER BY rc.request_id, c.created_at DESC
+        ");
+
+        // Группируем комментарии по ID заявки
+        $commentsByRequest = collect($requestComments)
+            ->groupBy('request_id')
+            ->map(function ($comments) {
+                return collect($comments)->map(function ($comment) {
+                    return (object)[
+                        'id' => $comment->comment_id,
+                        'comment' => $comment->comment,
+                        'created_at' => $comment->created_at,
+                        'author_name' => $comment->author_name
+                    ];
+                })->toArray();
+            });
+            
+        // Преобразуем коллекцию в массив для передачи в представление
+        $comments_by_request = $commentsByRequest->toArray();
         
         // Запрашиваем request_addresses
         $request_addresses = DB::select('SELECT * FROM request_addresses'); 
@@ -96,21 +123,76 @@ class HomeController extends Controller
         ];
 
         // Передаём всё в шаблон
-        return view('welcome', compact(
-            'user',
-            'users',
-            'clients',
-            'request_statuses',
-            'requests',
-            'brigades',
-            'employees',
-            'addresses',
-            'brigade_members',
-            'comments',
-            'request_addresses',
-            'requests_types',
-            'brigadeMembersWithDetails',
-            'flags'
-        ));
+        // Собираем все переменные для передачи в представление
+        $viewData = [
+            'user' => $user,
+            'users' => $users,
+            'clients' => $clients,
+            'request_statuses' => $request_statuses,
+            'requests' => $requests,
+            'brigades' => $brigades,
+            'employees' => $employees,
+            'addresses' => $addresses,
+            'brigade_members' => $brigade_members,
+            'comments_by_request' => $comments_by_request,
+            'request_addresses' => $request_addresses,
+            'requests_types' => $requests_types,
+            'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+            'flags' => $flags
+        ];
+        
+        // Логируем данные для отладки
+        // \Log::info('View data:', ['comments_by_request' => $comments_by_request]);
+        
+        return view('welcome', $viewData);
+    }
+
+    /**
+     * Добавление комментария к заявке
+     */
+    public function addComment(Request $request)
+    {
+        $validated = $request->validate([
+            'request_id' => 'required|exists:requests,id',
+            'comment' => 'required|string|max:1000'
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            // Создаем комментарий
+            $commentId = DB::table('comments')->insertGetId([
+                'comment' => $validated['comment'],
+                'created_at' => now(),
+                'user_id' => Auth::id()
+            ]);
+
+            // Привязываем комментарий к заявке
+            DB::table('request_comments')->insert([
+                'request_id' => $validated['request_id'],
+                'comment_id' => $commentId,
+                'created_at' => now()
+            ]);
+        });
+
+        return response()->json(['success' => true]);
+    }
+    
+    /**
+     * Получение комментариев к заявке
+     */
+    public function getComments($requestId)
+    {
+        $comments = DB::select("
+            SELECT 
+                c.id,
+                c.comment,
+                c.created_at,
+                'Система' as author_name
+            FROM request_comments rc
+            JOIN comments c ON rc.comment_id = c.id
+            WHERE rc.request_id = ?
+            ORDER BY c.created_at DESC
+        ", [$requestId]);
+        
+        return response()->json($comments);
     }
 }

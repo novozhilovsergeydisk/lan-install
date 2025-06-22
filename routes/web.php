@@ -27,6 +27,16 @@ Route::post('/register', [RegisterController::class, 'register']);
 // Главная страница
 Route::get('/', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
+// Обработка комментариев
+Route::post('/requests/comment', [HomeController::class, 'addComment'])
+    ->middleware('auth')
+    ->name('requests.comment');
+
+// Получение комментариев к заявке
+Route::get('/api/requests/{request}/comments', [HomeController::class, 'getComments'])
+    ->middleware('auth')
+    ->name('api.requests.comments');
+
 // API Route for getting brigade data
 Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'getBrigadeData'])->name('brigade.data');
 
