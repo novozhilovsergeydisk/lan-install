@@ -152,28 +152,68 @@ class HomeController extends Controller
      */
     public function addComment(Request $request)
     {
-        $validated = $request->validate([
-            'request_id' => 'required|exists:requests,id',
-            'comment' => 'required|string|max:1000'
-        ]);
-
-        DB::transaction(function () use ($validated) {
-            // Создаем комментарий
-            $commentId = DB::table('comments')->insertGetId([
-                'comment' => $validated['comment'],
-                'created_at' => now(),
-                'user_id' => Auth::id()
+        try {
+            // Логируем входящие данные
+            \Log::info('Данные запроса:', $request->all());
+            
+            $validated = $request->validate([
+                'request_id' => 'required|exists:requests,id',
+                'comment' => 'required|string|max:1000'
             ]);
 
+            DB::beginTransaction();
+
+            // Создаем комментарий
+            $commentData = [
+                'comment' => $validated['comment'],
+                'created_at' => now()
+            ];
+            \Log::info('Данные для вставки в comments:', $commentData);
+            
+            $commentId = DB::table('comments')->insertGetId($commentData);
+            \Log::info('Создан комментарий с ID: ' . $commentId);
+
             // Привязываем комментарий к заявке
-            DB::table('request_comments')->insert([
+            $requestCommentData = [
                 'request_id' => $validated['request_id'],
                 'comment_id' => $commentId,
                 'created_at' => now()
-            ]);
-        });
+            ];
+            \Log::info('Данные для вставки в request_comments:', $requestCommentData);
+            
+            DB::table('request_comments')->insert($requestCommentData);
 
-        return response()->json(['success' => true]);
+            DB::commit();
+
+            // Получаем обновленный список комментариев
+            $comments = DB::table('request_comments')
+                ->join('comments', 'request_comments.comment_id', '=', 'comments.id')
+                ->where('request_comments.request_id', $validated['request_id'])
+                ->orderBy('comments.created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'comments' => $comments
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при добавлении комментария:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при добавлении комментария',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
     }
     
     /**
