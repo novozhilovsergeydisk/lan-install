@@ -261,7 +261,7 @@
                                                 <th style="width: 10rem;">Дата</th>
                                                 <th>Комментарий</th>
                                                 <th style="width: 15rem;">Адрес/Телефон</th>
-                                                <th>Добавлено</th>
+                                                <th>Создана</th>
                                                 <th>Бригада</th>
                                             </tr>
                                         </thead>
@@ -316,7 +316,11 @@
                                                                 $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
                                                             @endphp
                                                             <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="{{ $commentText }}">
-                                                                {{ $commentText }}
+                                                                @if(count($comments_by_request[$request->id]) > 1)
+                                                                    {{ Str::limit($commentText, 65, '...') }}
+                                                                @else
+                                                                    {{ $commentText }}
+                                                                @endif
                                                             </div>
                                                         @endif
                                                         @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 1)
@@ -339,8 +343,16 @@
                                                     </td>
 
                                                     <!-- Клиент -->
-                                                    <td style="width: 10rem; max-width: 10rem; overflow: hidden; text-overflow: ellipsis;">
+                                                    <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
                                                         <div class="text-truncate">{{ $request->client_fio ?? 'Неизвестный клиент' }}</div>
+                                                        @if(!empty($request->street))
+                                                            <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" 
+                                                                   title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
+                                                                ул. {{ $request->street }}, д. {{ $request->houses }}
+                                                            </small>
+                                                        @else
+                                                            <small class="text-dark text-truncate d-block">Адрес не указан</small>
+                                                        @endif
                                                         <small class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
                                                             {{ $request->client_phone ?? 'Нет телефона' }}
                                                         </small>
