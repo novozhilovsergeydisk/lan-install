@@ -263,6 +263,7 @@
                                                 <th style="width: 15rem;">Адрес/Телефон</th>
                                                 <th>Создана</th>
                                                 <th>Бригада</th>
+                                                <th style="width: 12rem;">Действия</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -344,7 +345,7 @@
 
                                                     <!-- Клиент -->
                                                     <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-                                                        <div class="text-truncate">{{ $request->client_fio ?? 'Неизвестный клиент' }}</div>
+                                                        <!-- <div class="text-truncate">{{ $request->client_fio ?? 'Неизвестный клиент' }}</div> -->
                                                         @if(!empty($request->street))
                                                             <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" 
                                                                    title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
@@ -372,6 +373,25 @@
                                                         @endif
                                                         
 
+                                                    </td>
+                                                    <!-- Action Buttons -->
+                                                    <td class="text-nowrap">
+                                                        <div class="d-flex flex-column gap-1">
+                                                            @if($request->status_name !== 'выполнена')
+                                                                <button type="button" class="btn btn-sm btn-outline-danger close-request-btn" 
+                                                                        onclick="console.log('Закрыть заявку', {{ $request->id }})">
+                                                                    <i class="bi bi-x-circle me-1"></i>Закрыть заявку
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-primary add-comment-btn"
+                                                                        onclick="console.log('Добавить комментарий', {{ $request->id }})">
+                                                                    <i class="bi bi-chat-left-text me-1"></i>Комментарий
+                                                                </button>
+                                                            @endif
+                                                            <button type="button" class="btn btn-sm btn-outline-success add-photo-btn"
+                                                                    onclick="console.log('Добавить фотоотчет', {{ $request->id }})">
+                                                                <i class="bi bi-camera me-1"></i>Фотоотчет
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             @endforeach
