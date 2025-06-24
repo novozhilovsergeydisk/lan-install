@@ -1,0 +1,45 @@
+/* Стили для темной темы модальных окон */
+[data-bs-theme="dark"] .brigade-details,
+[data-bs-theme="dark"] .brigade-details h4,
+[data-bs-theme="dark"] .brigade-details h5,
+[data-bs-theme="dark"] .brigade-details h6,
+[data-bs-theme="dark"] .brigade-details p,
+[data-bs-theme="dark"] .brigade-details .card,
+[data-bs-theme="dark"] .brigade-details .card-body,
+[data-bs-theme="dark"] .brigade-details .list-group-item {
+    color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .text-muted {
+    color: #adb5bd !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .card {
+    background-color: #2b3035 !important;
+    border-color: #373b3e !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .card-header {
+    background-color: #212529 !important;
+    border-bottom-color: #373b3e !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .list-group-item {
+    background-color: #2b3035 !important;
+    border-color: #373b3e !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .list-group-item.bg-light {
+    background-color: #343a40 !important;
+}
+
+/* Стили для кнопки комментариев */
+.comment-btn-hover:hover,
+.comment-btn-hover:hover i {
+    color: white !important;
+    transition: color 0.2s ease-in-out;
+}
+
+[data-bs-theme="dark"] .brigade-details .card-header h5 {
+    color: #fff !important;
+}

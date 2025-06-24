@@ -72,6 +72,8 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/table-styles.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/dark-theme.css') }}" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">    
     
@@ -96,53 +98,7 @@
             }
         });
     </script>
-    <style>
-        /* Styles for the dark theme in the modal window */
-        [data-bs-theme="dark"] .brigade-details,
-        [data-bs-theme="dark"] .brigade-details h4,
-        [data-bs-theme="dark"] .brigade-details h5,
-        [data-bs-theme="dark"] .brigade-details h6,
-        [data-bs-theme="dark"] .brigade-details p,
-        [data-bs-theme="dark"] .brigade-details .card,
-        [data-bs-theme="dark"] .brigade-details .card-body,
-        [data-bs-theme="dark"] .brigade-details .list-group-item {
-            color: #f8f9fa !important;
-        }
-        
-        [data-bs-theme="dark"] .brigade-details .text-muted {
-            color: #adb5bd !important;
-        }
-        
-        [data-bs-theme="dark"] .brigade-details .card {
-            background-color: #2b3035 !important;
-            border-color: #373b3e !important;
-        }
-        
-        [data-bs-theme="dark"] .brigade-details .card-header {
-            background-color: #212529 !important;
-            border-bottom-color: #373b3e !important;
-        }
-        
-        [data-bs-theme="dark"] .brigade-details .list-group-item {
-            background-color: #2b3035 !important;
-            border-color: #373b3e !important;
-        }
-        
-        [data-bs-theme="dark"] .brigade-details .list-group-item.bg-light {
-            background-color: #343a40 !important;
-        }
-        
-        /* Стили для кнопки комментариев */
-        .comment-btn-hover:hover,
-        .comment-btn-hover:hover i {
-            color: white !important;
-            transition: color 0.2s ease-in-out;
-        }
-        
-        [data-bs-theme="dark"] .brigade-details .card-header h5 {
-            color: #fff !important;
-        }
-    </style>
+    <!-- Стили для темной темы вынесены в отдельный файл dark-theme.css -->
 </head>
 
 <body>
@@ -214,8 +170,6 @@
                         </div>
                     </div>
 
-
-
                     <!-- Tabs -->
                     <ul class="nav nav-tabs" id="mainTabs" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -269,79 +223,8 @@
                             @if ($requests)
                                 <div id="requests-table-container" class="table-responsive mt-4" style="border: 1px solid rgb(110, 113, 117); border-radius: 0.375rem;">
                                     <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
-                                        <style>
-                                            #requests-table-container thead th {
-                                                /* position: sticky;
-                                                top: 0; */
-                                                /* background-color: #f8f9fa; */
-                                                /* z-index: 10; */
-                                            }
-                                            [data-bs-theme="dark"] #requests-table-container thead th {
-                                                background-color: #343a40;
-                                            }
-                                            [data-bs-theme="dark"] thead.bg-dark,
-                                            [data-bs-theme="dark"] thead.bg-dark th,
-                                            [data-bs-theme="dark"] thead.bg-dark * {
-                                                color: #fff !important;
-                                            }
-                                            [data-bs-theme="dark"] thead.bg-dark {
-                                                --bs-table-bg: #343a40;
-                                                --bs-table-color: #fff;
-                                                background-color: #343a40;
-                                            }
 
-                                            /* Стили для чекбоксов */
-                                            .request-checkbox {
-                                                background-color: rgba(255, 255, 255, 0.5) !important;
-                                                border-color: rgba(0, 0, 0, 0.25) !important;
-                                                opacity: 0.7;
-                                                transition: opacity 0.2s ease;
-                                            }
-                                            
-                                            .request-checkbox:checked {
-                                                background-color: #0d6efd !important;
-                                                border-color: #0d6efd !important;
-                                                opacity: 1;
-                                            }
-                                            
-                                            .request-checkbox:not(:checked) {
-                                                background-color: transparent !important;
-                                                border-color: rgba(0, 0, 0, 0.25) !important;
-                                            }
-                                            
-                                            tr:hover .request-checkbox {
-                                                opacity: 1;
-                                            }
-
-                                            /* Цвет текста в таблице */
-                                            .table {
-                                                    --bs-table-color: #000000;
-                                                }
-                                                
-                                                /* Цвет текста при наведении */
-                                                .table-hover tbody tr:hover td {
-                                                    color: #000000;
-                                                }
-                                                /* Исключаем кнопки из стиля наведения */
-                                                .table-hover tbody tr:hover td .btn,
-                                                .table-hover tbody tr:hover td .btn * {
-                                                    /*color: inherit !important;*/
-                                                }
-
-                                                /* Стиль для текста бригадира - всегда черный */
-                                                .brigade-lead-text {
-                                                    /* color: #000000 !important; */
-                                                }
-                                                .table-hover tbody tr:hover {
-                                                    /* --bs-table-color: #000000 !important;
-                                                    color: #000000 !important; */
-                                                }
-
-                                                .status-row {
-                                                    --bs-table-bg: var(--status-color);
-                                                    background-color: var(--status-color);
-                                                }
-                                        </style>
+                                        
                                         <thead class="bg-dark">
                                             <tr>
                                                 <th style="width: 1rem;"></th>
@@ -668,21 +551,6 @@
     </script>
     
     <script>
-        // Обработка закрытия модального окна комментариев
-        document.getElementById('commentsModal').addEventListener('hidden.bs.modal', function (event) {
-            // Сбрасываем фокус при закрытии модального окна
-            document.activeElement.blur();
-            
-            // Если используется Bootstrap 5+
-            var modalBackdrop = document.querySelector('.modal-backdrop');
-            if (modalBackdrop) {
-                modalBackdrop.remove();
-            }
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
-        });
-
         // Обработка открытия модального окна комментариев
         document.addEventListener('DOMContentLoaded', function() {
             const commentsModal = document.getElementById('commentsModal');

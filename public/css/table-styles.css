@@ -1,0 +1,74 @@
+/* Table Container */
+#requests-table-container thead th {
+    /* position: sticky;
+    top: 0; */
+    /* background-color: #f8f9fa; */
+    /* z-index: 10; */
+}
+
+/* Dark Theme Styles */
+[data-bs-theme="dark"] #requests-table-container thead th {
+    background-color: #343a40;
+}
+
+[data-bs-theme="dark"] thead.bg-dark,
+[data-bs-theme="dark"] thead.bg-dark th,
+[data-bs-theme="dark"] thead.bg-dark * {
+    color: #fff !important;
+}
+
+[data-bs-theme="dark"] thead.bg-dark {
+    --bs-table-bg: #343a40;
+    --bs-table-color: #fff;
+    background-color: #343a40;
+}
+
+/* Checkbox Styles */
+.request-checkbox {
+    background-color: rgba(255, 255, 255, 0.5) !important;
+    border-color: rgba(0, 0, 0, 0.25) !important;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.request-checkbox:checked {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    opacity: 1;
+}
+
+.request-checkbox:not(:checked) {
+    background-color: transparent !important;
+    border-color: rgba(0, 0, 0, 0.25) !important;
+}
+
+tr:hover .request-checkbox {
+    opacity: 1;
+}
+
+/* Table Text Colors */
+.table {
+    --bs-table-color: #000000;
+}
+
+/* Hover Effects */
+.table-hover tbody tr:hover td {
+    color: #000000;
+}
+
+/* Exclude buttons from hover effect */
+.table-hover tbody tr:hover td .btn,
+.table-hover tbody tr:hover td .btn * {
+    /*color: inherit !important;*/
+}
+
+/* Brigade Lead Text */
+.brigade-lead-text {
+    /* color: #000000 !important; */
+}
+
+/* Status Row */
+.status-row {
+    --bs-table-bg: var(--status-color);
+    background-color: var(--status-color);
+}
