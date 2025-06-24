@@ -5,6 +5,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления заявками</title>
+    <style>
+        .btn-custom-brown {
+            color: #8B4513 !important;
+            border-color: #8B4513 !important;
+            background-color: transparent !important;
+        }
+        .btn-custom-brown:hover, .btn-custom-brown:hover i {
+            color: white !important;
+            background-color: #8B4513 !important;
+        }
+        .btn-outline-primary:hover, .btn-outline-primary:hover i {
+            color: white !important;
+        }
+        /* Styles for the dark theme in the modal window */
+        [data-bs-theme="dark"] .brigade-details,
+        [data-bs-theme="dark"] .brigade-details h4,
+        [data-bs-theme="dark"] .brigade-details h5,
+        [data-bs-theme="dark"] .brigade-details h6,
+        [data-bs-theme="dark"] .brigade-details p,
+        [data-bs-theme="dark"] .brigade-details .card,
+        [data-bs-theme="dark"] .brigade-details .card-body,
+        [data-bs-theme="dark"] .brigade-details .list-group-item {
+            color: #f8f9fa !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .text-muted {
+            color: #adb5bd !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .card {
+            background-color: #2b3035 !important;
+            border-color: #373b3e !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .card-header {
+            background-color: #212529 !important;
+            border-bottom-color: #373b3e !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .list-group-item {
+            background-color: #2b3035 !important;
+            border-color: #373b3e !important;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .list-group-item.bg-light {
+            background-color: #343a40 !important;
+        }
+        
+        /* Стили для кнопки комментариев */
+        .comment-btn-hover:hover,
+        .comment-btn-hover:hover i {
+            color: white !important;
+            transition: color 0.2s ease-in-out;
+        }
+        
+        [data-bs-theme="dark"] .brigade-details .card-header h5 {
+            color: #fff !important;
+        }
+    </style>
     <!-- Bootstrap 5 CSS -->
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -253,30 +312,20 @@
                                             tr:hover .request-checkbox {
                                                 opacity: 1;
                                             }
-                                        </style>
-                                        <thead class="bg-dark">
-                                            <tr>
-                                                <th style="width: 1rem;"></th>
-                                                <th style="width: 1rem;"></th>
-                                                <th style="width: 10rem;">Дата</th>
-                                                <th>Комментарий</th>
-                                                <th style="width: 15rem;">Адрес/Телефон</th>
-                                                <th>Создана</th>
-                                                <th>Бригада</th>
-                                                <th style="width: 12rem;">Действия</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <style>
-                                                /* Цвет текста в таблице */
-                                                .table {
+
+                                            /* Цвет текста в таблице */
+                                            .table {
                                                     --bs-table-color: #000000;
                                                 }
                                                 
                                                 /* Цвет текста при наведении */
-                                                .table-hover tbody tr:hover td,
-                                                .table-hover tbody tr:hover td * {
-                                                    color: #000000 !important;
+                                                .table-hover tbody tr:hover td {
+                                                    color: #000000;
+                                                }
+                                                /* Исключаем кнопки из стиля наведения */
+                                                .table-hover tbody tr:hover td .btn,
+                                                .table-hover tbody tr:hover td .btn * {
+                                                    /*color: inherit !important;*/
                                                 }
 
                                                 /* Стиль для текста бригадира - всегда черный */
@@ -292,12 +341,28 @@
                                                     --bs-table-bg: var(--status-color);
                                                     background-color: var(--status-color);
                                                 }
-
+                                        </style>
+                                        <thead class="bg-dark">
+                                            <tr>
+                                                <th style="width: 1rem;"></th>
+                                                <th style="width: 1rem;"></th>
+                                                <th style="width: 10rem;">Дата</th>
+                                                <th>Комментарий</th>
+                                                <th style="width: 15rem;">Адрес/Телефон</th>
+                                                <th>Оператор/Создана</th>
+                                                <th>Бригада</th>
+                                                <th style="width: 12rem;">Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <style>
+                                                
                                             </style>
 
                                             @foreach ($requests as $request)
                                                 <tr class="align-middle status-row" style="--status-color: {{ $request->status_color }}">
                                                     <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $request->id }}</td>
+                                                    
                                                     <td class="text-center" style="width: 1rem;">
                                                         <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
                                                     </td>
@@ -360,30 +425,48 @@
                                                     </td>
 
                                                     <!-- Дата выполнения -->
-                                                    <td>{{ \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') }}</td>
+                                                    <td>
+                                                        <span class="brigade-lead-text">{{ $request->operator_name }}</span><br>
+                                                        <span class="brigade-lead-text">{{ \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') }}</span>
+                                                    </td>
 
                                                     <!-- Состав бригады -->
                                                     <td>
                                                         @if($request->brigade_id)
-                                                            <button type="button" class="btn btn-sm btn-outline-primary view-brigade-btn mb-1" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="{{ $request->brigade_id }}">
-                                                                <i class="bi bi-people me-1"></i>Состав бригады
-                                                            </button>
+                                                            @php
+                                                                $brigadeMembers = collect($brigadeMembersWithDetails)
+                                                                    ->where('brigade_id', $request->brigade_id);
+                                                            @endphp
+                                                            
+                                                            @if($brigadeMembers->isNotEmpty())
+                                                                <div class="mb-2" style="font-size: 0.75rem; line-height: 1.2;">
+                                                                    @foreach($brigadeMembers as $member)
+                                                                        <div>
+                                                                            {{ $member->employee_name }}
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            @endif
+                                                            
+                                                            <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn" style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="{{ $request->brigade_id }}">
+                                                                подробнее
+                                                            </a>
                                                         @else
                                                             <small class="text-muted d-block mb-1">Не назначена</small>
                                                         @endif
-                                                        
-
                                                     </td>
                                                     <!-- Action Buttons -->
                                                     <td class="text-nowrap">
                                                         <div class="d-flex flex-column gap-1">
                                                             @if($request->status_name !== 'выполнена')
-                                                                <button type="button" class="btn btn-sm btn-outline-danger close-request-btn" 
-                                                                        onclick="console.log('Закрыть заявку', {{ $request->id }})">
+                                                                <button type="button" 
+                                                                        class="btn btn-sm btn-custom-brown p-1"
+                                                                        onclick="console.log('Закрыть заявку', {{ $request->id }}); return false;">
                                                                     <i class="bi bi-x-circle me-1"></i>Закрыть заявку
                                                                 </button>
-                                                                <button type="button" class="btn btn-sm btn-outline-primary add-comment-btn"
-                                                                        onclick="console.log('Добавить комментарий', {{ $request->id }})">
+                                                                <button type="button" 
+                                                                        class="btn btn-sm btn-outline-primary p-1"
+                                                                        onclick="console.log('Добавить комментарий', {{ $request->id }}); return false;">
                                                                     <i class="bi bi-chat-left-text me-1"></i>Комментарий
                                                                 </button>
                                                             @endif
@@ -403,6 +486,7 @@
                             @endif
 
                         </div>
+
                         <div class="tab-pane fade" id="teams" role="tabpanel">
                             <h4>Бригады</h4>
                             <p>В этом разделе отображается информация о бригадах. Вы можете просматривать состав бригад,
@@ -411,6 +495,7 @@
                             <p>Используйте этот раздел для назначения заявок на бригады и контроля за выполнением работ.
                                 Вы можете фильтровать бригады по специализации или текущему статусу.</p>
                         </div>
+
                         <div class="tab-pane fade" id="addresses" role="tabpanel">
                             <h4>Адреса</h4>
                             <p>Справочник адресов позволяет вести учет всех объектов, с которыми вы работаете. Для
@@ -419,6 +504,7 @@
                             <p>Добавляйте новые адреса вручную или импортируйте их из файла. Система автоматически
                                 проверяет дубликаты и предлагает объединить похожие записи.</p>
                         </div>
+
                         <div class="tab-pane fade" id="users" role="tabpanel">
                             <h4>Пользователи</h4>
                             <p>Управление пользователями системы. В этом разделе вы можете создавать новые учетные
@@ -442,6 +528,7 @@
                             @endif
 
                         </div>
+
                         <div class="tab-pane fade" id="reports" role="tabpanel">
                             <h4>Отчеты</h4>
                             <p>В этом разделе доступны различные отчеты по деятельности компании. Вы можете
@@ -450,6 +537,7 @@
                                 время. Доступны шаблоны отчетов для различных подразделений компании.</p>
                         </div>
                     </div>
+
                     <div class="card mt-4">
                         <div class="card-body">
                             <h5 class="card-title">Выберите дату в календаре</h5>

@@ -102,6 +102,7 @@ class HomeController extends Controller
                 rs.color AS status_color,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
+                op.fio AS operator_name,
                 addr.street,
                 addr.houses,
                 addr.district,
@@ -111,6 +112,7 @@ class HomeController extends Controller
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
             LEFT JOIN brigades b ON r.brigade_id = b.id
             LEFT JOIN employees e ON b.leader_id = e.id
+            LEFT JOIN employees op ON r.operator_id = op.id
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
             ORDER BY r.request_date DESC
