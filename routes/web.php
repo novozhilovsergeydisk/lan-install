@@ -43,7 +43,25 @@ Route::get('/api/requests/{request}/comments', [HomeController::class, 'getComme
 // API Route for getting brigade data
 Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'getBrigadeData'])->name('brigade.data');
 
-/*Route::get('/', function () {
-    return view('welcome');
-})->middleware('auth');*/
+// API Routes for request management
+Route::prefix('api')->middleware('auth')->group(function () {
+    // Get request types
+    Route::get('/request-types', [HomeController::class, 'getRequestTypes'])->name('api.request-types');
+    
+    // Get request statuses
+    Route::get('/request-statuses', [HomeController::class, 'getRequestStatuses'])->name('api.request-statuses');
+    
+    // Get brigades
+    Route::get('/brigades', [HomeController::class, 'getBrigades'])->name('api.brigades');
+    
+    // Get operators
+    Route::get('/operators', [HomeController::class, 'getOperators'])->name('api.operators');
+    
+    // Get cities
+    Route::get('/cities', [HomeController::class, 'getCities'])->name('api.cities');
+    
+    // Create new request
+    Route::post('/requests', [HomeController::class, 'storeRequest'])->name('api.requests.store');
+});
+
 

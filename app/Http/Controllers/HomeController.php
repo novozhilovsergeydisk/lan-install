@@ -288,4 +288,238 @@ class HomeController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get list of request types
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRequestTypes()
+    {
+        try {
+            $types = DB::select('SELECT id, name, color FROM request_types ORDER BY name');
+            return response()->json($types);
+        } catch (\Exception $e) {
+            \Log::error('Error getting request types: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении типов заявок',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get list of request statuses
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRequestStatuses()
+    {
+        try {
+            $statuses = DB::select('SELECT id, name, color FROM request_statuses ORDER BY name');
+            return response()->json($statuses);
+        } catch (\Exception $e) {
+            \Log::error('Error getting request statuses: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении статусов заявок',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get list of brigades
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getBrigades()
+    {
+        try {
+            $brigades = DB::select('SELECT id, name FROM brigades ORDER BY name');
+            return response()->json($brigades);
+        } catch (\Exception $e) {
+            \Log::error('Error getting brigades: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении списка бригад',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get list of operators
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getOperators()
+    {
+        try {
+            $operators = DB::select('SELECT id, fio FROM employees WHERE position_id = 1 ORDER BY fio');
+            return response()->json($operators);
+        } catch (\Exception $e) {
+            \Log::error('Error getting operators: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении списка операторов',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get list of cities
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCities()
+    {
+        try {
+            $cities = DB::select('SELECT id, name FROM cities ORDER BY name');
+            return response()->json($cities);
+        } catch (\Exception $e) {
+            \Log::error('Error getting cities: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении списка городов',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Store a new request
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function storeRequest(Request $request)
+    {
+        DB::beginTransaction();
+        
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'client.fio' => 'required|string|max:255',
+                'client.phone' => 'required|string|max:20',
+                'request.request_type_id' => 'required|exists:request_types,id',
+                'request.status_id' => 'required|exists:request_statuses,id',
+                'request.comment' => 'nullable|string',
+                'request.execution_date' => 'required|date',
+                'request.execution_time' => 'nullable|date_format:H:i',
+                'request.brigade_id' => 'required|exists:brigades,id',
+                'request.operator_id' => 'required|exists:employees,id',
+                'addresses' => 'required|array|min:1',
+                'addresses.*.city_id' => 'required|exists:cities,id',
+                'addresses.*.street' => 'required|string|max:255',
+                'addresses.*.comment' => 'nullable|string'
+            ]);
+            
+            // 1. Create or find client
+            $client = DB::table('clients')
+                ->where('phone', $validated['client']['phone'])
+                ->first();
+                
+            if (!$client) {
+                $clientId = DB::table('clients')->insertGetId([
+                    'fio' => $validated['client']['fio'],
+                    'phone' => $validated['client']['phone'],
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            } else {
+                $clientId = $client->id;
+                // Update client name if it has changed
+                if ($client->fio !== $validated['client']['fio']) {
+                    DB::table('clients')
+                        ->where('id', $clientId)
+                        ->update([
+                            'fio' => $validated['client']['fio'],
+                            'updated_at' => now()
+                        ]);
+                }
+            }
+            
+            // 2. Create request
+            $requestData = [
+                'number' => 'REQ-' . time(),
+                'client_id' => $clientId,
+                'request_type_id' => $validated['request']['request_type_id'],
+                'status_id' => $validated['request']['status_id'],
+                'comment' => $validated['request']['comment'] ?? null,
+                'execution_date' => $validated['request']['execution_date'],
+                'execution_time' => $validated['request']['execution_time'] ?? null,
+                'brigade_id' => $validated['request']['brigade_id'],
+                'operator_id' => $validated['request']['operator_id'],
+                'request_date' => now(),
+                'created_at' => now(),
+                'updated_at' => now()
+            ];
+            
+            $requestId = DB::table('requests')->insertGetId($requestData);
+            
+            // 3. Process addresses
+            foreach ($validated['addresses'] as $address) {
+                // Find or create address
+                $addressId = DB::table('addresses')->insertGetId([
+                    'city_id' => $address['city_id'],
+                    'street' => $address['street'],
+                    'comment' => $address['comment'] ?? null,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+                
+                // Link address to request
+                DB::table('request_addresses')->insert([
+                    'request_id' => $requestId,
+                    'address_id' => $addressId,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+            
+            // 4. Add system comment
+            $commentId = DB::table('comments')->insertGetId([
+                'comment' => 'Заявка создана',
+                'created_at' => now()
+            ]);
+            
+            DB::table('request_comments')->insert([
+                'request_id' => $requestId,
+                'comment_id' => $commentId,
+                'created_at' => now()
+            ]);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявка успешно создана',
+                'request_id' => $requestId
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error creating request: ' . $e->getMessage());
+            \Log::error('Trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при создании заявки',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
+    }
 }

@@ -200,20 +200,25 @@
                             
                             <!-- Filter Section -->
                             <div class="mb-3">
-                                <div class="d-flex" style="width: fit-content; max-width: 100%;">
-                                    <div id="request-filters" class="d-flex align-items-center" style="height: 2rem; border: 1px solid var(--card-border, #dee2e6); border-radius: 0.25rem 0 0 0.25rem; padding: 0 0.5rem; background-color: var(--card-bg, #ffffff);">
-                                        <label class="me-2 mb-0">Фильтр заявок по:</label>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" id="filter-statuses">
-                                            <label class="form-check-label" for="filter-statuses">статусам</label>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex" style="max-width: 100%;">
+                                        <div id="request-filters" class="d-flex align-items-center" style="height: 2rem; border: 1px solid var(--card-border, #dee2e6); border-radius: 0.25rem 0 0 0.25rem; padding: 0 0.5rem; background-color: var(--card-bg, #ffffff);">
+                                            <label class="me-2 mb-0">Фильтр заявок по:</label>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="filter-statuses">
+                                                <label class="form-check-label" for="filter-statuses">статусам</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" id="filter-teams">
+                                                <label class="form-check-label" for="filter-teams">бригадам</label>
+                                            </div>
                                         </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" id="filter-teams">
-                                            <label class="form-check-label" for="filter-teams">бригадам</label>
-                                        </div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="reset-filters-button" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i>Сброс
+                                        </button>
                                     </div>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="reset-filters-button" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
-                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Сброс
+                                    <button type="button" class="btn btn-primary" id="new-request-button" data-bs-toggle="modal" data-bs-target="#newRequestModal">
+                                        <i class="bi bi-plus-circle me-1"></i>Новая заявка
                                     </button>
                                 </div>
                             </div>
@@ -751,6 +756,426 @@
             </div>
         </div>
     </div>
+
+    <!-- New Request Modal -->
+    <div class="modal fade" id="newRequestModal" tabindex="-1" aria-labelledby="newRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newRequestModalLabel">Создание новой заявки</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newRequestForm">
+                        @csrf
+                        <div class="mb-3">
+                            <h6>Информация о клиенте</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="clientName" class="form-label">ФИО клиента *</label>
+                                    <input type="text" class="form-control" id="clientName" name="client_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="clientPhone" class="form-label">Телефон *</label>
+                                    <input type="tel" class="form-control" id="clientPhone" name="client_phone" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <h6>Детали заявки</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="requestType" class="form-label">Тип заявки *</label>
+                                    <select class="form-select" id="requestType" name="request_type_id" required>
+                                        <option value="" disabled selected>Выберите тип заявки</option>
+                                        <!-- Will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="requestStatus" class="form-label">Статус</label>
+                                    <select class="form-select" id="requestStatus" name="status_id">
+                                        <!-- Will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Комментарий</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <h6>Планирование</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="executionDate" class="form-label">Дата выполнения *</label>
+                                    <input type="date" class="form-control" id="executionDate" name="execution_date" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="executionTime" class="form-label">Время выполнения</label>
+                                    <input type="time" class="form-control" id="executionTime" name="execution_time">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <h6>Назначение</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="brigade" class="form-label">Бригада *</label>
+                                    <select class="form-select" id="brigade" name="brigade_id" required>
+                                        <option value="" disabled selected>Выберите бригаду</option>
+                                        <!-- Will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="operator" class="form-label">Оператор *</label>
+                                    <select class="form-select" id="operator" name="operator_id" required>
+                                        <option value="" disabled selected>Выберите оператора</option>
+                                        <!-- Will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Адреса</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="addAddress">
+                                    <i class="bi bi-plus-circle"></i> Добавить адрес
+                                </button>
+                            </div>
+                            <div id="addressesContainer">
+                                <div class="address-entry mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-md-10">
+                                            <select class="form-select mb-2" name="city_id[]" required>
+                                                <option value="" disabled selected>Выберите город</option>
+                                                <!-- Will be populated by JavaScript -->
+                                            </select>
+                                            <input type="text" class="form-control mb-2" name="street[]" placeholder="Улица" required>
+                                            <input type="text" class="form-control" name="address_comment[]" placeholder="Комментарий к адресу">
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-center">
+                                            <button type="button" class="btn btn-sm btn-outline-danger remove-address" disabled>
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="submitRequest">Создать заявку</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // New Request Form Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const newRequestModal = document.getElementById('newRequestModal');
+        
+        if (newRequestModal) {
+            // Set default execution date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('executionDate').valueAsDate = tomorrow;
+            
+            // Load dynamic data when modal is shown
+            newRequestModal.addEventListener('show.bs.modal', async function() {
+                try {
+                    await Promise.all([
+                        loadRequestTypes(),
+                        loadRequestStatuses(),
+                        loadBrigades(),
+                        loadOperators(),
+                        loadCities()
+                    ]);
+                } catch (error) {
+                    console.error('Error loading form data:', error);
+                    showAlert('Ошибка при загрузке данных формы', 'danger');
+                }
+            });
+            
+            // Handle form submission
+            document.getElementById('submitRequest').addEventListener('click', submitRequestForm);
+            
+            // Handle adding new address fields
+            document.getElementById('addAddress').addEventListener('click', addAddressField);
+            
+            // Handle removing address fields (delegated event)
+            document.getElementById('addressesContainer').addEventListener('click', function(e) {
+                if (e.target.closest('.remove-address') && !e.target.closest('.remove-address').disabled) {
+                    e.target.closest('.address-entry').remove();
+                    updateRemoveButtons();
+                }
+            });
+            
+            // Initialize with one address field
+            updateRemoveButtons();
+        }
+        
+        // Load request types from API
+        async function loadRequestTypes() {
+            try {
+                const response = await fetch('/api/request-types');
+                const types = await response.json();
+                const select = document.getElementById('requestType');
+                
+                types.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type.id;
+                    option.textContent = type.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading request types:', error);
+                throw error;
+            }
+        }
+        
+        // Load request statuses from API
+        async function loadRequestStatuses() {
+            try {
+                const response = await fetch('/api/request-statuses');
+                const statuses = await response.json();
+                const select = document.getElementById('requestStatus');
+                
+                statuses.forEach(status => {
+                    const option = document.createElement('option');
+                    option.value = status.id;
+                    option.textContent = status.name;
+                    // Select 'Новая' status by default if it exists
+                    if (status.name.toLowerCase() === 'новая') {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading request statuses:', error);
+                throw error;
+            }
+        }
+        
+        // Load brigades from API
+        async function loadBrigades() {
+            try {
+                const response = await fetch('/api/brigades');
+                const brigades = await response.json();
+                const select = document.getElementById('brigade');
+                
+                brigades.forEach(brigade => {
+                    const option = document.createElement('option');
+                    option.value = brigade.id;
+                    option.textContent = brigade.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading brigades:', error);
+                throw error;
+            }
+        }
+        
+        // Load operators from API
+        async function loadOperators() {
+            try {
+                const response = await fetch('/api/operators');
+                const operators = await response.json();
+                const select = document.getElementById('operator');
+                
+                operators.forEach(operator => {
+                    const option = document.createElement('option');
+                    option.value = operator.id;
+                    option.textContent = operator.fio;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading operators:', error);
+                throw error;
+            }
+        }
+        
+        // Load cities from API
+        async function loadCities() {
+            try {
+                const response = await fetch('/api/cities');
+                const cities = await response.json();
+                const selects = document.querySelectorAll('select[name="city_id[]"]');
+                
+                selects.forEach(select => {
+                    // Clear existing options except the first one (placeholder)
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+                    
+                    cities.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city.id;
+                        option.textContent = city.name;
+                        select.appendChild(option);
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading cities:', error);
+                throw error;
+            }
+        }
+        
+        // Add new address field
+        function addAddressField() {
+            const container = document.getElementById('addressesContainer');
+            const newAddress = container.querySelector('.address-entry').cloneNode(true);
+            
+            // Clear input values
+            const inputs = newAddress.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.value = '';
+            });
+            
+            // Reset select
+            const select = newAddress.querySelector('select');
+            select.selectedIndex = 0;
+            
+            // Enable remove button
+            const removeBtn = newAddress.querySelector('.remove-address');
+            removeBtn.disabled = false;
+            
+            container.appendChild(newAddress);
+            updateRemoveButtons();
+        }
+        
+        // Update remove buttons state (disable if only one address exists)
+        function updateRemoveButtons() {
+            const addressEntries = document.querySelectorAll('.address-entry');
+            const removeButtons = document.querySelectorAll('.remove-address');
+            
+            if (addressEntries.length <= 1) {
+                removeButtons.forEach(btn => {
+                    btn.disabled = true;
+                });
+            } else {
+                removeButtons.forEach(btn => {
+                    btn.disabled = false;
+                });
+            }
+        }
+        
+        // Handle form submission
+        async function submitRequestForm() {
+            const form = document.getElementById('newRequestForm');
+            const submitBtn = document.getElementById('submitRequest');
+            
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Создание...';
+                
+                const formData = new FormData(form);
+                const data = {};
+                
+                // Convert FormData to object
+                formData.forEach((value, key) => {
+                    if (data[key] !== undefined) {
+                        if (!Array.isArray(data[key])) {
+                            data[key] = [data[key]];
+                        }
+                        data[key].push(value);
+                    } else {
+                        data[key] = value;
+                    }
+                });
+                
+                // Process addresses
+                const addresses = [];
+                const cityIds = Array.isArray(data['city_id[]']) ? data['city_id[]'] : [data['city_id[]']];
+                const streets = Array.isArray(data['street[]']) ? data['street[]'] : [data['street[]']];
+                const addressComments = Array.isArray(data['address_comment[]']) ? data['address_comment[]'] : [data['address_comment[]']];
+                
+                for (let i = 0; i < cityIds.length; i++) {
+                    if (cityIds[i] && streets[i]) {
+                        addresses.push({
+                            city_id: cityIds[i],
+                            street: streets[i],
+                            comment: addressComments[i] || ''
+                        });
+                    }
+                }
+                
+                if (addresses.length === 0) {
+                    throw new Error('Необходимо указать хотя бы один адрес');
+                }
+                
+                // Prepare final data
+                const requestData = {
+                    client: {
+                        fio: data.client_name,
+                        phone: data.client_phone
+                    },
+                    request: {
+                        request_type_id: data.request_type_id,
+                        status_id: data.status_id,
+                        comment: data.comment || '',
+                        execution_date: data.execution_date,
+                        execution_time: data.execution_time || null,
+                        brigade_id: data.brigade_id,
+                        operator_id: data.operator_id
+                    },
+                    addresses: addresses
+                };
+                
+                const response = await fetch('/api/requests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Ошибка при создании заявки');
+                }
+                
+                const result = await response.json();
+                
+                // Show success message
+                showAlert('Заявка успешно создана!', 'success');
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(newRequestModal);
+                modal.hide();
+                
+                // Reset form
+                form.reset();
+                document.getElementById('executionDate').valueAsDate = new Date();
+                
+                // Reload requests if function exists
+                if (typeof loadRequests === 'function') {
+                    loadRequests();
+                }
+                
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                showAlert(error.message || 'Произошла ошибка при создании заявки', 'danger');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Создать заявку';
+            }
+        }
+    });
+    </script>
 </body>
 
 </html>
