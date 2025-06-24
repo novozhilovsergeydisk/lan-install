@@ -346,9 +346,11 @@
                                                                         onclick="closeRequest({{ $request->id }}); return false;">
                                                                     Закрыть заявку
                                                                 </button>
-                                                                <button data-request-id="{{ $request->id }}" type="button" 
-                                                                        class="btn btn-sm btn-outline-primary p-1"
-                                                                        onclick="console.log('Добавить комментарий', {{ $request->id }}); return false;">
+                                                                <button type="button" 
+                                                                        class="btn btn-sm btn-outline-primary p-1 comment-btn"
+                                                                        data-bs-toggle="modal" 
+                                                                        data-bs-target="#commentsModal"
+                                                                        data-request-id="{{ $request->id }}">
                                                                     <i class="bi bi-chat-left-text me-1"></i>Комментарий
                                                                 </button>
                                                             @endif
@@ -677,18 +679,24 @@
             
             // Функция обновления счетчика комментариев
             function updateCommentsBadge(requestId) {
-                const badge = document.querySelector(`button[data-request-id="${requestId}"] .badge`);
-                if (badge) {
-                    const currentCount = parseInt(badge.textContent.trim()) || 0;
-                    badge.textContent = currentCount + 1;
-                } else {
-                    const button = document.querySelector(`button[data-request-id="${requestId}"]`);
-                    if (button) {
-                        button.innerHTML += `
-                            <span class="badge bg-primary rounded-pill ms-1">1</span>
-                        `;
+                // Находим только кнопки "Все комментарии" для этой заявки
+                const viewAllCommentsButtons = document.querySelectorAll(`button.view-comments-btn[data-request-id="${requestId}"]`);
+                
+                viewAllCommentsButtons.forEach(button => {
+                    let badge = button.querySelector('.badge');
+                    
+                    if (badge) {
+                        // Если бейдж уже существует, увеличиваем счетчик
+                        const currentCount = parseInt(badge.textContent.trim()) || 0;
+                        badge.textContent = currentCount + 1;
+                    } else {
+                        // Если бейджа нет, создаем новый
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'badge bg-primary rounded-pill ms-1';
+                        newBadge.textContent = '1';
+                        button.appendChild(newBadge);
                     }
-                }
+                });
             }
             
             // Функция показа уведомлений
