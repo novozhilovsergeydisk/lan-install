@@ -63,7 +63,7 @@ class HomeController extends Controller
                 'Система' as author_name
             FROM request_comments rc
             JOIN comments c ON rc.comment_id = c.id
-            ORDER BY rc.request_id, c.created_at DESC
+            ORDER BY rc.request_id, c.created_at
         ");
 
         // Группируем комментарии по ID заявки
@@ -79,6 +79,8 @@ class HomeController extends Controller
                     ];
                 })->toArray();
             });
+
+            // dd($commentsByRequest);
             
         // Преобразуем коллекцию в массив для передачи в представление
         $comments_by_request = $commentsByRequest->toArray();
@@ -377,10 +379,26 @@ class HomeController extends Controller
     public function getCities()
     {
         try {
+            \Log::info('Получение списка городов из базы данных');
+            
+            // Получаем только необходимые поля
             $cities = DB::select('SELECT id, name FROM cities ORDER BY name');
+            
+            // Преобразуем объекты в массивы для корректной сериализации в JSON
+            $cities = array_map(function($city) {
+                return [
+                    'id' => $city->id,
+                    'name' => $city->name
+                ];
+            }, $cities);
+            
+            \Log::info('Найдено городов: ' . count($cities));
+            \Log::info('Пример данных: ' . json_encode(array_slice($cities, 0, 3), JSON_UNESCAPED_UNICODE));
+            
             return response()->json($cities);
         } catch (\Exception $e) {
-            \Log::error('Error getting cities: ' . $e->getMessage());
+            \Log::error('Ошибка при получении списка городов: ' . $e->getMessage());
+            \Log::error('Трассировка: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении списка городов',

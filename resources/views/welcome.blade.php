@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления заявками</title>
     <style>
+        /* Hide remove button for the first address entry */
+        .address-entry:first-child .remove-address {
+            display: none;
+        }
+        
         .btn-custom-brown {
             color: #8B4513 !important;
             border-color: #8B4513 !important;
@@ -772,11 +777,11 @@
                             <h6>Информация о клиенте</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="clientName" class="form-label">ФИО клиента *</label>
+                                    <label for="clientName" class="form-label">Контактное лицо <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="clientName" name="client_name" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="clientPhone" class="form-label">Телефон *</label>
+                                    <label for="clientPhone" class="form-label">Телефон <span class="text-danger">*</span></label>
                                     <input type="tel" class="form-control" id="clientPhone" name="client_phone" required>
                                 </div>
                             </div>
@@ -786,7 +791,7 @@
                             <h6>Детали заявки</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="requestType" class="form-label">Тип заявки *</label>
+                                    <label for="requestType" class="form-label">Тип заявки <span class="text-danger">*</span></label>
                                     <select class="form-select" id="requestType" name="request_type_id" required>
                                         <option value="" disabled selected>Выберите тип заявки</option>
                                         <!-- Will be populated by JavaScript -->
@@ -802,15 +807,10 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="comment" class="form-label">Комментарий</label>
-                            <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
-                        </div>
-
-                        <div class="mb-3">
                             <h6>Планирование</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="executionDate" class="form-label">Дата выполнения *</label>
+                                    <label for="executionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="executionDate" name="execution_date" required>
                                 </div>
                                 <div class="col-md-6">
@@ -824,14 +824,14 @@
                             <h6>Назначение</h6>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="brigade" class="form-label">Бригада *</label>
+                                    <label for="brigade" class="form-label">Бригада <span class="text-danger">*</span></label>
                                     <select class="form-select" id="brigade" name="brigade_id" required>
                                         <option value="" disabled selected>Выберите бригаду</option>
                                         <!-- Will be populated by JavaScript -->
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="operator" class="form-label">Оператор *</label>
+                                    <label for="operator" class="form-label">Оператор <span class="text-danger">*</span></label>
                                     <select class="form-select" id="operator" name="operator_id" required>
                                         <option value="" disabled selected>Выберите оператора</option>
                                         <!-- Will be populated by JavaScript -->
@@ -851,12 +851,15 @@
                                 <div class="address-entry mb-3">
                                     <div class="row g-2">
                                         <div class="col-md-10">
-                                            <select class="form-select mb-2" name="city_id[]" required>
+                                            <label class="form-label">Город <span class="text-danger">*</span></label>
+                                            <select class="form-select mb-2" id="city_id" name="city_id" required>
                                                 <option value="" disabled selected>Выберите город</option>
                                                 <!-- Will be populated by JavaScript -->
                                             </select>
-                                            <input type="text" class="form-control mb-2" name="street[]" placeholder="Улица" required>
-                                            <input type="text" class="form-control" name="address_comment[]" placeholder="Комментарий к адресу">
+                                            <label class="form-label">Район <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control mb-2" name="address_comment[]" placeholder="Введите район" required>
+                                            <label class="form-label">Улица <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" name="street[]" placeholder="Улица" required>
                                         </div>
                                         <div class="col-md-2 d-flex align-items-center">
                                             <button type="button" class="btn btn-sm btn-outline-danger remove-address" disabled>
@@ -866,6 +869,11 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Комментарий <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
                         </div>
                     </form>
                 </div>
@@ -878,11 +886,11 @@
     </div>
     
     <script>
-    // New Request Form Functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const newRequestModal = document.getElementById('newRequestModal');
+        // New Request Form Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const newRequestModal = document.getElementById('newRequestModal');
         
-        if (newRequestModal) {
+            if (newRequestModal) {
             // Set default execution date to tomorrow
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -929,11 +937,19 @@
                 const types = await response.json();
                 const select = document.getElementById('requestType');
                 
-                types.forEach(type => {
+                // Clear any existing options first
+                select.innerHTML = '';
+                
+                types.forEach((type, index) => {
                     const option = document.createElement('option');
                     option.value = type.id;
                     option.textContent = type.name;
                     select.appendChild(option);
+                    
+                    // Select the first item by default
+                    if (index === 0) {
+                        option.selected = true;
+                    }
                 });
             } catch (error) {
                 console.error('Error loading request types:', error);
@@ -987,15 +1003,27 @@
         async function loadOperators() {
             try {
                 const response = await fetch('/api/operators');
-                const operators = await response.json();
+                let operators = await response.json();
                 const select = document.getElementById('operator');
                 
-                operators.forEach(operator => {
-                    const option = document.createElement('option');
-                    option.value = operator.id;
-                    option.textContent = operator.fio;
-                    select.appendChild(option);
-                });
+                // Очищаем список и добавляем текущего пользователя первым
+                select.innerHTML = `
+                    <option value="{{ auth()->id() }}" selected>{{ $user->name }}</option>
+                    <option value="" disabled>──────────</option>
+                `;
+                
+                // Добавляем остальных операторов
+                operators
+                    .filter(op => op.id != {{ auth()->id() }}) // Исключаем текущего пользователя, если он есть в списке
+                    .sort((a, b) => (a.fio || '').localeCompare(b.fio || ''))
+                    .forEach(operator => {
+                        const option = document.createElement('option');
+                        option.value = operator.id;
+                        option.textContent = operator.fio || `Оператор #${operator.id}`;
+                        select.appendChild(option);
+                    });
+                    
+                console.log('Операторы загружены, выбран:', select.options[select.selectedIndex]?.text);
             } catch (error) {
                 console.error('Error loading operators:', error);
                 throw error;
@@ -1005,26 +1033,87 @@
         // Load cities from API
         async function loadCities() {
             try {
-                const response = await fetch('/api/cities');
-                const cities = await response.json();
-                const selects = document.querySelectorAll('select[name="city_id[]"]');
-                
-                selects.forEach(select => {
-                    // Clear existing options except the first one (placeholder)
-                    while (select.options.length > 1) {
-                        select.remove(1);
+                console.log('Запрос списка городов...');
+                const response = await fetch('/api/cities', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
+                });
+                
+                console.log('Статус ответа:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Ошибка HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const cities = await response.json();
+                console.log('Загружены города:', cities);
+                
+                const selects = document.querySelectorAll('select[name="city_id"]');
+                
+                if (!cities || !Array.isArray(cities)) {
+                    throw new Error('Некорректный формат данных о городах');
+                }
+                
+                if (cities.length === 0) {
+                    console.warn('Список городов пуст');
+                    return;
+                }
+                
+                // Находим Москву в списке городов (регистронезависимый поиск)
+                const moscow = cities.find(city => 
+                    city && 
+                    city.name && 
+                    typeof city.name === 'string' && 
+                    city.name.toLowerCase().includes('москва')
+                );
+                
+                console.log('Найден город Москва:', moscow);
+                
+                console.log('Найдено выпадающих списков городов:', selects.length);
+                
+                selects.forEach((select, index) => {
+                    console.log(`Обработка выпадающего списка #${index + 1}`, select);
                     
+                    // Очищаем существующие опции, оставляя только плейсхолдер
+                    select.innerHTML = '<option value="">Выберите город</option>';
+                    
+                    // Добавляем все города в выпадающий список
                     cities.forEach(city => {
+                        if (!city || !city.id || !city.name) return;
+                        
                         const option = document.createElement('option');
                         option.value = city.id;
                         option.textContent = city.name;
+                        
+                        // Выбираем Москву по умолчанию, если она есть
+                        if (moscow && city.id == moscow.id) {
+                            option.selected = true;
+                            console.log(`Выбран город по умолчанию для списка #${index + 1}:`, city.name);
+                        }
+                        
                         select.appendChild(option);
                     });
+                    
+                    // Проверяем, что опции добавились
+                    console.log(`Добавлено городов в список #${index + 1}:`, select.options.length - 1);
                 });
+                
+                console.log('Города успешно загружены в выпадающие списки');
+                
             } catch (error) {
-                console.error('Error loading cities:', error);
-                throw error;
+                console.error('Ошибка при загрузке городов:', error);
+                // Показываем сообщение об ошибке пользователю
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger mt-2';
+                errorDiv.textContent = 'Не удалось загрузить список городов. Пожалуйста, обновите страницу.';
+                
+                const container = document.querySelector('.address-fields');
+                if (container) {
+                    container.prepend(errorDiv);
+                }
             }
         }
         
