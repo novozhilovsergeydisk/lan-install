@@ -254,4 +254,38 @@ class HomeController extends Controller
         
         return response()->json($comments);
     }
+
+    /**
+     * Close the specified request.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function closeRequest($id)
+    {
+        try {
+            // Update the request status to 'выполнена' (ID 4)
+            $updated = DB::table('requests')
+                ->where('id', $id)
+                ->update(['status_id' => 4]); // 4 is the ID for 'выполнена'
+
+            if ($updated) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Заявка успешно закрыта'
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Не удалось обновить заявку'
+            ], 400);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка сервера: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -396,10 +396,8 @@
                                                                         data-bs-toggle="modal" 
                                                                         data-bs-target="#commentsModal"
                                                                         data-request-id="{{ $request->id }}"
-                                                                        style="position: relative; z-index: 1;"
-                                                                        onmouseover="this.style.setProperty('color', 'white', 'important'); this.querySelector('i').style.setProperty('color', 'white', 'important'); this.style.setProperty('background-color', '#6c757d', 'important'); this.style.setProperty('border-color', '#6c757d', 'important');"
-                                                                        onmouseout="this.style.removeProperty('color'); this.querySelector('i').style.removeProperty('color'); this.style.removeProperty('background-color'); this.style.removeProperty('border-color');">
-                                                                    <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                                                                        style="position: relative; z-index: 1;">
+                                                                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
                                                                     <span class="badge bg-primary rounded-pill ms-1">
                                                                         {{ count($comments_by_request[$request->id]) }}
                                                                     </span>
@@ -455,22 +453,23 @@
                                                             <small class="text-muted d-block mb-1">Не назначена</small>
                                                         @endif
                                                     </td>
+
                                                     <!-- Action Buttons -->
                                                     <td class="text-nowrap">
                                                         <div class="d-flex flex-column gap-1">
                                                             @if($request->status_name !== 'выполнена')
-                                                                <button type="button" 
-                                                                        class="btn btn-sm btn-custom-brown p-1"
-                                                                        onclick="console.log('Закрыть заявку', {{ $request->id }}); return false;">
-                                                                    <i class="bi bi-x-circle me-1"></i>Закрыть заявку
+                                                                <button data-request-id="{{ $request->id }}" type="button" 
+                                                                        class="btn btn-sm btn-custom-brown p-1 close-request-btn"
+                                                                        onclick="closeRequest({{ $request->id }}); return false;">
+                                                                    Закрыть заявку
                                                                 </button>
-                                                                <button type="button" 
+                                                                <button data-request-id="{{ $request->id }}" type="button" 
                                                                         class="btn btn-sm btn-outline-primary p-1"
                                                                         onclick="console.log('Добавить комментарий', {{ $request->id }}); return false;">
                                                                     <i class="bi bi-chat-left-text me-1"></i>Комментарий
                                                                 </button>
                                                             @endif
-                                                            <button type="button" class="btn btn-sm btn-outline-success add-photo-btn"
+                                                            <button data-request-id="{{ $request->id }}" type="button" class="btn btn-sm btn-outline-success add-photo-btn"
                                                                     onclick="console.log('Добавить фотоотчет', {{ $request->id }})">
                                                                 <i class="bi bi-camera me-1"></i>Фотоотчет
                                                             </button>
@@ -641,8 +640,49 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function closeRequest(requestId) {
+            if (confirm('Вы уверены, что хотите закрыть заявку #' + requestId + '?')) {
+                fetch(`/requests/${requestId}/close`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Ошибка при закрытии заявки: ' + (data.message || 'Неизвестная ошибка'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при отправке запроса');
+                });
+            }
+        }
+    </script>
     
     <script>
+        // Обработка закрытия модального окна комментариев
+        document.getElementById('commentsModal').addEventListener('hidden.bs.modal', function (event) {
+            // Сбрасываем фокус при закрытии модального окна
+            document.activeElement.blur();
+            
+            // Если используется Bootstrap 5+
+            var modalBackdrop = document.querySelector('.modal-backdrop');
+            if (modalBackdrop) {
+                modalBackdrop.remove();
+            }
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+
         // Обработка открытия модального окна комментариев
         document.addEventListener('DOMContentLoaded', function() {
             const commentsModal = document.getElementById('commentsModal');

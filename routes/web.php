@@ -27,6 +27,9 @@ Route::post('/register', [RegisterController::class, 'register']);
 // Главная страница
 Route::get('/', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
+// Close request
+Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth');
+
 // Обработка комментариев
 Route::post('/requests/comment', [HomeController::class, 'addComment'])
     ->middleware('auth')
