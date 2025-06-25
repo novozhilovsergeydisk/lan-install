@@ -710,25 +710,29 @@
             }
             
             // Функция показа уведомлений
-            function showAlert(message, type = 'success') {
-                const alertDiv = document.createElement('div');
-                alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
-                alertDiv.style.zIndex = '1060';
-                alertDiv.role = 'alert';
-                alertDiv.innerHTML = `
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                `;
-                
-                document.body.appendChild(alertDiv);
-                
-                // Автоматически скрываем уведомление через 5 секунд
-                setTimeout(() => {
-                    const bsAlert = new bootstrap.Alert(alertDiv);
-                    bsAlert.close();
-                }, 5000);
-            }
+            
+            
         });
+    
+    // Глобальная функция показа уведомлений
+    function showAlert(message, type = 'success') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+        alertDiv.style.zIndex = '1060';
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        // Автоматически скрываем уведомление через 5 секунд
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 5000);
+    }
     </script>
     <!-- Bootstrap Datepicker JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
@@ -852,14 +856,16 @@
                                     <div class="row g-2">
                                         <div class="col-md-10">
                                             <label class="form-label">Город <span class="text-danger">*</span></label>
-                                            <select class="form-select mb-2" id="city_id" name="city_id" required>
+                                            <select class="form-select mb-2" id="city_id" name="city_id[]" required>
                                                 <option value="" disabled selected>Выберите город</option>
                                                 <!-- Will be populated by JavaScript -->
                                             </select>
                                             <label class="form-label">Район <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control mb-2" name="address_comment[]" placeholder="Введите район" required>
                                             <label class="form-label">Улица <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" name="street[]" placeholder="Улица" required>
+                                            <input type="text" class="form-control mb-2" name="street[]" placeholder="Улица" required>
+                                            <label class="form-label">Дом <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" name="house[]" placeholder="Дом" required>
                                         </div>
                                         <div class="col-md-2 d-flex align-items-center">
                                             <button type="button" class="btn btn-sm btn-outline-danger remove-address" disabled>
@@ -1051,7 +1057,7 @@
                 const cities = await response.json();
                 console.log('Загружены города:', cities);
                 
-                const selects = document.querySelectorAll('select[name="city_id"]');
+                const selects = document.querySelectorAll('select[name="city_id[]"]');
                 
                 if (!cities || !Array.isArray(cities)) {
                     throw new Error('Некорректный формат данных о городах');
@@ -1120,24 +1126,49 @@
         // Add new address field
         function addAddressField() {
             const container = document.getElementById('addressesContainer');
-            const newAddress = container.querySelector('.address-entry').cloneNode(true);
+            const template = container.querySelector('.address-entry');
+            const newAddress = template.cloneNode(true);
             
-            // Clear input values
-            const inputs = newAddress.querySelectorAll('input');
+            // Generate unique ID for the new address entry
+            const newId = 'address-' + Date.now();
+            
+            // Update IDs and names of all form elements
+            const inputs = newAddress.querySelectorAll('input, select, textarea');
             inputs.forEach(input => {
+                // Clear values
                 input.value = '';
+                
+                // Update IDs and names for array fields
+                if (input.name && input.name.endsWith('[]')) {
+                    const baseName = input.name.slice(0, -2);
+                    input.name = `${baseName}[]`;
+                }
+                
+                // Reset checkboxes and radios
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    input.checked = false;
+                }
+                
+                // Reset select
+                if (input.tagName === 'SELECT') {
+                    input.selectedIndex = 0;
+                }
             });
-            
-            // Reset select
-            const select = newAddress.querySelector('select');
-            select.selectedIndex = 0;
             
             // Enable remove button
             const removeBtn = newAddress.querySelector('.remove-address');
-            removeBtn.disabled = false;
+            if (removeBtn) {
+                removeBtn.disabled = false;
+            }
             
+            // Add new address to the container
             container.appendChild(newAddress);
             updateRemoveButtons();
+            
+            // Re-initialize any necessary plugins or event listeners
+            if (typeof $ !== 'undefined') {
+                $(newAddress).find('select').select2();
+            }
         }
         
         // Update remove buttons state (disable if only one address exists)
@@ -1189,24 +1220,19 @@
                 const addresses = [];
                 const cityIds = Array.isArray(data['city_id[]']) ? data['city_id[]'] : [data['city_id[]']];
                 const streets = Array.isArray(data['street[]']) ? data['street[]'] : [data['street[]']];
+                const houses = Array.isArray(data['house[]']) ? data['house[]'] : [data['house[]']];
                 const addressComments = Array.isArray(data['address_comment[]']) ? data['address_comment[]'] : [data['address_comment[]']];
                 
-                for (let i = 0; i < cityIds.length; i++) {
-                    if (cityIds[i] && streets[i]) {
-                        addresses.push({
-                            city_id: cityIds[i],
-                            street: streets[i],
-                            comment: addressComments[i] || ''
-                        });
-                    }
-                }
+                // Debug information
+                console.log('cityIds:', cityIds);
+                console.log('streets:', streets);
+                console.log('houses:', houses);
+                console.log('addressComments:', addressComments);
+                console.log('FormData:', data);
                 
-                if (addresses.length === 0) {
-                    throw new Error('Необходимо указать хотя бы один адрес');
-                }
-                
-                // Prepare final data
+                // Создаем объект с данными для отправки
                 const requestData = {
+                    _token: data._token,
                     client: {
                         fio: data.client_name,
                         phone: data.client_phone
@@ -1214,30 +1240,57 @@
                     request: {
                         request_type_id: data.request_type_id,
                         status_id: data.status_id,
-                        comment: data.comment || '',
-                        execution_date: data.execution_date,
+                        comment: data.description || '',
+                        execution_date: data.execution_date || null,
                         execution_time: data.execution_time || null,
-                        brigade_id: data.brigade_id,
-                        operator_id: data.operator_id
+                        brigade_id: data.brigade_id || null,
+                        operator_id: data.operator_id || null
                     },
-                    addresses: addresses
+                    addresses: []
                 };
+                
+                // Добавляем адреса
+                for (let i = 0; i < cityIds.length; i++) {
+                    if (cityIds[i] && streets[i] && houses[i]) {
+                        requestData.addresses.push({
+                            city_id: cityIds[i],
+                            street: streets[i],
+                            house: houses[i],
+                            comment: addressComments[i] || ''
+                        });
+                    }
+                }
+                
+                console.log('Request data to be sent:', JSON.stringify(requestData, null, 2));
+                
+                if (requestData.addresses.length === 0) {
+                    throw new Error('Необходимо указать хотя бы один адрес');
+                }
+                
+                console.log('Sending request to /api/requests with data:', JSON.stringify(requestData));
                 
                 const response = await fetch('/api/requests', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': requestData._token
                     },
                     body: JSON.stringify(requestData)
                 });
                 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Ошибка при создании заявки');
-                }
+                const responseData = await response.json();
+                console.log('Server response:', response.status, responseData);
                 
-                const result = await response.json();
+                if (!response.ok) {
+                    if (response.status === 422) {
+                        // Обработка ошибок валидации
+                        const errors = responseData.errors || {};
+                        const errorMessages = Object.values(errors).flat().join('\n');
+                        throw new Error(`Ошибка валидации: ${errorMessages}`);
+                    }
+                    throw new Error(responseData.message || 'Ошибка при создании заявки');
+                }
                 
                 // Show success message
                 showAlert('Заявка успешно создана!', 'success');
@@ -1254,6 +1307,8 @@
                 if (typeof loadRequests === 'function') {
                     loadRequests();
                 }
+                
+                return responseData;
                 
             } catch (error) {
                 console.error('Error submitting request:', error);
