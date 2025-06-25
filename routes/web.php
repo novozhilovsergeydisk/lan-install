@@ -62,6 +62,10 @@ Route::prefix('api')->middleware('auth')->group(function () {
     
     // Create new request
     Route::post('/requests', [HomeController::class, 'storeRequest'])->name('api.requests.store');
+    
+    // Get comments count for request
+    Route::get('/requests/{request}/comments/count', [HomeController::class, 'getCommentsCount'])
+        ->name('api.requests.comments.count');
 });
 
 

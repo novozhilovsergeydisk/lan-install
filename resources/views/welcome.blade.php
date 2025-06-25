@@ -20,6 +20,25 @@
             color: white !important;
             background-color: #8B4513 !important;
         }
+        
+        /* Стили для бейджиков на кнопках */
+        .btn .badge {
+            position: relative;
+            top: -1px;
+            margin-left: 3px;
+            z-index: 1;
+        }
+        
+        /* Исправляем позиционирование бейджиков для кнопок с иконками */
+        .btn i + .badge {
+            margin-left: 5px;
+        }
+        
+        /* Убедимся, что бейджи видны поверх кнопок */
+        .btn {
+            position: relative;
+            overflow: visible;
+        }
         .btn-outline-primary:hover, .btn-outline-primary:hover i {
             color: white !important;
         }
@@ -253,7 +272,7 @@
                                             </style>
 
                                             @foreach ($requests as $request)
-                                                <tr class="align-middle status-row" style="--status-color: {{ $request->status_color }}">
+                                                <tr class="align-middle status-row" style="--status-color: {{ $request->status_color }}" data-request-id="{{ $request->id }}">
                                                     <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $request->id }}</td>
                                                     
                                                     <td class="text-center" style="width: 1rem;">
@@ -611,16 +630,19 @@
                     })
                     .then(data => {
                         if (data.success) {
-                            // Обновляем список комментариев
-                            loadComments(requestId);
                             // Очищаем поле ввода
                             commentForm.querySelector('input[name="comment"]').value = '';
                             
                             // Показываем уведомление об успехе
                             showAlert('Комментарий успешно добавлен', 'success');
                             
-                            // Обновляем счетчик комментариев
-                            updateCommentsBadge(requestId);
+                            // Обновляем список комментариев
+                            loadComments(requestId).then(() => {
+                                // Даем время на обновление DOM
+                                setTimeout(() => {
+                                    updateCommentsBadge(requestId);
+                                }, 100);
+                            });
                         }
                     })
                     .catch(error => {
@@ -632,81 +654,129 @@
             
             // Функция загрузки комментариев
             function loadComments(requestId) {
-                const container = document.getElementById('commentsContainer');
-                
-                // Показываем индикатор загрузки
-                container.innerHTML = `
-                    <div class="text-center my-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Загрузка...</span>
-                        </div>
-                    </div>
-                `;
-                
-                // Загружаем комментарии
-                fetch(`/api/requests/${requestId}/comments`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.length > 0) {
-                            let html = `
-                                <div class="comments-list">
-                                    <div class="mb-3">
-                                        <span class="fw-bold">Комментариев: ${data.length}</span>
-                                    </div>
-                            `;
+                return new Promise((resolve, reject) => {
+                    const container = document.getElementById('commentsContainer');
+                    
+                    // Показываем индикатор загрузки
+                    container.innerHTML = `
+                        <div class="text-center my-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                            <p class="mt-2">Загрузка комментариев...</p>
+                        </div>`;
+                    
+                    fetch(`/api/requests/${requestId}/comments`)
+                        .then(response => response.json())
+                        .then(comments => {
+                            if (comments.length === 0) {
+                                container.innerHTML = '<div class="text-muted text-center py-4">Нет комментариев</div>';
+                                resolve(comments);
+                                return;
+                            }
                             
-                            data.forEach(comment => {
+                            let html = '<div class="list-group list-group-flush">';
+                            
+                            comments.forEach(comment => {
+                                const date = new Date(comment.created_at);
+                                const formattedDate = date.toLocaleString('ru-RU', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                                
                                 html += `
-                                    <div class="card mb-3">
-                                        <div class="card-body p-3">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="text-muted">
-                                                    ${new Date(comment.created_at).toLocaleDateString('ru-RU')} 
-                                                    ${new Date(comment.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="me-3">
+                                                <p class="mb-1">${comment.comment}</p>
+                                                <small class="text-muted">${formattedDate}</small>
                                             </div>
-                                            <p class="mb-0">${comment.comment}</p>
                                         </div>
-                                    </div>
-                                `;
+                                    </div>`;
                             });
                             
                             html += '</div>';
                             container.innerHTML = html;
-                        } else {
-                            container.innerHTML = '<div class="text-muted text-center py-4">Нет комментариев</div>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Ошибка при загрузке комментариев:', error);
-                        container.innerHTML = `
-                            <div class="alert alert-danger">
-                                Не удалось загрузить комментарии. Пожалуйста, попробуйте позже.
-                            </div>
-                        `;
-                    });
+                            resolve(comments);
+                        })
+                        .catch(error => {
+                            console.error('Ошибка при загрузке комментариев:', error);
+                            container.innerHTML = `
+                                <div class="alert alert-danger">
+                                    Произошла ошибка при загрузке комментариев. Пожалуйста, обновите страницу.
+                                </div>`;
+                            reject(error);
+                        });
+                });
             }
             
             // Функция обновления счетчика комментариев
             function updateCommentsBadge(requestId) {
-                // Находим только кнопки "Все комментарии" для этой заявки
-                const viewAllCommentsButtons = document.querySelectorAll(`button.view-comments-btn[data-request-id="${requestId}"]`);
+                console.log('Updating badge for request ID:', requestId);
                 
-                viewAllCommentsButtons.forEach(button => {
-                    let badge = button.querySelector('.badge');
-                    
-                    if (badge) {
-                        // Если бейдж уже существует, увеличиваем счетчик
-                        const currentCount = parseInt(badge.textContent.trim()) || 0;
-                        badge.textContent = currentCount + 1;
-                    } else {
-                        // Если бейджа нет, создаем новый
-                        const newBadge = document.createElement('span');
-                        newBadge.className = 'badge bg-primary rounded-pill ms-1';
-                        newBadge.textContent = '1';
-                        button.appendChild(newBadge);
-                    }
-                });
+                // Запрашиваем актуальное количество комментариев
+                fetch(`/api/requests/${requestId}/comments/count`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Received comments count data:', data);
+                        const commentCount = data.count || 0;
+                        console.log(`Found ${commentCount} comments for request ${requestId}`);
+                        
+                        // Находим строку таблицы с нужной заявкой
+                        const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`) || 
+                                         document.querySelector(`tr:has(button[data-request-id="${requestId}"])`);
+                        
+                        if (!requestRow) {
+                            console.error('Не удалось найти строку с заявкой ID:', requestId);
+                            return;
+                        }
+                        
+                        // Обновляем бейджи только на кнопках комментариев
+                        const commentButtons = requestRow.querySelectorAll(`
+                            button.comment-btn[data-request-id="${requestId}"],
+                            button.view-comments-btn[data-request-id="${requestId}"]
+                        `);
+                        
+                        console.log(`Found ${commentButtons.length} comment buttons to update in row`);
+                        
+                        commentButtons.forEach(button => {
+                            console.log('Updating comment button:', button);
+                            
+                            // Удаляем старый бейдж, если есть
+                            const oldBadge = button.querySelector('.badge');
+                            if (oldBadge) {
+                                oldBadge.remove();
+                            }
+                            
+                            // Добавляем новый бейдж, если есть комментарии
+                            if (commentCount > 0) {
+                                const newBadge = document.createElement('span');
+                                newBadge.className = 'badge bg-primary rounded-pill ms-1';
+                                newBadge.textContent = commentCount;
+                                
+                                // Вставляем бейдж после иконки, если она есть
+                                const icon = button.querySelector('i');
+                                if (icon && !icon.nextElementSibling?.classList?.contains('badge')) {
+                                    icon.insertAdjacentElement('afterend', newBadge);
+                                } else {
+                                    button.appendChild(newBadge);
+                                }
+                                
+                                console.log('Added new badge:', newBadge);
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при получении количества комментариев:', error);
+                    });
             }
             
             // Функция показа уведомлений
@@ -1240,7 +1310,7 @@
                     request: {
                         request_type_id: data.request_type_id,
                         status_id: data.status_id,
-                        comment: data.description || '',
+                        comment: data.comment || '',
                         execution_date: data.execution_date || null,
                         execution_time: data.execution_time || null,
                         brigade_id: data.brigade_id || null,
@@ -1292,16 +1362,15 @@
                     throw new Error(responseData.message || 'Ошибка при создании заявки');
                 }
                 
-                // Show success message
+                // Успешное создание заявки
                 showAlert('Заявка успешно создана!', 'success');
                 
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(newRequestModal);
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
                 modal.hide();
                 
-                // Reset form
-                form.reset();
-                document.getElementById('executionDate').valueAsDate = new Date();
+                // Обновляем страницу, чтобы отобразить новую заявку
+                window.location.reload();
                 
                 // Reload requests if function exists
                 if (typeof loadRequests === 'function') {
