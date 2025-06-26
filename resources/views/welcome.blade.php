@@ -636,7 +636,7 @@
                             commentForm.querySelector('input[name="comment"]').value = '';
                             
                             // Показываем уведомление об успехе
-                            showAlert('Комментарий успешно добавлен', 'success');
+                            utils.showAlert('Комментарий успешно добавлен', 'success');
                             
                             // Обновляем список комментариев
                             loadComments(requestId).then(() => {
@@ -649,7 +649,7 @@
                     })
                     .catch(error => {
                         console.error('Ошибка:', error);
-                        showAlert('Произошла ошибка при добавлении комментария', 'danger');
+                        utils.showAlert('Произошла ошибка при добавлении комментария', 'danger');
                     });
                 });
             }
@@ -787,24 +787,24 @@
         });
     
     // Глобальная функция показа уведомлений
-    function showAlert(message, type = 'success') {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
-        alertDiv.style.zIndex = '1060';
-        alertDiv.role = 'alert';
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
+    // function showAlert(message, type = 'success') {
+    //     const alertDiv = document.createElement('div');
+    //     alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    //     alertDiv.style.zIndex = '1060';
+    //     alertDiv.role = 'alert';
+    //     alertDiv.innerHTML = `
+    //         ${message}
+    //         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    //     `;
         
-        document.body.appendChild(alertDiv);
+    //     document.body.appendChild(alertDiv);
         
-        // Автоматически скрываем уведомление через 5 секунд
-        setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alertDiv);
-            bsAlert.close();
-        }, 5000);
-    }
+    //     // Автоматически скрываем уведомление через 5 секунд
+    //     setTimeout(() => {
+    //         const bsAlert = new bootstrap.Alert(alertDiv);
+    //         bsAlert.close();
+    //     }, 5000);
+    // }
     </script>
     <!-- Bootstrap Datepicker JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
@@ -812,6 +812,7 @@
     
     <!-- Custom Application JS -->
     <script src="{{ asset('js/app.js') }}"></script>
+    <script type="module" src="{{ asset('js/utils.js') }}"></script>    
     
     <!-- Event Handlers -->
     <script src="{{ asset('js/handler.js') }}"></script>
@@ -986,7 +987,7 @@
                     ]);
                 } catch (error) {
                     console.error('Error loading form data:', error);
-                    showAlert('Ошибка при загрузке данных формы', 'danger');
+                    utils.showAlert('Ошибка при загрузке данных формы', 'danger');
                 }
             });
             
@@ -1365,7 +1366,7 @@
                 }
                 
                 // Успешное создание заявки
-                showAlert('Заявка успешно создана!', 'success');
+                utils.showAlert('Заявка успешно создана!', 'success');
                 
                 // Закрываем модальное окно
                 const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
@@ -1383,13 +1384,19 @@
                 
             } catch (error) {
                 console.error('Error submitting request:', error);
-                showAlert(error.message || 'Произошла ошибка при создании заявки', 'danger');
+                utils.showAlert(error.message || 'Произошла ошибка при создании заявки', 'danger');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Создать заявку';
             }
         }
     });
+    </script>
+
+    <script type="module">
+        // import { showAlert} from './js/utils.js';
+
+        // utils.showAlert('Заявка создана!', 'success');
     </script>
 </body>
 
