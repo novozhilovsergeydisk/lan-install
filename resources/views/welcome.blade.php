@@ -403,7 +403,54 @@
                         </div>
 
                         <div class="tab-pane fade" id="teams" role="tabpanel">
-                            <h4>Бригады</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="mb-0">Бригады</h4>
+                                <button type="button" class="btn btn-primary" id="createBrigadeBtn">
+                                    <i class="bi bi-plus-circle"></i> Создать бригаду
+                                </button>
+                            </div>
+                            
+                            <!-- Brigades List -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <div id="brigadesList" class="list-group">
+                                        <!-- Brigades will be loaded here -->
+                                        <div class="text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Загрузка...</span>
+                                            </div>
+                                            <p class="mt-2 mb-0">Загрузка списка бригад...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Create/Edit Brigade Modal -->
+                            <div class="modal fade" id="brigadeModal" tabindex="-1" aria-labelledby="brigadeModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="brigadeModalLabel">Новая бригада</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="brigadeForm">
+                                                @csrf
+                                                <div class="mb-3">
+                                                    <label for="brigadeName" class="form-label">Название бригады</label>
+                                                    <input type="text" class="form-control" id="brigadeName" required>
+                                                </div>
+                                                <!-- We'll add more fields here later -->
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                            <button type="button" class="btn btn-primary" id="saveBrigadeBtn">Сохранить</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <p>В этом разделе отображается информация о бригадах. Вы можете просматривать состав бригад,
                                 их загрузку и текущие задачи. Для каждой бригады доступна контактная информация
                                 ответственного лица.</p>
@@ -1398,6 +1445,9 @@
 
         // utils.showAlert('Заявка создана!', 'success');
     </script>
+    
+    <!-- Brigades Script -->
+    <script src="{{ asset('js/brigades.js') }}"></script>
 </body>
 
 </html>
