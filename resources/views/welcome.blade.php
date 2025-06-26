@@ -39,6 +39,8 @@
             position: relative;
             overflow: visible;
         }
+        
+
         .btn-outline-primary:hover, .btn-outline-primary:hover i {
             color: white !important;
         }
@@ -739,9 +741,8 @@
                             return;
                         }
                         
-                        // Обновляем бейджи только на кнопках комментариев
+                        // Обновляем бейдж только на кнопке 'Все комментарии'
                         const commentButtons = requestRow.querySelectorAll(`
-                            button.comment-btn[data-request-id="${requestId}"],
                             button.view-comments-btn[data-request-id="${requestId}"]
                         `);
                         
@@ -750,27 +751,28 @@
                         commentButtons.forEach(button => {
                             console.log('Updating comment button:', button);
                             
-                            // Удаляем старый бейдж, если есть
-                            const oldBadge = button.querySelector('.badge');
-                            if (oldBadge) {
-                                oldBadge.remove();
-                            }
+                            // Находим существующий бейдж или его место для вставки
+                            let badge = button.querySelector('.badge');
                             
-                            // Добавляем новый бейдж, если есть комментарии
                             if (commentCount > 0) {
-                                const newBadge = document.createElement('span');
-                                newBadge.className = 'badge bg-primary rounded-pill ms-1';
-                                newBadge.textContent = commentCount;
-                                
-                                // Вставляем бейдж после иконки, если она есть
-                                const icon = button.querySelector('i');
-                                if (icon && !icon.nextElementSibling?.classList?.contains('badge')) {
-                                    icon.insertAdjacentElement('afterend', newBadge);
-                                } else {
-                                    button.appendChild(newBadge);
+                                if (!badge) {
+                                    // Создаем новый бейдж, если его нет
+                                    badge = document.createElement('span');
+                                    badge.className = 'badge bg-primary rounded-pill ms-1';
+                                    
+                                    // Вставляем бейдж после иконки, если она есть
+                                    const icon = button.querySelector('i');
+                                    if (icon) {
+                                        icon.insertAdjacentElement('afterend', badge);
+                                    } else {
+                                        button.appendChild(badge);
+                                    }
                                 }
-                                
-                                console.log('Added new badge:', newBadge);
+                                // Обновляем только текст бейджа
+                                badge.textContent = commentCount;
+                            } else if (badge) {
+                                // Если комментариев нет, но бейдж есть - удаляем его
+                                badge.remove();
                             }
                         });
                     })
