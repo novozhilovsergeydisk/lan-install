@@ -86,6 +86,11 @@
             transition: color 0.2s ease-in-out;
         }
         
+        /* Скрываем кнопку добавления адреса */
+        #addAddress {
+            display: none !important;
+        }
+        
         [data-bs-theme="dark"] .brigade-details .card-header h5 {
             color: #fff !important;
         }
@@ -377,7 +382,8 @@
                                                                         onclick="closeRequest({{ $request->id }}); return false;">
                                                                     Закрыть заявку
                                                                 </button>
-                                                                <button type="button" 
+                                                                <button type="button"
+                                                                        id="btn-comment" 
                                                                         class="btn btn-sm btn-outline-primary p-1 comment-btn"
                                                                         data-bs-toggle="modal" 
                                                                         data-bs-target="#commentsModal"
@@ -778,6 +784,10 @@
                         console.log('Received comments count data:', data);
                         const commentCount = data.count || 0;
                         console.log(`Found ${commentCount} comments for request ${requestId}`);
+
+                        if (commentCount == 2) {
+                            console.log('Joker:', commentCount);
+                        }
                         
                         // Находим строку таблицы с нужной заявкой
                         const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`) || 

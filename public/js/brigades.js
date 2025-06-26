@@ -34,7 +34,7 @@ function saveBrigade() {
     // This will be implemented later to save the brigade
     const brigadeName = document.getElementById('brigadeName')?.value;
     if (!brigadeName) {
-        alert('Пожалуйста, введите название бригады');
+        utils.showAlert('Пожалуйста, введите название бригады', 'danger');
         return;
     }
     
@@ -45,7 +45,7 @@ function saveBrigade() {
     modal.hide();
     
     // Show success message
-    alert(`Бригада "${brigadeName}" будет создана`);
+    utils.showAlert(`Бригада "${brigadeName}" будет создана`, 'success');
     
     // In the future, we'll refresh the brigades list here
     // loadBrigades();
