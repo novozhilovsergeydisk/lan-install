@@ -92,7 +92,7 @@ class HomeController extends Controller
         // Запрашиваем request_types
         $requests_types = DB::select('SELECT * FROM request_types ORDER BY id');
 
-        // 🔽 Комплексный запрос с подключением к employees
+        // 🔽 Комплексный запрос получения списка заявок с подключением к employees
         $requests = DB::select("
             SELECT
                 r.*,
@@ -115,6 +115,7 @@ class HomeController extends Controller
             LEFT JOIN employees op ON r.operator_id = op.id
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
+            WHERE r.request_date::date = CURRENT_DATE
             ORDER BY r.request_date DESC
         ");
 
@@ -357,7 +358,7 @@ class HomeController extends Controller
 
             $validated = $validator->validated();
             $requestDate = $validated['date'];
-            
+
             // Закомментирован тестовый блок искусственной ошибки
             // if ($requestDate === '2025-06-27') {
             //     return response()->json([
@@ -403,7 +404,7 @@ class HomeController extends Controller
                 'exception' => $e,
                 'date' => $date ?? null
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении заявок: ' . $e->getMessage(),
