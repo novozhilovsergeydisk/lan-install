@@ -32,7 +32,7 @@ function applyFilters() {
 
     // Здесь можно добавить логику применения фильтров к таблице или списку
     console.log('Применены фильтры:', activeFilters);
-    
+
     // Пример: перезагрузка данных с учетом фильтров
     // loadData(activeFilters);
 }
@@ -79,7 +79,7 @@ function initBrigadeModal(modalId) {
     });
 
     // Очистка содержимого при закрытии
-    modalElement.addEventListener('hidden.bs.modal', function() {
+    modalElement.addEventListener('hidden.bs.modal', function () {
         // Удаляем класс modal-open с body, который добавляет Bootstrap
         document.body.classList.remove('modal-open');
         // Удаляем backdrop, который создает затемнение
@@ -87,12 +87,12 @@ function initBrigadeModal(modalId) {
         if (backdrop) {
             backdrop.remove();
         }
-        
+
         const modalBody = this.querySelector('.modal-body');
         if (modalBody) {
             showLoader(modalBody);
         }
-        
+
         // Сбрасываем стили, которые могли быть добавлены
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
         logoutButton.addEventListener('click', function (e) {
             e.preventDefault();
             logButtonClick('logout-button', 'Выход');
-            
+
             // Показываем подтверждение выхода
             if (confirm('Вы уверены, что хотите выйти?')) {
                 // Отправляем запрос на выход
@@ -121,15 +121,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     credentials: 'same-origin'
                 })
-                .then(response => {
-                    if (response.redirected) {
-                        window.location.href = response.url;
-                    }
-                })
-                .catch(error => {
-                    console.error('Ошибка при выходе:', error);
-                    window.location.href = '/login';
-                });
+                    .then(response => {
+                        if (response.redirected) {
+                            window.location.href = response.url;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при выходе:', error);
+                        window.location.href = '/login';
+                    });
             }
         });
     }
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const DATEPICKER_CLEAR_METHOD = $.fn.datepicker ? 'clearDates' : 'value';
             const DATEPICKER_CLEAR_VALUE = $.fn.datepicker ? '' : '';
             if ($.fn.datepicker) {
-                $(`#${FILTER_IDS.DATEPICKER}`).datepicker({[DATEPICKER_CLEAR_METHOD]: DATEPICKER_CLEAR_VALUE});
+                $(`#${FILTER_IDS.DATEPICKER}`).datepicker({ [DATEPICKER_CLEAR_METHOD]: DATEPICKER_CLEAR_VALUE });
             } else {
                 const dateInput = document.getElementById(FILTER_IDS.DATEPICKER);
                 if (dateInput) dateInput.value = DATEPICKER_CLEAR_VALUE;
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: FILTER_IDS.STATUSES, type: 'statuses' },
         { id: FILTER_IDS.TEAMS, type: 'teams' }
     ];
-    
+
     filterCheckboxes.forEach(({ id, type }) => {
         const checkbox = document.getElementById(id);
         if (checkbox) {
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const label = document.querySelector(`label[for="${id}"]`);
                 const labelText = label ? label.textContent.trim() : 'Неизвестный фильтр';
                 const filterValue = this.value || labelText;
-                
+
                 if (this.checked) {
                     // Добавляем значение в соответствующий массив фильтров
                     if (!filterState[type].includes(filterValue)) {
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Удаляем значение из массива фильтров
                     filterState[type] = filterState[type].filter(item => item !== filterValue);
                 }
-                
+
                 console.log(`Фильтр "${labelText}" ${this.checked ? 'включен' : 'отключен'}`, filterState);
                 applyFilters();
             });
@@ -275,29 +275,29 @@ document.addEventListener('DOMContentLoaded', function () {
             showError('Не удалось инициализировать модальное окно');
             return;
         }
-        
+
         // Сохраняем ссылку на модальное окно в глобальной области видимости
         window.brigadeModal = modalInstance;
         const { modal, modalElement } = modalInstance;
 
         // Возвращаем фокус на кнопку при закрытии
-        const onModalHidden = function() {
+        const onModalHidden = function () {
             if (btn.focus) btn.focus();
             // Удаляем обработчик после срабатывания
             modalElement.removeEventListener('hidden.bs.modal', onModalHidden);
-            
+
             // Принудительно скрываем модальное окно, если оно все еще видимо
             if (modalElement.classList.contains('show')) {
                 modal.hide();
             }
         };
-        
+
         modalElement.addEventListener('hidden.bs.modal', onModalHidden, { once: true });
 
         // Показываем индикатор загрузки
         const modalBody = modalElement.querySelector('.modal-body');
         showLoader(modalBody);
-        
+
         // Показываем модальное окно
         modal.show();
 
@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /******* Функция отображения сведений о бригаде в модальном окне *******/
     function renderBrigadeDetails(data) {
-        const {brigade, leader, members} = data;
+        const { brigade, leader, members } = data;
         const detailsContainer = document.getElementById(FILTER_IDS.BRIGADE_DETAILS);
 
         let html = `
@@ -369,9 +369,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                     <div class="list-group list-group-flush">
                         ${members.length > 0 ?
-            members.map(member => {
-                const isLeader = member.is_leader ? '<span class="badge bg-success ms-2">Бригадир</span>' : '';
-                return `
+                members.map(member => {
+                    const isLeader = member.is_leader ? '<span class="badge bg-success ms-2">Бригадир</span>' : '';
+                    return `
                                 <div class="list-group-item ${member.is_leader ? 'bg-light' : ''}">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
@@ -384,12 +384,12 @@ document.addEventListener('DOMContentLoaded', function () {
                                         </div>
                                     </div>
                                 </div>`;
-            }).join('') : `
+                }).join('') : `
                                 <div class="list-group-item text-muted text-center py-4">
                                     <i class="bi bi-people fs-1 d-block mb-2 text-muted"></i>
                                     В бригаде пока нет участников
                                 </div>`
-        }
+            }
                     </div>
                 </div>
             </div>`;
