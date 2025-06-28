@@ -80,8 +80,6 @@ class HomeController extends Controller
                 })->toArray();
             });
 
-            // dd($commentsByRequest);
-
         // Преобразуем коллекцию в массив для передачи в представление
         $comments_by_request = $commentsByRequest->toArray();
 

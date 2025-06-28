@@ -59,8 +59,7 @@
 
         <!-- Main Content -->
         <div id="main-content" class="main-content">
-            <div id="content-wrapper" class="container-fluid position-relative"
-                 style="min-height: 100vh; overflow-x: hidden;">
+            <div id="content-wrapper" class="container-fluid position-relative" style="min-height: 100vh; overflow-x: hidden;">
                 <div id="header-section" class="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <h1 class="mb-0">Система управления заявками</h1>
