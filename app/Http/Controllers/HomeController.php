@@ -368,6 +368,7 @@ class HomeController extends Controller
             //     ], 200);
             // }
 
+            // Получаем заявки с основной информацией
             $requestByDate = DB::select("
                 SELECT
                     r.*,
@@ -376,6 +377,7 @@ class HomeController extends Controller
                     rs.name AS status_name,
                     rs.color AS status_color,
                     b.name AS brigade_name,
+                    b.id AS brigade_id,
                     e.fio AS brigade_lead,
                     op.fio AS operator_name,
                     addr.street,
@@ -394,10 +396,81 @@ class HomeController extends Controller
                 ORDER BY r.id DESC
             ", [$requestDate]);
 
+
+            // Получаем ID бригад для загрузки членов
+            $brigadeIds = array_filter(array_column($requestByDate, 'brigade_id'));
+            $brigadeMembers = [];
+
+            if (!empty($brigadeIds)) {
+                // Получаем всех членов бригад для загруженных заявок
+                $members = DB::select("
+                    SELECT 
+                        bm.brigade_id,
+                        e.fio as member_name,
+                        e.phone as member_phone,
+                        e.position_id
+                    FROM brigade_members bm
+                    JOIN employees e ON bm.employee_id = e.id
+                    WHERE bm.brigade_id IN (" . implode(',', $brigadeIds) . ")
+                ");
+
+
+                // Группируем членов по ID бригады
+                foreach ($members as $member) {
+                    $brigadeMembers[$member->brigade_id][] = [
+                        'name' => $member->member_name,
+                        'phone' => $member->member_phone,
+                        'position_id' => $member->position_id
+                    ];
+                }
+            }
+
+
+            // Получаем ID заявок для загрузки комментариев
+            $requestIds = array_column($requestByDate, 'id');
+            $commentsByRequest = [];
+
+            if (!empty($requestIds)) {
+                // Получаем все комментарии для загруженных заявок
+                $comments = DB::select("
+                    SELECT
+                        rc.request_id,
+                        c.id as comment_id,
+                        c.comment,
+                        c.created_at,
+                        'Система' as author_name
+                    FROM request_comments rc
+                    JOIN comments c ON rc.comment_id = c.id
+                    WHERE rc.request_id IN (" . implode(',', $requestIds) . ")
+                    ORDER BY c.created_at DESC
+                ");
+
+                // Группируем комментарии по ID заявки
+                foreach ($comments as $comment) {
+                    $commentsByRequest[$comment->request_id][] = [
+                        'id' => $comment->comment_id,
+                        'comment' => $comment->comment,
+                        'created_at' => $comment->created_at,
+                        'author_name' => $comment->author_name
+                    ];
+                }
+            }
+
+
+            // Добавляем членов бригады и комментарии к каждой заявке
+            $result = array_map(function($request) use ($brigadeMembers, $commentsByRequest) {
+                $brigadeId = $request->brigade_id;
+                $request->brigade_members = $brigadeMembers[$brigadeId] ?? [];
+                $request->comments = $commentsByRequest[$request->id] ?? [];
+                $request->comments_count = count($request->comments);
+                return $request;
+            }, $requestByDate);
+
+
             return response()->json([
                 'success' => true,
-                'data' => $requestByDate,
-                'count' => count($requestByDate)
+                'data' => $result,
+                'count' => count($result)
             ]);
         } catch (\Exception $e) {
             \Log::error('Ошибка при получении заявок: ' . $e->getMessage(), [

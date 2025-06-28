@@ -78,36 +78,83 @@ function applyFilters() {
                     return;
                 }
 
-                // Очищаем существующие строки
+                // Очищаем существующие строки и скрываем сообщение о пустом списке
                 tbody.innerHTML = '';
+                const noRequestsRow = document.getElementById('no-requests-row');
+                if (noRequestsRow) {
+                    noRequestsRow.classList.add('d-none');
+                }
 
                 // Добавляем новые строки с данными
                 if (Array.isArray(data.data) && data.data.length > 0) {
+                    // Скрываем сообщение о пустом списке
+                    const noRequestsRow = document.getElementById('no-requests-row');
+                    if (noRequestsRow) {
+                        noRequestsRow.classList.add('d-none');
+                    }
                     data.data.forEach(request => {
+                        // Отладочная информация
+                        console.log('Заявка:', request);
+                        
                         // Форматируем дату с проверкой на валидность
                         let formattedDate = 'Не указана';
+                        let requestDate = '';
                         try {
-                            const date = new Date(request.created_at);
-                            if (!isNaN(date.getTime())) {
-                                formattedDate = date.toLocaleDateString('ru-RU', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric'
-                                });
+                            // Пробуем использовать request_date, если он есть, иначе created_at
+                            const dateStr = request.request_date || request.created_at;
+                            console.log('Исходная дата:', dateStr);
+                            
+                            if (dateStr) {
+                                const date = new Date(dateStr);
+                                if (!isNaN(date.getTime())) {
+                                    formattedDate = date.toLocaleDateString('ru-RU', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false
+                                    });
+                                    
+                                    // Форматируем дату для номера заявки
+                                    requestDate = [
+                                        String(date.getDate()).padStart(2, '0'),
+                                        String(date.getMonth() + 1).padStart(2, '0'),
+                                        date.getFullYear()
+                                    ].join('');
+                                }
                             }
                         } catch (e) {
-                            console.error('Ошибка форматирования даты:', e);
+                            console.error('Ошибка форматирования даты:', e, 'Request:', request);
                         }
 
                         // Формируем номер заявки
-                        const requestNumber = `REQ-${formattedDate.replace(/\./g, '')}-${String(request.id).padStart(4, '0')}`;
+                        const requestNumber = request.number || 
+                            `REQ-${requestDate}-${String(request.id).padStart(4, '0')}`;
+
+                        // Формируем адрес
+                        const address = [
+                            request.street ? `ул. ${request.street}` : '',
+                            request.houses ? `д. ${request.houses}` : ''
+                        ].filter(Boolean).join(', ') || 'Не указан';
 
                         // Создаем строку с составом бригады
-                        let brigadeMembers = '';
-                        if (request.brigade && request.brigade.members && request.brigade.members.length > 0) {
-                            request.brigade.members.forEach(member => {
-                                brigadeMembers += `<div>${member.name}</div>`;
-                            });
+                        let brigadeMembers = 'Не назначена';
+                        if (request.brigade_members && request.brigade_members.length > 0) {
+                            brigadeMembers = request.brigade_members
+                                .map(member => `<div>${member.name || member}</div>`)
+                                .join('');
+                            
+                            brigadeMembers += `
+                                <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn" 
+                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;" 
+                                   onmouseover="this.style.textDecoration='underline'" 
+                                   onmouseout="this.style.textDecoration='none'" 
+                                   data-bs-toggle="modal" 
+                                   data-bs-target="#brigadeModal" 
+                                   data-brigade-id="${request.brigade_id || ''}">
+                                    подробнее...
+                                </a>`;
                         }
 
 
@@ -144,26 +191,21 @@ function applyFilters() {
                                 ` : ''}
                             </td>
                             <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-                                <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || 'Не указан'}">
-                                    ${request.address || 'Не указан'}
+                                <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
+                                    ${request.address || address}
                                 </small>
                                 <small class="text-success_ fw-bold_ text-truncate d-block">
-                                    ${request.phone || ''}
+                                    ${request.phone || request.client_phone || ''}
                                 </small>
                             </td>
                             <td>
-                                <span class="brigade-lead-text">${request.brigade_lead || ''}</span><br>
+                                <span class="brigade-lead-text">${request.operator_name || request.user?.name || 'Не указан'}</span><br>
                                 <span class="brigade-lead-text">${formattedDate}</span>
                             </td>
                             <td>
-                                ${brigadeMembers ? `
-                                    <div class="mb-2" style="font-size: 0.75rem; line-height: 1.2;">
-                                        ${brigadeMembers}
-                                    </div>
-                                    <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn" style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="${request.brigade?.id || ''}">
-                                        подробнее...
-                                    </a>
-                                ` : 'Не назначена'}
+                                <div style="font-size: 0.75rem; line-height: 1.2;">
+                                    ${brigadeMembers}
+                                </div>
                             </td>
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
@@ -192,16 +234,16 @@ function applyFilters() {
                     });
                 } else {
                     // Если данных нет, показываем сообщение
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td colspan="8" class="text-center py-4">
-                            <div class="text-muted">Нет данных для отображения</div>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
+                    const noRequestsRow = document.getElementById('no-requests-row');
+                    if (noRequestsRow) {
+                        noRequestsRow.classList.remove('d-none');
+                    }
                 }
 
                 // Обновляем счетчик загруженных заявок
+                updateRequestsCount(Array.isArray(data.data) ? data.data.length : 0);
+                
+                // Обновляем отображение счетчика
                 const countElement = document.querySelector('.requests-count');
                 if (countElement) {
                     countElement.textContent = data.count || 0;
@@ -217,6 +259,14 @@ function applyFilters() {
     }
 
     console.log('Применены фильтры:', activeFilters);
+}
+
+// Функция для обновления счетчика заявок
+function updateRequestsCount(count) {
+    const counterElement = document.querySelector('.requests-count');
+    if (counterElement) {
+        counterElement.textContent = count;
+    }
 }
 
 // Функция для логирования кликов

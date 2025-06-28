@@ -154,47 +154,35 @@
                             </div>
                         </div>
 
-                        <!-- max-height: 33vh; overflow: auto; -webkit-overflow-scrolling: touch; -->
+                        <!-- Calendar Button and Content -->
+                        <div class="pt-4 ps-4 pb-0">
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="btn-open-calendar">
+                                <i class="bi bi-calendar me-1"></i>Календарь
+                            </button>
+                        </div>
 
-                        @if ($requests)
-                            <div id="requests-table-container" class="table-responsive mt-4 t-custom">
-                                <div class="pt-4 ps-4 pb-0">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="btn-open-calendar">
-                                        <i class="bi bi-calendar me-1"></i>Календарь
-                                    </button>
-                                </div>
+                        <!-- Calendar Container (initially hidden) -->
+                        <div id="calendar-content" class="max-w-400 p-4 hide-me">
+                            <div id="datepicker"></div>
+                        </div>
 
-                                <div id="calendar-content" class="max-w-400 p-4 hide-me">
-                                    <div id="datepicker"></div>
-
-                                    <div class="mt-3 d-none">
-                                        <div class="form-group">
-                                            <label for="dateInput" class="form-label">Выберите дату:</label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control" id="dateInput" placeholder="дд.мм.гггг">
-                                                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                        <!-- Контейнер таблицы заявок (всегда отображается) -->
+                        <div id="requests-table-container" class="table-responsive mt-4 t-custom">
+                            <!-- Легенда статусов -->
+                            @if (!empty($request_statuses))
+                                <div class="p-4">
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach ($request_statuses as $status)
+                                            <div class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
+                                                <div class="me-3 w-7 h-7 rounded-sm"
+                                                     style="width: 8rem; height: 2rem; background-color: {{ $status->color }};">
+                                                </div>
+                                                <span>{{ $status->name }}</span>
                                             </div>
-                                        </div>
+                                        @endforeach
                                     </div>
                                 </div>
-
-                                <div class="p-4"> <!-- #98979a -->
-                                    @if (!empty($request_statuses))
-                                        <!-- <h4 class="mt-5 mb-3">Статусы заявок</h4> -->
-                                        <div class="d-flex flex-column gap-2">
-                                            @foreach ($request_statuses as $status)
-                                                <div class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
-                                                    <div class="me-3 w-7 h-7 rounded-sm"
-                                                         style="width: 8rem; height: 2rem; background-color: {{ $status->color }};">
-                                                    </div>
-                                                    <span>{{ $status->name }}</span>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <p class="text-muted mt-3">Нет доступных статусов заявок.</p>
-                                    @endif
-                                </div>
+                            @endif
 
                                 <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                     <thead class="bg-dark">
@@ -212,90 +200,93 @@
                                     <tbody>
                                     <style>
 
-                                    </style>
+                                </style>
 
-                                    @foreach ($requests as $request)
-                                        <tr class="align-middle status-row"
-                                            style="--status-color: {{ $request->status_color }}"
-                                            data-request-id="{{ $request->id }}">
-                                            <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $request->id }}</td>
+                                @foreach ($requests as $request)
+                                    @php
+                                        $formattedDate = $request->request_date 
+                                            ? \Carbon\Carbon::parse($request->request_date)->format('d.m.Y, H:i')
+                                            : ($request->created_at ? \Carbon\Carbon::parse($request->created_at)->format('d.m.Y, H:i') : 'Не указана');
+                                        $requestNumber = 'REQ-' . \Carbon\Carbon::parse($request->request_date ?? $request->created_at)->format('dmY, H:i') . '-' . str_pad($request->id, 4, '0', STR_PAD_LEFT);
+                                    @endphp
+                                    <tr class="align-middle status-row" style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}" data-request-id="{{ $request->id }}">
+                                        <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $request->id }}</td>
 
-                                            <td class="text-center" style="width: 1rem;">
-                                                <input type="checkbox" id="request-{{ $request->id }}"
-                                                       class="form-check-input request-checkbox"
-                                                       value="{{ $request->id }}" aria-label="Выбрать заявку">
-                                            </td>
-                                            <!-- Дата и номер заявки -->
-                                            <td>
-                                                <div>{{ \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') }}</div>
-                                                <div class="text-dark"
-                                                     style="font-size: 0.8rem;">{{ $request->number }}</div>
-                                            </td>
+                                        <td class="text-center" style="width: 1rem;">
+                                            <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
+                                        </td>
+                                        <!-- Дата и номер заявки -->
+                                        <td>
+                                            <div>{{ $formattedDate }}</div>
+                                            <div class="text-dark" style="font-size: 0.8rem;">{{ $requestNumber }}</div>
+                                        </td>
 
-                                            <!-- Комментарий -->
-                                            <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
-                                                @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
-                                                    @php
-                                                        $firstComment = $comments_by_request[$request->id][0];
-                                                        $commentText = $firstComment->comment;
-                                                        $author = $firstComment->author_name;
-                                                        $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
-                                                    @endphp
-                                                    <div class="comment-preview small text-dark"
-                                                         data-bs-toggle="tooltip" title="{{ $commentText }}">
-                                                        @if(count($comments_by_request[$request->id]) > 1)
-                                                            {{ Str::limit($commentText, 65, '...') }}
-                                                        @else
-                                                            {{ $commentText }}
-                                                        @endif
-                                                    </div>
-                                                @endif
-                                                @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 1)
-                                                    <div class="mt-1">
-                                                        <button type="button"
-                                                                class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#commentsModal"
-                                                                data-request-id="{{ $request->id }}"
-                                                                style="position: relative; z-index: 1;">
-                                                            <i class="bi bi-chat-left-text me-1"></i>Все комментарии
-                                                            <span class="badge bg-primary rounded-pill ms-1">
+                                        <!-- Комментарий -->
+                                        <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
+                                            @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
+                                                @php
+                                                    $firstComment = $comments_by_request[$request->id][0];
+                                                    $commentText = $firstComment->comment;
+                                                    $author = $firstComment->author_name;
+                                                    $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
+                                                @endphp
+                                                <div class="comment-preview small text-dark"
+                                                     data-bs-toggle="tooltip" title="{{ $commentText }}">
+                                                    @if(count($comments_by_request[$request->id]) > 1)
+                                                        {{ Str::limit($commentText, 65, '...') }}
+                                                    @else
+                                                        {{ $commentText }}
+                                                    @endif
+                                                </div>
+                                            @endif
+                                            @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 1)
+                                                <div class="mt-1">
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#commentsModal"
+                                                            data-request-id="{{ $request->id }}"
+                                                            style="position: relative; z-index: 1;">
+                                                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                                                        <span class="badge bg-primary rounded-pill ms-1">
                                                                         {{ count($comments_by_request[$request->id]) }}
                                                                     </span>
-                                                        </button>
-                                                    </div>
-                                                @endif
-                                            </td>
+                                                    </button>
+                                                </div>
+                                            @endif
+                                        </td>
 
-                                            <!-- Клиент -->
-                                            <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-                                            <!-- <div class="text-truncate">{{ $request->client_fio ?? 'Неизвестный клиент' }}</div> -->
-                                                @if(!empty($request->street))
-                                                    <small class="text-dark text-truncate d-block"
-                                                           data-bs-toggle="tooltip"
-                                                           title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
-                                                        ул. {{ $request->street }}, д. {{ $request->houses }}
-                                                    </small>
-                                                @else
-                                                    <small class="text-dark text-truncate d-block">Адрес не
-                                                        указан</small>
-                                                @endif
-                                                <small
-                                                    class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
-                                                    {{ $request->client_phone ?? 'Нет телефона' }}
+                                        <!-- Клиент -->
+                                        <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                            @if(!empty($request->street))
+                                                <small class="text-dark text-truncate d-block"
+                                                       data-bs-toggle="tooltip"
+                                                       title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
+                                                    ул. {{ $request->street }}, д. {{ $request->houses }}
                                                 </small>
-                                            </td>
+                                            @else
+                                                <small class="text-dark text-truncate d-block">Адрес не
+                                                    указан</small>
+                                            @endif
+                                            <small
+                                                class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
+                                                {{ $request->client_phone ?? 'Нет телефона' }}
+                                            </small>
+                                        </td>
 
-                                            <!-- Дата выполнения -->
-                                            <td>
-                                                <span class="brigade-lead-text">{{ $request->operator_name }}</span><br>
-                                                <span
-                                                    class="brigade-lead-text">{{ \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') }}</span>
-                                            </td>
+                                        <!-- Дата выполнения -->
+                                        <td>
+                                            <span class="brigade-lead-text">{{ $request->user->name ?? 'Не указан' }}</span><br>
+                                            <span class="brigade-lead-text">{{ $formattedDate }}</span>
+                                        </td>
 
-                                            <!-- Состав бригады -->
-                                            <td>
-                                                @if($request->brigade_id)
+                                        <!-- Состав бригады -->
+                                        <td>
+                                            @if($request->brigade_id)
+                                                @php
+                                                    $brigadeMembers = collect($brigadeMembersWithDetails)
+                                                        ->where('brigade_id', $request->brigade_id);
+                                                @endphp
                                                     @php
                                                         $brigadeMembers = collect($brigadeMembersWithDetails)
                                                             ->where('brigade_id', $request->brigade_id);
@@ -353,11 +344,16 @@
                                         </tr>
                                     @endforeach
                                     </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <p class="mt-4 text-muted">Нет заявок для отображения.</p>
-                        @endif
+                                    <tr id="no-requests-row" class="d-none">
+                                        <td colspan="8" class="text-center py-4">
+                                            <div class="alert alert-info m-0">
+                                                <i class="bi bi-info-circle me-2"></i>Нет заявок для отображения.
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
                     </div>
 
