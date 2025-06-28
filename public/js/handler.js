@@ -1,3 +1,5 @@
+import { showAlert } from './utils.js';
+
 // Константы для идентификаторов
 const FILTER_IDS = {
     STATUSES: 'filter-statuses',
@@ -30,11 +32,191 @@ function applyFilters() {
         date: filterState.date
     };
 
-    // Здесь можно добавить логику применения фильтров к таблице или списку
-    console.log('Применены фильтры:', activeFilters);
+    console.log({ 'filterState.date = ': filterState.date });
 
-    // Пример: перезагрузка данных с учетом фильтров
-    // loadData(activeFilters);
+    // Если выбрана дата, делаем запрос на сервер
+    if (filterState.date) {
+        // Конвертируем дату из DD.MM.YYYY в YYYY-MM-DD
+        const [day, month, year] = filterState.date.split('.');
+        const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        
+        // Формируем URL с отформатированной датой
+        const apiUrl = `/api/requests/date/${formattedDate}`;
+        
+        console.log('Отправка запроса на:', apiUrl);
+        
+        fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            
+            if (!response.ok) {
+                const error = new Error(data.message || `Ошибка HTTP: ${response.status}`);
+                error.response = response;
+                error.data = data;
+                throw error;
+            }
+            
+            return data;
+        })
+        .then(data => {
+            console.log('Ответ сервера:', data);
+            if (data && data.success === false) {
+                showAlert(data.message || 'Ошибка при загрузке заявок', 'danger');
+            } else {
+                console.log('Получены заявки по дате:', data);
+                // Находим основную таблицу с заявками по классу
+                const tbody = document.querySelector('table.table-hover tbody');
+                if (!tbody) {
+                    console.error('Не найден элемент tbody для вставки данных');
+                    return;
+                }
+
+                // Очищаем существующие строки
+                tbody.innerHTML = '';
+
+                // Добавляем новые строки с данными
+                if (Array.isArray(data.data) && data.data.length > 0) {
+                    data.data.forEach(request => {
+                        // Форматируем дату с проверкой на валидность
+                        let formattedDate = 'Не указана';
+                        try {
+                            const date = new Date(request.created_at);
+                            if (!isNaN(date.getTime())) {
+                                formattedDate = date.toLocaleDateString('ru-RU', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                });
+                            }
+                        } catch (e) {
+                            console.error('Ошибка форматирования даты:', e);
+                        }
+
+                        // Формируем номер заявки
+                        const requestNumber = `REQ-${formattedDate.replace(/\./g, '')}-${String(request.id).padStart(4, '0')}`;
+
+                        // Создаем строку с составом бригады
+                        let brigadeMembers = '';
+                        if (request.brigade && request.brigade.members && request.brigade.members.length > 0) {
+                            request.brigade.members.forEach(member => {
+                                brigadeMembers += `<div>${member.name}</div>`;
+                            });
+                        }
+
+
+                        // Создаем HTML строки таблицы
+                        const row = document.createElement('tr');
+                        row.className = 'align-middle status-row';
+                        row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
+                        row.setAttribute('data-request-id', request.id);
+
+                        row.innerHTML = `
+                            <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${request.id}</td>
+                            <td class="text-center" style="width: 1rem;">
+                                <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
+                            </td>
+                            <td>
+                                <div>${formattedDate}</div>
+                                <div class="text-dark" style="font-size: 0.8rem;">${requestNumber}</div>
+                            </td>
+                            <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
+                                ${request.comment ? `
+                                    <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="${request.comment.replace(/"/g, '&quot;')}">
+                                        ${request.comment.length > 50 ? request.comment.substring(0, 50) + '...' : request.comment}
+                                    </div>
+                                ` : ''}
+                                ${request.comments_count > 0 ? `
+                                    <div class="mt-1">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary view-comments-btn p-1" data-bs-toggle="modal" data-bs-target="#commentsModal" data-request-id="${request.id}" style="position: relative; z-index: 1;">
+                                            <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                                            <span class="badge bg-primary rounded-pill ms-1">
+                                                ${request.comments_count}
+                                            </span>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </td>
+                            <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || 'Не указан'}">
+                                    ${request.address || 'Не указан'}
+                                </small>
+                                <small class="text-success_ fw-bold_ text-truncate d-block">
+                                    ${request.phone || ''}
+                                </small>
+                            </td>
+                            <td>
+                                <span class="brigade-lead-text">${request.brigade_lead || ''}</span><br>
+                                <span class="brigade-lead-text">${formattedDate}</span>
+                            </td>
+                            <td>
+                                ${brigadeMembers ? `
+                                    <div class="mb-2" style="font-size: 0.75rem; line-height: 1.2;">
+                                        ${brigadeMembers}
+                                    </div>
+                                    <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn" style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="${request.brigade?.id || ''}">
+                                        подробнее...
+                                    </a>
+                                ` : 'Не назначена'}
+                            </td>
+                            <td class="text-nowrap">
+                                <div class="d-flex flex-column gap-1">
+                                    ${request.status !== 'completed' ? `
+                                        <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn" onclick="closeRequest(${request.id}); return false;">
+                                            Закрыть заявку
+                                        </button>
+                                    ` : ''}
+                                    <button type="button" class="btn btn-sm btn-outline-primary p-1 comment-btn" data-bs-toggle="modal" data-bs-target="#commentsModal" data-request-id="${request.id}">
+                                        <i class="bi bi-chat-left-text me-1"></i>Комментарий
+                                    </button>
+                                    <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn" onclick="console.log('Добавить фотоотчет', ${request.id})">
+                                        <i class="bi bi-camera me-1"></i>Фотоотчет
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+
+                        tbody.appendChild(row);
+                    });
+
+                    // Инициализируем тултипы
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                } else {
+                    // Если данных нет, показываем сообщение
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td colspan="8" class="text-center py-4">
+                            <div class="text-muted">Нет данных для отображения</div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                }
+
+                // Обновляем счетчик загруженных заявок
+                const countElement = document.querySelector('.requests-count');
+                if (countElement) {
+                    countElement.textContent = data.count || 0;
+                }
+                showAlert(`Загружено ${data.count} заявок`, 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке заявок:', error);
+            const errorMessage = error.data?.message || error.message || 'Неизвестная ошибка';
+            showAlert(`Ошибка при загрузке заявок: ${errorMessage}`, 'danger');
+        });
+    }
+
+    console.log('Применены фильтры:', activeFilters);
 }
 
 // Функция для логирования кликов

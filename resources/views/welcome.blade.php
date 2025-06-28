@@ -772,7 +772,7 @@
 <script type="module" src="{{ asset('js/utils.js') }}"></script>
 
 <!-- Event Handlers -->
-<script src="{{ asset('js/handler.js') }}"></script>
+<script type="module" src="{{ asset('js/handler.js') }}"></script>
 
 <!-- Here modals -->
 

@@ -118,15 +118,15 @@ class HomeController extends Controller
             ORDER BY r.request_date DESC
         ");
 
+//        dd($requestByDate);
+
         $flags = [
             'new' => 'new',
             'in_work' => 'in_work',
             'waiting_for_client' => 'waiting_for_client',
             'completed' => 'completed',
             'cancelled' => 'cancelled',
-            'on_hold' => 'on_hold',
             'under_review' => 'under_review',
-            'on_hold' => 'on_hold',
             'on_hold' => 'on_hold',
         ];
 
@@ -337,6 +337,82 @@ class HomeController extends Controller
     }
 
     /**
+     * Получение заявок по дате
+     */
+    public function getRequestsByDate($date)
+    {
+        try {
+            // Валидация даты
+            $validator = validator(['date' => $date], [
+                'date' => 'required|date_format:Y-m-d'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Неверный формат даты. Ожидается YYYY-MM-DD',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $validated = $validator->validated();
+            $requestDate = $validated['date'];
+            
+            // Закомментирован тестовый блок искусственной ошибки
+            // if ($requestDate === '2025-06-27') {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Тестовая ошибка: проверка обработки ошибок',
+            //         'test_error' => true
+            //     ], 200);
+            // }
+
+            $requestByDate = DB::select("
+                SELECT
+                    r.*,
+                    c.fio AS client_fio,
+                    c.phone AS client_phone,
+                    rs.name AS status_name,
+                    rs.color AS status_color,
+                    b.name AS brigade_name,
+                    e.fio AS brigade_lead,
+                    op.fio AS operator_name,
+                    addr.street,
+                    addr.houses,
+                    addr.district,
+                    addr.city_id
+                FROM requests r
+                LEFT JOIN clients c ON r.client_id = c.id
+                LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                LEFT JOIN brigades b ON r.brigade_id = b.id
+                LEFT JOIN employees e ON b.leader_id = e.id
+                LEFT JOIN employees op ON r.operator_id = op.id
+                LEFT JOIN request_addresses ra ON r.id = ra.request_id
+                LEFT JOIN addresses addr ON ra.address_id = addr.id
+                WHERE DATE(r.request_date) = ?
+                ORDER BY r.id DESC
+            ", [$requestDate]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $requestByDate,
+                'count' => count($requestByDate)
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при получении заявок: ' . $e->getMessage(), [
+                'exception' => $e,
+                'date' => $date ?? null
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении заявок: ' . $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null
+            ], 500);
+        }
+    }
+
+    /**
      * Получение комментариев к заявке
      */
     public function getComments($requestId)
@@ -538,7 +614,7 @@ class HomeController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-public function storeRequest(Request $request)
+    public function storeRequest(Request $request)
 {
     // Временно отключаем транзакцию для отладки
     // DB::beginTransaction();

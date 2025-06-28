@@ -45,6 +45,9 @@ Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'g
 
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {
+    // Get requests by date
+    Route::get('/requests/date/{date}', [HomeController::class, 'getRequestsByDate'])->name('api.requests.by-date');
+    
     // Get request types
     Route::get('/request-types', [HomeController::class, 'getRequestTypes'])->name('api.request-types');
     
