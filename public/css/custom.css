@@ -1,0 +1,115 @@
+.max-w-400 {
+    max-width: 400px;
+}
+
+.t-custom {
+    border: 1px solid rgb(110, 113, 117);
+    border-radius: 0.375rem;
+}
+
+.border-red {
+    border: 1px solid red;
+}
+
+.display-block, .show-me {
+    display: block;
+}
+
+.display-none, .hide-me {
+    display: none;
+}
+
+/**/
+
+/* Hide remove button for the first address entry */
+.address-entry:first-child .remove-address {
+    display: none;
+}
+
+.btn-custom-brown {
+    color: #8B4513 !important;
+    border-color: #8B4513 !important;
+    background-color: transparent !important;
+}
+
+.btn-custom-brown:hover, .btn-custom-brown:hover i {
+    color: white !important;
+    background-color: #8B4513 !important;
+}
+
+/* Стили для бейджиков на кнопках */
+.btn .badge {
+    position: relative;
+    top: -1px;
+    margin-left: 3px;
+    z-index: 1;
+}
+
+/* Исправляем позиционирование бейджиков для кнопок с иконками */
+.btn i + .badge {
+    margin-left: 5px;
+}
+
+/* Убедимся, что бейджи видны поверх кнопок */
+.btn {
+    position: relative;
+    overflow: visible;
+}
+
+
+.btn-outline-primary:hover, .btn-outline-primary:hover i {
+    color: white !important;
+}
+
+/* Styles for the dark theme in the modal window */
+[data-bs-theme="dark"] .brigade-details,
+[data-bs-theme="dark"] .brigade-details h4,
+[data-bs-theme="dark"] .brigade-details h5,
+[data-bs-theme="dark"] .brigade-details h6,
+[data-bs-theme="dark"] .brigade-details p,
+[data-bs-theme="dark"] .brigade-details .card,
+[data-bs-theme="dark"] .brigade-details .card-body,
+[data-bs-theme="dark"] .brigade-details .list-group-item {
+    color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .text-muted {
+    color: #adb5bd !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .card {
+    background-color: #2b3035 !important;
+    border-color: #373b3e !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .card-header {
+    background-color: #212529 !important;
+    border-bottom-color: #373b3e !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .list-group-item {
+    background-color: #2b3035 !important;
+    border-color: #373b3e !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .list-group-item.bg-light {
+    background-color: #343a40 !important;
+}
+
+/* Стили для кнопки комментариев */
+.comment-btn-hover:hover,
+.comment-btn-hover:hover i {
+    color: white !important;
+    transition: color 0.2s ease-in-out;
+}
+
+/* Скрываем кнопку добавления адреса */
+#addAddress {
+    display: none !important;
+}
+
+[data-bs-theme="dark"] .brigade-details .card-header h5 {
+    color: #fff !important;
+}
+
+/**/

@@ -32,30 +32,30 @@ class HomeController extends Controller
 
         // Комплексный запрос для получения информации о членах бригад с данными о бригадах
         $brigadeMembersWithDetails = DB::select(
-            "SELECT 
-                bm.*, 
-                b.name as brigade_name, 
-                b.leader_id, 
-                e.fio as employee_name, 
-                e.phone as employee_phone, 
-                e.group_role as employee_group_role, 
-                e.sip as employee_sip, 
-                e.position_id as employee_position_id 
+            "SELECT
+                bm.*,
+                b.name as brigade_name,
+                b.leader_id,
+                e.fio as employee_name,
+                e.phone as employee_phone,
+                e.group_role as employee_group_role,
+                e.sip as employee_sip,
+                e.position_id as employee_position_id
             FROM brigade_members bm
             JOIN brigades b ON bm.brigade_id = b.id
             LEFT JOIN employees e ON bm.employee_id = e.id"
         );
 
         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
-            
+
         // Выводим содержимое для отладки
         // dd($brigadeMembersWithDetails);
-            
+
         $brigade_members = DB::select('SELECT * FROM brigade_members'); // Оставляем старый запрос для обратной совместимости
-        
+
         // Запрашиваем комментарии с привязкой к заявкам
         $requestComments = DB::select("
-            SELECT 
+            SELECT
                 rc.request_id,
                 c.id as comment_id,
                 c.comment,
@@ -81,22 +81,22 @@ class HomeController extends Controller
             });
 
             // dd($commentsByRequest);
-            
+
         // Преобразуем коллекцию в массив для передачи в представление
         $comments_by_request = $commentsByRequest->toArray();
-        
+
         // Запрашиваем request_addresses
-        $request_addresses = DB::select('SELECT * FROM request_addresses'); 
-        
+        $request_addresses = DB::select('SELECT * FROM request_addresses');
+
         // Запрашиваем request_statuses
-        $request_statuses = DB::select('SELECT * FROM request_statuses'); 
+        $request_statuses = DB::select('SELECT * FROM request_statuses ORDER BY id');
 
         // Запрашиваем request_types
-        $requests_types = DB::select('SELECT * FROM request_types'); 
+        $requests_types = DB::select('SELECT * FROM request_types ORDER BY id');
 
         // 🔽 Комплексный запрос с подключением к employees
         $requests = DB::select("
-            SELECT 
+            SELECT
                 r.*,
                 c.fio AS client_fio,
                 c.phone AS client_phone,
@@ -150,10 +150,10 @@ class HomeController extends Controller
             'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
             'flags' => $flags
         ];
-        
+
         // Логируем данные для отладки
         // \Log::info('View data:', ['comments_by_request' => $comments_by_request]);
-        
+
         return view('welcome', $viewData);
     }
 
@@ -165,7 +165,7 @@ class HomeController extends Controller
         try {
             // Включаем логирование SQL-запросов
             \DB::enableQueryLog();
-            
+
             \Log::info('=== НАЧАЛО ДОБАВЛЕНИЯ КОММЕНТАРИЯ ===');
             \Log::info('Метод запроса: ' . $request->method());
             \Log::info('Полный URL: ' . $request->fullUrl());
@@ -179,22 +179,22 @@ class HomeController extends Controller
                 'comment' => 'required|string|max:1000',
                 '_token' => 'required|string'
             ]);
-            
+
             \Log::info('Валидация пройдена успешно', $validated);
 
             // Проверяем существование заявки
             $requestExists = DB::selectOne(
-                "SELECT COUNT(*) as count FROM requests WHERE id = ?", 
+                "SELECT COUNT(*) as count FROM requests WHERE id = ?",
                 [$validated['request_id']]
             );
-            
+
             $requestExists = $requestExists->count > 0;
-                
+
             \Log::info('Проверка существования заявки:', [
                 'request_id' => $validated['request_id'],
                 'exists' => $requestExists
             ]);
-            
+
             if (!$requestExists) {
                 return response()->json([
                     'success' => false,
@@ -209,69 +209,69 @@ class HomeController extends Controller
             try {
                 // Получаем структуру таблицы requests, чтобы найти колонку с датой
                 $tableInfo = DB::selectOne(
-                    "SELECT column_name 
-                     FROM information_schema.columns 
-                     WHERE table_name = 'requests' 
+                    "SELECT column_name
+                     FROM information_schema.columns
+                     WHERE table_name = 'requests'
                      AND data_type IN ('timestamp without time zone', 'timestamp with time zone', 'date', 'datetime')"
                 );
-                
+
                 if (!$tableInfo) {
                     throw new \Exception('Не удалось определить колонку с датой в таблице requests');
                 }
-                
+
                 $dateColumn = $tableInfo->column_name;
-                
+
                 // Получаем дату заявки
                 $requestDate = DB::selectOne(
-                    "SELECT $dateColumn as request_date FROM requests WHERE id = ?", 
+                    "SELECT $dateColumn as request_date FROM requests WHERE id = ?",
                     [$validated['request_id']]
                 )->request_date;
 
                 // Устанавливаем дату комментария как максимальную из текущей даты и даты заявки
                 $comment = $validated['comment'];
                 $commentDate = now();
-                
+
                 if ($commentDate < new \DateTime($requestDate)) {
                     $commentDate = new \DateTime($requestDate);
                 }
-                
+
                 $createdAt = $commentDate->format('Y-m-d H:i:s');
-                
+
                 \Log::info('Данные для вставки комментария:', [
                     'comment' => $comment,
                     'created_at' => $createdAt,
                     'request_date' => $requestDate
                 ]);
-                
+
                 // Вставляем комментарий
                 $result = DB::insert(
                     'INSERT INTO comments (comment, created_at) VALUES (?, ?) RETURNING id',
                     [$comment, $createdAt]
                 );
-                
+
                 if (!$result) {
                     throw new \Exception('Не удалось создать комментарий');
                 }
-                
+
                 // Получаем ID вставленного комментария
                 $commentId = DB::getPdo()->lastInsertId();
                 \Log::info('Создан комментарий с ID: ' . $commentId);
 
                 // Привязываем комментарий к заявке
                 $requestId = $validated['request_id'];
-                
+
                 \Log::info('Данные для связи комментария с заявкой:', [
                     'request_id' => $requestId,
                     'comment_id' => $commentId,
                     'created_at' => $createdAt
                 ]);
-                
+
                 // Вставляем связь с заявкой
                 $result = DB::insert(
                     'INSERT INTO request_comments (request_id, comment_id, created_at) VALUES (?, ?, ?)',
                     [$requestId, $commentId, $createdAt]
                 );
-                
+
                 if (!$result) {
                     throw new \Exception('Не удалось привязать комментарий к заявке');
                 }
@@ -282,9 +282,9 @@ class HomeController extends Controller
 
                 // Получаем обновленный список комментариев
                 $comments = DB::select(
-                    'SELECT c.* FROM comments c 
-                    INNER JOIN request_comments rc ON c.id = rc.comment_id 
-                    WHERE rc.request_id = ? 
+                    'SELECT c.* FROM comments c
+                    INNER JOIN request_comments rc ON c.id = rc.comment_id
+                    WHERE rc.request_id = ?
                     ORDER BY c.created_at DESC',
                     [$requestId]
                 );
@@ -304,7 +304,7 @@ class HomeController extends Controller
                     DB::rollBack();
                     \Log::warning('Транзакция откачена из-за ошибки');
                 }
-                
+
                 $errorInfo = [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
@@ -313,7 +313,7 @@ class HomeController extends Controller
                     'sql_queries' => \DB::getQueryLog()
                 ];
                 \Log::error('Ошибка при добавлении комментария:', $errorInfo);
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Произошла ошибка при добавлении комментария: ' . $e->getMessage(),
@@ -330,21 +330,21 @@ class HomeController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Критическая ошибка: ' . $e->getMessage()
             ], 500);
         }
     }
-    
+
     /**
      * Получение комментариев к заявке
      */
     public function getComments($requestId)
     {
         $comments = DB::select("
-            SELECT 
+            SELECT
                 c.id,
                 c.comment,
                 c.created_at,
@@ -355,7 +355,7 @@ class HomeController extends Controller
             WHERE rc.request_id = ?
             ORDER BY c.created_at DESC
         ", [$requestId]);
-        
+
         // Format the date for each comment
         foreach ($comments as &$comment) {
             $date = new \DateTime($comment->created_at);
@@ -365,7 +365,7 @@ class HomeController extends Controller
             }
             unset($comment->formatted_date);
         }
-        
+
         return response()->json($comments);
     }
 
@@ -405,7 +405,7 @@ class HomeController extends Controller
 
     /**
      * Get list of request types
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getRequestTypes()
@@ -425,7 +425,7 @@ class HomeController extends Controller
 
     /**
      * Get list of request statuses
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getRequestStatuses()
@@ -445,7 +445,7 @@ class HomeController extends Controller
 
     /**
      * Get list of brigades
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getBrigades()
@@ -465,7 +465,7 @@ class HomeController extends Controller
 
     /**
      * Get list of operators
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getOperators()
@@ -485,17 +485,17 @@ class HomeController extends Controller
 
     /**
      * Get list of cities
-     * 
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getCities()
     {
         try {
             \Log::info('Получение списка городов из базы данных');
-            
+
             // Получаем только необходимые поля
             $cities = DB::select('SELECT id, name FROM cities ORDER BY name');
-            
+
             // Преобразуем объекты в массивы для корректной сериализации в JSON
             $cities = array_map(function($city) {
                 return [
@@ -503,10 +503,10 @@ class HomeController extends Controller
                     'name' => $city->name
                 ];
             }, $cities);
-            
+
             \Log::info('Найдено городов: ' . count($cities));
             \Log::info('Пример данных: ' . json_encode(array_slice($cities, 0, 3), JSON_UNESCAPED_UNICODE));
-            
+
             return response()->json($cities);
         } catch (\Exception $e) {
             \Log::error('Ошибка при получении списка городов: ' . $e->getMessage());
@@ -530,13 +530,13 @@ class HomeController extends Controller
         $count = DB::table('request_comments')
             ->where('request_id', $requestId)
             ->count();
-            
+
         return response()->json(['count' => $count]);
     }
 
     /**
      * Store a new request
-     * 
+     *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -544,7 +544,7 @@ public function storeRequest(Request $request)
 {
     // Временно отключаем транзакцию для отладки
     // DB::beginTransaction();
-    
+
     try {
         // Подробное логирование входящих данных
         \Log::info('=== НАЧАЛО ОБРАБОТКИ ЗАПРОСА ===');
@@ -552,12 +552,12 @@ public function storeRequest(Request $request)
         \Log::info('Данные клиента:', $request->input('client', []));
         \Log::info('Данные заявки:', $request->input('request', []));
         \Log::info('Список адресов:', $request->input('addresses', []));
-        
+
         // Проверяем наличие всех необходимых данных
         if (!$request->has('client') || !$request->has('request') || !$request->has('addresses')) {
             throw new \Exception('Отсутствуют обязательные поля в запросе');
         }
-        
+
         // Валидация входных данных
         $validated = $request->validate([
             'client.fio' => 'required|string|max:255',
@@ -578,13 +578,13 @@ public function storeRequest(Request $request)
         // 1. Проверяем существующего клиента
         $clientData = $validated['client'];
         $phone = preg_replace('/[^0-9]/', '', $clientData['phone']); // Нормализуем номер телефона
-        
+
         // Ищем существующего клиента по номеру телефона
         $existingClient = DB::selectOne(
-            "SELECT id FROM clients WHERE phone = ? OR phone LIKE ?", 
+            "SELECT id FROM clients WHERE phone = ? OR phone LIKE ?",
             [$phone, '%' . $phone]
         );
-        
+
         if ($existingClient) {
             $clientId = $existingClient->id;
             \Log::info('Найден существующий клиент с ID:', ['id' => $clientId]);
@@ -593,7 +593,7 @@ public function storeRequest(Request $request)
             $clientSql = "INSERT INTO clients (fio, phone) VALUES ('" .
                         addslashes($clientData['fio']) . "', '" .
                         addslashes($phone) . "') RETURNING id";
-            
+
             \Log::info('SQL для вставки клиента:', ['sql' => $clientSql]);
             $clientId = DB::selectOne($clientSql)->id;
             \Log::info('Создан новый клиент с ID:', ['id' => $clientId]);
@@ -602,30 +602,30 @@ public function storeRequest(Request $request)
         // 2. Создаем комментарий, только если он не пустой
         $commentText = trim($validated['request']['comment'] ?? $validated['request']['description'] ?? '');
         $newCommentId = null;
-        
+
         // Логируем полученные данные для отладки
         \Log::info('Полученные данные запроса:', [
             'all_request_data' => $validated,
             'comment_text' => $commentText
         ]);
-        
+
         if (!empty($commentText)) {
             \Log::info('Создание комментария:', ['comment_text' => $commentText]);
-            
+
             try {
-                $commentSql = "INSERT INTO comments (comment) VALUES ('" . 
-                             addslashes($commentText) . 
+                $commentSql = "INSERT INTO comments (comment) VALUES ('" .
+                             addslashes($commentText) .
                              "') RETURNING id";
-                
+
                 \Log::info('SQL для вставки комментария:', ['sql' => $commentSql]);
-                
+
                 $commentResult = DB::selectOne($commentSql);
                 $newCommentId = $commentResult ? $commentResult->id : null;
-                
+
                 if (!$newCommentId) {
                     throw new \Exception('Не удалось получить ID созданного комментария');
                 }
-                
+
                 \Log::info('Успешно создан комментарий:', [
                     'id' => $newCommentId,
                     'comment' => $commentText
@@ -683,14 +683,14 @@ public function storeRequest(Request $request)
         \Log::info('SQL для вставки заявки:', ['sql' => $requestSql, 'params' => $requestParams]);
         $requestId = DB::selectOne($requestSql, $requestParams)->id;
         \Log::info('Создана заявка с ID:', ['id' => $requestId]);
-        
+
         // 4. Создаем связь между заявкой и комментарием
         \Log::info('Попытка создать связь заявки с комментарием:', [
             'request_id' => $requestId,
             'comment_id' => $newCommentId,
             'comment_text' => $commentText
         ]);
-        
+
         if ($newCommentId) {
             try {
                 $requestCommentSql = "
@@ -701,12 +701,12 @@ public function storeRequest(Request $request)
                         :request_id,
                         :comment_id
                     ) RETURNING *";
-                    
+
                 $requestCommentParams = [
                     'request_id' => $requestId,
                     'comment_id' => $newCommentId
                 ];
-                
+
                 $result = DB::selectOne($requestCommentSql, $requestCommentParams);
                 \Log::info('Успешно создана связь заявки с комментарием:', [
                     'request_id' => $requestId,
@@ -800,8 +800,8 @@ public function storeRequest(Request $request)
         // Формируем информативный ответ
         $response = [
             'success' => true,
-            'message' => $existingClient 
-                ? 'Использован существующий клиент' 
+            'message' => $existingClient
+                ? 'Использован существующий клиент'
                 : 'Создан новый клиент',
             'client' => [
                 'id' => $clientId,
@@ -839,12 +839,12 @@ public function storeRequest(Request $request)
             'message' => 'Ошибка валидации',
             'errors' => $e->errors()
         ], 422);
-        
+
     } catch (\Exception $e) {
         DB::rollBack();
         \Log::error('Error creating request: ' . $e->getMessage());
         \Log::error('Trace: ' . $e->getTraceAsString());
-        
+
         return response()->json([
             'success' => false,
             'message' => 'Ошибка при создании заявки',

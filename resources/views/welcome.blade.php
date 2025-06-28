@@ -6,96 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления заявками</title>
     <style>
-        /* Hide remove button for the first address entry */
-        .address-entry:first-child .remove-address {
-            display: none;
-        }
 
-        .btn-custom-brown {
-            color: #8B4513 !important;
-            border-color: #8B4513 !important;
-            background-color: transparent !important;
-        }
-
-        .btn-custom-brown:hover, .btn-custom-brown:hover i {
-            color: white !important;
-            background-color: #8B4513 !important;
-        }
-
-        /* Стили для бейджиков на кнопках */
-        .btn .badge {
-            position: relative;
-            top: -1px;
-            margin-left: 3px;
-            z-index: 1;
-        }
-
-        /* Исправляем позиционирование бейджиков для кнопок с иконками */
-        .btn i + .badge {
-            margin-left: 5px;
-        }
-
-        /* Убедимся, что бейджи видны поверх кнопок */
-        .btn {
-            position: relative;
-            overflow: visible;
-        }
-
-
-        .btn-outline-primary:hover, .btn-outline-primary:hover i {
-            color: white !important;
-        }
-
-        /* Styles for the dark theme in the modal window */
-        [data-bs-theme="dark"] .brigade-details,
-        [data-bs-theme="dark"] .brigade-details h4,
-        [data-bs-theme="dark"] .brigade-details h5,
-        [data-bs-theme="dark"] .brigade-details h6,
-        [data-bs-theme="dark"] .brigade-details p,
-        [data-bs-theme="dark"] .brigade-details .card,
-        [data-bs-theme="dark"] .brigade-details .card-body,
-        [data-bs-theme="dark"] .brigade-details .list-group-item {
-            color: #f8f9fa !important;
-        }
-
-        [data-bs-theme="dark"] .brigade-details .text-muted {
-            color: #adb5bd !important;
-        }
-
-        [data-bs-theme="dark"] .brigade-details .card {
-            background-color: #2b3035 !important;
-            border-color: #373b3e !important;
-        }
-
-        [data-bs-theme="dark"] .brigade-details .card-header {
-            background-color: #212529 !important;
-            border-bottom-color: #373b3e !important;
-        }
-
-        [data-bs-theme="dark"] .brigade-details .list-group-item {
-            background-color: #2b3035 !important;
-            border-color: #373b3e !important;
-        }
-
-        [data-bs-theme="dark"] .brigade-details .list-group-item.bg-light {
-            background-color: #343a40 !important;
-        }
-
-        /* Стили для кнопки комментариев */
-        .comment-btn-hover:hover,
-        .comment-btn-hover:hover i {
-            color: white !important;
-            transition: color 0.2s ease-in-out;
-        }
-
-        /* Скрываем кнопку добавления адреса */
-        #addAddress {
-            display: none !important;
-        }
-
-        [data-bs-theme="dark"] .brigade-details .card-header h5 {
-            color: #fff !important;
-        }
     </style>
     <!-- Bootstrap 5 CSS -->
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
@@ -107,6 +18,7 @@
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     <link href="{{ asset('css/table-styles.css') }}" rel="stylesheet">
     <link href="{{ asset('css/dark-theme.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">
 
@@ -138,35 +50,12 @@
 <div id="app-container" class="container-fluid g-0">
     <div id="main-layout" class="row g-0" style="min-height: 100vh;">
         <!-- Left Sidebar with Calendar -->
+
+        <!--
         <div id="sidebar" class="col-auto sidebar p-3">
-            <h4 class="mb-4">Календарь</h4>
-            <div id="datepicker"></div>
-            <div class="mt-3 d-none">
-                <div class="form-group">
-                    <label for="dateInput" class="form-label">Выберите дату:</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="dateInput" placeholder="дд.мм.гггг">
-                        <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
-                    </div>
-                </div>
-            </div>
-            @if (!empty($request_statuses))
-                <h4 class="mt-5 mb-3">Статусы заявок</h4>
-                <div class="d-flex flex-column gap-2">
-                    @foreach ($request_statuses as $status)
-                        <div class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
-                            <div class="me-3 w-7 h-7 rounded-sm"
-                                 style="width: 8rem; height: 2rem; background-color: {{ $status->color ?? '#ccc' }};">
-                            </div>
-                            <span>{{ $status->name }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <p class="text-muted mt-3">Нет доступных статусов заявок.</p>
-            @endif
 
         </div>
+        -->
 
         <!-- Main Content -->
         <div id="main-content" class="main-content">
@@ -269,12 +158,46 @@
                         <!-- max-height: 33vh; overflow: auto; -webkit-overflow-scrolling: touch; -->
 
                         @if ($requests)
-                            <div id="requests-table-container" class="table-responsive mt-4"
-                                 style="border: 1px solid rgb(110, 113, 117); border-radius: 0.375rem;">
-                                <table class="table table-hover align-middle mb-0"
-                                       style="min-width: 992px; margin-bottom: 0;">
+                            <div id="requests-table-container" class="table-responsive mt-4 t-custom">
+                                <div class="pt-4 ps-4 pb-0">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="btn-open-calendar">
+                                        <i class="bi bi-calendar me-1"></i>Календарь
+                                    </button>
+                                </div>
 
+                                <div id="calendar-content" class="max-w-400 p-4 hide-me">
+                                    <div id="datepicker"></div>
 
+                                    <div class="mt-3 d-none">
+                                        <div class="form-group">
+                                            <label for="dateInput" class="form-label">Выберите дату:</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="dateInput" placeholder="дд.мм.гггг">
+                                                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-4"> <!-- #98979a -->
+                                    @if (!empty($request_statuses))
+                                        <!-- <h4 class="mt-5 mb-3">Статусы заявок</h4> -->
+                                        <div class="d-flex flex-column gap-2">
+                                            @foreach ($request_statuses as $status)
+                                                <div class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
+                                                    <div class="me-3 w-7 h-7 rounded-sm"
+                                                         style="width: 8rem; height: 2rem; background-color: {{ $status->color }};">
+                                                    </div>
+                                                    <span>{{ $status->name }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <p class="text-muted mt-3">Нет доступных статусов заявок.</p>
+                                    @endif
+                                </div>
+
+                                <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                     <thead class="bg-dark">
                                     <tr>
                                         <th style="width: 1rem;"></th>
@@ -525,40 +448,6 @@
     </div>
 </div>
 
-<!-- Модальное окно комментариев -->
-<div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке #<span
-                        id="commentsRequestId"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="commentsContainer">
-                <!-- Список комментариев будет загружен здесь -->
-                <div class="text-center my-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Загрузка...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <form id="addCommentForm" class="w-100">
-                    @csrf
-                    <input type="hidden" name="request_id" id="commentRequestId">
-                    <div class="input-group">
-                        <input type="text" name="comment" class="form-control" placeholder="Напишите комментарий..."
-                               required>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send"></i> Отправить
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Divider -->
 <hr class="my-0 border-top border-2 border-opacity-10">
 
@@ -617,6 +506,7 @@
 
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <!-- Bootstrap 5 JS Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -886,6 +776,40 @@
 <script src="{{ asset('js/handler.js') }}"></script>
 
 <!-- Here modals -->
+
+<!-- Модальное окно комментариев -->
+<div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке #<span
+                        id="commentsRequestId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="commentsContainer">
+                <!-- Список комментариев будет загружен здесь -->
+                <div class="text-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <form id="addCommentForm" class="w-100">
+                    @csrf
+                    <input type="hidden" name="request_id" id="commentRequestId">
+                    <div class="input-group">
+                        <input type="text" name="comment" class="form-control" placeholder="Напишите комментарий..."
+                               required>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Отправить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal for displaying brigade details -->
 <div class="modal fade" id="brigadeModal" tabindex="-1" aria-labelledby="brigadeModalLabel" data-bs-backdrop="static">
@@ -1476,6 +1400,7 @@
 
 <!-- Brigades Script -->
 <script src="{{ asset('js/brigades.js') }}"></script>
+<script src="{{ asset('js/calendar.js') }}"></script>
 </body>
 
 </html>

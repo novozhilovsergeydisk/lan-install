@@ -24,7 +24,7 @@ function loadBrigades() {
 }
 
 function showCreateBrigadeModal() {
-    console.log('Showing create brigade modal');
+    console.log('Showing create brigade modal (tab)');
     const modal = new bootstrap.Modal(document.getElementById('brigadeModal'));
     modal.show();
 }
@@ -37,16 +37,16 @@ function saveBrigade() {
         utils.showAlert('Пожалуйста, введите название бригады', 'danger');
         return;
     }
-    
+
     console.log('New brigade:', brigadeName);
-    
+
     // Close the modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('brigadeModal'));
     modal.hide();
-    
+
     // Show success message
     utils.showAlert(`Бригада "${brigadeName}" будет создана`, 'success');
-    
+
     // In the future, we'll refresh the brigades list here
     // loadBrigades();
 }
