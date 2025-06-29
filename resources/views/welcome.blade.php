@@ -921,6 +921,16 @@
                             </select>
                         </div>
                     </div>
+
+                    <div class="mb-3">
+                        <h6>Комментарий к заявке</h6>
+                        <div class="mb-3">
+                            <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Введите комментарий к заявке" required minlength="3" maxlength="1000"></textarea>
+                            <div class="invalid-feedback">
+                                Пожалуйста, введите комментарий (от 3 до 1000 символов)
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -1108,11 +1118,50 @@
         }
 
         // Handle form submission
+        // Function to validate the form
+        function validateForm(form) {
+            // Check all required fields
+            let isValid = true;
+            const requiredFields = form.querySelectorAll('[required]');
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else if (field.id === 'comment' && (field.value.length < 3 || field.value.length > 1000)) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            return isValid;
+        }
+
+        // Add real-time validation for comment field
+        document.addEventListener('DOMContentLoaded', function() {
+            const commentField = document.getElementById('comment');
+            if (commentField) {
+                commentField.addEventListener('input', function() {
+                    if (this.value.length < 3 || this.value.length > 1000) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            }
+        });
+
         async function submitRequestForm() {
             const form = document.getElementById('newRequestForm');
             const submitBtn = document.getElementById('submitRequest');
 
-            // Валидация других обязательных полей (если есть)
+            // Validate form
+            if (!validateForm(form)) {
+                utils.showAlert('Пожалуйста, заполните все обязательные поля корректно', 'warning');
+                return;
+            }
             const requiredFields = form.querySelectorAll('[required]');
             let isValid = true;
 
@@ -1136,6 +1185,12 @@
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Создание...';
 
                 const formData = new FormData(form);
+                
+                // Add comment to form data if exists
+                const comment = document.getElementById('comment').value.trim();
+                if (comment) {
+                    formData.append('comment', comment);
+                }
                 const data = {};
 
                 // Convert FormData to object

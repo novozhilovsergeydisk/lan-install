@@ -891,17 +891,61 @@ class HomeController extends Controller
                 ], 500);
             }
 
-            // 2. Создаем комментарий, только если он не пустой
+            // 3. Создаем заявку
+            $requestData = [
+                'client_id' => $clientId,
+                'request_type_id' => $validated['request_type_id'],
+                'status_id' => $validated['status_id'],
+                'execution_date' => $validated['execution_date'],
+                'execution_time' => $validated['execution_time'],
+                'brigade_id' => $validated['brigade_id'] ?? null,
+                'operator_id' => $validated['operator_id'],
+                'created_at' => now(),
+                'updated_at' => now()
+            ];
+            
+            // Генерируем номер заявки
+            $countQuery = DB::table('requests');
+            $count = $countQuery->count() + 1;
+            $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $requestData['number'] = $requestNumber;
+            $requestData['request_date'] = now()->toDateString();
+            
+            // Вставляем заявку с помощью DB::insert и получаем ID
+            $result = DB::select(
+                'INSERT INTO requests (client_id, request_type_id, status_id, execution_date, execution_time, brigade_id, operator_id, number, request_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
+                [
+                    $clientId,
+                    $validated['request_type_id'],
+                    $validated['status_id'],
+                    $validated['execution_date'],
+                    $validated['execution_time'] ?? null,
+                    $validated['brigade_id'] ?? null,
+                    $validated['operator_id'],
+                    $requestNumber,
+                    now()->toDateString()
+                ]
+            );
+
+            \Log::info('Результат вставки заявки:', ['result' => $result, 'type' => gettype($result)]);
+
+            if (empty($result)) {
+                throw new \Exception('Не удалось создать заявку');
+            }
+
+            $requestId = $result[0]->id;
+            \Log::info('Создана заявка с ID:', ['id' => $requestId]);
+            
+            // 4. Создаем комментарий, только если он не пустой
             $commentText = trim($validated['comment'] ?? '');
             $newCommentId = null;
 
             if (!empty($commentText)) {
                 try {
-                    // Вставляем комментарий с правильным именем колонки 'comment'
-                    $commentSql = "INSERT INTO comments (comment, created_at, updated_at) VALUES (?, ?, ?) RETURNING id";
+                    // Вставляем комментарий без поля updated_at
+                    $commentSql = "INSERT INTO comments (comment, created_at) VALUES (?, ?) RETURNING id";
                     $bindings = [
                         $commentText,
-                        now()->toDateTimeString(),
                         now()->toDateTimeString()
                     ];
 
@@ -917,68 +961,20 @@ class HomeController extends Controller
                     \Log::info('Создан комментарий с ID:', ['id' => $newCommentId]);
                     
                     // Создаем связь между заявкой и комментарием
-                    if ($requestId && $newCommentId) {
-                        try {
-                            DB::table('request_comments')->insert([
-                                'request_id' => $requestId,
-                                'comment_id' => $newCommentId,
-                                'created_at' => now()->toDateTimeString()
-                            ]);
-                            \Log::info('Связь между заявкой и комментарием создана', [
-                                'request_id' => $requestId,
-                                'comment_id' => $newCommentId
-                            ]);
-                        } catch (\Exception $e) {
-                            \Log::warning('Не удалось создать связь комментария с заявкой: ' . $e->getMessage());
-                            // Продолжаем выполнение, так как это не критичная ошибка
-                        }
-                    }
+                    DB::table('request_comments')->insert([
+                        'request_id' => $requestId,
+                        'comment_id' => $newCommentId,
+                        'created_at' => now()->toDateTimeString()
+                    ]);
+                    
+                    \Log::info('Связь между заявкой и комментарием создана', [
+                        'request_id' => $requestId,
+                        'comment_id' => $newCommentId
+                    ]);
                 } catch (\Exception $e) {
                     \Log::error('Ошибка при создании комментария: ' . $e->getMessage());
                     // Продолжаем выполнение, так как комментарий не является обязательным
                 }
-            }
-
-            // Код вставки комментария и связывания с заявкой уже выполнен выше
-
-            // 3. Создаем заявку
-            $requestData = [
-                'client_id' => $clientId,
-                'request_type_id' => $validated['request_type_id'],
-                'status_id' => $validated['status_id'],
-                'execution_date' => $validated['execution_date'],
-                'execution_time' => $validated['execution_time'],
-                'brigade_id' => $validated['brigade_id'] ?? null,
-                'operator_id' => $validated['operator_id'],
-                'created_at' => now(),
-                'updated_at' => now()
-            ];
-            
-            // Логируем SQL-запрос подсчета заявок
-            $countQuery = DB::table('requests');
-            $count = $countQuery->count() + 1;
-            \Log::info('SQL Query:', [
-                'query' => $countQuery->toSql(),
-                'bindings' => $countQuery->getBindings()
-            ]);
-            
-            // Генерируем номер заявки
-            $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
-            
-            $requestData['number'] = $requestNumber;
-            
-            // Удаляем поля created_at и updated_at, если они есть
-            unset($requestData['created_at'], $requestData['updated_at']);
-            
-            // Добавляем дату создания заявки
-            $requestData['request_date'] = now()->toDateString();
-            
-            // Вставляем заявку
-            $requestId = DB::table('requests')->insertGetId($requestData);
-            \Log::info('Создана заявка с ID:', ['id' => $requestId]);
-            
-            if (!$requestId) {
-                throw new \Exception('Не удалось создать заявку');
             }
 
             // 5. Связываем существующий адрес с заявкой
