@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления заявками</title>
     <style>
-
+        /* Стили для выпадающего списка адресов */
     </style>
     <!-- Bootstrap 5 CSS -->
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
@@ -856,7 +856,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 hide-me">
                         <h6>Детали заявки</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -919,6 +919,20 @@
                                 <i class="bi bi-plus-circle"></i> Добавить адрес
                             </button>
                         </div>
+
+                        <div id="addressesListContainer">
+                            <div class="address-entry mb-3">
+                                <div class="row g-2">
+                                    <div class="col-md-10">
+                                        <select class="form-select mb-2" id="addresses_id" name="addresses_id" required>
+                                            <option value="" disabled selected>Выберите адрес</option>
+                                            <!-- Will be populated by JavaScript -->
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="addressesContainer">
                             <div class="address-entry mb-3">
                                 <div class="row g-2">

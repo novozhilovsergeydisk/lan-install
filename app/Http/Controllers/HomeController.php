@@ -8,6 +8,31 @@ use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
+    /**
+     * Get list of addresses for select element
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAddresses()
+    {
+        $sql = "
+            SELECT 
+                a.id,
+                CONCAT(a.street, ', ', a.houses, ' [', CASE WHEN a.district = 'Не указан' THEN 'Район не указан' ELSE a.district END, '][', c.name, ']') as full_address,
+                a.street,
+                a.houses,
+                c.name as city,
+                a.district
+            FROM addresses a
+            JOIN cities c ON a.city_id = c.id
+            ORDER BY a.street, a.houses
+        ";
+        
+        $addresses = DB::select($sql);
+            
+        return response()->json($addresses);
+    }
+    
     public function index()
     {
         // Получаем текущего пользователя
