@@ -734,9 +734,8 @@ class HomeController extends Controller
      */
     public function storeRequest(Request $request)
     {
-        // Временно отключаем транзакцию для отладки
-        // DB::beginTransaction();
-
+        DB::beginTransaction();
+        $existingClient = false; // Инициализируем переменную
         try {
             // Подробное логирование входящих данных
             \Log::info('=== НАЧАЛО ОБРАБОТКИ ЗАПРОСА ===');
@@ -745,15 +744,20 @@ class HomeController extends Controller
             \Log::info('Данные заявки:', $request->input('request', []));
             \Log::info('Список адресов:', $request->input('addresses', []));
 
-            // Проверяем наличие всех необходимых данных
-            if (!$request->has('client') || !$request->has('request') || !$request->has('addresses')) {
+            // Проверяем наличие обязательных полей запроса
+            if (!$request->has('request') || !$request->has('addresses')) {
                 throw new \Exception('Отсутствуют обязательные поля в запросе');
+            }
+
+            // Инициализируем пустой массив клиента, если его нет
+            if (!$request->has('client')) {
+                $request->merge(['client' => []]);
             }
 
             // Валидация входных данных
             $validated = $request->validate([
-                'client.fio' => 'required|string|max:255',
-                'client.phone' => 'required|string|max:20',
+                'client.fio' => 'nullable|string|max:255',
+                'client.phone' => 'nullable|string|max:20',
                 'request.request_type_id' => 'required|exists:request_types,id',
                 'request.status_id' => 'required|exists:request_statuses,id',
                 'request.comment' => 'nullable|string',
@@ -766,29 +770,53 @@ class HomeController extends Controller
                 'addresses.*.street' => 'required|string|max:255',
                 'addresses.*.house' => 'required|string|max:20'
             ]);
+            
+            // Логируем валидированные данные для отладки
+            \Log::info('Валидированные данные:', $validated);
 
-            // 1. Проверяем существующего клиента
-            $clientData = $validated['client'];
-            $phone = preg_replace('/[^0-9]/', '', $clientData['phone']);  // Нормализуем номер телефона
+            // 1. Обработка данных клиента (если они есть)
+            $clientId = null;
+            
+            // Проверяем, есть ли данные клиента в запросе
+            if (isset($validated['client']) && is_array($validated['client'])) {
+                $clientData = $validated['client'];
+                $phone = !empty($clientData['phone']) ? preg_replace('/[^0-9]/', '', $clientData['phone']) : '';
+                $fio = $clientData['fio'] ?? '';
 
-            // Ищем существующего клиента по номеру телефона
-            $existingClient = DB::selectOne(
-                'SELECT id FROM clients WHERE phone = ? OR phone LIKE ?',
-                [$phone, '%' . $phone]
-            );
+                // Если указан телефон или ФИО, обрабатываем клиента
+                if (!empty($phone) || !empty($fio)) {
+                    // Ищем существующего клиента по номеру телефона, если номер указан
+                    if (!empty($phone)) {
+                        $existingClient = DB::selectOne(
+                            'SELECT id FROM clients WHERE phone = ? OR phone LIKE ? LIMIT 1',
+                            [$phone, '%' . $phone]
+                        );
 
-            if ($existingClient) {
-                $clientId = $existingClient->id;
-                \Log::info('Найден существующий клиент с ID:', ['id' => $clientId]);
-            } else {
-                // Создаем нового клиента, если не нашли существующего
-                $clientSql = "INSERT INTO clients (fio, phone) VALUES ('"
-                    . addslashes($clientData['fio']) . "', '"
-                    . addslashes($phone) . "') RETURNING id";
+                        if ($existingClient) {
+                            $clientId = $existingClient->id;
+                            \Log::info('Найден существующий клиент с ID:', ['id' => $clientId]);
+                            
+                            // Обновляем ФИО клиента, если оно изменилось
+                            if (!empty($fio)) {
+                                DB::update(
+                                    'UPDATE clients SET fio = ? WHERE id = ?',
+                                    [$fio, $clientId]
+                                );
+                            }
+                        }
+                    }
 
-                \Log::info('SQL для вставки клиента:', ['sql' => $clientSql]);
-                $clientId = DB::selectOne($clientSql)->id;
-                \Log::info('Создан новый клиент с ID:', ['id' => $clientId]);
+                    // Если клиент не найден и есть данные для создания
+                    if (!$clientId && (!empty($fio) || !empty($phone))) {
+                        $clientSql = "INSERT INTO clients (fio, phone) VALUES ('"
+                            . addslashes($fio) . "', '"
+                            . addslashes($phone) . "') RETURNING id";
+
+                        \Log::info('SQL для вставки клиента:', ['sql' => $clientSql]);
+                        $clientId = DB::selectOne($clientSql)->id;
+                        \Log::info('Создан новый клиент с ID:', ['id' => $clientId]);
+                    }
+                }
             }
 
             // 2. Создаем комментарий, только если он не пустой
@@ -992,15 +1020,15 @@ class HomeController extends Controller
             // Формируем информативный ответ
             $response = [
                 'success' => true,
-                'message' => $existingClient
-                    ? 'Использован существующий клиент'
-                    : 'Создан новый клиент',
-                'client' => [
+                'message' => isset($clientId) 
+                    ? (isset($existingClient) && $existingClient ? 'Использован существующий клиент' : 'Создан новый клиент')
+                    : 'Заявка создана без привязки к клиенту',
+                'client' => isset($clientId) ? [
                     'id' => $clientId,
-                    'fio' => $clientData['fio'],
-                    'phone' => $clientData['phone'],
-                    'is_new' => !$existingClient
-                ],
+                    'fio' => $clientData['fio'] ?? null,
+                    'phone' => $clientData['phone'] ?? null,
+                    'is_new' => !(isset($existingClient) && $existingClient)
+                ] : null,
                 'request' => [
                     'id' => $requestId,
                     'number' => $requestNumber,

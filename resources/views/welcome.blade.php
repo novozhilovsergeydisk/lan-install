@@ -204,7 +204,7 @@
 
                                 @foreach ($requests as $request)
                                     @php
-                                        $formattedDate = $request->request_date 
+                                        $formattedDate = $request->request_date
                                             ? \Carbon\Carbon::parse($request->request_date)->format('d.m.Y, H:i')
                                             : ($request->created_at ? \Carbon\Carbon::parse($request->created_at)->format('d.m.Y, H:i') : 'Не указана');
                                         $requestNumber = 'REQ-' . \Carbon\Carbon::parse($request->request_date ?? $request->created_at)->format('dmY, H:i') . '-' . str_pad($request->id, 4, '0', STR_PAD_LEFT);
@@ -846,12 +846,12 @@
                             <div class="col-md-6">
                                 <label for="clientName" class="form-label">Контактное лицо <span
                                         class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="clientName" name="client_name" required>
+                                <input type="text" class="form-control" id="clientName" name="client_name">
                             </div>
                             <div class="col-md-6">
                                 <label for="clientPhone" class="form-label">Телефон <span
                                         class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="clientPhone" name="client_phone" required>
+                                <input type="tel" class="form-control" id="clientPhone" name="client_phone">
                             </div>
                         </div>
                     </div>
@@ -1265,8 +1265,22 @@
             const form = document.getElementById('newRequestForm');
             const submitBtn = document.getElementById('submitRequest');
 
-            if (!form.checkValidity()) {
+            // Валидация других обязательных полей (если есть)
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
                 form.classList.add('was-validated');
+                utils.showAlert('Пожалуйста, заполните все обязательные поля', 'danger');
                 return;
             }
 
@@ -1306,10 +1320,6 @@
                 // Создаем объект с данными для отправки
                 const requestData = {
                     _token: data._token,
-                    client: {
-                        fio: data.client_name,
-                        phone: data.client_phone
-                    },
                     request: {
                         request_type_id: data.request_type_id,
                         status_id: data.status_id,
@@ -1321,6 +1331,14 @@
                     },
                     addresses: []
                 };
+
+                // Добавляем данные клиента, только если они заполнены
+                if (data.client_name || data.client_phone) {
+                    requestData.client = {
+                        fio: data.client_name || '',
+                        phone: data.client_phone || ''
+                    };
+                }
 
                 // Добавляем адреса
                 for (let i = 0; i < cityIds.length; i++) {
