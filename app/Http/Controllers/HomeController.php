@@ -116,7 +116,7 @@ class HomeController extends Controller
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
             WHERE r.request_date::date = CURRENT_DATE
-            ORDER BY r.request_date DESC
+            ORDER BY r.id DESC
         ');
 
         //        dd($requestByDate);
