@@ -891,14 +891,13 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 hide-me">
                         <h6>Назначение</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="brigade" class="form-label">Бригада <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-select" id="brigade" name="brigade_id" required>
-                                    <option value="" disabled selected>Выберите бригаду</option>
+                                <label for="brigade" class="form-label">Бригада</label>
+                                <select class="form-select" id="brigade" name="brigade_id">
+                                    <option value="" selected>Не выбрано</option>
                                     <!-- Will be populated by JavaScript -->
                                 </select>
                             </div>
@@ -1268,7 +1267,7 @@
             // Валидация других обязательных полей (если есть)
             const requiredFields = form.querySelectorAll('[required]');
             let isValid = true;
-            
+
             requiredFields.forEach(field => {
                 if (!field.value.trim()) {
                     field.classList.add('is-invalid');
@@ -1277,7 +1276,7 @@
                     field.classList.remove('is-invalid');
                 }
             });
-            
+
             if (!isValid) {
                 form.classList.add('was-validated');
                 utils.showAlert('Пожалуйста, заполните все обязательные поля', 'danger');

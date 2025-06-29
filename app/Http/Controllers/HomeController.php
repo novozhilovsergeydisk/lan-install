@@ -763,7 +763,7 @@ class HomeController extends Controller
                 'request.comment' => 'nullable|string',
                 'request.execution_date' => 'required|date',
                 'request.execution_time' => 'nullable|date_format:H:i',
-                'request.brigade_id' => 'required|exists:brigades,id',
+                'request.brigade_id' => 'nullable|exists:brigades,id',
                 'request.operator_id' => 'required|exists:employees,id',
                 'addresses' => 'required|array|min:1',
                 'addresses.*.city_id' => 'required|exists:cities,id',
