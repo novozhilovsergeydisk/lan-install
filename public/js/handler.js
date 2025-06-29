@@ -32,7 +32,7 @@ function applyFilters() {
         date: filterState.date
     };
 
-    console.log({ 'filterState.date = ': filterState.date });
+    // Логи фильтров отключены
 
     // Если выбрана дата, делаем запрос на сервер
     if (filterState.date) {
@@ -43,7 +43,7 @@ function applyFilters() {
         // Формируем URL с отформатированной датой
         const apiUrl = `/api/requests/date/${formattedDate}`;
 
-        console.log('Отправка запроса на:', apiUrl);
+        // Логи запросов отключены
 
         fetch(apiUrl, {
             method: 'GET',
@@ -56,7 +56,7 @@ function applyFilters() {
         .then(async response => {
             const data = await response.json().catch(() => ({}));
 
-            console.log('Ответ сервера: строка 62:', data);
+            // Логи ответов отключены
 
             if (!response.ok) {
                 const error = new Error(data.message || `Ошибка HTTP: ${response.status}`);
@@ -68,23 +68,21 @@ function applyFilters() {
             return data;
         })
         .then(data => {
-            console.log('Ответ сервера:', data);
+            // Логи ответов отключены
             if (data) {
                 if (data.success === false) {
-                    console.log('data.message = ', data.message);
+                    // Логи сообщений отключены
                     showAlert(data.message || 'Ошибка при загрузке заявок', 'danger');
                     return;
                 }
 
-                console.log('Получены данные заявок:', data);
+                // Логи данных заявок отключены
 
                 // Логируем первую заявку для отладки
                 if (data.data && data.data.length > 0) {
-                    console.log('Первая заявка:', data.data[0]);
-                    console.log('Доступные поля:', Object.keys(data.data[0]));
-                    console.log('operator_name:', data.data[0].operator_name);
+                    // Отладочные логи полей заявки отключены
                 } else {
-                    console.log('Нет данных о заявках');
+                    console.info('На выбранную дату заявок нет');
                 }
 
                 const tbody = document.querySelector('table.table-hover tbody');
@@ -109,7 +107,7 @@ function applyFilters() {
                     }
                     data.data.forEach(request => {
                         // Отладочная информация
-                        console.log('Заявка:', request);
+                        // Логи заявок отключены
 
                         // Форматируем дату с проверкой на валидность
                         let formattedDate = 'Не указана';
@@ -117,7 +115,7 @@ function applyFilters() {
                         try {
                             // Пробуем использовать request_date, если он есть, иначе created_at
                             const dateStr = request.request_date || request.created_at;
-                            console.log('Исходная дата:', dateStr);
+                            // Логи дат отключены
 
                             if (dateStr) {
                                 const date = new Date(dateStr);
@@ -178,8 +176,7 @@ function applyFilters() {
                         row.className = 'align-middle status-row';
                         row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
                         // Отладочный вывод
-                        console.log('Request data:', request);
-                        console.log('Comments type:', typeof request.comments, 'Value:', request.comments);
+                        // Логи данных запроса отключены
                         
                         row.setAttribute('data-request-id', request.id);
 
@@ -271,7 +268,7 @@ function applyFilters() {
                                     <button type="button" class="btn btn-sm btn-outline-primary p-1 comment-btn" data-bs-toggle="modal" data-bs-target="#commentsModal" data-request-id="${request.id}">
                                         <i class="bi bi-chat-left-text me-1"></i>Комментарий
                                     </button>
-                                    <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn" onclick="console.log('Добавить фотоотчет', ${request.id})">
+                                    <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
                                         <i class="bi bi-camera me-1"></i>Фотоотчет
                                     </button>
                                 </div>
@@ -302,7 +299,7 @@ function applyFilters() {
                 if (countElement) {
                     countElement.textContent = data.count || 0;
                 }
-                showAlert(`Загружено ${data.count} заявок`, 'success');
+                showAlert(`Загружено заявок: ${data.count}`, 'success');
             }
         })
         .catch(error => {
@@ -312,7 +309,7 @@ function applyFilters() {
         });
     }
 
-    console.log('Применены фильтры:', activeFilters);
+    // Логи фильтров отключены
 }
 
 // Функция для обновления счетчика заявок
@@ -325,7 +322,7 @@ function updateRequestsCount(count) {
 
 // Функция для логирования кликов
 function logButtonClick(buttonId, buttonText) {
-    console.log(`Клик по кнопке: ${buttonText} (ID: ${buttonId})`);
+    // Логи кликов отключены
 }
 
 // Функция для отображения ошибок в модальном окне
@@ -389,8 +386,7 @@ function initBrigadeModal(modalId) {
 
 // Обработчики для кнопок
 // Выводим в консоль данные при загрузке страницы
-console.log('Данные заявок при загрузке страницы:');
-console.log(window.requestsData || 'Данные не загружены');
+// Логи загрузки страницы отключены
 
 document.addEventListener('DOMContentLoaded', function () {
     // Кнопка выхода
@@ -467,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (dateInput) dateInput.value = DATEPICKER_CLEAR_VALUE;
             }
 
-            console.log('Все фильтры сброшены', filterState);
+            // Логи сброса фильтров отключены
             applyFilters();
         });
     }
@@ -496,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     filterState[type] = filterState[type].filter(item => item !== filterValue);
                 }
 
-                console.log(`Фильтр "${labelText}" ${this.checked ? 'включен' : 'отключен'}`, filterState);
+                // Логи состояния фильтров отключены
                 applyFilters();
             });
         }
@@ -515,14 +511,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }).on('changeDate', function (e) {
                 const selectedDate = e.format('dd.mm.yyyy');
                 filterState.date = selectedDate;
-                console.log(`Выбрана дата: ${selectedDate}`);
+                // Логи выбора даты отключены
                 applyFilters();
             });
         } else {
             // Если плагин не загружен, используем стандартный input
             datepicker.addEventListener('change', function () {
                 filterState.date = this.value;
-                console.log(`Выбрана дата: ${this.value}`);
+                // Логи выбора даты отключены
                 applyFilters();
             });
         }
@@ -535,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (button && calendarContent) {
         button.addEventListener('click', function () {
-            console.log('Display', calendarContent.style.display)
+            // Логи отображения отключены
 
             // Переключаем видимость
             if (calendarContent.classList.contains('hide-me')) {
