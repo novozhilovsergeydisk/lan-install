@@ -39,12 +39,12 @@ function applyFilters() {
         // Конвертируем дату из DD.MM.YYYY в YYYY-MM-DD
         const [day, month, year] = filterState.date.split('.');
         const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        
+
         // Формируем URL с отформатированной датой
         const apiUrl = `/api/requests/date/${formattedDate}`;
-        
+
         console.log('Отправка запроса на:', apiUrl);
-        
+
         fetch(apiUrl, {
             method: 'GET',
             headers: {
@@ -55,23 +55,38 @@ function applyFilters() {
         })
         .then(async response => {
             const data = await response.json().catch(() => ({}));
-            
+
+            console.log('Ответ сервера: строка 62:', data);
+
             if (!response.ok) {
                 const error = new Error(data.message || `Ошибка HTTP: ${response.status}`);
                 error.response = response;
                 error.data = data;
                 throw error;
             }
-            
+
             return data;
         })
         .then(data => {
             console.log('Ответ сервера:', data);
-            if (data && data.success === false) {
-                showAlert(data.message || 'Ошибка при загрузке заявок', 'danger');
-            } else {
-                console.log('Получены заявки по дате:', data);
-                // Находим основную таблицу с заявками по классу
+            if (data) {
+                if (data.success === false) {
+                    console.log('data.message = ', data.message);
+                    showAlert(data.message || 'Ошибка при загрузке заявок', 'danger');
+                    return;
+                }
+
+                console.log('Получены данные заявок:', data);
+
+                // Логируем первую заявку для отладки
+                if (data.data && data.data.length > 0) {
+                    console.log('Первая заявка:', data.data[0]);
+                    console.log('Доступные поля:', Object.keys(data.data[0]));
+                    console.log('operator_name:', data.data[0].operator_name);
+                } else {
+                    console.log('Нет данных о заявках');
+                }
+
                 const tbody = document.querySelector('table.table-hover tbody');
                 if (!tbody) {
                     console.error('Не найден элемент tbody для вставки данных');
@@ -95,7 +110,7 @@ function applyFilters() {
                     data.data.forEach(request => {
                         // Отладочная информация
                         console.log('Заявка:', request);
-                        
+
                         // Форматируем дату с проверкой на валидность
                         let formattedDate = 'Не указана';
                         let requestDate = '';
@@ -103,7 +118,7 @@ function applyFilters() {
                             // Пробуем использовать request_date, если он есть, иначе created_at
                             const dateStr = request.request_date || request.created_at;
                             console.log('Исходная дата:', dateStr);
-                            
+
                             if (dateStr) {
                                 const date = new Date(dateStr);
                                 if (!isNaN(date.getTime())) {
@@ -115,7 +130,7 @@ function applyFilters() {
                                         minute: '2-digit',
                                         hour12: false
                                     });
-                                    
+
                                     // Форматируем дату для номера заявки
                                     requestDate = [
                                         String(date.getDate()).padStart(2, '0'),
@@ -129,7 +144,7 @@ function applyFilters() {
                         }
 
                         // Формируем номер заявки
-                        const requestNumber = request.number || 
+                        const requestNumber = request.number ||
                             `REQ-${requestDate}-${String(request.id).padStart(4, '0')}`;
 
                         // Формируем адрес
@@ -144,14 +159,14 @@ function applyFilters() {
                             brigadeMembers = request.brigade_members
                                 .map(member => `<div>${member.name || member}</div>`)
                                 .join('');
-                            
+
                             brigadeMembers += `
-                                <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn" 
-                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;" 
-                                   onmouseover="this.style.textDecoration='underline'" 
-                                   onmouseout="this.style.textDecoration='none'" 
-                                   data-bs-toggle="modal" 
-                                   data-bs-target="#brigadeModal" 
+                                <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
+                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
+                                   onmouseover="this.style.textDecoration='underline'"
+                                   onmouseout="this.style.textDecoration='none'"
+                                   data-bs-toggle="modal"
+                                   data-bs-target="#brigadeModal"
                                    data-brigade-id="${request.brigade_id || ''}">
                                     подробнее...
                                 </a>`;
@@ -162,6 +177,10 @@ function applyFilters() {
                         const row = document.createElement('tr');
                         row.className = 'align-middle status-row';
                         row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
+                        // Отладочный вывод
+                        console.log('Request data:', request);
+                        console.log('Comments type:', typeof request.comments, 'Value:', request.comments);
+                        
                         row.setAttribute('data-request-id', request.id);
 
                         row.innerHTML = `
@@ -174,21 +193,56 @@ function applyFilters() {
                                 <div class="text-dark" style="font-size: 0.8rem;">${requestNumber}</div>
                             </td>
                             <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
-                                ${request.comment ? `
-                                    <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="${request.comment.replace(/"/g, '&quot;')}">
-                                        ${request.comment.length > 50 ? request.comment.substring(0, 50) + '...' : request.comment}
-                                    </div>
-                                ` : ''}
-                                ${request.comments_count > 0 ? `
-                                    <div class="mt-1">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary view-comments-btn p-1" data-bs-toggle="modal" data-bs-target="#commentsModal" data-request-id="${request.id}" style="position: relative; z-index: 1;">
-                                            <i class="bi bi-chat-left-text me-1"></i>Все комментарии
-                                            <span class="badge bg-primary rounded-pill ms-1">
-                                                ${request.comments_count}
-                                            </span>
-                                        </button>
-                                    </div>
-                                ` : ''}
+                                ${(() => {
+                                    if (!request.comments) return '---';
+                                    
+                                    // Если comments - это массив, берем последний комментарий (новейший)
+                                    let commentText = '';
+                                    if (Array.isArray(request.comments) && request.comments.length > 0) {
+                                        // Берем последний элемент массива (новейший комментарий)
+                                        const lastComment = request.comments[request.comments.length - 1];
+                                        commentText = lastComment.text || lastComment.comment || lastComment.content || JSON.stringify(lastComment);
+                                    } 
+                                    // Если comments - это объект, но не массив
+                                    else if (typeof request.comments === 'object' && request.comments !== null) {
+                                        commentText = request.comments.text || request.comments.comment || request.comments.content || JSON.stringify(request.comments);
+                                    } 
+                                    // Если comments - это строка
+                                    else if (typeof request.comments === 'string') {
+                                        commentText = request.comments;
+                                    } else {
+                                        return '---';
+                                    }
+                                    
+                                    // Экранируем кавычки для атрибута title
+                                    const escapedComment = String(commentText).replace(/"/g, '&quot;');
+                                    const displayText = commentText.length > 50 
+                                        ? commentText.substring(0, 50) + '...' 
+                                        : commentText;
+                                        
+                                    return `
+                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="${escapedComment}">
+                                            ${displayText}
+                                        </div>`;
+                                })()}
+                                <!-- Кнопка комментариев -->
+                                <div class="mt-1">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#commentsModal"
+                                            data-request-id="${request.id}"
+                                            style="position: relative; z-index: 1;"
+                                            ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ? '' : 'disabled'}>
+                                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                                        ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ?
+                                            `<span class="badge bg-primary rounded-pill ms-1">
+                                                ${request.comments_count || (request.comments ? request.comments.length : 0)}
+                                            </span>` :
+                                            ''
+                                        }
+                                    </button>
+                                </div>
                             </td>
                             <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
                                 <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
@@ -199,7 +253,7 @@ function applyFilters() {
                                 </small>
                             </td>
                             <td>
-                                <span class="brigade-lead-text">${request.operator_name || request.user?.name || 'Не указан'}</span><br>
+                                <span class="brigade-lead-text">${request.operator_name || 'Не указан'}</span><br>
                                 <span class="brigade-lead-text">${formattedDate}</span>
                             </td>
                             <td>
@@ -242,7 +296,7 @@ function applyFilters() {
 
                 // Обновляем счетчик загруженных заявок
                 updateRequestsCount(Array.isArray(data.data) ? data.data.length : 0);
-                
+
                 // Обновляем отображение счетчика
                 const countElement = document.querySelector('.requests-count');
                 if (countElement) {
@@ -252,7 +306,7 @@ function applyFilters() {
             }
         })
         .catch(error => {
-            console.error('Ошибка при загрузке заявок:', error);
+            console.error('Ошибка при загрузке заявок 2:', error);
             const errorMessage = error.data?.message || error.message || 'Неизвестная ошибка';
             showAlert(`Ошибка при загрузке заявок: ${errorMessage}`, 'danger');
         });
@@ -334,6 +388,10 @@ function initBrigadeModal(modalId) {
 }
 
 // Обработчики для кнопок
+// Выводим в консоль данные при загрузке страницы
+console.log('Данные заявок при загрузке страницы:');
+console.log(window.requestsData || 'Данные не загружены');
+
 document.addEventListener('DOMContentLoaded', function () {
     // Кнопка выхода
     const logoutButton = document.getElementById(FILTER_IDS.LOGOUT_BUTTON);

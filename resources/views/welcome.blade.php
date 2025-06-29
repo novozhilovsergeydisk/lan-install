@@ -276,7 +276,7 @@
 
                                         <!-- Дата выполнения -->
                                         <td>
-                                            <span class="brigade-lead-text">{{ $request->user->name ?? 'Не указан' }}</span><br>
+                                            <span class="brigade-lead-text">{{ $request->operator_name ?? 'Не указан' }}</span><br>
                                             <span class="brigade-lead-text">{{ $formattedDate }}</span>
                                         </td>
 
@@ -434,7 +434,7 @@
                 <div class="card mt-4">
                     <div class="card-body">
                         <h5 class="card-title">Выберите дату в календаре</h5>
-                        <p class="card-text">Используйте календарь слева для выбора даты.</p>
+                        <!-- <p class="card-text">Используйте календарь слева для выбора даты.</p> -->
                         <p>Выбранная дата: <span id="selectedDate" class="fw-bold">не выбрана</span></p>
                     </div>
                 </div>
@@ -1394,6 +1394,11 @@
 </script>
 
 <!-- Brigades Script -->
+<script>
+    // Передаем данные заявок в JavaScript
+    window.requestsData = @json($requests);
+    console.log('Данные заявок переданы в JavaScript:', window.requestsData);
+</script>
 <script src="{{ asset('js/brigades.js') }}"></script>
 <script src="{{ asset('js/calendar.js') }}"></script>
 </body>
