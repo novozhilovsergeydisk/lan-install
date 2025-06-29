@@ -29,46 +29,32 @@ async function submitRequestForm() {
         }
     });
 
-    const requestData = {
-        _token: data._token,
-        client: {
-            fio: data.client_name,
-            phone: data.client_phone
-        },
-        request: {
-            request_type_id: data.request_type_id,
-            status_id: data.status_id,
-            comment: data.comment || '',
-            execution_date: data.execution_date || null,
-            execution_time: data.execution_time || null,
-            brigade_id: data.brigade_id || null,
-            operator_id: data.operator_id || null
-        },
-        addresses: []
-    };
-
-    const cityIds = Array.isArray(data['city_id[]']) ? data['city_id[]'] : [data['city_id[]']];
-    const streets = Array.isArray(data['street[]']) ? data['street[]'] : [data['street[]']];
-    const houses = Array.isArray(data['house[]']) ? data['house[]'] : [data['house[]']];
-    const addressComments = Array.isArray(data['address_comment[]']) ? data['address_comment[]'] : [data['address_comment[]']];
-
-    for (let i = 0; i < cityIds.length; i++) {
-        if (cityIds[i] && streets[i] && houses[i]) {
-            requestData.addresses.push({
-                city_id: cityIds[i],
-                street: streets[i],
-                house: houses[i],
-                comment: addressComments[i] || ''
-            });
-        }
-    }
-
-    if (requestData.addresses.length === 0) {
-        showAlert('Необходимо указать хотя бы один адрес', 'danger');
+    const addressId = document.getElementById('addresses_id').value;
+    
+    if (!addressId) {
+        showAlert('Пожалуйста, выберите адрес из списка', 'danger');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Создать заявку';
         return;
     }
+
+    // Формируем данные для отправки
+    const requestData = {
+        _token: data._token,
+        client_name: data.client_name || '',
+        client_phone: data.client_phone || '',
+        request_type_id: data.request_type_id,
+        status_id: data.status_id,
+        comment: data.comment || '',
+        execution_date: data.execution_date || null,
+        execution_time: data.execution_time || null,
+        brigade_id: data.brigade_id || null,
+        operator_id: data.operator_id || null,
+        address_id: addressId
+    };
+
+    // Логируем данные перед отправкой
+    console.log('Отправляемые данные:', requestData);
 
     try {
         const result = await postData('/api/requests', requestData);
@@ -88,4 +74,5 @@ async function submitRequestForm() {
     }
 }
 
-export { submitRequestForm };
+// Делаем функцию доступной глобально
+window.submitRequestForm = submitRequestForm;

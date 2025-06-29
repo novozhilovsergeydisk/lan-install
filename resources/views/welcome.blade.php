@@ -913,65 +913,19 @@
                     </div>
 
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0">Адреса</h6>
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="addAddress">
-                                <i class="bi bi-plus-circle"></i> Добавить адрес
-                            </button>
+                        <h6>Адрес</h6>
+                        <div class="mb-3">
+                            <select class="form-select" id="addresses_id" name="addresses_id" required>
+                                <option value="" disabled selected>Выберите адрес</option>
+                                <!-- Will be populated by JavaScript -->
+                            </select>
                         </div>
-
-                        <div id="addressesListContainer">
-                            <div class="address-entry mb-3">
-                                <div class="row g-2">
-                                    <div class="col-md-10">
-                                        <select class="form-select mb-2" id="addresses_id" name="addresses_id" required>
-                                            <option value="" disabled selected>Выберите адрес</option>
-                                            <!-- Will be populated by JavaScript -->
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="addressesContainer">
-                            <div class="address-entry mb-3">
-                                <div class="row g-2">
-                                    <div class="col-md-10">
-                                        <label class="form-label">Город <span class="text-danger">*</span></label>
-                                        <select class="form-select mb-2" id="city_id" name="city_id[]" required>
-                                            <option value="" disabled selected>Выберите город</option>
-                                            <!-- Will be populated by JavaScript -->
-                                        </select>
-                                        <label class="form-label">Район <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control mb-2" name="address_comment[]"
-                                               placeholder="Введите район" required>
-                                        <label class="form-label">Улица <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control mb-2" name="street[]" placeholder="Улица"
-                                               required>
-                                        <label class="form-label">Дом <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="house[]" placeholder="Дом"
-                                               required>
-                                    </div>
-                                    <div class="col-md-2 d-flex align-items-center">
-                                        <button type="button" class="btn btn-sm btn-outline-danger remove-address"
-                                                disabled>
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="comment" class="form-label">Комментарий <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="comment" name="comment" rows="3" required></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="submitRequest">Создать заявку</button>
+                <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать заявку</button>
             </div>
         </div>
     </div>
@@ -996,30 +950,13 @@
                         loadRequestStatuses(),
                         loadBrigades(),
                         loadOperators(),
-                        loadCities()
+                        loadAddresses()
                     ]);
                 } catch (error) {
                     console.error('Error loading form data:', error);
                     utils.showAlert('Ошибка при загрузке данных формы', 'danger');
                 }
             });
-
-            // Handle form submission
-            document.getElementById('submitRequest').addEventListener('click', submitRequestForm);
-
-            // Handle adding new address fields
-            document.getElementById('addAddress').addEventListener('click', addAddressField);
-
-            // Handle removing address fields (delegated event)
-            document.getElementById('addressesContainer').addEventListener('click', function (e) {
-                if (e.target.closest('.remove-address') && !e.target.closest('.remove-address').disabled) {
-                    e.target.closest('.address-entry').remove();
-                    updateRemoveButtons();
-                }
-            });
-
-            // Initialize with one address field
-            updateRemoveButtons();
         }
 
         // Load request types from API
@@ -1122,154 +1059,51 @@
             }
         }
 
-        // Load cities from API
-        async function loadCities() {
+        // Function to load addresses
+        async function loadAddresses() {
             try {
-                console.log('Запрос списка городов...');
-                const response = await fetch('/api/cities', {
+                console.log('Запрос списка адресов...');
+                const response = await fetch('/api/addresses', {
                     headers: {
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    },
+                    credentials: 'same-origin'
                 });
 
-                console.log('Статус ответа:', response.status);
-
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Ошибка HTTP ${response.status}: ${errorText}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const cities = await response.json();
-                console.log('Загружены города:', cities);
+                const addresses = await response.json();
+                console.log('Получены адреса:', addresses);
 
-                const selects = document.querySelectorAll('select[name="city_id[]"]');
-
-                if (!cities || !Array.isArray(cities)) {
-                    throw new Error('Некорректный формат данных о городах');
-                }
-
-                if (cities.length === 0) {
-                    console.warn('Список городов пуст');
+                const select = document.getElementById('addresses_id');
+                if (!select) {
+                    console.error('Элемент addresses_id не найден');
                     return;
                 }
 
-                // Находим Москву в списке городов (регистронезависимый поиск)
-                const moscow = cities.find(city =>
-                    city &&
-                    city.name &&
-                    typeof city.name === 'string' &&
-                    city.name.toLowerCase().includes('москва')
-                );
+                // Add new options
+                addresses.forEach(address => {
+                    const option = document.createElement('option');
+                    option.value = address.id;
+                    option.textContent = address.full_address;
+                    select.appendChild(option);
+                });
 
-                console.log('Найден город Москва:', moscow);
-
-                console.log('Найдено выпадающих списков городов:', selects.length);
-
-                selects.forEach((select, index) => {
-                    console.log(`Обработка выпадающего списка #${index + 1}`, select);
-
-                    // Очищаем существующие опции, оставляя только плейсхолдер
-                    select.innerHTML = '<option value="">Выберите город</option>';
-
-                    // Добавляем все города в выпадающий список
-                    cities.forEach(city => {
-                        if (!city || !city.id || !city.name) return;
-
-                        const option = document.createElement('option');
-                        option.value = city.id;
-                        option.textContent = city.name;
-
-                        // Выбираем Москву по умолчанию, если она есть
-                        if (moscow && city.id == moscow.id) {
-                            option.selected = true;
-                            console.log(`Выбран город по умолчанию для списка #${index + 1}:`, city.name);
-                        }
-
-                        select.appendChild(option);
+                // Initialize Select2 if available
+                if (window.jQuery && jQuery.fn.select2) {
+                    $('#addresses_id').select2({
+                        placeholder: 'Выберите адрес',
+                        allowClear: true,
+                        width: '100%',
+                        dropdownAutoWidth: true
                     });
-
-                    // Проверяем, что опции добавились
-                    console.log(`Добавлено городов в список #${index + 1}:`, select.options.length - 1);
-                });
-
-                console.log('Города успешно загружены в выпадающие списки');
-
+                }
             } catch (error) {
-                console.error('Ошибка при загрузке городов:', error);
-                // Показываем сообщение об ошибке пользователю
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-danger mt-2';
-                errorDiv.textContent = 'Не удалось загрузить список городов. Пожалуйста, обновите страницу.';
-
-                const container = document.querySelector('.address-fields');
-                if (container) {
-                    container.prepend(errorDiv);
-                }
-            }
-        }
-
-        // Add new address field
-        function addAddressField() {
-            const container = document.getElementById('addressesContainer');
-            const template = container.querySelector('.address-entry');
-            const newAddress = template.cloneNode(true);
-
-            // Generate unique ID for the new address entry
-            const newId = 'address-' + Date.now();
-
-            // Update IDs and names of all form elements
-            const inputs = newAddress.querySelectorAll('input, select, textarea');
-            inputs.forEach(input => {
-                // Clear values
-                input.value = '';
-
-                // Update IDs and names for array fields
-                if (input.name && input.name.endsWith('[]')) {
-                    const baseName = input.name.slice(0, -2);
-                    input.name = `${baseName}[]`;
-                }
-
-                // Reset checkboxes and radios
-                if (input.type === 'checkbox' || input.type === 'radio') {
-                    input.checked = false;
-                }
-
-                // Reset select
-                if (input.tagName === 'SELECT') {
-                    input.selectedIndex = 0;
-                }
-            });
-
-            // Enable remove button
-            const removeBtn = newAddress.querySelector('.remove-address');
-            if (removeBtn) {
-                removeBtn.disabled = false;
-            }
-
-            // Add new address to the container
-            container.appendChild(newAddress);
-            updateRemoveButtons();
-
-            // Re-initialize any necessary plugins or event listeners
-            if (typeof $ !== 'undefined') {
-                $(newAddress).find('select').select2();
-            }
-        }
-
-        // Update remove buttons state (disable if only one address exists)
-        function updateRemoveButtons() {
-            const addressEntries = document.querySelectorAll('.address-entry');
-            const removeButtons = document.querySelectorAll('.remove-address');
-
-            if (addressEntries.length <= 1) {
-                removeButtons.forEach(btn => {
-                    btn.disabled = true;
-                });
-            } else {
-                removeButtons.forEach(btn => {
-                    btn.disabled = false;
-                });
+                console.error('Ошибка при загрузке адресов:', error);
+                utils.showAlert('Не удалось загрузить список адресов', 'danger');
             }
         }
 
@@ -1432,6 +1266,7 @@
 </script>
 <script src="{{ asset('js/brigades.js') }}"></script>
 <script src="{{ asset('js/calendar.js') }}"></script>
+<script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
 </body>
 
 </html>
