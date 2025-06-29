@@ -691,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>` : ''}
 
                 <div class="card">
-                    <div class="card-header bg-light">
+                    <div class="card-header bg-light-2">
                         <h5 class="mb-0">
                             <i class="bi bi-people me-2"></i>Члены бригады
                             <span class="badge bg-primary ms-2">${members.length}</span>
@@ -702,7 +702,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 members.map(member => {
                     const isLeader = member.is_leader ? '<span class="badge bg-success ms-2">Бригадир</span>' : '';
                     return `
-                                <div class="list-group-item ${member.is_leader ? 'bg-light' : ''}">
+                                <div class="list-group-item ${member.is_leader ? 'bg-light-2' : ''}">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <div class="d-flex align-items-center">

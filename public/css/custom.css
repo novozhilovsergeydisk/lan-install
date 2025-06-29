@@ -116,4 +116,21 @@
     color: #fff !important;
 }
 
+/* Custom light background with dark theme support */
+.bg-light-2 {
+    --bs-bg-opacity: 1;
+    background-color: rgba(248, 249, 250, var(--bs-bg-opacity)) !important;
+}
+
+[data-bs-theme="dark"] .bg-light-2 {
+    background-color: #1a1d20 !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid #2c3034 !important;
+}
+
+[data-bs-theme="dark"] .bg-light-2 h5,
+[data-bs-theme="dark"] .bg-light-2 .text-dark {
+    color: #ffffff !important;
+}
+
 /**/

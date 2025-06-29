@@ -184,7 +184,7 @@ async function showBrigadeDetails(brigadeId) {
                 <h4>${brigade.name || 'Без названия'}</h4>
                 ${leader ? `
                     <div class="card mb-3">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-light-2">
                             <h5 class="mb-0">Бригадир</h5>
                         </div>
                         <div class="card-body">
@@ -198,7 +198,7 @@ async function showBrigadeDetails(brigadeId) {
                 ` : '<p class="text-muted">Бригадир не назначен</p>'}
                 
                 <div class="card">
-                    <div class="card-header bg-light">
+                    <div class="card-header bg-light-2">
                         <h5 class="mb-0">Члены бригады</h5>
                     </div>
                     <div class="card-body">
