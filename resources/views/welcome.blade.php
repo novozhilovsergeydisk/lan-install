@@ -958,7 +958,7 @@
                     await Promise.all([
                         loadRequestTypes(),
                         loadRequestStatuses(),
-                        loadBrigades(),
+                        // loadBrigades(),  // Not used in the form
                         loadOperators(),
                         loadAddresses()
                     ]);
@@ -1153,14 +1153,20 @@
             }
         });
 
-        async function submitRequestForm() {
+        async function submitRequestForm(event) {
+            // Предотвращаем стандартную отправку формы
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
             const form = document.getElementById('newRequestForm');
             const submitBtn = document.getElementById('submitRequest');
 
             // Validate form
             if (!validateForm(form)) {
                 utils.showAlert('Пожалуйста, заполните все обязательные поля корректно', 'warning');
-                return;
+                return false;
             }
             const requiredFields = form.querySelectorAll('[required]');
             let isValid = true;
@@ -1184,33 +1190,42 @@
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Создание...';
 
-                const formData = new FormData(form);
+                // Get all form inputs
+                const formInputs = form.querySelectorAll('input, select, textarea');
+                const data = { _token: '' };
                 
-                // Add comment to form data if exists
-                const comment = document.getElementById('comment').value.trim();
-                if (comment) {
-                    formData.append('comment', comment);
-                }
-                const data = {};
-
-                // Convert FormData to object
-                formData.forEach((value, key) => {
-                    if (data[key] !== undefined) {
-                        if (!Array.isArray(data[key])) {
-                            data[key] = [data[key]];
+                // Convert form data to object
+                formInputs.forEach(input => {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        if (input.checked) {
+                            if (!data[input.name]) {
+                                data[input.name] = [input.value];
+                            } else if (Array.isArray(data[input.name])) {
+                                data[input.name].push(input.value);
+                            } else {
+                                data[input.name] = [data[input.name], input.value];
+                            }
                         }
-                        data[key].push(value);
                     } else {
-                        data[key] = value;
+                        if (data[input.name] !== undefined) {
+                            if (!Array.isArray(data[input.name])) {
+                                data[input.name] = [data[input.name]];
+                            }
+                            data[input.name].push(input.value);
+                        } else {
+                            data[input.name] = input.value;
+                        }
                     }
                 });
 
+
+
                 // Process addresses
                 const addresses = [];
-                const cityIds = Array.isArray(data['city_id[]']) ? data['city_id[]'] : [data['city_id[]']];
-                const streets = Array.isArray(data['street[]']) ? data['street[]'] : [data['street[]']];
-                const houses = Array.isArray(data['house[]']) ? data['house[]'] : [data['house[]']];
-                const addressComments = Array.isArray(data['address_comment[]']) ? data['address_comment[]'] : [data['address_comment[]']];
+                const cityIds = Array.isArray(data['city_id']) ? data['city_id'] : (data['city_id'] ? [data['city_id']] : []);
+                const streets = Array.isArray(data['street']) ? data['street'] : (data['street'] ? [data['street']] : []);
+                const houses = Array.isArray(data['house']) ? data['house'] : (data['house'] ? [data['house']] : []);
+                const addressComments = Array.isArray(data['address_comment']) ? data['address_comment'] : (data['address_comment'] ? [data['address_comment']] : []);
 
                 // Debug information
                 console.log('cityIds:', cityIds);
@@ -1288,16 +1303,23 @@
                 // Успешное создание заявки
                 utils.showAlert('Заявка успешно создана!', 'success');
 
+                // Очищаем форму
+                form.reset();
+                
                 // Закрываем модальное окно
                 const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
                 modal.hide();
-
-                // Обновляем страницу, чтобы отобразить новую заявку
-                window.location.reload();
-
-                // Reload requests if function exists
-                if (typeof loadRequests === 'function') {
-                    loadRequests();
+                
+                // Очищаем форму
+                form.reset();
+                
+                // Обновляем таблицу заявок
+                try {
+                    await loadRequests();
+                } catch (error) {
+                    console.error('Ошибка при обновлении таблицы заявок:', error);
+                    // В случае ошибки просто перезагружаем страницу
+                    window.location.reload();
                 }
 
                 return responseData;
@@ -1309,6 +1331,140 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Создать заявку';
             }
+        }
+        
+        // Function to load and update the requests table via AJAX
+        async function loadRequests() {
+            try {
+                // Show loading state
+                const tableBody = document.querySelector('#requests-table-container tbody');
+                const noRequestsRow = document.getElementById('no-requests-row');
+                const loadingRow = document.createElement('tr');
+                loadingRow.id = 'loading-requests';
+                loadingRow.innerHTML = `
+                    <td colspan="9" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                        <div class="mt-2">Загрузка заявок...</div>
+                    </td>`;
+                
+                // Clear existing rows except the "no requests" row
+                const existingRows = tableBody.querySelectorAll('tr:not(#no-requests-row)');
+                existingRows.forEach(row => row.remove());
+                
+                // Add loading row
+                tableBody.insertBefore(loadingRow, noRequestsRow);
+                noRequestsRow.classList.add('d-none');
+                
+                // Get current date filter
+                const dateFilter = document.getElementById('dateFilter')?.value || '';
+                
+                // Fetch requests from API
+                const response = await fetch(`/api/requests?date=${encodeURIComponent(dateFilter)}`);
+                if (!response.ok) throw new Error('Ошибка при загрузке заявок');
+                
+                const data = await response.json();
+                
+                // Remove loading row
+                const loadingElement = document.getElementById('loading-requests');
+                if (loadingElement) loadingElement.remove();
+                
+                // Clear existing rows
+                tableBody.innerHTML = '';
+                
+                if (data.data && data.data.length > 0) {
+                    // Add new rows for each request
+                    data.data.forEach(request => {
+                        const row = createRequestRow(request);
+                        tableBody.appendChild(row);
+                    });
+                    noRequestsRow.classList.add('d-none');
+                } else {
+                    noRequestsRow.classList.remove('d-none');
+                }
+                
+                // Reinitialize tooltips
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+                
+                return data;
+                
+            } catch (error) {
+                console.error('Error loading requests:', error);
+                utils.showAlert('Ошибка при загрузке заявок: ' + error.message, 'danger');
+                
+                // Show error state
+                const loadingElement = document.getElementById('loading-requests');
+                if (loadingElement) {
+                    loadingElement.innerHTML = `
+                        <td colspan="9" class="text-center py-4 text-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Не удалось загрузить заявки. Попробуйте обновить страницу.
+                        </td>`;
+                }
+                
+                throw error;
+            }
+        }
+        
+        // Helper function to create a request row
+        function createRequestRow(request) {
+            const row = document.createElement('tr');
+            row.className = 'align-middle status-row';
+            row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
+            row.setAttribute('data-request-id', request.id);
+            
+            // Format the date
+            const requestDate = request.request_date || request.created_at;
+            const formattedDate = requestDate 
+                ? new Date(requestDate).toLocaleString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).replace(',', '') 
+                : 'Не указана';
+                
+            // Format the execution date
+            const executionDate = request.execution_date 
+                ? new Date(request.execution_date).toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                })
+                : 'Не указана';
+            
+            // Create row HTML
+            row.innerHTML = `
+                <td>${request.id}</td>
+                <td class="text-center">
+                    <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
+                </td>
+                <td>${formattedDate}</td>
+                <td>${request.number || 'Нет номера'}</td>
+                <td>${request.client_name || 'Не указан'}</td>
+                <td>${request.phone || 'Не указан'}</td>
+                <td>${request.request_type_name || 'Не указан'}</td>
+                <td>${request.status_name || 'Не указан'}</td>
+                <td>${executionDate}</td>
+                <td>${request.operator_name || 'Не назначен'}</td>
+                <td>${request.brigade_name || 'Не назначена'}</td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="showRequestDetails(${request.id})">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="editRequest(${request.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                </td>`;
+                
+            return row;
         }
     });
 </script>

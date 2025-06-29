@@ -909,7 +909,10 @@ class HomeController extends Controller
             $count = $countQuery->count() + 1;
             $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
             $requestData['number'] = $requestNumber;
-            $requestData['request_date'] = now()->toDateString();
+            
+            // Устанавливаем текущую дату (учитывая часовой пояс из конфига Laravel)
+            $currentDate = now()->toDateString();
+            $requestData['request_date'] = $currentDate;
             
             // Вставляем заявку с помощью DB::insert и получаем ID
             $result = DB::select(
@@ -923,7 +926,7 @@ class HomeController extends Controller
                     $validated['brigade_id'] ?? null,
                     $validated['operator_id'],
                     $requestNumber,
-                    now()->toDateString()
+                    $currentDate
                 ]
             );
 
