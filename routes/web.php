@@ -58,7 +58,7 @@ Route::prefix('api')->middleware('auth')->group(function () {
     Route::get('/request-statuses', [HomeController::class, 'getRequestStatuses'])->name('api.request-statuses');
     
     // Get brigades
-    Route::get('/brigades', [HomeController::class, 'getBrigades'])->name('api.brigades');
+    Route::get('/brigades', [BrigadeController::class, 'index'])->name('api.brigades');
     
     // Get operators
     Route::get('/operators', [HomeController::class, 'getOperators'])->name('api.operators');
