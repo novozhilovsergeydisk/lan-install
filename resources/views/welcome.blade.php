@@ -154,11 +154,14 @@
                             </div>
                         </div>
 
-                        <!-- Calendar Button and Content -->
-                        <div class="pt-4 ps-4 pb-0">
-                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="btn-open-calendar">
+                        <!-- Calendar and Status Buttons -->
+                        <div class="pt-4 ps-4 pb-0 d-flex align-items-center">
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2" id="btn-open-calendar">
                                 <i class="bi bi-calendar me-1"></i>Календарь
                             </button>
+                            <div id="status-buttons" class="d-flex flex-wrap gap-2">
+                                <!-- Кнопки статусов будут добавлены через JavaScript -->
+                            </div>
                         </div>
 
                         <!-- Calendar Container (initially hidden) -->

@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BrigadeController;
+use App\Http\Controllers\RequestFilterController;
 
 // Форма входа
 /*Route::get('/login', function () {
@@ -42,6 +43,16 @@ Route::get('/api/requests/{request}/comments', [HomeController::class, 'getComme
 
 // API Route for getting brigade data
 Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'getBrigadeData'])->name('brigade.data');
+
+// API Route for filtering requests by statuses
+Route::get('/api/requests/by-status', [RequestFilterController::class, 'filterByStatuses'])
+    ->middleware('auth')
+    ->name('api.requests.filter-statuses');
+
+// API Route for getting all statuses
+Route::get('/api/request-statuses/all', [RequestFilterController::class, 'getStatuses'])
+    ->middleware('auth')
+    ->name('api.request-statuses.all');
 
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {

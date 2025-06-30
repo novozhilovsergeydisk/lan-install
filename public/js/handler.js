@@ -177,7 +177,7 @@ function applyFilters() {
                         row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
                         // Отладочный вывод
                         // Логи данных запроса отключены
-                        
+
                         row.setAttribute('data-request-id', request.id);
 
                         row.innerHTML = `
@@ -192,31 +192,31 @@ function applyFilters() {
                             <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
                                 ${(() => {
                                     if (!request.comments) return '---';
-                                    
+
                                     // Если comments - это массив, берем последний комментарий (новейший)
                                     let commentText = '';
                                     if (Array.isArray(request.comments) && request.comments.length > 0) {
                                         // Берем последний элемент массива (новейший комментарий)
                                         const lastComment = request.comments[request.comments.length - 1];
                                         commentText = lastComment.text || lastComment.comment || lastComment.content || JSON.stringify(lastComment);
-                                    } 
+                                    }
                                     // Если comments - это объект, но не массив
                                     else if (typeof request.comments === 'object' && request.comments !== null) {
                                         commentText = request.comments.text || request.comments.comment || request.comments.content || JSON.stringify(request.comments);
-                                    } 
+                                    }
                                     // Если comments - это строка
                                     else if (typeof request.comments === 'string') {
                                         commentText = request.comments;
                                     } else {
                                         return '---';
                                     }
-                                    
+
                                     // Экранируем кавычки для атрибута title
                                     const escapedComment = String(commentText).replace(/"/g, '&quot;');
-                                    const displayText = commentText.length > 50 
-                                        ? commentText.substring(0, 50) + '...' 
+                                    const displayText = commentText.length > 50
+                                        ? commentText.substring(0, 50) + '...'
                                         : commentText;
-                                        
+
                                     return `
                                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="${escapedComment}">
                                             ${displayText}
@@ -384,9 +384,97 @@ function initBrigadeModal(modalId) {
     return { modal, modalElement };
 }
 
-// Обработчики для кнопок
-// Выводим в консоль данные при загрузке страницы
-// Логи загрузки страницы отключены
+// Загрузка и отображение кнопок статусов
+function loadStatusButtons() {
+    fetch('/api/request-statuses/all', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Ошибка при загрузке статусов');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success && data.statuses) {
+            const statusButtonsContainer = document.getElementById('status-buttons');
+            
+            // Очищаем контейнер перед добавлением кнопок
+            statusButtonsContainer.innerHTML = '';
+            
+            // Создаем кнопку для всех статусов
+            const allButton = document.createElement('button');
+            allButton.type = 'button';
+            allButton.className = 'btn btn-outline-secondary btn-sm mb-3';
+            allButton.textContent = 'Все';
+            allButton.dataset.statusId = 'all';
+            allButton.addEventListener('click', () => handleStatusFilterClick('all'));
+            statusButtonsContainer.appendChild(allButton);
+            
+            // Создаем кнопки для каждого статуса
+            data.statuses.forEach(status => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-sm mb-3';
+                button.style.backgroundColor = status.color || '#6c757d';
+                button.style.borderColor = status.color || '#6c757d';
+                button.style.color = getContrastColor(status.color || '#6c757d');
+                button.textContent = status.name;
+                button.dataset.statusId = status.id;
+                button.addEventListener('click', () => handleStatusFilterClick(status.id));
+                statusButtonsContainer.appendChild(button);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при загрузке статусов:', error);
+    });
+}
+
+// Функция для определения контрастного цвета текста
+function getContrastColor(hexColor) {
+    // Если цвет не передан, возвращаем белый
+    if (!hexColor) return '#ffffff';
+    
+    // Удаляем символ #, если он есть
+    const hex = hexColor.replace('#', '');
+    
+    // Конвертируем HEX в RGB
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Вычисляем яркость по формуле W3C
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    // Возвращаем черный для светлых цветов и белый для темных
+    return brightness > 128 ? '#000000' : '#ffffff';
+}
+
+// Обработчик клика по кнопке статуса
+function handleStatusFilterClick(statusId) {
+    // Сбрасываем активное состояние у всех кнопок
+    document.querySelectorAll('#status-buttons button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Устанавливаем активное состояние для нажатой кнопки
+    const clickedButton = document.querySelector(`#status-buttons button[data-status-id="${statusId}"]`);
+    if (clickedButton) {
+        clickedButton.classList.add('active');
+    }
+    
+    // Здесь можно добавить логику фильтрации заявок по статусу
+    console.log('Выбран статус с ID:', statusId);
+    
+    // Если нужно применить фильтр к таблице заявок, раскомментируйте следующую строку:
+    // applyFilter('status', statusId === 'all' ? null : statusId);
+}
 
 // Функция для загрузки списка адресов
 function loadAddresses() {
@@ -408,7 +496,7 @@ function loadAddresses() {
         .then(addresses => {
             // Очищаем список и добавляем заглушку
             selectElement.innerHTML = '<option value="" disabled selected>Выберите адрес</option>';
-            
+
             // Добавляем адреса в выпадающий список
             addresses.forEach(address => {
                 const option = document.createElement('option');
@@ -419,7 +507,7 @@ function loadAddresses() {
                 option.dataset.houses = address.houses;
                 option.dataset.city = address.city;
                 option.dataset.district = address.district;
-                
+
                 selectElement.appendChild(option);
             });
         })
@@ -430,10 +518,15 @@ function loadAddresses() {
         });
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Загружаем список адресов при загрузке страницы
+// Функция для инициализации всех обработчиков при загрузке страницы
+function initializePage() {
+    // Загружаем кнопки статусов
+    loadStatusButtons();
+    
+    // Загружаем список адресов
     loadAddresses();
-    // Кнопка выхода
+    
+    // Обработчик кнопки выхода
     const logoutButton = document.getElementById(FILTER_IDS.LOGOUT_BUTTON);
     if (logoutButton) {
         logoutButton.addEventListener('click', function (e) {
@@ -568,7 +661,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /******* Календарь *******/
+    //******* Календарь *******//
 
     const button = document.getElementById(FILTER_IDS.CALENDAR_BUTTON);
     const calendarContent = document.getElementById(FILTER_IDS.CALENDAR_CONTENT);
@@ -663,7 +756,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Инициализация модального окна при загрузке страницы
     window.brigadeModal = initBrigadeModal();
 
-    /******* Функция отображения сведений о бригаде в модальном окне *******/
+    //******* Функция отображения сведений о бригаде в модальном окне *******//
+
     function renderBrigadeDetails(data) {
         const { brigade, leader, members } = data;
         const detailsContainer = document.getElementById(FILTER_IDS.BRIGADE_DETAILS);
@@ -727,5 +821,74 @@ document.addEventListener('DOMContentLoaded', function () {
         detailsContainer.innerHTML = html;
     }
 
+    //******* Работа с фильтрами на странице *******//
 
-});
+    // Получаем элемент чекбокса с ID "filter-statuses" и контейнер для кнопок статусов
+    const statusCheckbox = document.getElementById('filter-statuses');
+    const statusButtonsContainer = document.getElementById('status-buttons');
+
+    // Проверяем, существуют ли элементы на странице
+    if (statusCheckbox && statusButtonsContainer) {
+        console.log('Элементы найдены:', {statusCheckbox, statusButtonsContainer});
+        
+        // Добавляем класс для скрытия кнопок статусов при загрузке страницы
+        statusButtonsContainer.classList.add('d-none');
+        // Добавляем инлайновые стили для гарантированного скрытия
+        statusButtonsContainer.style.display = 'none !important';
+        console.log('Кнопки статусов скрыты при загрузке');
+        
+        // Назначаем обработчик события изменения состояния чекбокса
+        statusCheckbox.addEventListener('change', function () {
+            console.log('Состояние чекбокса изменилось:', this.checked);
+            
+            // Показываем или скрываем кнопки статусов
+            if (this.checked) {
+                statusButtonsContainer.classList.remove('d-none');
+                statusButtonsContainer.classList.add('d-flex');
+                statusButtonsContainer.style.display = 'flex !important';
+            } else {
+                statusButtonsContainer.classList.remove('d-flex');
+                statusButtonsContainer.classList.add('d-none');
+                statusButtonsContainer.style.display = 'none !important';
+            }
+            
+            console.log('Классы контейнера:', statusButtonsContainer.className);
+            
+            // Если нужно загружать заявки при включении чекбокса, раскомментируйте код ниже
+            if (false) { // Замените на this.checked, когда нужно включить загрузку заявок
+                // Отправляем GET-запрос на сервер для получения заявок по определённым статусам
+                fetch('/api/requests/by-status?statuses[]=1&statuses[]=2', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                    // Обрабатываем JSON-ответ от сервера
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Успешно получены заявки — выводим в консоль
+                            console.log('Заявки по статусам:', data.requests);
+
+                            // TODO: здесь можно вызвать функцию renderFilteredRequests(data.requests)
+                            // чтобы отрисовать таблицу заявок на странице
+                        } else {
+                            // Если сервер вернул ошибку — показываем сообщение
+                            alert(data.message || 'Ошибка');
+                        }
+                    })
+                    // Обработка сетевых или других ошибок
+                    .catch(err => {
+                        console.error('Ошибка:', err);
+                        alert('Ошибка при фильтрации заявок');
+                    });
+            } else {
+                // Если чекбокс снят — можно добавить сброс фильтров без перезагрузки страницы
+                // Например, сбросить выбранные статусы и обновить таблицу
+                // resetStatusFilters();
+            }
+        });
+    }
+}
+
+// Обработчик загрузки страницы
+document.addEventListener('DOMContentLoaded', initializePage);
