@@ -962,8 +962,8 @@
                         loadRequestTypes(),
                         loadRequestStatuses(),
                         // loadBrigades(),  // Not used in the form
-                        loadOperators(),
-                        loadAddresses()
+                        loadOperators()
+                        // loadAddresses() is called from handler.js
                     ]);
                 } catch (error) {
                     console.error('Error loading form data:', error);
@@ -1072,53 +1072,7 @@
             }
         }
 
-        // Function to load addresses
-        async function loadAddresses() {
-            try {
-                console.log('Запрос списка адресов...');
-                const response = await fetch('/api/addresses', {
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    credentials: 'same-origin'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const addresses = await response.json();
-                console.log('Получены адреса:', addresses);
-
-                const select = document.getElementById('addresses_id');
-                if (!select) {
-                    console.error('Элемент addresses_id не найден');
-                    return;
-                }
-
-                // Add new options
-                addresses.forEach(address => {
-                    const option = document.createElement('option');
-                    option.value = address.id;
-                    option.textContent = address.full_address;
-                    select.appendChild(option);
-                });
-
-                // Initialize Select2 if available
-                if (window.jQuery && jQuery.fn.select2) {
-                    $('#addresses_id').select2({
-                        placeholder: 'Выберите адрес',
-                        allowClear: true,
-                        width: '100%',
-                        dropdownAutoWidth: true
-                    });
-                }
-            } catch (error) {
-                console.error('Ошибка при загрузке адресов:', error);
-                utils.showAlert('Не удалось загрузить список адресов', 'danger');
-            }
-        }
+        // Function to load addresses (moved to handler.js)
 
         // Handle form submission
         // Function to validate the form
