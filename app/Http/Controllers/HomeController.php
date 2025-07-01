@@ -601,18 +601,38 @@ class HomeController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function closeRequest($id)
+    public function closeRequest($id, Request $request)
     {
         try {
-            // Update the request status to 'выполнена' (ID 4)
+            // Начинаем транзакцию
+            DB::beginTransaction();
+
+            // Обновляем статус заявки на 'выполнена' (ID 4)
             $updated = DB::table('requests')
                 ->where('id', $id)
-                ->update(['status_id' => 4]);  // 4 is the ID for 'выполнена'
+                ->update(['status_id' => 4]);
 
             if ($updated) {
+                // Создаем комментарий
+                $commentId = DB::table('comments')->insertGetId([
+                    'comment' => $request->input('comment', 'Заявка закрыта'),
+                    'created_at' => now()
+                ]);
+
+                // Связываем комментарий с заявкой
+                DB::table('request_comments')->insert([
+                    'request_id' => $id,
+                    'comment_id' => $commentId,
+                    'created_at' => now()
+                ]);
+
+                // Фиксируем изменения
+                DB::commit();
+
                 return response()->json([
                     'success' => true,
-                    'message' => 'Заявка успешно закрыта'
+                    'message' => 'Заявка успешно закрыта',
+                    'comment_id' => $commentId
                 ]);
             }
 

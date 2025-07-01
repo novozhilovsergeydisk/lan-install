@@ -331,8 +331,7 @@
                                                 <div class="d-flex flex-column gap-1">
                                                     @if($request->status_name !== 'выполнена')
                                                         <button data-request-id="{{ $request->id }}" type="button"
-                                                                class="btn btn-sm btn-custom-brown p-1 close-request-btn"
-                                                                onclick="closeRequest({{ $request->id }}); return false;">
+                                                                class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                                             Закрыть заявку
                                                         </button>
                                                         <button type="button"
@@ -1452,6 +1451,124 @@
             return row;
         }
     });
+</script>
+
+<!-- Modal for Closing Request -->
+<div class="modal fade" id="closeRequestModal" tabindex="-1" aria-labelledby="closeRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="closeRequestModalLabel">Закрытие заявки <span id="modalRequestId"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="closeRequestForm">
+                    @csrf
+                    <input type="hidden" id="requestIdToClose" name="request_id">
+                    <div class="mb-3">
+                        <label for="closeComment" class="form-label">Комментарий</label>
+                        <textarea class="form-control" id="closeComment" name="comment" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmCloseRequest">Закрыть заявку</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Обработчик для кнопки закрытия заявки в таблице
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчик для кнопки "Закрыть заявку" в таблице
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.close-request-btn')) {
+            e.preventDefault();
+            const requestId = e.target.closest('.close-request-btn').getAttribute('data-request-id');
+            const modal = new bootstrap.Modal(document.getElementById('closeRequestModal'));
+            
+            // Устанавливаем ID заявки в скрытое поле и заголовок
+            document.getElementById('requestIdToClose').value = requestId;
+            document.getElementById('modalRequestId').textContent = '#' + requestId;
+            
+            // Показываем модальное окно
+            modal.show();
+        }
+    });
+
+    // Обработчик для кнопки подтверждения в модальном окне
+    document.getElementById('confirmCloseRequest').addEventListener('click', async function() {
+        const form = document.getElementById('closeRequestForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const requestId = document.getElementById('requestIdToClose').value;
+        const comment = document.getElementById('closeComment').value;
+        const submitBtn = this;
+        const originalBtnText = submitBtn.innerHTML;
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...';
+
+            const response = await fetch(`/requests/${requestId}/close`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    comment: comment,
+                    _token: document.querySelector('input[name="_token"]').value
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showAlert('Заявка успешно закрыта', 'success');
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('closeRequestModal'));
+                modal.hide();
+                // Обновляем страницу
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                throw new Error(result.message || 'Неизвестная ошибка при закрытии заявки');
+            }
+        } catch (error) {
+            console.error('Ошибка при закрытии заявки:', error);
+            showAlert(`Ошибка при закрытии заявки: ${error.message}`, 'danger');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    });
+});
+
+// Функция для отображения уведомлений
+function showAlert(message, type = 'success') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '2000';
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Автоматическое скрытие через 5 секунд
+    setTimeout(() => {
+        const bsAlert = new bootstrap.Alert(alertDiv);
+        bsAlert.close();
+    }, 5000);
+}
 </script>
 
 <!-- Modal for Brigade Details -->
