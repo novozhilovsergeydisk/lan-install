@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BrigadeController;
 use App\Http\Controllers\RequestFilterController;
+use App\Http\Controllers\RequestTeamFilterController;
 
 // Форма входа
 /*Route::get('/login', function () {
@@ -53,6 +54,10 @@ Route::get('/api/requests/by-status', [RequestFilterController::class, 'filterBy
 Route::get('/api/request-statuses/all', [RequestFilterController::class, 'getStatuses'])
     ->middleware('auth')
     ->name('api.request-statuses.all');
+
+Route::get('/api/requests/by-brigade', [RequestTeamFilterController::class, 'filterByTeams'])
+    ->name('api.requests.filter-brigade')
+    ->middleware('auth');
 
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {

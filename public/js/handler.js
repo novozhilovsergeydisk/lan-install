@@ -403,10 +403,10 @@ function loadStatusButtons() {
     .then(data => {
         if (data.success && data.statuses) {
             const statusButtonsContainer = document.getElementById('status-buttons');
-            
+
             // Очищаем контейнер перед добавлением кнопок
             statusButtonsContainer.innerHTML = '';
-            
+
             // Создаем кнопку для всех статусов
             const allButton = document.createElement('button');
             allButton.type = 'button';
@@ -415,7 +415,7 @@ function loadStatusButtons() {
             allButton.dataset.statusId = 'all';
             allButton.addEventListener('click', () => handleStatusFilterClick('all'));
             statusButtonsContainer.appendChild(allButton);
-            
+
             // Создаем кнопки для каждого статуса
             data.statuses.forEach(status => {
                 const button = document.createElement('button');
@@ -440,18 +440,18 @@ function loadStatusButtons() {
 function getContrastColor(hexColor) {
     // Если цвет не передан, возвращаем белый
     if (!hexColor) return '#ffffff';
-    
+
     // Удаляем символ #, если он есть
     const hex = hexColor.replace('#', '');
-    
+
     // Конвертируем HEX в RGB
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
-    
+
     // Вычисляем яркость по формуле W3C
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    
+
     // Возвращаем черный для светлых цветов и белый для темных
     return brightness > 128 ? '#000000' : '#ffffff';
 }
@@ -462,16 +462,16 @@ function handleStatusFilterClick(statusId) {
     document.querySelectorAll('#status-buttons button').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     // Устанавливаем активное состояние для нажатой кнопки
     const clickedButton = document.querySelector(`#status-buttons button[data-status-id="${statusId}"]`);
     if (clickedButton) {
         clickedButton.classList.add('active');
     }
-    
+
     // Здесь можно добавить логику фильтрации заявок по статусу
     console.log('Выбран статус с ID:', statusId);
-    
+
     // Если нужно применить фильтр к таблице заявок, раскомментируйте следующую строку:
     // applyFilter('status', statusId === 'all' ? null : statusId);
 }
@@ -522,10 +522,10 @@ function loadAddresses() {
 function initializePage() {
     // Загружаем кнопки статусов
     loadStatusButtons();
-    
+
     // Загружаем список адресов
     loadAddresses();
-    
+
     // Обработчик кнопки выхода
     const logoutButton = document.getElementById(FILTER_IDS.LOGOUT_BUTTON);
     if (logoutButton) {
@@ -830,17 +830,17 @@ function initializePage() {
     // Проверяем, существуют ли элементы на странице
     if (statusCheckbox && statusButtonsContainer) {
         console.log('Элементы найдены:', {statusCheckbox, statusButtonsContainer});
-        
+
         // Добавляем класс для скрытия кнопок статусов при загрузке страницы
         statusButtonsContainer.classList.add('d-none');
         // Добавляем инлайновые стили для гарантированного скрытия
         statusButtonsContainer.style.display = 'none !important';
         console.log('Кнопки статусов скрыты при загрузке');
-        
+
         // Назначаем обработчик события изменения состояния чекбокса
         statusCheckbox.addEventListener('change', function () {
             console.log('Состояние чекбокса изменилось:', this.checked);
-            
+
             // Показываем или скрываем кнопки статусов
             if (this.checked) {
                 statusButtonsContainer.classList.remove('d-none');
@@ -851,9 +851,9 @@ function initializePage() {
                 statusButtonsContainer.classList.add('d-none');
                 statusButtonsContainer.style.display = 'none !important';
             }
-            
+
             console.log('Классы контейнера:', statusButtonsContainer.className);
-            
+
             // Если нужно загружать заявки при включении чекбокса, раскомментируйте код ниже
             if (false) { // Замените на this.checked, когда нужно включить загрузку заявок
                 // Отправляем GET-запрос на сервер для получения заявок по определённым статусам
@@ -885,6 +885,53 @@ function initializePage() {
                 // Если чекбокс снят — можно добавить сброс фильтров без перезагрузки страницы
                 // Например, сбросить выбранные статусы и обновить таблицу
                 // resetStatusFilters();
+            }
+        });
+    }
+
+    // Фильтр по бригадам
+
+    const teamCheckbox = document.getElementById('filter-teams');
+
+    if (teamCheckbox) {
+        teamCheckbox.addEventListener('change', async function () {
+            if (this.checked) {
+                try {
+                    console.log('Запрос заявок для бригад с ID: 1, 2');
+                    const response = await fetch('/api/requests/by-brigade', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Ответ сервера:', data);
+                    
+                    if (data.success) {
+                        if (data.requests && data.requests.length > 0) {
+                            console.log(`Найдено заявок: ${data.requests.length}`);
+                            console.log('Список заявок:', data.requests);
+                            // TODO: отобразить заявки в таблице
+                        } else {
+                            console.log('Нет заявок для выбранных бригад');
+                            // TODO: показать сообщение пользователю
+                        }
+                    } else {
+                        console.error('Ошибка сервера:', data.message || 'Неизвестная ошибка');
+                        // TODO: показать сообщение об ошибке
+                    }
+                } catch (error) {
+                    console.error('Ошибка при запросе заявок:', error);
+                    // TODO: показать сообщение об ошибке
+                }
+            } else {
+                console.log('Фильтр по бригадам отключен');
+                // TODO: добавить логику сброса отображения к исходному состоянию
             }
         });
     }
