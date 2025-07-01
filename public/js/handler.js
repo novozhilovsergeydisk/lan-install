@@ -982,4 +982,155 @@ function initializePage() {
 }
 
 // Обработчик загрузки страницы
-document.addEventListener('DOMContentLoaded', initializePage);
+document.addEventListener('DOMContentLoaded', function() {
+    initializePage();
+    setupBrigadeAttachment();
+});
+
+// Функция для настройки прикрепления бригады к заявке
+function setupBrigadeAttachment() {
+    // Обработчик изменения состояния чекбоксов заявок
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.matches('input[type="checkbox"].request-checkbox')) {
+            const brigadeSelect = document.getElementById('brigade-leader-select');
+            const attachButton = document.getElementById('attach-brigade-button');
+            const filterContainer = document.getElementById('brigade-leader-filter');
+            
+            if (brigadeSelect && filterContainer) {
+                // Добавляем классы для отображения в строку
+                filterContainer.classList.add('d-flex', 'align-items-center');
+                
+                if (e.target.checked) {
+                    // Если кнопка еще не создана - создаем ее
+                    if (!attachButton) {
+                        const button = document.createElement('button');
+                        button.id = 'attach-brigade-button';
+                        button.className = 'btn btn-primary btn-sm ms-2';
+                        button.style.whiteSpace = 'nowrap'; // Предотвращаем перенос текста
+                        button.style.marginTop = '-12px'; // Выравнивание по вертикали с селектом
+                        button.textContent = 'Прикрепить бригаду к заявке';
+                        button.onclick = async function() {
+                            const select = document.getElementById('brigade-leader-select');
+                            const checkedCheckbox = document.querySelector('input[type="checkbox"].request-checkbox:checked');
+                            
+                            if (!select.value) {
+                                console.log('Бригадир не выбран!');
+                                return;
+                            }
+                            
+                            if (!checkedCheckbox) {
+                                console.log('Не выбрана ни одна заявка!');
+                                return;
+                            }
+                            
+                            const leaderId = select.value;
+                            const requestId = checkedCheckbox.value;
+                            const brigadeName = select.options[select.selectedIndex].text;
+                            
+                            console.log(`ID выбранной заявки: ${requestId}`);
+                            console.log(`ID выбранного бригадира: ${leaderId}`);
+                            
+                            try {
+                                console.log('1. Получаем данные о бригаде...');
+                                const brigadeResponse = await fetch(`/api/requests/brigade/by-leader/${leaderId}`);
+                                const brigadeData = await brigadeResponse.json();
+                                
+                                console.log('Ответ от API бригады:', brigadeData);
+                                
+                                if (!brigadeResponse.ok) {
+                                    throw new Error(brigadeData.message || `Ошибка ${brigadeResponse.status} при получении данных о бригаде`);
+                                }
+                                
+                                if (!brigadeData.data || !brigadeData.data.brigade_id) {
+                                    throw new Error('Не удалось получить ID бригады из ответа сервера');
+                                }
+                                
+                                console.log('2. Отправляем запрос на обновление заявки...');
+                                const updateResponse = await fetch('/api/requests/update-brigade', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                        'Accept': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        brigade_id: brigadeData.data.brigade_id,
+                                        request_id: requestId
+                                    })
+                                });
+                                
+                                const updateData = await updateResponse.json().catch(() => ({}));
+                                console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
+                                
+                                if (!updateResponse.ok) {
+                                    const errorMessage = updateData.message || 
+                                                       updateData.error || 
+                                                       (updateData.error_details ? JSON.stringify(updateData.error_details) : 'Неизвестная ошибка');
+                                    throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
+                                }
+                                
+                                console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
+                                
+                                // 3. Обновляем страницу для отображения изменений
+                                window.location.reload();
+                                
+                            } catch (error) {
+                                console.error('Ошибка при прикреплении бригады:', error.message);
+                                alert(`Ошибка: ${error.message}`);
+                            }
+                        };
+                        
+                        // Вставляем кнопку после селекта
+                        filterContainer.appendChild(button);
+                    } else {
+                        // Если кнопка уже существует, просто показываем её
+                        attachButton.style.display = 'inline-block';
+                    }
+                } else {
+                    // Проверяем, есть ли другие отмеченные чекбоксы
+                    const anyChecked = document.querySelector('input[type="checkbox"].request-checkbox:checked');
+                    // Если нет отмеченных чекбоксов - скрываем кнопку
+                    if (!anyChecked && attachButton) {
+                        attachButton.style.display = 'none';
+                    }
+                }
+            }
+        }
+    });
+    // Обработчик изменения состояния чекбоксов
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.matches('.request-checkbox')) {
+            const checkbox = e.target;
+            const requestId = checkbox.value;
+            const row = checkbox.closest('tr');
+            
+            // Находим select с бригадирами в строке
+            const brigadeSelect = row.querySelector('select#brigade-leader-select');
+            
+            if (brigadeSelect) {
+                // Удаляем существующую кнопку, если есть
+                const existingButton = brigadeSelect.nextElementSibling;
+                if (existingButton && existingButton.matches('.attach-brigade-button')) {
+                    existingButton.remove();
+                }
+                
+                // Если чекбокс отмечен, добавляем кнопку
+                if (checkbox.checked) {
+                    const button = document.createElement('button');
+                    button.className = 'btn btn-sm btn-primary attach-brigade-button';
+                    button.textContent = 'Прикрепить бригаду к заявке';
+                    button.style.marginLeft = '10px';
+                    
+                    // Моковый обработчик
+                    button.addEventListener('click', function() {
+                        console.log('Кнопка нажата для заявки', requestId);
+                        console.log('Выбран бригадир с ID:', brigadeSelect.value);
+                    });
+                    
+                    // Вставляем кнопку после select
+                    brigadeSelect.parentNode.insertBefore(button, brigadeSelect.nextSibling);
+                }
+            }
+        }
+    });
+}

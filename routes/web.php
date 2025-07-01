@@ -50,6 +50,15 @@ Route::get('/api/requests/by-status', [RequestFilterController::class, 'filterBy
     ->middleware('auth')
     ->name('api.requests.filter-statuses');
 
+// API Routes for request modification
+Route::prefix('api/requests')->middleware('auth')->group(function () {
+    // Получить бригаду по ID бригадира за текущую дату
+    Route::get('/brigade/by-leader/{leaderId}', [\App\Http\Controllers\ControllerRequestModification::class, 'getBrigadeByLeader']);
+    
+    // Обновить бригаду у заявки
+    Route::post('/update-brigade', [\App\Http\Controllers\ControllerRequestModification::class, 'updateRequestBrigade']);
+});
+
 // API Route for getting all statuses
 Route::get('/api/request-statuses/all', [RequestFilterController::class, 'getStatuses'])
     ->middleware('auth')
