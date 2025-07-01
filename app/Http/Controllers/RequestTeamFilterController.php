@@ -45,5 +45,22 @@ class RequestTeamFilterController extends Controller
             'requests' => $requests
         ]);
     }
+
+    /**
+     * Получить список бригадиров
+     */
+    public function getBrigadeLeaders()
+    {
+        $leaders = DB::table('brigades as b')
+            ->join('employees as e', 'b.leader_id', '=', 'e.id')
+            ->select('e.id', 'e.fio as name')
+            ->distinct()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'leaders' => $leaders
+        ]);
+    }
 }
 

@@ -889,16 +889,19 @@ function initializePage() {
         });
     }
 
-    // Фильтр по бригадам
-
+    // Фильтр по бригадам (показываем список бригадиров)
     const teamCheckbox = document.getElementById('filter-teams');
+    const brigadeLeaderFilter = document.getElementById('brigade-leader-filter');
+    const brigadeLeaderSelect = document.getElementById('brigade-leader-select');
+    let brigadeLeaders = [];
 
-    if (teamCheckbox) {
+    if (teamCheckbox && brigadeLeaderFilter && brigadeLeaderSelect) {
+        // Обработчик изменения состояния флажка
         teamCheckbox.addEventListener('change', async function () {
             if (this.checked) {
                 try {
-                    console.log('Запрос заявок для бригад с ID: 1, 2');
-                    const response = await fetch('/api/requests/by-brigade', {
+                    console.log('Запрос списка бригадиров...');
+                    const response = await fetch('/api/brigade-leaders', {
                         headers: {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
@@ -906,32 +909,73 @@ function initializePage() {
                     });
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
                     }
                     
                     const data = await response.json();
                     console.log('Ответ сервера:', data);
                     
-                    if (data.success) {
-                        if (data.requests && data.requests.length > 0) {
-                            console.log(`Найдено заявок: ${data.requests.length}`);
-                            console.log('Список заявок:', data.requests);
-                            // TODO: отобразить заявки в таблице
-                        } else {
-                            console.log('Нет заявок для выбранных бригад');
-                            // TODO: показать сообщение пользователю
-                        }
+                    if (data.success && data.leaders && data.leaders.length > 0) {
+                        brigadeLeaders = data.leaders;
+                        console.log('Получен список бригадиров:', brigadeLeaders);
+                        
+                        // Очищаем и заполняем выпадающий список
+                        brigadeLeaderSelect.innerHTML = '<option value="" selected disabled>Выберите бригадира...</option>';
+                        
+                        // Добавляем бригадиров в выпадающий список
+                        brigadeLeaders.forEach(leader => {
+                            const option = document.createElement('option');
+                            option.value = leader.id;
+                            option.textContent = leader.name;
+                            brigadeLeaderSelect.appendChild(option);
+                        });
+                        
+                        // Показываем контейнер с выбором бригадира
+                        brigadeLeaderFilter.classList.remove('d-none');
+                        
                     } else {
-                        console.error('Ошибка сервера:', data.message || 'Неизвестная ошибка');
-                        // TODO: показать сообщение об ошибке
+                        console.error('Не удалось загрузить список бригадиров или список пуст');
+                        // Скрываем контейнер, если нет данных
+                        brigadeLeaderFilter.classList.add('d-none');
+                        // Снимаем флажок, так как загрузить данные не удалось
+                        teamCheckbox.checked = false;
+                        
+                        // Показываем сообщение пользователю
+                        showAlert('Не удалось загрузить список бригадиров', 'warning');
                     }
                 } catch (error) {
-                    console.error('Ошибка при запросе заявок:', error);
-                    // TODO: показать сообщение об ошибке
+                    console.error('Ошибка при запросе списка бригадиров:', error);
+                    // Скрываем контейнер при ошибке
+                    brigadeLeaderFilter.classList.add('d-none');
+                    // Снимаем флажок при ошибке
+                    teamCheckbox.checked = false;
+                    
+                    // Показываем сообщение об ошибке
+                    showAlert('Произошла ошибка при загрузке списка бригадиров', 'danger');
                 }
             } else {
                 console.log('Фильтр по бригадам отключен');
-                // TODO: добавить логику сброса отображения к исходному состоянию
+                // Скрываем контейнер с выбором бригадира
+                brigadeLeaderFilter.classList.add('d-none');
+                // Очищаем выбранное значение
+                brigadeLeaderSelect.value = '';
+                // Очищаем список бригадиров
+                brigadeLeaders = [];
+                
+                // Здесь можно добавить сброс фильтрации по бригадиру
+                // Например, показать все заявки
+                // applyFilters();
+            }
+        });
+        
+        // Обработчик выбора бригадира
+        brigadeLeaderSelect.addEventListener('change', function() {
+            const selectedLeaderId = this.value;
+            if (selectedLeaderId) {
+                console.log('Выбран бригадир с ID:', selectedLeaderId);
+                // Здесь можно добавить логику фильтрации заявок по выбранному бригадиру
+                // Например, отправить запрос на сервер или отфильтровать существующие данные
+                // applyFilters();
             }
         });
     }

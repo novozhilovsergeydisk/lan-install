@@ -59,6 +59,11 @@ Route::get('/api/requests/by-brigade', [RequestTeamFilterController::class, 'fil
     ->name('api.requests.filter-brigade')
     ->middleware('auth');
 
+// Получение списка бригадиров
+Route::get('/api/brigade-leaders', [RequestTeamFilterController::class, 'getBrigadeLeaders'])
+    ->name('api.brigade-leaders')
+    ->middleware('auth');
+
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {
     // Get addresses for select

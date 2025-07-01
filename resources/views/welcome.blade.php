@@ -162,6 +162,13 @@
                             <div id="status-buttons" class="d-flex flex-wrap gap-2">
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->
                             </div>
+                            <!-- Контейнер для выбора бригадира -->
+                            <div id="brigade-leader-filter" class="ms-3 d-none">
+                                <select id="brigade-leader-select" class="form-select form-select-sm" style="width: 250px; margin-top: -12px;">
+                                    <option value="" selected disabled>Выберите бригадира...</option>
+                                    <!-- Список бригадиров будет добавлен через JavaScript -->
+                                </select>
+                            </div>
                         </div>
 
                         <!-- Calendar Container (initially hidden) -->
