@@ -7,6 +7,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BrigadeController;
 use App\Http\Controllers\RequestFilterController;
 use App\Http\Controllers\RequestTeamFilterController;
+use App\Http\Controllers\GeoController;
 
 // Форма входа
 /*Route::get('/login', function () {
@@ -104,4 +105,13 @@ Route::prefix('api')->middleware('auth')->group(function () {
         ->name('api.requests.comments.count');
 });
 
+//
+Route::prefix('api/geo')->middleware('auth')->group(function () {
+    Route::get('/addresses', [GeoController::class, 'getAddresses']);
+    Route::get('/cities', [GeoController::class, 'getCities']);
+    Route::get('/regions', [GeoController::class, 'getRegions']);
 
+    Route::post('/addresses', [GeoController::class, 'addAddress']);
+    Route::post('/cities', [GeoController::class, 'addCity']);
+    Route::post('/regions', [GeoController::class, 'addRegion']);
+});

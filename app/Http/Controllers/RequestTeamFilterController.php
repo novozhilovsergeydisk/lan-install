@@ -53,13 +53,15 @@ class RequestTeamFilterController extends Controller
     {
         $leaders = DB::table('brigades as b')
             ->join('employees as e', 'b.leader_id', '=', 'e.id')
+            ->whereDate('b.formation_date', '>=', now()->toDateString())
             ->select('e.id', 'e.fio as name')
             ->distinct()
             ->get();
 
         return response()->json([
             'success' => true,
-            'leaders' => $leaders
+            'leaders' => $leaders,
+            'message' => $leaders->isEmpty() ? 'На сегодня не создано ни одной бригады!' : ''
         ]);
     }
 }

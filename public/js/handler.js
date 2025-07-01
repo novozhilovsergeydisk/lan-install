@@ -915,33 +915,37 @@ function initializePage() {
                     const data = await response.json();
                     console.log('Ответ сервера:', data);
                     
-                    if (data.success && data.leaders && data.leaders.length > 0) {
-                        brigadeLeaders = data.leaders;
-                        console.log('Получен список бригадиров:', brigadeLeaders);
-                        
-                        // Очищаем и заполняем выпадающий список
-                        brigadeLeaderSelect.innerHTML = '<option value="" selected disabled>Выберите бригадира...</option>';
-                        
-                        // Добавляем бригадиров в выпадающий список
-                        brigadeLeaders.forEach(leader => {
-                            const option = document.createElement('option');
-                            option.value = leader.id;
-                            option.textContent = leader.name;
-                            brigadeLeaderSelect.appendChild(option);
-                        });
-                        
-                        // Показываем контейнер с выбором бригадира
-                        brigadeLeaderFilter.classList.remove('d-none');
-                        
+                    if (data.success) {
+                        if (data.leaders && data.leaders.length > 0) {
+                            brigadeLeaders = data.leaders;
+                            console.log('Получен список бригадиров:', brigadeLeaders);
+                            
+                            // Очищаем и заполняем выпадающий список
+                            brigadeLeaderSelect.innerHTML = '<option value="" selected disabled>Выберите бригадира...</option>';
+                            
+                            // Добавляем бригадиров в выпадающий список
+                            brigadeLeaders.forEach(leader => {
+                                const option = document.createElement('option');
+                                option.value = leader.id;
+                                option.textContent = leader.name;
+                                brigadeLeaderSelect.appendChild(option);
+                            });
+                            
+                            // Показываем контейнер с выбором бригадира
+                            brigadeLeaderFilter.classList.remove('d-none');
+                        } else {
+                            // Если успешный ответ, но список пуст, показываем сообщение
+                            console.log(data.message || 'Список бригадиров пуст');
+                            showAlert(data.message || 'На сегодня не создано ни одной бригады!', 'info');
+                            brigadeLeaderFilter.classList.add('d-none');
+                            teamCheckbox.checked = false;
+                        }
                     } else {
-                        console.error('Не удалось загрузить список бригадиров или список пуст');
-                        // Скрываем контейнер, если нет данных
+                        // Обработка ошибки
+                        console.error('Ошибка при загрузке списка бригадиров:', data.message || 'Неизвестная ошибка');
                         brigadeLeaderFilter.classList.add('d-none');
-                        // Снимаем флажок, так как загрузить данные не удалось
                         teamCheckbox.checked = false;
-                        
-                        // Показываем сообщение пользователю
-                        showAlert('Не удалось загрузить список бригадиров', 'warning');
+                        showAlert(data.message || 'Не удалось загрузить список бригадиров', 'warning');
                     }
                 } catch (error) {
                     console.error('Ошибка при запросе списка бригадиров:', error);

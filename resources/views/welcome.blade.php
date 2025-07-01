@@ -1571,6 +1571,43 @@ function showAlert(message, type = 'success') {
 }
 </script>
 
+<!-- Modal for Geo -->
+<div class="modal fade" id="geoModal" tabindex="-1" aria-labelledby="geoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="geoModalLabel">Управление адресами, городами и регионами</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+
+        <h6>Добавить регион</h6>
+        <form id="regionForm" class="mb-3">
+          <input type="text" name="name" class="form-control" placeholder="Название региона" required>
+          <button type="submit" class="btn btn-sm btn-outline-primary mt-2">Добавить регион</button>
+        </form>
+
+        <h6>Добавить город</h6>
+        <form id="cityForm" class="mb-3">
+          <input type="text" name="name" class="form-control mb-2" placeholder="Название города" required>
+          <select name="region_id" class="form-select" required></select>
+          <button type="submit" class="btn btn-sm btn-outline-primary mt-2">Добавить город</button>
+        </form>
+
+        <h6>Добавить адрес</h6>
+        <form id="addressForm">
+          <input type="text" name="street" class="form-control mb-2" placeholder="Улица" required>
+          <input type="text" name="houses" class="form-control mb-2" placeholder="Дом" required>
+          <input type="text" name="district" class="form-control mb-2" placeholder="Район">
+          <select name="city_id" class="form-select" required></select>
+          <button type="submit" class="btn btn-sm btn-outline-primary mt-2">Добавить адрес</button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal for Brigade Details -->
 <div class="modal fade" id="brigadeDetailsModal" tabindex="-1" aria-labelledby="brigadeDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
