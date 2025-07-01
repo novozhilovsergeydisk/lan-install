@@ -833,7 +833,7 @@
 </div>
 
 <!-- New Request Modal -->
-<div class="modal fade" id="newRequestModal" tabindex="-1" aria-labelledby="newRequestModalLabel" aria-hidden="true">
+<div class="modal fade" id="newRequestModal" tabindex="-1" aria-labelledby="newRequestModalLabel" aria-hidden="true" role="dialog">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -948,8 +948,29 @@
     // New Request Form Functionality
     document.addEventListener('DOMContentLoaded', function () {
         const newRequestModal = document.getElementById('newRequestModal');
-
+        
+        // Initialize modal with proper ARIA attributes
         if (newRequestModal) {
+            // Set up event listeners for modal show/hide
+            newRequestModal.addEventListener('show.bs.modal', function() {
+                this.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('modal-open');
+                // Add inert to the rest of the page when modal is open
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) {
+                    mainContent.setAttribute('inert', 'true');
+                }
+            });
+            
+            newRequestModal.addEventListener('hidden.bs.modal', function() {
+                this.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('modal-open');
+                // Remove inert from the main content when modal is closed
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) {
+                    mainContent.removeAttribute('inert');
+                }
+            });
             // Set default execution date to tomorrow
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
