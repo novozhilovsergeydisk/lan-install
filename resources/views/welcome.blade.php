@@ -408,21 +408,77 @@
                             </div>  
 
                             <div class="d-flex gap-3 mb-3" style="height: 450px;">
-                                <div class="d-flex flex-column" style="flex: 1;">
-                                    <label class="form-label">Состав бригады</label>
-                                    <select name="members[]" class="form-select h-100" multiple required>
+                                <div class="d-flex flex-column" style="flex: 1.2;">
+                                    <label class="form-label">Выбрать сотрудника</label>
+                                    <select name="members[]" id="employeesSelect" class="form-select h-100" multiple required>
                                         @foreach ($employees as $emp)
                                             <option value="{{ $emp->id }}">{{ $emp->fio }}</option>
                                         @endforeach
                                     </select>
                                 </div>
 
-                                <div class="d-flex flex-column" style="flex: 1;">
-                                    <label class="form-label">Выбранные сотрудники</label>
+                                <div class="d-flex flex-column justify-content-center">
+                                    <button type="button" id="addToBrigadeBtn" class="btn btn-outline-secondary" style="width: 50px; height: 50px; border-radius: 50%;">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </button>
+                                </div>
+
+                                <div class="d-flex flex-column" style="flex: 1.2;">
+                                    <label class="form-label">Состав бригады</label>
                                     <div id="brigadeMembers" class="border rounded p-3 h-100 overflow-auto">
                                         <!-- Здесь будет отображаться выбранный состав бригады -->
                                     </div>
                                 </div>
+
+                                <script>
+                                    document.getElementById('addToBrigadeBtn').addEventListener('click', function() {
+                                        const select = document.getElementById('employeesSelect');
+                                        const brigadeMembers = document.getElementById('brigadeMembers');
+                                        const selectedOptions = Array.from(select.selectedOptions);
+                                        
+                                        if (selectedOptions.length > 0) {
+                                            selectedOptions.forEach(option => {
+                                                // Создаем элемент для отображения сотрудника
+                                                const memberDiv = document.createElement('div');
+                                                memberDiv.className = 'd-flex justify-content-between align-items-center p-2 mb-2 border rounded';
+                                                
+                                                // Добавляем имя сотрудника
+                                                const nameSpan = document.createElement('span');
+                                                nameSpan.textContent = option.text;
+                                                
+                                                // Создаем кнопку удаления
+                                                const deleteBtn = document.createElement('button');
+                                                deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                                                deleteBtn.innerHTML = '&times;';
+                                                deleteBtn.onclick = function() {
+                                                    memberDiv.remove();
+                                                    // Разблокируем опцию в селекте
+                                                    option.selected = false;
+                                                };
+                                                
+                                                // Скрытое поле для формы
+                                                const hiddenInput = document.createElement('input');
+                                                hiddenInput.type = 'hidden';
+                                                hiddenInput.name = 'brigade_members[]';
+                                                hiddenInput.value = option.value;
+                                                
+                                                // Собираем всё вместе
+                                                memberDiv.appendChild(hiddenInput);
+                                                memberDiv.appendChild(nameSpan);
+                                                memberDiv.appendChild(deleteBtn);
+                                                
+                                                // Добавляем в список бригады
+                                                brigadeMembers.appendChild(memberDiv);
+                                                
+                                                // Делаем опцию в селекте неактивной
+                                                option.disabled = true;
+                                                option.selected = false;
+                                            });
+                                        } else {
+                                            console.log('Выберите хотя бы одного сотрудника');
+                                        }
+                                    });
+                                </script>
                             </div>
 
                             <div class="mt-4">
