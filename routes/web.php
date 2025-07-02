@@ -51,6 +51,11 @@ Route::get('/api/requests/by-status', [RequestFilterController::class, 'filterBy
     ->middleware('auth')
     ->name('api.requests.filter-statuses');
 
+// Добавление нового адреса
+Route::post('/address/add', [GeoController::class, 'addAddress'])
+    ->middleware('auth')
+    ->name('address.add');
+
 // API Routes for request modification
 Route::prefix('api/requests')->middleware('auth')->group(function () {
     // Получить бригаду по ID бригадира за текущую дату

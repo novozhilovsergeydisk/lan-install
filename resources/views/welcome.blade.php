@@ -442,7 +442,8 @@
                                 <!-- Адрес -->
                                 <div>
                                     <h6>Добавить адрес</h6>
-                                    <form id="addressForm" class="row g-2 align-items-end">
+                                    <form id="addressForm" class="row g-2 align-items-end" method="POST" action="{{ route('address.add') }}">
+                                        @csrf
                                         <div class="col-md-3">
                                             <label class="form-label">Улица</label>
                                             <input type="text" name="street" class="form-control" placeholder="Улица" required>
@@ -457,8 +458,8 @@
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label">Город</label>
-                                            <select id="filter_city_id" name="filter_city_id" class="form-select">
-                                                <option value="">Все города</option>
+                                            <select id="filter_city_id" name="city_id" class="form-select" required>
+                                                <option value="">Выберите город</option>
                                             </select>
                                         </div>
                                         <div class="col-auto">
@@ -469,53 +470,59 @@
                                         </div>
                                     </form>
                                     <script>
-                                    // Загружаем города в выпадающий список
+                                    // Функция для загрузки городов
+                                    function loadCities(selectElement) {
+                                        // Устанавливаем состояние загрузки
+                                        const loadingOption = document.createElement('option');
+                                        loadingOption.value = '';
+                                        loadingOption.textContent = 'Загрузка городов...';
+                                        selectElement.innerHTML = '';
+                                        selectElement.appendChild(loadingOption);
+                                        
+                                        // Загружаем города с сервера
+                                        return fetch('/api/cities')
+                                            .then(response => {
+                                                if (!response.ok) {
+                                                    throw new Error('Ошибка загрузки городов');
+                                                }
+                                                return response.json();
+                                            })
+                                            .then(cities => {
+                                                // Очищаем список
+                                                selectElement.innerHTML = '';
+                                                
+                                                // Добавляем опцию по умолчанию
+                                                const defaultOption = document.createElement('option');
+                                                defaultOption.value = '';
+                                                defaultOption.textContent = 'Выберите город';
+                                                selectElement.appendChild(defaultOption);
+                                                
+                                                // Добавляем города в список
+                                                if (Array.isArray(cities) && cities.length > 0) {
+                                                    cities.forEach(city => {
+                                                        const option = document.createElement('option');
+                                                        option.value = city.id;
+                                                        option.textContent = city.name;
+                                                        selectElement.appendChild(option);
+                                                    });
+                                                    console.log('Загружено городов:', cities.length);
+                                                } else {
+                                                    console.warn('Получен пустой список городов');
+                                                }
+                                                return cities;
+                                            })
+                                            .catch(error => {
+                                                console.error('Ошибка при загрузке городов:', error);
+                                                selectElement.innerHTML = '<option value="">Ошибка загрузки</option>';
+                                                throw error;
+                                            });
+                                    }
+
+                                    // Загружаем города при загрузке страницы
                                     document.addEventListener('DOMContentLoaded', function() {
                                         const citySelect = document.getElementById('filter_city_id');
-                                        
                                         if (citySelect) {
-                                            // Устанавливаем состояние загрузки
-                                            const loadingOption = document.createElement('option');
-                                            loadingOption.value = '';
-                                            loadingOption.textContent = 'Загрузка городов...';
-                                            citySelect.innerHTML = '';
-                                            citySelect.appendChild(loadingOption);
-                                            
-                                            // Загружаем города с сервера
-                                            fetch('/api/cities')
-                                                .then(response => {
-                                                    if (!response.ok) {
-                                                        throw new Error('Ошибка загрузки городов');
-                                                    }
-                                                    return response.json();
-                                                })
-                                                .then(cities => {
-                                                    // Очищаем список
-                                                    citySelect.innerHTML = '';
-                                                    
-                                                    // Добавляем опцию по умолчанию
-                                                    const defaultOption = document.createElement('option');
-                                                    defaultOption.value = '';
-                                                    defaultOption.textContent = 'Все города';
-                                                    citySelect.appendChild(defaultOption);
-                                                    
-                                                    // Добавляем города в список
-                                                    if (Array.isArray(cities) && cities.length > 0) {
-                                                        cities.forEach(city => {
-                                                            const option = document.createElement('option');
-                                                            option.value = city.id;
-                                                            option.textContent = city.name;
-                                                            citySelect.appendChild(option);
-                                                        });
-                                                        console.log('Загружено городов:', cities.length);
-                                                    } else {
-                                                        console.warn('Получен пустой список городов');
-                                                    }
-                                                })
-                                                .catch(error => {
-                                                    console.error('Ошибка при загрузке городов:', error);
-                                                    citySelect.innerHTML = '<option value="">Ошибка загрузки</option>';
-                                                });
+                                            loadCities(citySelect);
                                         }
                                     });
                                     
@@ -580,9 +587,87 @@
                                             form.elements['street'].value = data.street;
                                             form.elements['houses'].value = data.houses;
                                             form.elements['district'].value = data.district;
-                                            // Используем filter_city_id вместо city_id
-                                            document.getElementById('filter_city_id').value = data.city_id;
+                                            // Устанавливаем значение города
+                                            form.elements['city_id'].value = data.city_id;
                                         });
+                                    </script>
+
+                                    <script>
+                                    // Обработчик отправки формы добавления адреса
+                                    document.getElementById('addressForm').addEventListener('submit', async function(e) {
+                                        e.preventDefault();
+                                        
+                                        const form = e.target;
+                                        const submitBtn = form.querySelector('button[type="submit"]');
+                                        const originalBtnText = submitBtn.innerHTML;
+                                        
+                                        try {
+                                            // Показываем индикатор загрузки
+                                            submitBtn.disabled = true;
+                                            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+                                            
+                                            const formData = new FormData(form);
+                                            const response = await fetch(form.action, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Accept': 'application/json',
+                                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                                },
+                                                body: formData
+                                            });
+                                            
+                                            const result = await response.json();
+                                            
+                                            if (response.ok) {
+                                                // Очищаем форму при успешном сохранении
+                                                form.reset();
+                                                // Сбрасываем выпадающий список городов
+                                                const citySelect = form.elements['city_id'];
+                                                citySelect.innerHTML = '<option value="">Выберите город</option>';
+                                                // Перезагружаем города
+                                                loadCities(citySelect);
+                                                // Показываем уведомление об успехе
+                                                if (typeof showAlert === 'function') {
+                                                    showAlert('Адрес успешно добавлен!', 'success');
+                                                } else {
+                                                    alert('Адрес успешно добавлен!');
+                                                }
+                                            } else if (response.status === 422) {
+                                                // Обработка ошибок валидации
+                                                const errorMessages = [];
+                                                for (const field in result.errors) {
+                                                    errorMessages.push(result.errors[field].join('\n'));
+                                                }
+                                                const errorMessage = errorMessages.join('\n');
+                                                if (typeof showAlert === 'function') {
+                                                    showAlert(errorMessage, 'danger');
+                                                } else {
+                                                    alert(errorMessage);
+                                                }
+                                                throw new Error(errorMessage);
+                                            } else {
+                                                const errorMessage = result.message || 'Ошибка при сохранении адреса';
+                                                if (typeof showAlert === 'function') {
+                                                    showAlert(errorMessage, 'danger');
+                                                } else {
+                                                    alert(errorMessage);
+                                                }
+                                                throw new Error(errorMessage);
+                                            }
+                                        } catch (error) {
+console.error('Ошибка:', error);
+                                            const errorMessage = error.message || 'Произошла ошибка при сохранении адреса';
+                                            if (typeof showAlert === 'function') {
+                                                showAlert(errorMessage, 'danger');
+                                            } else {
+                                                alert(errorMessage);
+                                            }
+                                        } finally {
+                                            // Восстанавливаем кнопку
+                                            submitBtn.disabled = false;
+                                            submitBtn.innerHTML = originalBtnText;
+                                        }
+                                    });
                                     </script>
                                 </div>
 
