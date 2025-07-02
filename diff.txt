@@ -1,211 +1,227 @@
-diff --git a/public/js/handler.js b/public/js/handler.js
-index 6cb00cf..361ad77 100644
---- a/public/js/handler.js
-+++ b/public/js/handler.js
-@@ -261,7 +261,7 @@ function applyFilters() {
-                             <td class="text-nowrap">
-                                 <div class="d-flex flex-column gap-1">
-                                     ${request.status !== 'completed' ? `
--                                        <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn" onclick="closeRequest(${request.id}); return false;">
-+                                        <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                                             Закрыть заявку
-                                         </button>
-                                     ` : ''}
-@@ -907,22 +907,22 @@ function initializePage() {
-                             'X-Requested-With': 'XMLHttpRequest'
-                         }
-                     });
--                    
+diff --git a/app/Http/Controllers/BrigadeController.php b/app/Http/Controllers/BrigadeController.php
+index b9da836..dafebeb 100644
+--- a/app/Http/Controllers/BrigadeController.php
++++ b/app/Http/Controllers/BrigadeController.php
+@@ -71,12 +71,41 @@ public function index()
+         }
+     }
+ 
+-    /**
+-     * Store a newly created resource in storage.
+-     */
++    public function create()
++    {
++        // Получаем список всех сотрудников
++        $employees = DB::select("SELECT id, fio FROM employees ORDER BY fio");
 +
-                     if (!response.ok) {
-                         throw new Error(`Ошибка HTTP! Статус: ${response.status}`);
-                     }
--                    
++        
++    }
 +
-                     const data = await response.json();
-                     console.log('Ответ сервера:', data);
--                    
+     public function store(Request $request)
+     {
+-        //
++        $request->validate([
++            'name' => 'required|string|max:255',
++            'leader_id' => 'required|exists:employees,id',
++            'members' => 'required|array|min:1',
++            'members.*' => 'exists:employees,id',
++        ]);
 +
-                     if (data.success) {
-                         if (data.leaders && data.leaders.length > 0) {
-                             brigadeLeaders = data.leaders;
-                             console.log('Получен список бригадиров:', brigadeLeaders);
--                            
++        // Вставка бригады
++        DB::insert("INSERT INTO brigades (name, leader_id) VALUES (?, ?)", [
++            $request->input('name'),
++            $request->input('leader_id'),
++        ]);
 +
-                             // Очищаем и заполняем выпадающий список
-                             brigadeLeaderSelect.innerHTML = '<option value="" selected disabled>Выберите бригадира...</option>';
--                            
++        // Получаем ID только что вставленной бригады
++        $brigadeId = DB::getPdo()->lastInsertId();
 +
-                             // Добавляем бригадиров в выпадающий список
-                             brigadeLeaders.forEach(leader => {
-                                 const option = document.createElement('option');
-@@ -930,7 +930,7 @@ function initializePage() {
-                                 option.textContent = leader.name;
-                                 brigadeLeaderSelect.appendChild(option);
-                             });
--                            
++        // Вставка участников бригады
++        foreach ($request->input('members') as $memberId) {
++            DB::insert("INSERT INTO brigade_members (brigade_id, employee_id) VALUES (?, ?)", [
++                $brigadeId,
++                $memberId,
++            ]);
++        }
 +
-                             // Показываем контейнер с выбором бригадира
-                             brigadeLeaderFilter.classList.remove('d-none');
-                         } else {
-@@ -953,7 +953,7 @@ function initializePage() {
-                     brigadeLeaderFilter.classList.add('d-none');
-                     // Снимаем флажок при ошибке
-                     teamCheckbox.checked = false;
--                    
++        return redirect()->back()->with('success', 'Бригада успешно создана');
+     }
+ 
+     /**
+diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
+index 92a4b46..c98d05b 100644
+--- a/resources/views/welcome.blade.php
++++ b/resources/views/welcome.blade.php
+@@ -367,18 +367,17 @@ class="btn btn-sm btn-outline-success add-photo-btn"
+                     </div>
+ 
+                     <div class="tab-pane fade" id="teams" role="tabpanel">
++                        <!--
+                         <div class="d-flex justify-content-between align-items-center mb-4">
+                             <h4 class="mb-0">Бригады</h4>
+                             <button type="button" class="btn btn-primary" id="createBrigadeBtn">
+                                 <i class="bi bi-plus-circle"></i> Создать бригаду
+                             </button>
+-                        </div>
+-
+-                        <!-- Brigades List -->
+-                        <div class="card">
++                        </div>-->
++                        
++                        <div class="card hide-me">
+                             <div class="card-body">
+                                 <div id="brigadesList" class="list-group">
+-                                    <!-- Brigades will be loaded here -->
+                                     <div class="text-center py-4">
+                                         <div class="spinner-border text-primary" role="status">
+                                             <span class="visually-hidden">Загрузка...</span>
+@@ -388,15 +387,50 @@ class="btn btn-sm btn-outline-success add-photo-btn"
+                                 </div>
+                             </div>
+                         </div>
++                        
+ 
+-                        <!-- Brigade details modal is defined below in the file -->
++                        <form action="{{ route('brigades.store') }}" method="POST">
++                            @csrf
+ 
+-                        <p>В этом разделе отображается информация о бригадах. Вы можете просматривать состав бригад,
+-                            их загрузку и текущие задачи. Для каждой бригады доступна контактная информация
+-                            ответственного лица.</p>
+-                        <p>Используйте этот раздел для назначения заявок на бригады и контроля за выполнением работ.
+-                            Вы можете фильтровать бригады по специализации или текущему статусу.</p>
+-                    </div>
++                            <div class="mb-3">
++                                <label class="form-label">Название бригады</label>
++                                <input type="text" name="name" class="form-control" required>
++                            </div>
 +
-                     // Показываем сообщение об ошибке
-                     showAlert('Произошла ошибка при загрузке списка бригадиров', 'danger');
-                 }
-@@ -965,13 +965,13 @@ function initializePage() {
-                 brigadeLeaderSelect.value = '';
-                 // Очищаем список бригадиров
-                 brigadeLeaders = [];
--                
++                            <div class="mb-3">
++                                <label class="form-label">Бригадир</label>
++                                <select name="leader_id" class="form-select" required>
++                                    <option value="">-- Выберите бригадира --</option>
++                                    @foreach ($employees as $emp)
++                                        <option value="{{ $emp->id }}">{{ $emp->fio }}</option>
++                                    @endforeach
++                                </select>
++                            </div>  
 +
-                 // Здесь можно добавить сброс фильтрации по бригадиру
-                 // Например, показать все заявки
-                 // applyFilters();
-             }
-         });
--        
++                            <div class="d-flex gap-3 mb-3" style="height: 450px;">
++                                <div class="d-flex flex-column" style="flex: 1;">
++                                    <label class="form-label">Состав бригады</label>
++                                    <select name="members[]" class="form-select h-100" multiple required>
++                                        @foreach ($employees as $emp)
++                                            <option value="{{ $emp->id }}">{{ $emp->fio }}</option>
++                                        @endforeach
++                                    </select>
++                                </div>
 +
-         // Обработчик выбора бригадира
-         brigadeLeaderSelect.addEventListener('change', function() {
-             const selectedLeaderId = this.value;
-@@ -999,11 +999,11 @@ function setupBrigadeAttachment() {
-             const brigadeSelect = document.getElementById('brigade-leader-select');
-             const attachButton = document.getElementById('attach-brigade-button');
-             const filterContainer = document.getElementById('brigade-leader-filter');
--            
++                                <div class="d-flex flex-column" style="flex: 1;">
++                                    <label class="form-label">Выбранные сотрудники</label>
++                                    <div id="brigadeMembers" class="border rounded p-3 h-100 overflow-auto">
++                                        <!-- Здесь будет отображаться выбранный состав бригады -->
++                                    </div>
++                                </div>
++                            </div>
 +
-             if (brigadeSelect && filterContainer) {
-                 // Добавляем классы для отображения в строку
-                 filterContainer.classList.add('d-flex', 'align-items-center');
--                
++                            <div class="mt-4">
++                                <button type="submit" class="btn btn-primary">Создать бригаду</button>
++                            </div>
++                        </form>
 +
-                 if (e.target.checked) {
-                     // Если кнопка еще не создана - создаем ее
-                     if (!attachButton) {
-@@ -1016,39 +1016,39 @@ function setupBrigadeAttachment() {
-                         button.onclick = async function() {
-                             const select = document.getElementById('brigade-leader-select');
-                             const checkedCheckbox = document.querySelector('input[type="checkbox"].request-checkbox:checked');
--                            
++                    </div>    
+ 
+                     <div class="tab-pane fade" id="addresses" role="tabpanel">
+                         <h4>Адреса</h4>
+@@ -1118,7 +1152,7 @@ function updateCommentsBadge(requestId) {
+                 <form id="newRequestForm">
+                     @csrf
+                     <div class="mb-3">
+-                        <h6>Информация о клиенте</h6>
++                        <!-- <h6>Информация о клиенте</h6> -->
+                         <div class="row g-3">
+                             <div class="col-md-6">
+                                 <label for="clientName" class="form-label">Контактное лицо <span
+@@ -1134,7 +1168,7 @@ class="text-danger">*</span></label>
+                     </div>
+ 
+                     <div class="mb-3 hide-me">
+-                        <h6>Детали заявки</h6>
++                        <!-- <h6>Детали заявки</h6> -->
+                         <div class="row g-3">
+                             <div class="col-md-6">
+                                 <label for="requestType" class="form-label">Тип заявки <span
+@@ -1154,7 +1188,7 @@ class="text-danger">*</span></label>
+                     </div>
+ 
+                     <div class="mb-3">
+-                        <h6>Планирование</h6>
++                        <!-- <h6>Планирование</h6> -->
+                         <div class="row g-3">
+                             <div class="col-md-6">
+                                 <label for="executionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
+diff --git a/routes/web.php b/routes/web.php
+index 8f35a52..4bdba35 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -9,10 +9,10 @@
+ use App\Http\Controllers\RequestTeamFilterController;
+ use App\Http\Controllers\GeoController;
+ 
+-// Форма входа
+-/*Route::get('/login', function () {
+-    return 'Маршрут /login работает!';
+-});*/
++Route::middleware(['auth'])->group(function () {
++    Route::get('/brigades/create', [BrigadeController::class, 'create'])->name('brigades.create');
++    Route::post('/brigades', [BrigadeController::class, 'store'])->name('brigades.store');
++});
+ 
+ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+ Route::post('/login', [LoginController::class, 'login']);
+@@ -60,7 +60,7 @@
+ Route::prefix('api/requests')->middleware('auth')->group(function () {
+     // Получить бригаду по ID бригадира за текущую дату
+     Route::get('/brigade/by-leader/{leaderId}', [\App\Http\Controllers\ControllerRequestModification::class, 'getBrigadeByLeader']);
+-    
 +
-                             if (!select.value) {
-                                 console.log('Бригадир не выбран!');
-                                 return;
-                             }
--                            
+     // Обновить бригаду у заявки
+     Route::post('/update-brigade', [\App\Http\Controllers\ControllerRequestModification::class, 'updateRequestBrigade']);
+ });
+@@ -83,28 +83,28 @@
+ Route::prefix('api')->middleware('auth')->group(function () {
+     // Get addresses for select
+     Route::get('/addresses', [HomeController::class, 'getAddresses'])->name('api.addresses');
+-    
 +
-                             if (!checkedCheckbox) {
-                                 console.log('Не выбрана ни одна заявка!');
-                                 return;
-                             }
--                            
+     // Get requests by date
+     Route::get('/requests/date/{date}', [HomeController::class, 'getRequestsByDate'])->name('api.requests.by-date');
+-    
 +
-                             const leaderId = select.value;
-                             const requestId = checkedCheckbox.value;
-                             const brigadeName = select.options[select.selectedIndex].text;
--                            
+     // Get request types
+     Route::get('/request-types', [HomeController::class, 'getRequestTypes'])->name('api.request-types');
+-    
 +
-                             console.log(`ID выбранной заявки: ${requestId}`);
-                             console.log(`ID выбранного бригадира: ${leaderId}`);
--                            
+     // Get request statuses
+     Route::get('/request-statuses', [HomeController::class, 'getRequestStatuses'])->name('api.request-statuses');
+-    
 +
-                             try {
-                                 console.log('1. Получаем данные о бригаде...');
-                                 const brigadeResponse = await fetch(`/api/requests/brigade/by-leader/${leaderId}`);
-                                 const brigadeData = await brigadeResponse.json();
--                                
+     // Get brigades
+     Route::get('/brigades', [BrigadeController::class, 'index'])->name('api.brigades');
+-    
 +
-                                 console.log('Ответ от API бригады:', brigadeData);
--                                
+     // Get operators
+     Route::get('/operators', [HomeController::class, 'getOperators'])->name('api.operators');
+-    
 +
-                                 if (!brigadeResponse.ok) {
-                                     throw new Error(brigadeData.message || `Ошибка ${brigadeResponse.status} при получении данных о бригаде`);
-                                 }
--                                
+     // Get cities
+     Route::get('/cities', [HomeController::class, 'getCities'])->name('api.cities');
+-    
 +
-                                 if (!brigadeData.data || !brigadeData.data.brigade_id) {
-                                     throw new Error('Не удалось получить ID бригады из ответа сервера');
-                                 }
--                                
+     // Create new request
+     Route::post('/requests', [HomeController::class, 'storeRequest'])->name('api.requests.store');
+-    
 +
-                                 console.log('2. Отправляем запрос на обновление заявки...');
-                                 const updateResponse = await fetch('/api/requests/update-brigade', {
-                                     method: 'POST',
-@@ -1062,28 +1062,28 @@ function setupBrigadeAttachment() {
-                                         request_id: requestId
-                                     })
-                                 });
--                                
-+
-                                 const updateData = await updateResponse.json().catch(() => ({}));
-                                 console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
--                                
-+
-                                 if (!updateResponse.ok) {
--                                    const errorMessage = updateData.message || 
--                                                       updateData.error || 
-+                                    const errorMessage = updateData.message ||
-+                                                       updateData.error ||
-                                                        (updateData.error_details ? JSON.stringify(updateData.error_details) : 'Неизвестная ошибка');
-                                     throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
-                                 }
--                                
-+
-                                 console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
--                                
-+
-                                 // 3. Обновляем страницу для отображения изменений
-                                 window.location.reload();
--                                
-+
-                             } catch (error) {
-                                 console.error('Ошибка при прикреплении бригады:', error.message);
-                                 alert(`Ошибка: ${error.message}`);
-                             }
-                         };
--                        
-+
-                         // Вставляем кнопку после селекта
-                         filterContainer.appendChild(button);
-                     } else {
-@@ -1107,30 +1107,30 @@ function setupBrigadeAttachment() {
-             const checkbox = e.target;
-             const requestId = checkbox.value;
-             const row = checkbox.closest('tr');
--            
-+
-             // Находим select с бригадирами в строке
-             const brigadeSelect = row.querySelector('select#brigade-leader-select');
--            
-+
-             if (brigadeSelect) {
-                 // Удаляем существующую кнопку, если есть
-                 const existingButton = brigadeSelect.nextElementSibling;
-                 if (existingButton && existingButton.matches('.attach-brigade-button')) {
-                     existingButton.remove();
-                 }
--                
-+
-                 // Если чекбокс отмечен, добавляем кнопку
-                 if (checkbox.checked) {
-                     const button = document.createElement('button');
-                     button.className = 'btn btn-sm btn-primary attach-brigade-button';
-                     button.textContent = 'Прикрепить бригаду к заявке';
-                     button.style.marginLeft = '10px';
--                    
-+
-                     // Моковый обработчик
-                     button.addEventListener('click', function() {
-                         console.log('Кнопка нажата для заявки', requestId);
-                         console.log('Выбран бригадир с ID:', brigadeSelect.value);
-                     });
--                    
-+
-                     // Вставляем кнопку после select
-                     brigadeSelect.parentNode.insertBefore(button, brigadeSelect.nextSibling);
-                 }
+     // Get comments count for request
+     Route::get('/requests/{request}/comments/count', [HomeController::class, 'getCommentsCount'])
+         ->name('api.requests.comments.count');

@@ -9,10 +9,10 @@ use App\Http\Controllers\RequestFilterController;
 use App\Http\Controllers\RequestTeamFilterController;
 use App\Http\Controllers\GeoController;
 
-// Форма входа
-/*Route::get('/login', function () {
-    return 'Маршрут /login работает!';
-});*/
+Route::middleware(['auth'])->group(function () {
+    Route::get('/brigades/create', [BrigadeController::class, 'create'])->name('brigades.create');
+    Route::post('/brigades', [BrigadeController::class, 'store'])->name('brigades.store');
+});
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -60,7 +60,7 @@ Route::post('/address/add', [GeoController::class, 'addAddress'])
 Route::prefix('api/requests')->middleware('auth')->group(function () {
     // Получить бригаду по ID бригадира за текущую дату
     Route::get('/brigade/by-leader/{leaderId}', [\App\Http\Controllers\ControllerRequestModification::class, 'getBrigadeByLeader']);
-    
+
     // Обновить бригаду у заявки
     Route::post('/update-brigade', [\App\Http\Controllers\ControllerRequestModification::class, 'updateRequestBrigade']);
 });
@@ -83,28 +83,28 @@ Route::get('/api/brigade-leaders', [RequestTeamFilterController::class, 'getBrig
 Route::prefix('api')->middleware('auth')->group(function () {
     // Get addresses for select
     Route::get('/addresses', [HomeController::class, 'getAddresses'])->name('api.addresses');
-    
+
     // Get requests by date
     Route::get('/requests/date/{date}', [HomeController::class, 'getRequestsByDate'])->name('api.requests.by-date');
-    
+
     // Get request types
     Route::get('/request-types', [HomeController::class, 'getRequestTypes'])->name('api.request-types');
-    
+
     // Get request statuses
     Route::get('/request-statuses', [HomeController::class, 'getRequestStatuses'])->name('api.request-statuses');
-    
+
     // Get brigades
     Route::get('/brigades', [BrigadeController::class, 'index'])->name('api.brigades');
-    
+
     // Get operators
     Route::get('/operators', [HomeController::class, 'getOperators'])->name('api.operators');
-    
+
     // Get cities
     Route::get('/cities', [HomeController::class, 'getCities'])->name('api.cities');
-    
+
     // Create new request
     Route::post('/requests', [HomeController::class, 'storeRequest'])->name('api.requests.store');
-    
+
     // Get comments count for request
     Route::get('/requests/{request}/comments/count', [HomeController::class, 'getCommentsCount'])
         ->name('api.requests.comments.count');

@@ -71,12 +71,41 @@ class BrigadeController extends Controller
         }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    public function create()
+    {
+        // Получаем список всех сотрудников
+        $employees = DB::select("SELECT id, fio FROM employees ORDER BY fio");
+
+        
+    }
+
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'leader_id' => 'required|exists:employees,id',
+            'members' => 'required|array|min:1',
+            'members.*' => 'exists:employees,id',
+        ]);
+
+        // Вставка бригады
+        DB::insert("INSERT INTO brigades (name, leader_id) VALUES (?, ?)", [
+            $request->input('name'),
+            $request->input('leader_id'),
+        ]);
+
+        // Получаем ID только что вставленной бригады
+        $brigadeId = DB::getPdo()->lastInsertId();
+
+        // Вставка участников бригады
+        foreach ($request->input('members') as $memberId) {
+            DB::insert("INSERT INTO brigade_members (brigade_id, employee_id) VALUES (?, ?)", [
+                $brigadeId,
+                $memberId,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Бригада успешно создана');
     }
 
     /**

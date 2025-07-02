@@ -367,18 +367,17 @@
                     </div>
 
                     <div class="tab-pane fade" id="teams" role="tabpanel">
+                        <!--
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="mb-0">Бригады</h4>
                             <button type="button" class="btn btn-primary" id="createBrigadeBtn">
                                 <i class="bi bi-plus-circle"></i> Создать бригаду
                             </button>
-                        </div>
-
-                        <!-- Brigades List -->
-                        <div class="card">
+                        </div>-->
+                        
+                        <div class="card hide-me">
                             <div class="card-body">
                                 <div id="brigadesList" class="list-group">
-                                    <!-- Brigades will be loaded here -->
                                     <div class="text-center py-4">
                                         <div class="spinner-border text-primary" role="status">
                                             <span class="visually-hidden">Загрузка...</span>
@@ -388,15 +387,50 @@
                                 </div>
                             </div>
                         </div>
+                        
 
-                        <!-- Brigade details modal is defined below in the file -->
+                        <form action="{{ route('brigades.store') }}" method="POST">
+                            @csrf
 
-                        <p>В этом разделе отображается информация о бригадах. Вы можете просматривать состав бригад,
-                            их загрузку и текущие задачи. Для каждой бригады доступна контактная информация
-                            ответственного лица.</p>
-                        <p>Используйте этот раздел для назначения заявок на бригады и контроля за выполнением работ.
-                            Вы можете фильтровать бригады по специализации или текущему статусу.</p>
-                    </div>
+                            <div class="mb-3">
+                                <label class="form-label">Название бригады</label>
+                                <input type="text" name="name" class="form-control" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Бригадир</label>
+                                <select name="leader_id" class="form-select" required>
+                                    <option value="">-- Выберите бригадира --</option>
+                                    @foreach ($employees as $emp)
+                                        <option value="{{ $emp->id }}">{{ $emp->fio }}</option>
+                                    @endforeach
+                                </select>
+                            </div>  
+
+                            <div class="d-flex gap-3 mb-3" style="height: 450px;">
+                                <div class="d-flex flex-column" style="flex: 1;">
+                                    <label class="form-label">Состав бригады</label>
+                                    <select name="members[]" class="form-select h-100" multiple required>
+                                        @foreach ($employees as $emp)
+                                            <option value="{{ $emp->id }}">{{ $emp->fio }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="d-flex flex-column" style="flex: 1;">
+                                    <label class="form-label">Выбранные сотрудники</label>
+                                    <div id="brigadeMembers" class="border rounded p-3 h-100 overflow-auto">
+                                        <!-- Здесь будет отображаться выбранный состав бригады -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">Создать бригаду</button>
+                            </div>
+                        </form>
+
+                    </div>    
 
                     <div class="tab-pane fade" id="addresses" role="tabpanel">
                         <h4>Адреса</h4>
@@ -1118,7 +1152,7 @@ console.error('Ошибка:', error);
                 <form id="newRequestForm">
                     @csrf
                     <div class="mb-3">
-                        <h6>Информация о клиенте</h6>
+                        <!-- <h6>Информация о клиенте</h6> -->
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="clientName" class="form-label">Контактное лицо <span
@@ -1134,7 +1168,7 @@ console.error('Ошибка:', error);
                     </div>
 
                     <div class="mb-3 hide-me">
-                        <h6>Детали заявки</h6>
+                        <!-- <h6>Детали заявки</h6> -->
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="requestType" class="form-label">Тип заявки <span
@@ -1154,7 +1188,7 @@ console.error('Ошибка:', error);
                     </div>
 
                     <div class="mb-3">
-                        <h6>Планирование</h6>
+                        <!-- <h6>Планирование</h6> -->
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="executionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
