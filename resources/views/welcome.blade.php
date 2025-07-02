@@ -400,11 +400,194 @@
 
                     <div class="tab-pane fade" id="addresses" role="tabpanel">
                         <h4>Адреса</h4>
-                        <p>Справочник адресов позволяет вести учет всех объектов, с которыми вы работаете. Для
-                            каждого адреса хранится полная контактная информация, история обращений и выполненных
-                            работ.</p>
-                        <p>Добавляйте новые адреса вручную или импортируйте их из файла. Система автоматически
-                            проверяет дубликаты и предлагает объединить похожие записи.</p>
+
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <!-- Регион -->
+                                <!--
+                                <div class="mb-4">
+                                    <h6>Добавить регион</h6>
+                                    <form id="regionForm" class="row g-2 align-items-end">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Название региона</label>
+                                            <input type="text" name="name" class="form-control" placeholder="Например: Московская область" required>
+                                        </div>
+                                        <div class="col-auto">
+                                            <button type="submit" class="btn btn-outline-primary">Добавить регион</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                -->
+
+                                <!-- Город -->
+                                <!--
+                                <div class="mb-4">
+                                    <h6>Добавить город</h6>
+                                    <form id="cityForm" class="row g-2 align-items-end">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Название города</label>
+                                            <input type="text" name="name" class="form-control" placeholder="Например: Коломна" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Регион</label>
+                                            <select name="region_id" class="form-select" required></select>
+                                        </div>
+                                        <div class="col-auto">
+                                            <button type="submit" class="btn btn-outline-primary">Добавить город</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                -->
+
+                                <!-- Адрес -->
+                                <div>
+                                    <h6>Добавить адрес</h6>
+                                    <form id="addressForm" class="row g-2 align-items-end">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Улица</label>
+                                            <input type="text" name="street" class="form-control" placeholder="Улица" required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Дом</label>
+                                            <input type="text" name="houses" class="form-control" placeholder="12А" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Район</label>
+                                            <input type="text" name="district" class="form-control" placeholder="Центральный">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Город</label>
+                                            <select id="filter_city_id" name="filter_city_id" class="form-select">
+                                                <option value="">Все города</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-auto">
+                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес</button>
+                                        </div>
+                                        <div class="mt-3">
+                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Тестовое заполнение</button>
+                                        </div>
+                                    </form>
+                                    <script>
+                                    // Загружаем города в выпадающий список
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const citySelect = document.getElementById('filter_city_id');
+                                        
+                                        if (citySelect) {
+                                            // Устанавливаем состояние загрузки
+                                            const loadingOption = document.createElement('option');
+                                            loadingOption.value = '';
+                                            loadingOption.textContent = 'Загрузка городов...';
+                                            citySelect.innerHTML = '';
+                                            citySelect.appendChild(loadingOption);
+                                            
+                                            // Загружаем города с сервера
+                                            fetch('/api/cities')
+                                                .then(response => {
+                                                    if (!response.ok) {
+                                                        throw new Error('Ошибка загрузки городов');
+                                                    }
+                                                    return response.json();
+                                                })
+                                                .then(cities => {
+                                                    // Очищаем список
+                                                    citySelect.innerHTML = '';
+                                                    
+                                                    // Добавляем опцию по умолчанию
+                                                    const defaultOption = document.createElement('option');
+                                                    defaultOption.value = '';
+                                                    defaultOption.textContent = 'Все города';
+                                                    citySelect.appendChild(defaultOption);
+                                                    
+                                                    // Добавляем города в список
+                                                    if (Array.isArray(cities) && cities.length > 0) {
+                                                        cities.forEach(city => {
+                                                            const option = document.createElement('option');
+                                                            option.value = city.id;
+                                                            option.textContent = city.name;
+                                                            citySelect.appendChild(option);
+                                                        });
+                                                        console.log('Загружено городов:', cities.length);
+                                                    } else {
+                                                        console.warn('Получен пустой список городов');
+                                                    }
+                                                })
+                                                .catch(error => {
+                                                    console.error('Ошибка при загрузке городов:', error);
+                                                    citySelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+                                                });
+                                        }
+                                    });
+                                    
+                                    const testData = [
+                                            {street: "Ленина", houses: "12А", district: "Центральный", city_id: "1"},
+                                            {street: "Пушкина", houses: "5", district: "Северный", city_id: "2"},
+                                            {street: "Крылова", houses: "34", district: "Южный", city_id: "3"},
+                                            {street: "Мира", houses: "17Б", district: "Западный", city_id: "4"},
+                                            {street: "Садовая", houses: "8", district: "Восточный", city_id: "5"},
+                                            {street: "Чехова", houses: "21", district: "Центральный", city_id: "1"},
+                                            {street: "Толстого", houses: "13", district: "Северный", city_id: "2"},
+                                            {street: "Гагарина", houses: "3", district: "Южный", city_id: "3"},
+                                            {street: "Космонавтов", houses: "9А", district: "Западный", city_id: "4"},
+                                            {street: "Новая", houses: "27", district: "Восточный", city_id: "5"},
+                                            {street: "Лесная", houses: "11", district: "Центральный", city_id: "1"},
+                                            {street: "Зеленая", houses: "4", district: "Северный", city_id: "2"},
+                                            {street: "Речная", houses: "19", district: "Южный", city_id: "3"},
+                                            {street: "Березовая", houses: "7", district: "Западный", city_id: "4"},
+                                            {street: "Солнечная", houses: "15", district: "Восточный", city_id: "5"},
+                                            {street: "Победы", houses: "2", district: "Центральный", city_id: "1"},
+                                            {street: "Калинина", houses: "16", district: "Северный", city_id: "2"},
+                                            {street: "Молодежная", houses: "10", district: "Южный", city_id: "3"},
+                                            {street: "Луговая", houses: "6", district: "Западный", city_id: "4"},
+                                            {street: "Восточная", houses: "20", district: "Восточный", city_id: "5"},
+                                            {street: "Цветочная", houses: "14", district: "Центральный", city_id: "1"},
+                                            {street: "Школьная", houses: "22", district: "Северный", city_id: "2"},
+                                            {street: "Парковая", houses: "9", district: "Южный", city_id: "3"},
+                                            {street: "Кленовая", houses: "18", district: "Западный", city_id: "4"},
+                                            {street: "Набережная", houses: "5А", district: "Восточный", city_id: "5"},
+                                            {street: "Магистральная", houses: "29", district: "Центральный", city_id: "1"},
+                                            {street: "Советская", houses: "7Б", district: "Северный", city_id: "2"},
+                                            {street: "Индустриальная", houses: "12", district: "Южный", city_id: "3"},
+                                            {street: "Октябрьская", houses: "3А", district: "Западный", city_id: "4"},
+                                            {street: "Революционная", houses: "10", district: "Восточный", city_id: "5"},
+                                            {street: "Лазурная", houses: "8Б", district: "Центральный", city_id: "1"},
+                                            {street: "Кирова", houses: "26", district: "Северный", city_id: "2"},
+                                            {street: "Горького", houses: "13А", district: "Южный", city_id: "3"},
+                                            {street: "Фестивальная", houses: "4", district: "Западный", city_id: "4"},
+                                            {street: "Заречная", houses: "15Б", district: "Восточный", city_id: "5"},
+                                            {street: "Полевая", houses: "11А", district: "Центральный", city_id: "1"},
+                                            {street: "Южная", houses: "19Б", district: "Северный", city_id: "2"},
+                                            {street: "Вишневая", houses: "6А", district: "Южный", city_id: "3"},
+                                            {street: "Вокзальная", houses: "1", district: "Западный", city_id: "4"},
+                                            {street: "Шоссейная", houses: "23", district: "Восточный", city_id: "5"},
+                                            {street: "Мирная", houses: "17А", district: "Центральный", city_id: "1"},
+                                            {street: "Песчаная", houses: "20Б", district: "Северный", city_id: "2"},
+                                            {street: "Ясная", houses: "14А", district: "Южный", city_id: "3"},
+                                            {street: "Полярная", houses: "9Б", district: "Западный", city_id: "4"},
+                                            {street: "Светлая", houses: "5А", district: "Восточный", city_id: "5"},
+                                            {street: "Пионерская", houses: "3Б", district: "Центральный", city_id: "1"},
+                                            {street: "Водопроводная", houses: "12Б", district: "Северный", city_id: "2"},
+                                            {street: "Золотая", houses: "7А", district: "Южный", city_id: "3"},
+                                            {street: "Медовая", houses: "18Б", district: "Западный", city_id: "4"},
+                                            {street: "Кавказская", houses: "10А", district: "Восточный", city_id: "5"}
+                                        ];
+
+                                        document.getElementById('testFillBtn').addEventListener('click', function() {
+                                            const randomIndex = Math.floor(Math.random() * testData.length);
+                                            const data = testData[randomIndex];
+
+                                            const form = document.getElementById('addressForm');
+                                            form.elements['street'].value = data.street;
+                                            form.elements['houses'].value = data.houses;
+                                            form.elements['district'].value = data.district;
+                                            // Используем filter_city_id вместо city_id
+                                            document.getElementById('filter_city_id').value = data.city_id;
+                                        });
+                                    </script>
+                                </div>
+
+                            </div>
+                        </div>
                     </div>
 
                     <div class="tab-pane fade" id="users" role="tabpanel">
@@ -943,6 +1126,7 @@
                 </form>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Заполнить тестовыми данными</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать заявку</button>
             </div>
@@ -951,10 +1135,107 @@
 </div>
 
 <script>
+    const newComments = [
+  "Ваше обращение принято в обработку. Специалист отдела обслуживания свяжется с вами для завершения подготовки к работам.",
+  "Принята ваша заявка на выполнение монтажа. Менеджеры скоро перезвонят для уточнения условий.",
+  "Заказ успешно передан в отдел обработки заявок. Наши сотрудники подробно проконсультируют вас по предстоящему проекту.",
+  "Получили ваш запрос и начали подготовительные мероприятия. Согласуем нюансы монтажа по телефону.",
+  "Обработка вашей заявки началась. После проверки информации с вами свяжутся наши специалисты.",
+  "Ваша заявка принята в производственный цикл. Детали будут оговорены дополнительно при контакте.",
+  "Информация по вашему запросу зафиксирована. В скором времени мы будем обсуждать организацию монтажа.",
+  "Оформление вашей заявки завершилось успешно. Вы получите звонок для утверждения сроков начала работ.",
+  "Работаем над вашим проектом. Ждите контакта от наших сотрудников для подтверждения деталей.",
+  "Спасибо за отправленную заявку! Наши менеджеры обязательно свяжутся с вами для координации процесса установки оборудования.",
+  "Ваша заявка внесена в рабочий график. Связываемся с вами для точного определения плана действий.",
+  "Начало процедуры оформления вашей заявки. По вопросам уточняющей информации свяжитесь с нашим представителем.",
+  "Запрос принят. Ожидайте дальнейшего взаимодействия от менеджера для организации монтажных мероприятий.",
+  "Подтверждение приема заявки получено. Организуем встречу или телефонный разговор для согласования технических аспектов.",
+  "Уведомляем о принятии вашей заявки. Дожидаетесь контактирования специалистов для обсуждения деталей реализации.",
+  "Выполнено принятие заявки на оказание услуг. Направлен запрос менеджеру для согласования порядка исполнения.",
+  "Началась обработка вашей заявки. Будет произведена связь с вами для внесения дополнений и обсуждений.",
+  "Фиксация заявки состоялась. Сообщение поступит от координатора проектов для рассмотрения деталей и сроков выполнения.",
+  "Предложение зафиксировано и передано специалистам. Следующий этап — обсуждение ваших пожеланий относительно монтажа.",
+  "Официально подтверждено начало обработки заявки. Осталось лишь согласовать ряд вопросов с нашими сотрудниками."
+];
+
+const mockData = [
+  {name: "Иван Иванов", phone: "+7 (999) 111-11-01", comment: newComments[0]},
+  {name: "Мария Петрова", phone: "+7 (999) 111-11-02", comment: newComments[1]},
+  {name: "Алексей Смирнов", phone: "+7 (999) 111-11-03", comment: newComments[2]},
+  {name: "Елена Кузнецова", phone: "+7 (999) 111-11-04", comment: newComments[3]},
+  {name: "Дмитрий Соколов", phone: "+7 (999) 111-11-05", comment: newComments[4]},
+  {name: "Ольга Морозова", phone: "+7 (999) 111-11-06", comment: newComments[5]},
+  {name: "Николай Васильев", phone: "+7 (999) 111-11-07", comment: newComments[6]},
+  {name: "Татьяна Орлова", phone: "+7 (999) 111-11-08", comment: newComments[7]},
+  {name: "Сергей Павлов", phone: "+7 (999) 111-11-09", comment: newComments[8]},
+  {name: "Анна Федорова", phone: "+7 (999) 111-11-10", comment: newComments[9]},
+  {name: "Владимир Беляев", phone: "+7 (999) 111-11-11", comment: newComments[10]},
+  {name: "Екатерина Никитина", phone: "+7 (999) 111-11-12", comment: newComments[11]},
+  {name: "Андрей Сидоров", phone: "+7 (999) 111-11-13", comment: newComments[12]},
+  {name: "Ирина Григорьева", phone: "+7 (999) 111-11-14", comment: newComments[13]},
+  {name: "Павел Егоров", phone: "+7 (999) 111-11-15", comment: newComments[14]},
+  {name: "Людмила Киселева", phone: "+7 (999) 111-11-16", comment: newComments[15]},
+  {name: "Михаил Козлов", phone: "+7 (999) 111-11-17", comment: newComments[16]},
+  {name: "Светлана Михайлова", phone: "+7 (999) 111-11-18", comment: newComments[17]},
+  {name: "Виктор Фролов", phone: "+7 (999) 111-11-19", comment: newComments[18]},
+  {name: "Оксана Дмитриева", phone: "+7 (999) 111-11-20", comment: newComments[19]},
+  {name: "Роман Кузьмин", phone: "+7 (999) 111-11-21", comment: newComments[0]},
+  {name: "Наталья Алексеева", phone: "+7 (999) 111-11-22", comment: newComments[1]},
+  {name: "Константин Власов", phone: "+7 (999) 111-11-23", comment: newComments[2]},
+  {name: "Алёна Николаева", phone: "+7 (999) 111-11-24", comment: newComments[3]},
+  {name: "Игорь Тимофеев", phone: "+7 (999) 111-11-25", comment: newComments[4]},
+  {name: "Галина Павлова", phone: "+7 (999) 111-11-26", comment: newComments[5]},
+  {name: "Денис Мельников", phone: "+7 (999) 111-11-27", comment: newComments[6]},
+  {name: "Алла Сергеева", phone: "+7 (999) 111-11-28", comment: newComments[7]},
+  {name: "Василий Лебедев", phone: "+7 (999) 111-11-29", comment: newComments[8]},
+  {name: "Евгения Тихонова", phone: "+7 (999) 111-11-30", comment: newComments[9]},
+  {name: "Олег Зайцев", phone: "+7 (999) 111-11-31", comment: newComments[10]},
+  {name: "Нина Орехова", phone: "+7 (999) 111-11-32", comment: newComments[11]},
+  {name: "Вячеслав Соколов", phone: "+7 (999) 111-11-33", comment: newComments[12]},
+  {name: "Лариса Денисова", phone: "+7 (999) 111-11-34", comment: newComments[13]},
+  {name: "Артур Крылов", phone: "+7 (999) 111-11-35", comment: newComments[14]},
+  {name: "Ирина Соловьева", phone: "+7 (999) 111-11-36", comment: newComments[15]},
+  {name: "Дмитрий Климов", phone: "+7 (999) 111-11-37", comment: newComments[16]},
+  {name: "Марина Белова", phone: "+7 (999) 111-11-38", comment: newComments[17]},
+  {name: "Владислав Орлов", phone: "+7 (999) 111-11-39", comment: newComments[18]},
+  {name: "Софья Федотова", phone: "+7 (999) 111-11-40", comment: newComments[19]},
+  {name: "Егор Панфилов", phone: "+7 (999) 111-11-41", comment: newComments[0]},
+  {name: "Олеся Захарова", phone: "+7 (999) 111-11-42", comment: newComments[1]},
+  {name: "Максим Ширяев", phone: "+7 (999) 111-11-43", comment: newComments[2]},
+  {name: "Вероника Борисова", phone: "+7 (999) 111-11-44", comment: newComments[3]},
+  {name: "Артём Дмитриев", phone: "+7 (999) 111-11-45", comment: newComments[4]},
+  {name: "Людмила Соколова", phone: "+7 (999) 111-11-46", comment: newComments[5]},
+  {name: "Никита Романов", phone: "+7 (999) 111-11-47", comment: newComments[6]},
+  {name: "Елена Крылова", phone: "+7 (999) 111-11-48", comment: newComments[7]},
+  {name: "Павел Гусев", phone: "+7 (999) 111-11-49", comment: newComments[8]},
+  {name: "Алина Иванова", phone: "+7 (999) 111-11-50", comment: newComments[9]},
+];
+
+// Если нужно ровно 50, можно циклом дополнить:
+while(mockData.length < 50) {
+  const i = mockData.length % comments.length;
+  mockData.push({
+    name: `Пользователь ${mockData.length + 1}`,
+    phone: `+7 (999) 111-11-${(mockData.length + 1).toString().padStart(2, '0')}`,
+    comment: comments[i]
+  });
+}
+
+document.getElementById('fillMockDataBtn').addEventListener('click', function() {
+  const randomIndex = Math.floor(Math.random() * mockData.length);
+  const data = mockData[randomIndex];
+  
+  document.getElementById('clientName').value = data.name;
+  document.getElementById('clientPhone').value = data.phone;
+  document.getElementById('comment').value = data.comment;
+});
+</script>
+
+<script>
     // New Request Form Functionality
     document.addEventListener('DOMContentLoaded', function () {
         const newRequestModal = document.getElementById('newRequestModal');
-        
+
         // Initialize modal with proper ARIA attributes
         if (newRequestModal) {
             // Set up event listeners for modal show/hide
@@ -967,7 +1248,7 @@
                     mainContent.setAttribute('inert', 'true');
                 }
             });
-            
+
             newRequestModal.addEventListener('hidden.bs.modal', function() {
                 this.setAttribute('aria-hidden', 'true');
                 document.body.classList.remove('modal-open');
@@ -1107,7 +1388,7 @@
             // Check all required fields
             let isValid = true;
             const requiredFields = form.querySelectorAll('[required]');
-            
+
             requiredFields.forEach(field => {
                 if (!field.value.trim()) {
                     field.classList.add('is-invalid');
@@ -1119,7 +1400,7 @@
                     field.classList.remove('is-invalid');
                 }
             });
-            
+
             return isValid;
         }
 
@@ -1143,7 +1424,7 @@
                 event.preventDefault();
                 event.stopPropagation();
             }
-            
+
             const form = document.getElementById('newRequestForm');
             const submitBtn = document.getElementById('submitRequest');
 
@@ -1177,7 +1458,7 @@
                 // Get all form inputs
                 const formInputs = form.querySelectorAll('input, select, textarea');
                 const data = { _token: '' };
-                
+
                 // Convert form data to object
                 formInputs.forEach(input => {
                     if (input.type === 'checkbox' || input.type === 'radio') {
@@ -1289,14 +1570,14 @@
 
                 // Очищаем форму
                 form.reset();
-                
+
                 // Закрываем модальное окно
                 const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
                 modal.hide();
-                
+
                 // Очищаем форму
                 form.reset();
-                
+
                 // Обновляем таблицу заявок
                 try {
                     await loadRequests();
@@ -1316,7 +1597,7 @@
                 submitBtn.textContent = 'Создать заявку';
             }
         }
-        
+
         // Function to load and update the requests table via AJAX
         async function loadRequests() {
             try {
@@ -1332,31 +1613,31 @@
                         </div>
                         <div class="mt-2">Загрузка заявок...</div>
                     </td>`;
-                
+
                 // Clear existing rows except the "no requests" row
                 const existingRows = tableBody.querySelectorAll('tr:not(#no-requests-row)');
                 existingRows.forEach(row => row.remove());
-                
+
                 // Add loading row
                 tableBody.insertBefore(loadingRow, noRequestsRow);
                 noRequestsRow.classList.add('d-none');
-                
+
                 // Get current date filter
                 const dateFilter = document.getElementById('dateFilter')?.value || '';
-                
+
                 // Fetch requests from API
                 const response = await fetch(`/api/requests?date=${encodeURIComponent(dateFilter)}`);
                 if (!response.ok) throw new Error('Ошибка при загрузке заявок');
-                
+
                 const data = await response.json();
-                
+
                 // Remove loading row
                 const loadingElement = document.getElementById('loading-requests');
                 if (loadingElement) loadingElement.remove();
-                
+
                 // Clear existing rows
                 tableBody.innerHTML = '';
-                
+
                 if (data.data && data.data.length > 0) {
                     // Add new rows for each request
                     data.data.forEach(request => {
@@ -1367,19 +1648,19 @@
                 } else {
                     noRequestsRow.classList.remove('d-none');
                 }
-                
+
                 // Reinitialize tooltips
                 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
                 tooltipTriggerList.map(function (tooltipTriggerEl) {
                     return new bootstrap.Tooltip(tooltipTriggerEl);
                 });
-                
+
                 return data;
-                
+
             } catch (error) {
                 console.error('Error loading requests:', error);
                 utils.showAlert('Ошибка при загрузке заявок: ' + error.message, 'danger');
-                
+
                 // Show error state
                 const loadingElement = document.getElementById('loading-requests');
                 if (loadingElement) {
@@ -1389,39 +1670,39 @@
                             Не удалось загрузить заявки. Попробуйте обновить страницу.
                         </td>`;
                 }
-                
+
                 throw error;
             }
         }
-        
+
         // Helper function to create a request row
         function createRequestRow(request) {
             const row = document.createElement('tr');
             row.className = 'align-middle status-row';
             row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
             row.setAttribute('data-request-id', request.id);
-            
+
             // Format the date
             const requestDate = request.request_date || request.created_at;
-            const formattedDate = requestDate 
+            const formattedDate = requestDate
                 ? new Date(requestDate).toLocaleString('ru-RU', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
-                }).replace(',', '') 
+                }).replace(',', '')
                 : 'Не указана';
-                
+
             // Format the execution date
-            const executionDate = request.execution_date 
+            const executionDate = request.execution_date
                 ? new Date(request.execution_date).toLocaleDateString('ru-RU', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
                 })
                 : 'Не указана';
-            
+
             // Create row HTML
             row.innerHTML = `
                 <td>${request.id}</td>
@@ -1447,7 +1728,7 @@
                         </button>
                     </div>
                 </td>`;
-                
+
             return row;
         }
     });
@@ -1488,11 +1769,11 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const requestId = e.target.closest('.close-request-btn').getAttribute('data-request-id');
             const modal = new bootstrap.Modal(document.getElementById('closeRequestModal'));
-            
+
             // Устанавливаем ID заявки в скрытое поле и заголовок
             document.getElementById('requestIdToClose').value = requestId;
             document.getElementById('modalRequestId').textContent = '#' + requestId;
-            
+
             // Показываем модальное окно
             modal.show();
         }
@@ -1562,7 +1843,7 @@ function showAlert(message, type = 'success') {
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     document.body.appendChild(alertDiv);
-    
+
     // Автоматическое скрытие через 5 секунд
     setTimeout(() => {
         const bsAlert = new bootstrap.Alert(alertDiv);
@@ -1571,42 +1852,9 @@ function showAlert(message, type = 'success') {
 }
 </script>
 
-<!-- Modal for Geo -->
-<div class="modal fade" id="geoModal" tabindex="-1" aria-labelledby="geoModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="geoModalLabel">Управление адресами, городами и регионами</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-      </div>
-      <div class="modal-body">
 
-        <h6>Добавить регион</h6>
-        <form id="regionForm" class="mb-3">
-          <input type="text" name="name" class="form-control" placeholder="Название региона" required>
-          <button type="submit" class="btn btn-sm btn-outline-primary mt-2">Добавить регион</button>
-        </form>
 
-        <h6>Добавить город</h6>
-        <form id="cityForm" class="mb-3">
-          <input type="text" name="name" class="form-control mb-2" placeholder="Название города" required>
-          <select name="region_id" class="form-select" required></select>
-          <button type="submit" class="btn btn-sm btn-outline-primary mt-2">Добавить город</button>
-        </form>
 
-        <h6>Добавить адрес</h6>
-        <form id="addressForm">
-          <input type="text" name="street" class="form-control mb-2" placeholder="Улица" required>
-          <input type="text" name="houses" class="form-control mb-2" placeholder="Дом" required>
-          <input type="text" name="district" class="form-control mb-2" placeholder="Район">
-          <select name="city_id" class="form-select" required></select>
-          <button type="submit" class="btn btn-sm btn-outline-primary mt-2">Добавить адрес</button>
-        </form>
-
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- Modal for Brigade Details -->
 <div class="modal fade" id="brigadeDetailsModal" tabindex="-1" aria-labelledby="brigadeDetailsModalLabel" aria-hidden="true">
