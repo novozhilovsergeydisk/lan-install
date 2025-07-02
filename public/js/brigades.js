@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initBrigadesTab();
 
     // Add event listeners
-    document.getElementById('createBrigadeBtn')?.addEventListener('click', showCreateBrigadeModal);
-    document.getElementById('saveBrigadeBtn')?.addEventListener('click', saveBrigade);
+    document.getElementById('createBrigadeBtn_')?.addEventListener('click', showCreateBrigadeModal);
+    document.getElementById('saveBrigadeBtn_')?.addEventListener('click', saveBrigade);
 });
 
 function initBrigadesTab() {

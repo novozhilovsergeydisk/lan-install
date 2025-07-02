@@ -873,13 +873,21 @@ function initializePage() {
                             // чтобы отрисовать таблицу заявок на странице
                         } else {
                             // Если сервер вернул ошибку — показываем сообщение
-                            alert(data.message || 'Ошибка');
+                            if (typeof utils !== 'undefined' && typeof utils.alert === 'function') {
+                                utils.alert(data.message || 'Ошибка');
+                            } else {
+                                showAlert(data.message || 'Ошибка', 'danger');
+                            }
                         }
                     })
                     // Обработка сетевых или других ошибок
                     .catch(err => {
                         console.error('Ошибка:', err);
-                        alert('Ошибка при фильтрации заявок');
+                        if (typeof utils !== 'undefined' && typeof utils.alert === 'function') {
+                            utils.alert('Ошибка при фильтрации заявок');
+                        } else {
+                            showAlert('Ошибка при фильтрации заявок', 'danger');
+                        }
                     });
             } else {
                 // Если чекбокс снят — можно добавить сброс фильтров без перезагрузки страницы
@@ -989,7 +997,128 @@ function initializePage() {
 document.addEventListener('DOMContentLoaded', function() {
     initializePage();
     setupBrigadeAttachment();
+    handlerCreateBrigade();
+    hanlerAddToBrigade();
 });
+
+function hanlerAddToBrigade() {
+    document.getElementById('addToBrigadeBtn').addEventListener('click', function() {
+        const select = document.getElementById('employeesSelect');
+        const brigadeMembers = document.getElementById('brigadeMembers');
+        const selectedOptions = Array.from(select.selectedOptions);
+        
+        if (selectedOptions.length > 0) {
+            selectedOptions.forEach(option => {
+                // Создаем элемент для отображения сотрудника
+                const memberDiv = document.createElement('div');
+                memberDiv.className = 'd-flex justify-content-between align-items-center p-2 mb-2 border rounded';
+                
+                // Добавляем имя сотрудника
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = option.text;
+                
+                // Создаем кнопку удаления
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.onclick = function() {
+                    memberDiv.remove();
+                    // Разблокируем опцию в селекте
+                    option.selected = false;
+                };
+                
+                // Скрытое поле для формы
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'brigade_members[]';
+                hiddenInput.value = option.value;
+                hiddenInput.dataset.employeeId = option.dataset.employeeId; // Добавляем data-employee-id
+                
+                // Собираем всё вместе
+                memberDiv.appendChild(hiddenInput);
+                memberDiv.appendChild(nameSpan);
+                memberDiv.appendChild(deleteBtn);
+                
+                // Добавляем в список бригады
+                brigadeMembers.appendChild(memberDiv);
+                
+                // Делаем опцию в селекте неактивной
+                option.disabled = true;
+                option.selected = false;
+            });
+        } else {
+            console.log('Выберите хотя бы одного сотрудника');
+        }
+    });
+}
+
+function handlerCreateBrigade() {
+        console.log('DOM полностью загружен');
+        const createBtn = document.getElementById('createBrigadeBtn');
+        console.log('Найдена кнопка:', createBtn);
+        
+        if (createBtn) {
+            createBtn.addEventListener('click', function(e) {
+                console.log('Клик по кнопке createBrigadeBtn');
+                e.preventDefault();
+                console.clear();
+                console.log('=== ДЕБАГ ИНФОРМАЦИЯ ===');
+                
+                // Получаем данные формы
+                const form = document.getElementById('brigadeForm');
+                if (!form) {
+                    console.error('Форма не найдена');
+                    return;
+                }
+                
+                const formData = new FormData(form);
+                
+                // Проверяем выбран ли бригадир
+                const leaderId = formData.get('leader_id');
+                if (!leaderId) {
+                    console.warn('ОШИБКА: Не выбран бригадир');
+                    showAlert('Пожалуйста, выберите бригадира', 'warning');
+                    return;
+                }
+                
+                // Выводим общую информацию о форме
+                console.log('=== ДАННЫЕ ФОРМЫ ===');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}:`, value);
+                }
+                
+                // Проверяем выбранных сотрудников
+                const brigadeMembers = document.querySelectorAll('#brigadeMembers [name="brigade_members[]"]');
+                console.log('\n=== ВЫБРАННЫЕ СОТРУДНИКИ ===');
+                console.log('Всего выбрано:', brigadeMembers.length);
+                
+                if (brigadeMembers.length === 0) {
+                    console.warn('ОШИБКА: Не выбрано ни одного сотрудника');
+                    showAlert('Пожалуйста, добавьте хотя бы одного сотрудника в бригаду', 'warning');
+                    return;
+                }
+                
+                // Выводим детальную информацию о каждом сотруднике
+                brigadeMembers.forEach((input, index) => {
+                    console.log(`\nСотрудник #${index + 1}:`);
+                    console.log('ID:', input.value);
+                    console.log('data-employee-id:', input.dataset.employeeId);
+                    console.log('HTML:', input.outerHTML);
+                });
+                
+                console.log('\n=== ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ ===');
+                console.log('Название бригады:', formData.get('name'));
+                console.log('ID бригадира:', formData.get('leader_id'));
+
+                showAlert('Отправка формы будет реализована в ближайшее время!', 'info');
+                
+                // Для отправки формы раскомментируйте строку ниже
+                // form.submit();
+            });
+        } else {
+            console.warn('Кнопка createBrigadeBtn не найдена');
+        }    
+}
 
 // Функция для настройки прикрепления бригады к заявке
 function setupBrigadeAttachment() {
@@ -1080,7 +1209,11 @@ function setupBrigadeAttachment() {
 
                             } catch (error) {
                                 console.error('Ошибка при прикреплении бригады:', error.message);
-                                alert(`Ошибка: ${error.message}`);
+                                if (typeof utils !== 'undefined' && typeof utils.alert === 'function') {
+                                    utils.alert(`Ошибка: ${error.message}`);
+                                } else {
+                                    showAlert(`Ошибка: ${error.message}`, 'danger');
+                                }
                             }
                         };
 
