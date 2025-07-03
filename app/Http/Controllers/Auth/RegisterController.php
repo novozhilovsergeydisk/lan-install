@@ -32,11 +32,19 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-	// Добавляем флеш-сообщение
-        session()->flash('success', 'Вы успешно зарегистрированы!');
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Пользователь успешно зарегистрирован',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'created_at' => $user->created_at->format('d.m.Y H:i')
+                ]
+            ]);
+        }
 
-        // return redirect('/dashboard';
-
-        return redirect('/')->with('success', 'Вы успешно зарегистрировались и вошли в систему!');
+        return back()->with('success', 'Вы успешно зарегистрировались и вошли в систему!');
     }
 }

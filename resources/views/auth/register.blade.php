@@ -70,7 +70,7 @@
                            required>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 mb-3">
+                <button type="submit" class="btn btn-primary w-100 mb-3" disabled>
                     <i class="bi bi-person-plus me-1"></i> Зарегистрироваться
                 </button>
             </form>

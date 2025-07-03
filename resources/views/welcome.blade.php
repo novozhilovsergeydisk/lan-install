@@ -735,26 +735,68 @@ console.error('Ошибка:', error);
                     </div>
 
                     <div class="tab-pane fade" id="users" role="tabpanel">
-                        <h4>Пользователи</h4>
-                        <p>Управление пользователями системы. В этом разделе вы можете создавать новые учетные
-                            записи, назначать роли и права доступа. Для каждого пользователя можно настроить
-                            уведомления и персональные настройки.</p>
-                        <p>Используйте фильтры для поиска пользователей по отделам, ролям или статусу активности. Вы
-                            можете экспортировать список пользователей в различных форматах.</p>
-
-                        @if (!empty($clients))
-                            <h3>Список клиентов</h3>
-                            <ul class="list-group mb-4">
-                                @foreach ($clients as $client)
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        {{ $client->fio ?? 'Без имени' }}
-                                        <span class="badge bg-primary">xx {{ $client->phone ?? 'Нет телефона' }}</span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @else
-                            <p>Нет данных о клиентах.</p>
-                        @endif
+                        <div class="row g-4">
+                            <!-- Форма регистрации -->
+                            <div class="col-lg-5">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Добавить нового пользователя</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        @include('auth.partials.register-form')
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Таблица пользователей -->
+                            <div class="col-lg-7 mt-3">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Список пользователей</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <style>
+                                                [data-bs-theme="dark"] .users-table {
+                                                    --bs-table-bg: transparent;
+                                                    --bs-table-color: #fff;
+                                                    --bs-table-hover-bg: rgba(255, 255, 255, 0.075);
+                                                }
+                                                [data-bs-theme="dark"] .users-table th,
+                                                [data-bs-theme="dark"] .users-table td {
+                                                    color: #fff;
+                                                    border-color: #495057;
+                                                }
+                                                [data-bs-theme="dark"] .users-table thead th {
+                                                    border-bottom-color: #6c757d;
+                                                }
+                                            </style>
+                                            <table class="table table-hover users-table mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>Имя</th>
+                                                            <th>Email</th>
+                                                            <th>Дата регистрации</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach(\App\Models\User::orderBy('created_at', 'desc')->get() as $user)
+                                                            <tr>
+                                                                <td>{{ $user->id }}</td>
+                                                                <td>{{ $user->name }}</td>
+                                                                <td>{{ $user->email }}</td>
+                                                                <td>{{ $user->created_at->format('d.m.Y H:i') }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
 
@@ -2029,6 +2071,10 @@ function showAlert(message, type = 'success') {
 <script src="{{ asset('js/brigades.js') }}"></script>
 <script src="{{ asset('js/calendar.js') }}"></script>
 <script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
+
+<!-- Stack for pushed scripts -->
+@stack('scripts')
+
 </body>
 
 </html>
