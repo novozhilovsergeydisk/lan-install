@@ -81,31 +81,56 @@ class BrigadeController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'leader_id' => 'required|exists:employees,id',
-            'members' => 'required|array|min:1',
-            'members.*' => 'exists:employees,id',
-        ]);
-
-        // Вставка бригады
-        DB::insert("INSERT INTO brigades (name, leader_id) VALUES (?, ?)", [
-            $request->input('name'),
-            $request->input('leader_id'),
-        ]);
-
-        // Получаем ID только что вставленной бригады
-        $brigadeId = DB::getPdo()->lastInsertId();
-
-        // Вставка участников бригады
-        foreach ($request->input('members') as $memberId) {
-            DB::insert("INSERT INTO brigade_members (brigade_id, employee_id) VALUES (?, ?)", [
-                $brigadeId,
-                $memberId,
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'leader_id' => 'required|exists:employees,id',
+                'members' => 'required|array|min:1',
+                'members.*' => 'exists:employees,id',
+            ], [
+                'name.required' => 'Название бригады обязательно для заполнения',
+                'leader_id.required' => 'Необходимо выбрать бригадира',
+                'members.required' => 'Необходимо добавить хотя бы одного участника',
+                'members.min' => 'Необходимо добавить хотя бы одного участника',
             ]);
-        }
 
-        return redirect()->back()->with('success', 'Бригада успешно создана');
+            DB::beginTransaction();
+
+            // Вставка бригады
+            DB::insert("INSERT INTO brigades (name, leader_id, formation_date) VALUES (?, ?, CURRENT_DATE)", [
+                $validated['name'],
+                $validated['leader_id'],
+            ]);
+
+            $brigadeId = DB::getPdo()->lastInsertId();
+
+            // Фильтруем участников, исключая бригадира
+            $members = array_diff($validated['members'], [$validated['leader_id']]);
+            
+            // Вставка участников бригады
+            if (!empty($members)) {
+                $values = array_map(fn($memberId) => "($brigadeId, $memberId)", $members);
+                DB::insert("INSERT INTO brigade_members (brigade_id, employee_id) VALUES " . implode(',', $values));
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Бригада успешно создана',
+                'brigade_id' => $brigadeId
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при создании бригады: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при создании бригады',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     /**

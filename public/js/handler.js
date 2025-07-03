@@ -1055,16 +1055,12 @@ function hanlerAddToBrigade() {
 }
 
 function handlerCreateBrigade() {
-        // console.log('DOM полностью загружен');
         const createBtn = document.getElementById('createBrigadeBtn');
-        // console.log('Найдена кнопка:', createBtn);
 
         if (createBtn) {
             createBtn.addEventListener('click', function(e) {
-                // console.log('Клик по кнопке createBrigadeBtn');
                 e.preventDefault();
                 console.clear();
-                console.log('=== ДЕБАГ ИНФОРМАЦИЯ ===');
 
                 // Получаем данные формы
                 const form = document.getElementById('brigadeForm');
@@ -1074,45 +1070,139 @@ function handlerCreateBrigade() {
                 }
 
                 const formData = new FormData(form);
+                
+                // Собираем все данные формы в объект
+                const formValues = {};
+                for (let [key, value] of formData.entries()) {
+                    // Обрабатываем массивы (например, brigade_members[])
+                    if (key.endsWith('[]')) {
+                        const baseKey = key.slice(0, -2);
+                        if (!formValues[baseKey]) {
+                            formValues[baseKey] = [];
+                        }
+                        formValues[baseKey].push(value);
+                    } else {
+                        formValues[key] = value;
+                    }
+                }
 
-                // Проверяем выбран ли бригадир
-                const leaderId = formData.get('leader_id');
-                if (!leaderId) {
-                    console.warn('ОШИБКА: Не выбран бригадир');
+                // Получаем дополнительную информацию о выбранных сотрудниках
+                const brigadeMembers = document.querySelectorAll('#brigadeMembers [name="brigade_members[]"]');
+                const membersInfo = Array.from(brigadeMembers).map(member => ({
+                    id: parseInt(member.value),
+                    employee_id: parseInt(member.dataset.employeeId)
+                }));
+
+                // Формируем итоговый JSON
+                const formJson = {
+                    formData: formValues,
+                    members: membersInfo,
+                    metadata: {
+                        totalMembers: membersInfo.length,
+                        hasLeader: !!formValues.leader_id,
+                        timestamp: new Date().toISOString()
+                    }
+                };
+
+                // Выводим JSON в консоль
+                console.log('=== ДАННЫЕ ФОРМЫ В ФОРМАТЕ JSON ===');
+                console.log(JSON.stringify(formJson, null, 2));
+
+                // Проверяем обязательные поля
+                if (!formValues.leader_id) {
                     showAlert('Пожалуйста, выберите бригадира', 'warning');
                     return;
                 }
 
-                // Выводим общую информацию о форме
-                console.log('=== ДАННЫЕ ФОРМЫ ===');
-                for (let [key, value] of formData.entries()) {
-                    console.log(`${key}:`, value);
-                }
-
-                // Проверяем выбранных сотрудников
-                const brigadeMembers = document.querySelectorAll('#brigadeMembers [name="brigade_members[]"]');
-                console.log('\n=== ВЫБРАННЫЕ СОТРУДНИКИ ===');
-                console.log('Всего выбрано:', brigadeMembers.length);
-
-                if (brigadeMembers.length === 0) {
-                    console.warn('ОШИБКА: Не выбрано ни одного сотрудника');
+                if (membersInfo.length === 0) {
                     showAlert('Пожалуйста, добавьте хотя бы одного сотрудника в бригаду', 'warning');
                     return;
                 }
 
-                // Выводим детальную информацию о каждом сотруднике
-                brigadeMembers.forEach((input, index) => {
-                    console.log(`\nСотрудник #${index + 1}:`);
-                    console.log('ID:', input.value);
-                    console.log('data-employee-id:', input.dataset.employeeId);
-                    console.log('HTML:', input.outerHTML);
-                });
+                showAlert('Данные формы успешно обработаны!', 'success');
 
-                console.log('\n=== ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ ===');
-                console.log('Название бригады:', formData.get('name'));
-                console.log('ID бригадира:', formData.get('leader_id'));
+                // Функция для отправки данных на сервер
+                const createBrigade = async () => {
+                    try {
+                        console.log('Отправка запроса на создание бригады...');
+                        const requestData = {
+                            ...formJson.formData,
+                            members: formJson.members.map(m => m.employee_id)
+                        };
+                        console.log('Данные для отправки:', requestData);
+                        
+                        const response = await fetch('/brigades', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': formJson.formData._token,
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify(requestData)
+                        });
 
-                showAlert('Отправка формы будет реализована в ближайшее время!', 'info');
+                        // Проверяем Content-Type ответа
+                        const contentType = response.headers.get('content-type');
+                        let data;
+                        
+                        if (contentType && contentType.includes('application/json')) {
+                            data = await response.json();
+                        } else {
+                            const text = await response.text();
+                            console.error('Ожидался JSON, но получен:', text);
+                            throw new Error('Сервер вернул неожиданный ответ. Проверьте консоль для деталей.');
+                        }
+
+                        if (!response.ok) {
+                            throw new Error(data.message || `Ошибка ${response.status}: ${response.statusText}`);
+                        }
+
+                        console.log('Ответ сервера:', data);
+                        if (data.success) {
+                            showAlert('Бригада успешно создана!', 'success');
+                            
+                            // Закрываем модальное окно, если оно открыто
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('createBrigadeModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                            
+                            // Очищаем форму
+                            const form = document.getElementById('brigadeForm');
+                            if (form) {
+                                form.reset();
+                            }
+                            
+                            // Обновляем список бригад (если есть такой элемент)
+                            const brigadesContainer = document.querySelector('[data-brigades-container]');
+                            if (brigadesContainer) {
+                                // Здесь можно добавить код для обновления списка бригад
+                                // Например, через AJAX-запрос за новым списком
+                                // или просто добавить новую бригаду в список
+                                console.log('Здесь будет обновление списка бригад');
+                            }
+                            
+                            // Если есть таблица с бригадами, можно обновить её
+                            const brigadesTable = document.querySelector('table[data-brigades-table]');
+                            if (brigadesTable) {
+                                // Здесь можно добавить строку с новой бригадой в таблицу
+                                console.log('Здесь будет обновление таблицы бригад');
+                            }
+                            
+                        } else {
+                            throw new Error(data.message || 'Неизвестная ошибка сервера');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Ошибка при создании бригады:', error);
+                        console.error('Полный стек ошибки:', error.stack);
+                        showAlert(`Ошибка: ${error.message}`, 'danger');
+                    }
+                };
+                
+                // Вызываем функцию создания бригады
+                createBrigade();
 
                 // Для отправки формы раскомментируйте строку ниже
                 // form.submit();
