@@ -241,7 +241,7 @@
                                                 <div class="comment-preview small text-dark"
                                                      data-bs-toggle="tooltip" title="{{ $commentText }}">
                                                     @if(count($comments_by_request[$request->id]) > 1)
-                                                        {{ Str::limit($commentText, 65, '...') }}
+                                                        {{ Str::limit($commentText, 300, '...') }}
                                                     @else
                                                         {{ $commentText }}
                                                     @endif
@@ -543,7 +543,7 @@
                                                         option.textContent = city.name;
                                                         selectElement.appendChild(option);
                                                     });
-                                                    console.log('Загружено городов:', cities.length);
+                                                    // console.log('Загружено городов:', cities.length);
                                                 } else {
                                                     console.warn('Получен пустой список городов');
                                                 }
@@ -980,7 +980,7 @@ console.error('Ошибка:', error);
 
         // Функция обновления счетчика комментариев
         function updateCommentsBadge(requestId) {
-            console.log('Updating badge for request ID:', requestId);
+            // console.log('Updating badge for request ID:', requestId);
 
             // Запрашиваем актуальное количество комментариев
             fetch(`/api/requests/${requestId}/comments/count`)
@@ -991,13 +991,9 @@ console.error('Ошибка:', error);
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Received comments count data:', data);
+                    // console.log('Received comments count data:', data);
                     const commentCount = data.count || 0;
-                    console.log(`Found ${commentCount} comments for request ${requestId}`);
-
-                    if (commentCount == 2) {
-                        console.log('Joker:', commentCount);
-                    }
+                    // console.log(`Found ${commentCount} comments for request ${requestId}`);
 
                     // Находим строку таблицы с нужной заявкой
                     const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`) ||
@@ -1013,10 +1009,10 @@ console.error('Ошибка:', error);
                             button.view-comments-btn[data-request-id="${requestId}"]
                         `);
 
-                    console.log(`Found ${commentButtons.length} comment buttons to update in row`);
+                     // console.log(`Found ${commentButtons.length} comment buttons to update in row`);
 
                     commentButtons.forEach(button => {
-                        console.log('Updating comment button:', button);
+                        // console.log('Updating comment button:', button);
 
                         // Находим существующий бейдж или его место для вставки
                         let badge = button.querySelector('.badge');
@@ -1496,7 +1492,7 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
                         select.appendChild(option);
                     });
 
-                console.log('Операторы загружены, выбран:', select.options[select.selectedIndex]?.text);
+                // console.log('Операторы загружены, выбран:', select.options[select.selectedIndex]?.text);
             } catch (error) {
                 console.error('Error loading operators:', error);
                 throw error;
@@ -1616,11 +1612,11 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
                 const addressComments = Array.isArray(data['address_comment']) ? data['address_comment'] : (data['address_comment'] ? [data['address_comment']] : []);
 
                 // Debug information
-                console.log('cityIds:', cityIds);
-                console.log('streets:', streets);
-                console.log('houses:', houses);
-                console.log('addressComments:', addressComments);
-                console.log('FormData:', data);
+                // console.log('cityIds:', cityIds);
+                // console.log('streets:', streets);
+                // console.log('houses:', houses);
+                // console.log('addressComments:', addressComments);
+                // console.log('FormData:', data);
 
                 // Создаем объект с данными для отправки
                 const requestData = {
@@ -1657,13 +1653,13 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
                     }
                 }
 
-                console.log('Request data to be sent:', JSON.stringify(requestData, null, 2));
+                // console.log('Request data to be sent:', JSON.stringify(requestData, null, 2));
 
                 if (requestData.addresses.length === 0) {
                     throw new Error('Необходимо указать хотя бы один адрес');
                 }
 
-                console.log('Sending request to /api/requests with data:', JSON.stringify(requestData));
+                // console.log('Sending request to /api/requests with data:', JSON.stringify(requestData));
 
                 const response = await fetch('/api/requests', {
                     method: 'POST',
@@ -1676,7 +1672,7 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
                 });
 
                 const responseData = await response.json();
-                console.log('Server response:', response.status, responseData);
+                // console.log('Server response:', response.status, responseData);
 
                 if (!response.ok) {
                     if (response.status === 422) {

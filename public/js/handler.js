@@ -180,6 +180,8 @@ function applyFilters() {
 
                         row.setAttribute('data-request-id', request.id);
 
+                        // console.log(request);
+
                         row.innerHTML = `
                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${request.id}</td>
                             <td class="text-center" style="width: 1rem;">
@@ -259,7 +261,7 @@ function applyFilters() {
                             </td>
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
-                                    ${request.status !== 'completed' ? `
+                                    ${request.status_name !== 'выполнена' ? `
                                         <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                             Закрыть заявку
                                         </button>
@@ -828,17 +830,17 @@ function initializePage() {
 
     // Проверяем, существуют ли элементы на странице
     if (statusCheckbox && statusButtonsContainer) {
-        console.log('Элементы найдены:', {statusCheckbox, statusButtonsContainer});
+        // console.log('Элементы найдены:', {statusCheckbox, statusButtonsContainer});
 
         // Добавляем класс для скрытия кнопок статусов при загрузке страницы
         statusButtonsContainer.classList.add('d-none');
         // Добавляем инлайновые стили для гарантированного скрытия
         statusButtonsContainer.style.display = 'none !important';
-        console.log('Кнопки статусов скрыты при загрузке');
+        // console.log('Кнопки статусов скрыты при загрузке');
 
         // Назначаем обработчик события изменения состояния чекбокса
         statusCheckbox.addEventListener('change', function () {
-            console.log('Состояние чекбокса изменилось:', this.checked);
+            // console.log('Состояние чекбокса изменилось:', this.checked);
 
             // Показываем или скрываем кнопки статусов
             if (this.checked) {
@@ -994,6 +996,7 @@ function initializePage() {
 
 // Обработчик загрузки страницы
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM полностью загружен');
     initializePage();
     setupBrigadeAttachment();
     handlerCreateBrigade();
@@ -1005,17 +1008,17 @@ function hanlerAddToBrigade() {
         const select = document.getElementById('employeesSelect');
         const brigadeMembers = document.getElementById('brigadeMembers');
         const selectedOptions = Array.from(select.selectedOptions);
-        
+
         if (selectedOptions.length > 0) {
             selectedOptions.forEach(option => {
                 // Создаем элемент для отображения сотрудника
                 const memberDiv = document.createElement('div');
                 memberDiv.className = 'd-flex justify-content-between align-items-center p-2 mb-2 border rounded';
-                
+
                 // Добавляем имя сотрудника
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = option.text;
-                
+
                 // Создаем кнопку удаления
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'btn btn-sm btn-outline-danger';
@@ -1025,22 +1028,22 @@ function hanlerAddToBrigade() {
                     // Разблокируем опцию в селекте
                     option.selected = false;
                 };
-                
+
                 // Скрытое поле для формы
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
                 hiddenInput.name = 'brigade_members[]';
                 hiddenInput.value = option.value;
                 hiddenInput.dataset.employeeId = option.dataset.employeeId; // Добавляем data-employee-id
-                
+
                 // Собираем всё вместе
                 memberDiv.appendChild(hiddenInput);
                 memberDiv.appendChild(nameSpan);
                 memberDiv.appendChild(deleteBtn);
-                
+
                 // Добавляем в список бригады
                 brigadeMembers.appendChild(memberDiv);
-                
+
                 // Делаем опцию в селекте неактивной
                 option.disabled = true;
                 option.selected = false;
@@ -1052,26 +1055,26 @@ function hanlerAddToBrigade() {
 }
 
 function handlerCreateBrigade() {
-        console.log('DOM полностью загружен');
+        // console.log('DOM полностью загружен');
         const createBtn = document.getElementById('createBrigadeBtn');
-        console.log('Найдена кнопка:', createBtn);
-        
+        // console.log('Найдена кнопка:', createBtn);
+
         if (createBtn) {
             createBtn.addEventListener('click', function(e) {
-                console.log('Клик по кнопке createBrigadeBtn');
+                // console.log('Клик по кнопке createBrigadeBtn');
                 e.preventDefault();
                 console.clear();
                 console.log('=== ДЕБАГ ИНФОРМАЦИЯ ===');
-                
+
                 // Получаем данные формы
                 const form = document.getElementById('brigadeForm');
                 if (!form) {
                     console.error('Форма не найдена');
                     return;
                 }
-                
+
                 const formData = new FormData(form);
-                
+
                 // Проверяем выбран ли бригадир
                 const leaderId = formData.get('leader_id');
                 if (!leaderId) {
@@ -1079,24 +1082,24 @@ function handlerCreateBrigade() {
                     showAlert('Пожалуйста, выберите бригадира', 'warning');
                     return;
                 }
-                
+
                 // Выводим общую информацию о форме
                 console.log('=== ДАННЫЕ ФОРМЫ ===');
                 for (let [key, value] of formData.entries()) {
                     console.log(`${key}:`, value);
                 }
-                
+
                 // Проверяем выбранных сотрудников
                 const brigadeMembers = document.querySelectorAll('#brigadeMembers [name="brigade_members[]"]');
                 console.log('\n=== ВЫБРАННЫЕ СОТРУДНИКИ ===');
                 console.log('Всего выбрано:', brigadeMembers.length);
-                
+
                 if (brigadeMembers.length === 0) {
                     console.warn('ОШИБКА: Не выбрано ни одного сотрудника');
                     showAlert('Пожалуйста, добавьте хотя бы одного сотрудника в бригаду', 'warning');
                     return;
                 }
-                
+
                 // Выводим детальную информацию о каждом сотруднике
                 brigadeMembers.forEach((input, index) => {
                     console.log(`\nСотрудник #${index + 1}:`);
@@ -1104,19 +1107,19 @@ function handlerCreateBrigade() {
                     console.log('data-employee-id:', input.dataset.employeeId);
                     console.log('HTML:', input.outerHTML);
                 });
-                
+
                 console.log('\n=== ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ ===');
                 console.log('Название бригады:', formData.get('name'));
                 console.log('ID бригадира:', formData.get('leader_id'));
 
                 showAlert('Отправка формы будет реализована в ближайшее время!', 'info');
-                
+
                 // Для отправки формы раскомментируйте строку ниже
                 // form.submit();
             });
         } else {
             console.warn('Кнопка createBrigadeBtn не найдена');
-        }    
+        }
 }
 
 // Функция для настройки прикрепления бригады к заявке
@@ -1163,11 +1166,11 @@ function setupBrigadeAttachment() {
                             console.log(`ID выбранного бригадира: ${leaderId}`);
 
                             try {
-                                console.log('1. Получаем данные о бригаде...');
+                                // console.log('1. Получаем данные о бригаде...');
                                 const brigadeResponse = await fetch(`/api/requests/brigade/by-leader/${leaderId}`);
                                 const brigadeData = await brigadeResponse.json();
 
-                                console.log('Ответ от API бригады:', brigadeData);
+                                // console.log('Ответ от API бригады:', brigadeData);
 
                                 if (!brigadeResponse.ok) {
                                     throw new Error(brigadeData.message || `Ошибка ${brigadeResponse.status} при получении данных о бригаде`);
@@ -1177,7 +1180,7 @@ function setupBrigadeAttachment() {
                                     throw new Error('Не удалось получить ID бригады из ответа сервера');
                                 }
 
-                                console.log('2. Отправляем запрос на обновление заявки...');
+                                // console.log('2. Отправляем запрос на обновление заявки...');
                                 const updateResponse = await fetch('/api/requests/update-brigade', {
                                     method: 'POST',
                                     headers: {
@@ -1201,7 +1204,7 @@ function setupBrigadeAttachment() {
                                     throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
                                 }
 
-                                console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
+                                // console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
 
                                 // 3. Обновляем страницу для отображения изменений
                                 window.location.reload();

@@ -1,387 +1,400 @@
 diff --git a/public/js/brigades.js b/public/js/brigades.js
-index e86dccf..1e44fbe 100644
+index 1e44fbe..0c35bcf 100644
 --- a/public/js/brigades.js
 +++ b/public/js/brigades.js
-@@ -16,7 +16,7 @@ function initBrigadesTab() {
+@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', function() {
+ });
+ 
+ function initBrigadesTab() {
+-    console.log('Initializing brigades tab...');
++    // console.log('Initializing brigades tab...');
+     // Load brigades list
+     loadBrigades();
+ }
+ 
  async function loadBrigades() {
-     console.log('Loading brigades...');
+-    console.log('Loading brigades...');
++    // console.log('Loading brigades...');
      const brigadesList = document.getElementById('brigadesList');
--    
-+
+ 
      if (!brigadesList) {
-         console.error('Brigades list container not found');
-         return;
-@@ -31,21 +31,21 @@ async function loadBrigades() {
-             <p class="mt-2">Загрузка списка бригад...</p>
-             <div id="debugInfo" class="text-start small text-muted mt-3"></div>
-         </div>`;
--        
-+
-     const debugEl = document.getElementById('debugInfo');
-     const addDebug = (msg) => {
-         if (debugEl) {
-             debugEl.innerHTML += `<div>${new Date().toISOString()}: ${msg}</div>`;
-         }
--        console.debug(msg);
-+        // console.debug(msg);
-     };
--    
-+
-     addDebug('Начало загрузки списка бригад...');
--    
-+
-     try {
-         const url = '/api/brigades';
-         addDebug(`Отправка запроса на ${url}...`);
--        
-+
-         const response = await fetch(url, {
-             headers: {
-                 'Accept': 'application/json',
-@@ -54,12 +54,13 @@ async function loadBrigades() {
-             },
-             credentials: 'same-origin'
-         });
--        
-+
-         addDebug(`Получен ответ: ${response.status} ${response.statusText}`);
--        
-+
-         const responseText = await response.text();
--        addDebug(`Получены данные: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`);
--        
-+        addDebug(`Получены данные: ${responseText}`);
-+        // addDebug(`Получены данные: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`);
-+
+@@ -64,7 +64,7 @@ async function loadBrigades() {
          let data;
          try {
              data = JSON.parse(responseText);
-@@ -69,16 +70,16 @@ async function loadBrigades() {
+-            console.log('Response data:', data);
++            // console.log('Response data:', data);
+         } catch (e) {
+             console.error('Ошибка парсинга JSON:', e);
              addDebug(`Ошибка парсинга JSON: ${e.message}`);
-             throw new Error('Неверный формат ответа от сервера');
-         }
--        
-+
-         if (data.success === false) {
-             const errorMsg = data.message || 'Неизвестная ошибка';
-             addDebug(`Ошибка API: ${errorMsg}`);
-             throw new Error(errorMsg);
-         }
--        
-+
-         const brigades = Array.isArray(data.data) ? data.data : [];
-         addDebug(`Получено бригад: ${brigades.length}`);
--        
-+
-         if (brigades.length === 0) {
-             brigadesList.innerHTML = `
-                 <div class="alert alert-info">
-@@ -87,17 +88,17 @@ async function loadBrigades() {
-                 </div>`;
-             return;
-         }
--        
-+
-         // Рендерим список бригад
-         let html = '<div class="list-group">';
--        
-+
-         brigades.forEach(brigade => {
-             const leaderName = [
-                 brigade.leader_last_name,
-                 brigade.leader_first_name,
-                 brigade.leader_middle_name
-             ].filter(Boolean).join(' ') || 'Не назначен';
--            
-+
-             html += `
-                 <div class="list-group-item">
-                     <div class="d-flex justify-content-between align-items-center">
-@@ -109,21 +110,21 @@ async function loadBrigades() {
-                                 ${brigade.leader_position ? `<span class="text-muted ms-2">(${brigade.leader_position})</span>` : ''}
-                             </p>
-                         </div>
--                        <button class="btn btn-sm btn-outline-primary" 
-+                        <button class="btn btn-sm btn-outline-primary"
-                                 onclick="showBrigadeDetails(${brigade.id})">
-                             Подробнее
-                         </button>
-                     </div>
-                 </div>`;
-         });
--        
-+
-         html += '</div>';
-         brigadesList.innerHTML = html;
--        
-+
-     } catch (error) {
-         console.error('Ошибка при загрузке бригад:', error);
-         const errorMessage = error.message || 'Неизвестная ошибка при загрузке списка бригад';
--        
-+
-         brigadesList.innerHTML = `
-             <div class="alert alert-danger">
-                 <p class="mb-2">${errorMessage}</p>
-@@ -138,10 +139,10 @@ async function loadBrigades() {
+@@ -138,7 +138,7 @@ async function loadBrigades() {
+ 
  // Функция для отображения модального окна с детальной информацией о бригаде
  async function showBrigadeDetails(brigadeId) {
-     console.log('Showing details for brigade ID:', brigadeId);
--    
-+
+-    console.log('Showing details for brigade ID:', brigadeId);
++    // console.log('Showing details for brigade ID:', brigadeId);
+ 
      const modalElement = document.getElementById('brigadeDetailsModal');
      const modal = new bootstrap.Modal(modalElement);
--    
-+
-     // Показываем индикатор загрузки
-     modalElement.querySelector('.modal-body').innerHTML = `
-         <div class="text-center my-4">
-@@ -150,9 +151,9 @@ async function showBrigadeDetails(brigadeId) {
-             </div>
-             <p class="mt-2">Загрузка данных о бригаде...</p>
-         </div>`;
--    
-+
-     modal.show();
--    
-+
-     try {
-         // Получаем данные о бригаде
-         const response = await fetch(`/brigade/${brigadeId}`, {
-@@ -164,20 +165,20 @@ async function showBrigadeDetails(brigadeId) {
-             },
-             credentials: 'same-origin'
-         });
--        
-+
-         if (!response.ok) {
-             throw new Error(`Ошибка HTTP: ${response.status}`);
+@@ -171,7 +171,7 @@ async function showBrigadeDetails(brigadeId) {
          }
--        
-+
+ 
          const data = await response.json();
-         console.log('Brigade details:', data);
--        
-+
+-        console.log('Brigade details:', data);
++        // console.log('Brigade details:', data);
+ 
          if (!data.success) {
              throw new Error(data.message || 'Не удалось загрузить данные о бригаде');
-         }
--        
-+
-         const { brigade, leader, members } = data;
--        
-+
-         // Формируем HTML для отображения
-         let html = `
-             <div class="mb-4">
-@@ -196,7 +197,7 @@ async function showBrigadeDetails(brigadeId) {
-                         </div>
-                     </div>
-                 ` : '<p class="text-muted">Бригадир не назначен</p>'}
--                
-+
-                 <div class="card">
-                     <div class="card-header bg-light-2">
-                         <h5 class="mb-0">Члены бригады</h5>
-@@ -216,10 +217,10 @@ async function showBrigadeDetails(brigadeId) {
-                     </div>
-                 </div>
-             </div>`;
--        
-+
-         // Вставляем сформированный HTML в модальное окно
-         modalElement.querySelector('.modal-body').innerHTML = html;
--        
-+
-     } catch (error) {
-         console.error('Ошибка при загрузке данных о бригаде:', error);
-         modalElement.querySelector('.modal-body').innerHTML = `
+@@ -234,13 +234,13 @@ async function showBrigadeDetails(brigadeId) {
+ }
+ 
+ function showCreateBrigadeModal() {
+-    console.log('Showing create brigade modal (tab)');
++    // console.log('Showing create brigade modal (tab)');
+     const modal = new bootstrap.Modal(document.getElementById('brigadeModal'));
+     modal.show();
+ }
+ 
+ async function saveBrigade() {
+-    console.log('Saving brigade...');
++    // console.log('Saving brigade...');
+     // This will be implemented later to save the brigade
+     const brigadeName = document.getElementById('brigadeName')?.value;
+     if (!brigadeName) {
+@@ -248,7 +248,7 @@ async function saveBrigade() {
+         return;
+     }
+ 
+-    console.log('New brigade:', brigadeName);
++    // console.log('New brigade:', brigadeName);
+ 
+     // Close the modal
+     const modal = bootstrap.Modal.getInstance(document.getElementById('brigadeModal'));
 diff --git a/public/js/handler.js b/public/js/handler.js
-index 699a955..486bcc6 100644
+index 486bcc6..621605e 100644
 --- a/public/js/handler.js
 +++ b/public/js/handler.js
-@@ -213,9 +213,8 @@ function applyFilters() {
+@@ -180,6 +180,8 @@ function applyFilters() {
  
-                                     // Экранируем кавычки для атрибута title
-                                     const escapedComment = String(commentText).replace(/"/g, '&quot;');
--                                    const displayText = commentText.length > 50
--                                        ? commentText.substring(0, 50) + '...'
--                                        : commentText;
-+                                    const displayText = commentText;
-+                                    // const displayText = commentText.length > 50 ? commentText.substring(0, 50) + '...' : commentText;
+                         row.setAttribute('data-request-id', request.id);
  
-                                     return `
-                                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="${escapedComment}">
++                        // console.log(request);
++
+                         row.innerHTML = `
+                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${request.id}</td>
+                             <td class="text-center" style="width: 1rem;">
+@@ -259,7 +261,7 @@ function applyFilters() {
+                             </td>
+                             <td class="text-nowrap">
+                                 <div class="d-flex flex-column gap-1">
+-                                    ${request.status !== 'completed' ? `
++                                    ${request.status_name !== 'выполнена' ? `
+                                         <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                                             Закрыть заявку
+                                         </button>
+@@ -828,17 +830,17 @@ function initializePage() {
+ 
+     // Проверяем, существуют ли элементы на странице
+     if (statusCheckbox && statusButtonsContainer) {
+-        console.log('Элементы найдены:', {statusCheckbox, statusButtonsContainer});
++        // console.log('Элементы найдены:', {statusCheckbox, statusButtonsContainer});
+ 
+         // Добавляем класс для скрытия кнопок статусов при загрузке страницы
+         statusButtonsContainer.classList.add('d-none');
+         // Добавляем инлайновые стили для гарантированного скрытия
+         statusButtonsContainer.style.display = 'none !important';
+-        console.log('Кнопки статусов скрыты при загрузке');
++        // console.log('Кнопки статусов скрыты при загрузке');
+ 
+         // Назначаем обработчик события изменения состояния чекбокса
+         statusCheckbox.addEventListener('change', function () {
+-            console.log('Состояние чекбокса изменилось:', this.checked);
++            // console.log('Состояние чекбокса изменилось:', this.checked);
+ 
+             // Показываем или скрываем кнопки статусов
+             if (this.checked) {
+@@ -994,6 +996,7 @@ function initializePage() {
+ 
+ // Обработчик загрузки страницы
+ document.addEventListener('DOMContentLoaded', function() {
++    console.log('DOM полностью загружен');
+     initializePage();
+     setupBrigadeAttachment();
+     handlerCreateBrigade();
+@@ -1005,17 +1008,17 @@ function hanlerAddToBrigade() {
+         const select = document.getElementById('employeesSelect');
+         const brigadeMembers = document.getElementById('brigadeMembers');
+         const selectedOptions = Array.from(select.selectedOptions);
+-        
++
+         if (selectedOptions.length > 0) {
+             selectedOptions.forEach(option => {
+                 // Создаем элемент для отображения сотрудника
+                 const memberDiv = document.createElement('div');
+                 memberDiv.className = 'd-flex justify-content-between align-items-center p-2 mb-2 border rounded';
+-                
++
+                 // Добавляем имя сотрудника
+                 const nameSpan = document.createElement('span');
+                 nameSpan.textContent = option.text;
+-                
++
+                 // Создаем кнопку удаления
+                 const deleteBtn = document.createElement('button');
+                 deleteBtn.className = 'btn btn-sm btn-outline-danger';
+@@ -1025,22 +1028,22 @@ function hanlerAddToBrigade() {
+                     // Разблокируем опцию в селекте
+                     option.selected = false;
+                 };
+-                
++
+                 // Скрытое поле для формы
+                 const hiddenInput = document.createElement('input');
+                 hiddenInput.type = 'hidden';
+                 hiddenInput.name = 'brigade_members[]';
+                 hiddenInput.value = option.value;
+                 hiddenInput.dataset.employeeId = option.dataset.employeeId; // Добавляем data-employee-id
+-                
++
+                 // Собираем всё вместе
+                 memberDiv.appendChild(hiddenInput);
+                 memberDiv.appendChild(nameSpan);
+                 memberDiv.appendChild(deleteBtn);
+-                
++
+                 // Добавляем в список бригады
+                 brigadeMembers.appendChild(memberDiv);
+-                
++
+                 // Делаем опцию в селекте неактивной
+                 option.disabled = true;
+                 option.selected = false;
+@@ -1052,26 +1055,26 @@ function hanlerAddToBrigade() {
+ }
+ 
+ function handlerCreateBrigade() {
+-        console.log('DOM полностью загружен');
++        // console.log('DOM полностью загружен');
+         const createBtn = document.getElementById('createBrigadeBtn');
+-        console.log('Найдена кнопка:', createBtn);
+-        
++        // console.log('Найдена кнопка:', createBtn);
++
+         if (createBtn) {
+             createBtn.addEventListener('click', function(e) {
+-                console.log('Клик по кнопке createBrigadeBtn');
++                // console.log('Клик по кнопке createBrigadeBtn');
+                 e.preventDefault();
+                 console.clear();
+                 console.log('=== ДЕБАГ ИНФОРМАЦИЯ ===');
+-                
++
+                 // Получаем данные формы
+                 const form = document.getElementById('brigadeForm');
+                 if (!form) {
+                     console.error('Форма не найдена');
+                     return;
+                 }
+-                
++
+                 const formData = new FormData(form);
+-                
++
+                 // Проверяем выбран ли бригадир
+                 const leaderId = formData.get('leader_id');
+                 if (!leaderId) {
+@@ -1079,24 +1082,24 @@ function handlerCreateBrigade() {
+                     showAlert('Пожалуйста, выберите бригадира', 'warning');
+                     return;
+                 }
+-                
++
+                 // Выводим общую информацию о форме
+                 console.log('=== ДАННЫЕ ФОРМЫ ===');
+                 for (let [key, value] of formData.entries()) {
+                     console.log(`${key}:`, value);
+                 }
+-                
++
+                 // Проверяем выбранных сотрудников
+                 const brigadeMembers = document.querySelectorAll('#brigadeMembers [name="brigade_members[]"]');
+                 console.log('\n=== ВЫБРАННЫЕ СОТРУДНИКИ ===');
+                 console.log('Всего выбрано:', brigadeMembers.length);
+-                
++
+                 if (brigadeMembers.length === 0) {
+                     console.warn('ОШИБКА: Не выбрано ни одного сотрудника');
+                     showAlert('Пожалуйста, добавьте хотя бы одного сотрудника в бригаду', 'warning');
+                     return;
+                 }
+-                
++
+                 // Выводим детальную информацию о каждом сотруднике
+                 brigadeMembers.forEach((input, index) => {
+                     console.log(`\nСотрудник #${index + 1}:`);
+@@ -1104,19 +1107,19 @@ function handlerCreateBrigade() {
+                     console.log('data-employee-id:', input.dataset.employeeId);
+                     console.log('HTML:', input.outerHTML);
+                 });
+-                
++
+                 console.log('\n=== ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ ===');
+                 console.log('Название бригады:', formData.get('name'));
+                 console.log('ID бригадира:', formData.get('leader_id'));
+ 
+                 showAlert('Отправка формы будет реализована в ближайшее время!', 'info');
+-                
++
+                 // Для отправки формы раскомментируйте строку ниже
+                 // form.submit();
+             });
+         } else {
+             console.warn('Кнопка createBrigadeBtn не найдена');
+-        }    
++        }
+ }
+ 
+ // Функция для настройки прикрепления бригады к заявке
+@@ -1163,11 +1166,11 @@ function setupBrigadeAttachment() {
+                             console.log(`ID выбранного бригадира: ${leaderId}`);
+ 
+                             try {
+-                                console.log('1. Получаем данные о бригаде...');
++                                // console.log('1. Получаем данные о бригаде...');
+                                 const brigadeResponse = await fetch(`/api/requests/brigade/by-leader/${leaderId}`);
+                                 const brigadeData = await brigadeResponse.json();
+ 
+-                                console.log('Ответ от API бригады:', brigadeData);
++                                // console.log('Ответ от API бригады:', brigadeData);
+ 
+                                 if (!brigadeResponse.ok) {
+                                     throw new Error(brigadeData.message || `Ошибка ${brigadeResponse.status} при получении данных о бригаде`);
+@@ -1177,7 +1180,7 @@ function setupBrigadeAttachment() {
+                                     throw new Error('Не удалось получить ID бригады из ответа сервера');
+                                 }
+ 
+-                                console.log('2. Отправляем запрос на обновление заявки...');
++                                // console.log('2. Отправляем запрос на обновление заявки...');
+                                 const updateResponse = await fetch('/api/requests/update-brigade', {
+                                     method: 'POST',
+                                     headers: {
+@@ -1201,7 +1204,7 @@ function setupBrigadeAttachment() {
+                                     throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
+                                 }
+ 
+-                                console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
++                                // console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
+ 
+                                 // 3. Обновляем страницу для отображения изменений
+                                 window.location.reload();
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index 8a18bfd..941d0bd 100644
+index 941d0bd..0e8ca9f 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -180,7 +180,7 @@
-                         <div id="requests-table-container" class="table-responsive mt-4 t-custom">
-                             <!-- Легенда статусов -->
-                             @if (!empty($request_statuses))
--                                <div class="p-4">
-+                                <div class="p-4 hide-me">
-                                     <div class="d-flex flex-column gap-2">
-                                         @foreach ($request_statuses as $status)
-                                             <div class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
-@@ -194,23 +194,21 @@
-                                 </div>
-                             @endif
+@@ -241,7 +241,7 @@
+                                                 <div class="comment-preview small text-dark"
+                                                      data-bs-toggle="tooltip" title="{{ $commentText }}">
+                                                     @if(count($comments_by_request[$request->id]) > 1)
+-                                                        {{ Str::limit($commentText, 65, '...') }}
++                                                        {{ Str::limit($commentText, 300, '...') }}
+                                                     @else
+                                                         {{ $commentText }}
+                                                     @endif
+@@ -543,7 +543,7 @@ function loadCities(selectElement) {
+                                                         option.textContent = city.name;
+                                                         selectElement.appendChild(option);
+                                                     });
+-                                                    console.log('Загружено городов:', cities.length);
++                                                    // console.log('Загружено городов:', cities.length);
+                                                 } else {
+                                                     console.warn('Получен пустой список городов');
+                                                 }
+@@ -980,7 +980,7 @@ function loadComments(requestId) {
  
--                                <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
--                                    <thead class="bg-dark">
--                                    <tr>
--                                        <th style="width: 1rem;"></th>
--                                        <th style="width: 1rem;"></th>
--                                        <th style="width: 10rem;">Дата</th>
--                                        <th>Комментарий</th>
--                                        <th style="width: 15rem;">Адрес/Телефон</th>
--                                        <th>Оператор/Создана</th>
--                                        <th>Бригада</th>
--                                        <th style="width: 12rem;">Действия</th>
--                                    </tr>
--                                    </thead>
--                                    <tbody>
--                                    <style>
-+                            <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
-+                                <thead class="bg-dark">
-+                                <tr>
-+                                    <th style="width: 1rem;"></th>
-+                                    <th style="width: 1rem;"></th>
-+                                    <th style="width: 10rem;">Дата</th>
-+                                    <th>Комментарий</th>
-+                                    <th style="width: 15rem;">Адрес/Телефон</th>
-+                                    <th>Оператор/Создана</th>
-+                                    <th>Бригада</th>
-+                                    <th style="width: 12rem;">Действия</th>
-+                                </tr>
-+                                </thead>
-+                                <tbody>
+         // Функция обновления счетчика комментариев
+         function updateCommentsBadge(requestId) {
+-            console.log('Updating badge for request ID:', requestId);
++            // console.log('Updating badge for request ID:', requestId);
  
--                                </style>
+             // Запрашиваем актуальное количество комментариев
+             fetch(`/api/requests/${requestId}/comments/count`)
+@@ -991,13 +991,9 @@ function updateCommentsBadge(requestId) {
+                     return response.json();
+                 })
+                 .then(data => {
+-                    console.log('Received comments count data:', data);
++                    // console.log('Received comments count data:', data);
+                     const commentCount = data.count || 0;
+-                    console.log(`Found ${commentCount} comments for request ${requestId}`);
+-
+-                    if (commentCount == 2) {
+-                        console.log('Joker:', commentCount);
+-                    }
++                    // console.log(`Found ${commentCount} comments for request ${requestId}`);
  
-                                 @foreach ($requests as $request)
-                                     @php
-@@ -374,7 +372,7 @@ class="btn btn-sm btn-outline-success add-photo-btn"
-                                 <i class="bi bi-plus-circle"></i> Создать бригаду
-                             </button>
-                         </div>-->
--                        
-+
-                         <div class="card hide-me">
-                             <div class="card-body">
-                                 <div id="brigadesList" class="list-group">
-@@ -387,7 +385,7 @@ class="btn btn-sm btn-outline-success add-photo-btn"
-                                 </div>
-                             </div>
-                         </div>
--                        
-+
+                     // Находим строку таблицы с нужной заявкой
+                     const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`) ||
+@@ -1013,10 +1009,10 @@ function updateCommentsBadge(requestId) {
+                             button.view-comments-btn[data-request-id="${requestId}"]
+                         `);
  
-                         <form id="brigadeForm" action="{{ route('brigades.store') }}" method="POST">
-                             @csrf
-@@ -405,7 +403,7 @@ class="btn btn-sm btn-outline-success add-photo-btn"
-                                         <option value="{{ $emp->id }}">{{ $emp->fio }}</option>
-                                     @endforeach
-                                 </select>
--                            </div>  
-+                            </div>
+-                    console.log(`Found ${commentButtons.length} comment buttons to update in row`);
++                     // console.log(`Found ${commentButtons.length} comment buttons to update in row`);
  
-                             <div class="d-flex gap-3 mb-3" style="height: 450px;">
-                                 <div class="d-flex flex-column" style="flex: 1.2;">
-@@ -436,7 +434,7 @@ class="btn btn-sm btn-outline-success add-photo-btn"
-                             </div>
-                         </form>
+                     commentButtons.forEach(button => {
+-                        console.log('Updating comment button:', button);
++                        // console.log('Updating comment button:', button);
  
--                    </div>    
-+                    </div>
+                         // Находим существующий бейдж или его место для вставки
+                         let badge = button.querySelector('.badge');
+@@ -1496,7 +1492,7 @@ class="text-danger">*</span></label>
+                         select.appendChild(option);
+                     });
  
-                     <div class="tab-pane fade" id="addresses" role="tabpanel">
-                         <h4>Адреса</h4>
-@@ -518,7 +516,7 @@ function loadCities(selectElement) {
-                                         loadingOption.textContent = 'Загрузка городов...';
-                                         selectElement.innerHTML = '';
-                                         selectElement.appendChild(loadingOption);
--                                        
-+
-                                         // Загружаем города с сервера
-                                         return fetch('/api/cities')
-                                             .then(response => {
-@@ -530,13 +528,13 @@ function loadCities(selectElement) {
-                                             .then(cities => {
-                                                 // Очищаем список
-                                                 selectElement.innerHTML = '';
--                                                
-+
-                                                 // Добавляем опцию по умолчанию
-                                                 const defaultOption = document.createElement('option');
-                                                 defaultOption.value = '';
-                                                 defaultOption.textContent = 'Выберите город';
-                                                 selectElement.appendChild(defaultOption);
--                                                
-+
-                                                 // Добавляем города в список
-                                                 if (Array.isArray(cities) && cities.length > 0) {
-                                                     cities.forEach(city => {
-@@ -565,7 +563,7 @@ function loadCities(selectElement) {
-                                             loadCities(citySelect);
-                                         }
-                                     });
--                                    
-+
-                                     const testData = [
-                                             {street: "Ленина", houses: "12А", district: "Центральный", city_id: "1"},
-                                             {street: "Пушкина", houses: "5", district: "Северный", city_id: "2"},
-@@ -636,16 +634,16 @@ function loadCities(selectElement) {
-                                     // Обработчик отправки формы добавления адреса
-                                     document.getElementById('addressForm').addEventListener('submit', async function(e) {
-                                         e.preventDefault();
--                                        
-+
-                                         const form = e.target;
-                                         const submitBtn = form.querySelector('button[type="submit"]');
-                                         const originalBtnText = submitBtn.innerHTML;
--                                        
-+
-                                         try {
-                                             // Показываем индикатор загрузки
-                                             submitBtn.disabled = true;
-                                             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
--                                            
-+
-                                             const formData = new FormData(form);
-                                             const response = await fetch(form.action, {
-                                                 method: 'POST',
-@@ -655,9 +653,9 @@ function loadCities(selectElement) {
-                                                 },
-                                                 body: formData
-                                             });
--                                            
-+
-                                             const result = await response.json();
--                                            
-+
-                                             if (response.ok) {
-                                                 // Очищаем форму при успешном сохранении
-                                                 form.reset();
-@@ -1349,7 +1347,7 @@ class="text-danger">*</span></label>
- document.getElementById('fillMockDataBtn').addEventListener('click', function() {
-   const randomIndex = Math.floor(Math.random() * mockData.length);
-   const data = mockData[randomIndex];
--  
-+
-   document.getElementById('clientName').value = data.name;
-   document.getElementById('clientPhone').value = data.phone;
-   document.getElementById('comment').value = data.comment;
-@@ -2008,8 +2006,8 @@ function showAlert(message, type = 'success') {
- <!-- Brigades Script -->
- <script>
-     // Передаем данные заявок в JavaScript
--    window.requestsData = @json($requests);
--    console.log('Данные заявок переданы в JavaScript:', window.requestsData);
-+    {{--window.requestsData = @json($requests);--}}
-+    // console.log('Данные заявок переданы в JavaScript:', window.requestsData);
- </script>
- <script src="{{ asset('js/brigades.js') }}"></script>
- <script src="{{ asset('js/calendar.js') }}"></script>
+-                console.log('Операторы загружены, выбран:', select.options[select.selectedIndex]?.text);
++                // console.log('Операторы загружены, выбран:', select.options[select.selectedIndex]?.text);
+             } catch (error) {
+                 console.error('Error loading operators:', error);
+                 throw error;
+@@ -1616,11 +1612,11 @@ function validateForm(form) {
+                 const addressComments = Array.isArray(data['address_comment']) ? data['address_comment'] : (data['address_comment'] ? [data['address_comment']] : []);
+ 
+                 // Debug information
+-                console.log('cityIds:', cityIds);
+-                console.log('streets:', streets);
+-                console.log('houses:', houses);
+-                console.log('addressComments:', addressComments);
+-                console.log('FormData:', data);
++                // console.log('cityIds:', cityIds);
++                // console.log('streets:', streets);
++                // console.log('houses:', houses);
++                // console.log('addressComments:', addressComments);
++                // console.log('FormData:', data);
+ 
+                 // Создаем объект с данными для отправки
+                 const requestData = {
+@@ -1657,13 +1653,13 @@ function validateForm(form) {
+                     }
+                 }
+ 
+-                console.log('Request data to be sent:', JSON.stringify(requestData, null, 2));
++                // console.log('Request data to be sent:', JSON.stringify(requestData, null, 2));
+ 
+                 if (requestData.addresses.length === 0) {
+                     throw new Error('Необходимо указать хотя бы один адрес');
+                 }
+ 
+-                console.log('Sending request to /api/requests with data:', JSON.stringify(requestData));
++                // console.log('Sending request to /api/requests with data:', JSON.stringify(requestData));
+ 
+                 const response = await fetch('/api/requests', {
+                     method: 'POST',
+@@ -1676,7 +1672,7 @@ function validateForm(form) {
+                 });
+ 
+                 const responseData = await response.json();
+-                console.log('Server response:', response.status, responseData);
++                // console.log('Server response:', response.status, responseData);
+ 
+                 if (!response.ok) {
+                     if (response.status === 422) {

@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initBrigadesTab() {
-    console.log('Initializing brigades tab...');
+    // console.log('Initializing brigades tab...');
     // Load brigades list
     loadBrigades();
 }
 
 async function loadBrigades() {
-    console.log('Loading brigades...');
+    // console.log('Loading brigades...');
     const brigadesList = document.getElementById('brigadesList');
 
     if (!brigadesList) {
@@ -64,7 +64,7 @@ async function loadBrigades() {
         let data;
         try {
             data = JSON.parse(responseText);
-            console.log('Response data:', data);
+            // console.log('Response data:', data);
         } catch (e) {
             console.error('Ошибка парсинга JSON:', e);
             addDebug(`Ошибка парсинга JSON: ${e.message}`);
@@ -138,7 +138,7 @@ async function loadBrigades() {
 
 // Функция для отображения модального окна с детальной информацией о бригаде
 async function showBrigadeDetails(brigadeId) {
-    console.log('Showing details for brigade ID:', brigadeId);
+    // console.log('Showing details for brigade ID:', brigadeId);
 
     const modalElement = document.getElementById('brigadeDetailsModal');
     const modal = new bootstrap.Modal(modalElement);
@@ -171,7 +171,7 @@ async function showBrigadeDetails(brigadeId) {
         }
 
         const data = await response.json();
-        console.log('Brigade details:', data);
+        // console.log('Brigade details:', data);
 
         if (!data.success) {
             throw new Error(data.message || 'Не удалось загрузить данные о бригаде');
@@ -234,13 +234,13 @@ async function showBrigadeDetails(brigadeId) {
 }
 
 function showCreateBrigadeModal() {
-    console.log('Showing create brigade modal (tab)');
+    // console.log('Showing create brigade modal (tab)');
     const modal = new bootstrap.Modal(document.getElementById('brigadeModal'));
     modal.show();
 }
 
 async function saveBrigade() {
-    console.log('Saving brigade...');
+    // console.log('Saving brigade...');
     // This will be implemented later to save the brigade
     const brigadeName = document.getElementById('brigadeName')?.value;
     if (!brigadeName) {
@@ -248,7 +248,7 @@ async function saveBrigade() {
         return;
     }
 
-    console.log('New brigade:', brigadeName);
+    // console.log('New brigade:', brigadeName);
 
     // Close the modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('brigadeModal'));
