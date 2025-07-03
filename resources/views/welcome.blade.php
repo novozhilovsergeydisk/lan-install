@@ -204,6 +204,7 @@
                                     <th style="width: 15rem;">Адрес/Телефон</th>
                                     <th>Оператор/Создана</th>
                                     <th>Бригада</th>
+                                    <th style="width: 16rem;">Действия с заявкой</th>
                                     <th style="width: 12rem;">Действия</th>
                                 </tr>
                                 </thead>
@@ -324,6 +325,21 @@
                                                 @endif
                                             </td>
 
+                                            <!-- Action Buttons Group -->
+                                            <td class="text-nowrap">
+                                                <div class="d-flex flex-column gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="{{ $request->id }}">
+                                                        <i class="bi bi-people me-1"></i>Назначить бригаду
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-success transfer-request-btn p-1" style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;" data-request-id="{{ $request->id }}">
+                                                        <i class="bi bi-arrow-left-right me-1"></i>Перенести заявку
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger cancel-request-btn p-1" data-request-id="{{ $request->id }}">
+                                                        <i class="bi bi-x-circle me-1"></i>Отменить заявку
+                                                    </button>
+                                                </div>
+                                            </td>
+
                                             <!-- Action Buttons -->
                                             <td class="text-nowrap">
                                                 <div class="d-flex flex-column gap-1">
@@ -352,7 +368,7 @@
                                     @endforeach
                                     </tbody>
                                     <tr id="no-requests-row" class="d-none">
-                                        <td colspan="8" class="text-center py-4">
+                                        <td colspan="9" class="text-center py-4">
                                             <div class="alert alert-info m-0">
                                                 <i class="bi bi-info-circle me-2"></i>Нет заявок для отображения.
                                             </div>

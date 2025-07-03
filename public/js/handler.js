@@ -996,9 +996,72 @@ function initializePage() {
 }
 
 // Обработчик загрузки страницы
+// Обработчик кнопки 'Назначить бригаду'
+function handleAssignTeam(button) {
+    const requestId = button.dataset.requestId;
+    console.log('Назначение бригады для заявки:', requestId);
+    // Здесь будет логика открытия модального окна для выбора бригады
+    showAlert(`Функционал 'Назначить бригаду' для заявки ${requestId} будет реализован позже`, 'info');
+}
+
+// Обработчик кнопки 'Перенести заявку'
+function handleTransferRequest(button) {
+    const requestId = button.dataset.requestId;
+    console.log('Перенос заявки:', requestId);
+    // Здесь будет логика переноса заявки
+    showAlert(`Функционал 'Перенести заявку' для заявки ${requestId} будет реализован позже`, 'info');
+}
+
+// Обработчик кнопки 'Отменить заявку'
+function handleCancelRequest(button) {
+    const requestId = button.dataset.requestId;
+    console.log('Отмена заявки:', requestId);
+    showAlert('Функционал будет реализован позже', 'info');
+}
+
+// Инициализация обработчиков для кнопок заявок
+function initRequestButtons() {
+    // Обработчик для кнопки 'Назначить бригаду'
+    document.querySelectorAll('.assign-team-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleAssignTeam(button);
+        });
+    });
+
+    // Обработчик для кнопки 'Перенести заявку'
+    document.querySelectorAll('.transfer-request-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleTransferRequest(button);
+        });
+    });
+
+    // Обработчик для кнопки 'Отменить заявку'
+    document.querySelectorAll('.cancel-request-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleCancelRequest(button);
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM полностью загружен');
     initializePage();
+    
+    // Инициализация обработчиков для кнопок заявок
+    initRequestButtons();
+    
+    // Перехватываем вызов applyFilters для обновления обработчиков после фильтрации
+    const originalApplyFilters = window.applyFilters;
+    window.applyFilters = function() {
+        return originalApplyFilters.apply(this, arguments).then(() => {
+            initRequestButtons();
+        });
+    };
+    
+
     setupBrigadeAttachment();
     handlerCreateBrigade();
     hanlerAddToBrigade();
