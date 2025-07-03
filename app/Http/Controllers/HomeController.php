@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\RequestTeamFilterController;
 
 class HomeController extends Controller
 {
@@ -17,7 +18,7 @@ class HomeController extends Controller
     public function getAddresses()
     {
         $sql = "
-            SELECT 
+            SELECT
                 a.id,
                 CONCAT(a.street, ', ', a.houses, ' [', CASE WHEN a.district = 'Не указан' THEN 'Район не указан' ELSE a.district END, '][', c.name, ']') as full_address,
                 a.street,
@@ -28,12 +29,12 @@ class HomeController extends Controller
             JOIN cities c ON a.city_id = c.id
             ORDER BY a.street, a.houses
         ";
-        
+
         $addresses = DB::select($sql);
-            
+
         return response()->json($addresses);
     }
-    
+
     public function index()
     {
         // Получаем текущего пользователя
@@ -118,6 +119,12 @@ class HomeController extends Controller
         // Запрашиваем request_types
         $requests_types = DB::select('SELECT * FROM request_types ORDER BY id');
 
+        $today = now()->toDateString();
+
+        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS leader_name, e.id as employee_id FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE DATE(b.formation_date) >= '{$today}'";
+
+        $brigadesCurrentDay = DB::select($sql);
+
         // 🔽 Комплексный запрос получения списка заявок с подключением к employees
         $requests = DB::select('
             SELECT
@@ -173,6 +180,7 @@ class HomeController extends Controller
             'request_addresses' => $request_addresses,
             'requests_types' => $requests_types,
             'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+            'brigadesCurrentDay' => $brigadesCurrentDay,
             'flags' => $flags
         ];
 
@@ -193,10 +201,10 @@ class HomeController extends Controller
             'json' => $request->json()->all(),
             'headers' => $request->headers->all(),
         ]);
-        
+
         // Включаем логирование SQL-запросов
         \DB::enableQueryLog();
-        
+
         try {
             \Log::info('=== НАЧАЛО ДОБАВЛЕНИЯ КОММЕНТАРИЯ ===');
             \Log::info('Метод запроса: ' . $request->method());
@@ -791,7 +799,7 @@ class HomeController extends Controller
         \DB::enableQueryLog();
         DB::beginTransaction();
         $isExistingClient = false;
-        
+
         try {
             // Логируем все входные данные для отладки
             \Log::info('=== НАЧАЛО ОБРАБОТКИ ЗАПРОСА ===');
@@ -799,7 +807,7 @@ class HomeController extends Controller
 
             // Получаем данные из запроса
             $input = $request->all();
-            
+
             // Формируем массив для валидации
             $validationData = [
                 'client_name' => $input['client_name'] ?? null,
@@ -830,7 +838,7 @@ class HomeController extends Controller
 
             // Валидация входных данных
             $validator = \Validator::make($validationData, $rules);
-            
+
             if ($validator->fails()) {
                 \Log::error('Ошибка валидации:', $validator->errors()->toArray());
                 return response()->json([
@@ -839,27 +847,27 @@ class HomeController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
-            
+
             $validated = $validator->validated();
             \Log::info('Валидированные данные:', $validated);
 
             // 1. Подготовка данных клиента
             $fio = trim($validated['client_name'] ?? '');
             $phone = trim($validated['client_phone'] ?? '');
-            
+
             // 2. Валидация данных клиента
             $clientData = [
                 'fio' => $fio,
                 'phone' => $phone,
                 'email' => '' // Пустая строка, так как поле не может быть NULL
             ];
-            
+
             $clientRules = [
                 'fio' => 'string|max:255',
                 'phone' => 'string|max:50',
                 'email' => 'string|max:255'
             ];
-            
+
             $clientValidator = Validator::make($clientData, $clientRules);
             if ($clientValidator->fails()) {
                 \Log::error('Ошибка валидации данных клиента:', $clientValidator->errors()->toArray());
@@ -869,17 +877,17 @@ class HomeController extends Controller
                     'errors' => $clientValidator->errors()
                 ], 422);
             }
-            
+
             // 3. Поиск существующего клиента по телефону (если телефон указан)
             $client = null;
             $clientId = null;
-            
+
             if (!empty($clientData['phone'])) {
                 $client = DB::table('clients')
                     ->where('phone', $clientData['phone'])
                     ->first();
             }
-            
+
             // 4. Создание или обновление клиента
             try {
                 if ($client) {
@@ -923,17 +931,17 @@ class HomeController extends Controller
                 'created_at' => now(),
                 'updated_at' => now()
             ];
-            
+
             // Генерируем номер заявки
             $countQuery = DB::table('requests');
             $count = $countQuery->count() + 1;
             $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
             $requestData['number'] = $requestNumber;
-            
+
             // Устанавливаем текущую дату (учитывая часовой пояс из конфига Laravel)
             $currentDate = now()->toDateString();
             $requestData['request_date'] = $currentDate;
-            
+
             // Вставляем заявку с помощью DB::insert и получаем ID
             $result = DB::select(
                 'INSERT INTO requests (client_id, request_type_id, status_id, execution_date, execution_time, brigade_id, operator_id, number, request_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
@@ -958,7 +966,7 @@ class HomeController extends Controller
 
             $requestId = $result[0]->id;
             \Log::info('Создана заявка с ID:', ['id' => $requestId]);
-            
+
             // 4. Создаем комментарий, только если он не пустой
             $commentText = trim($validated['comment'] ?? '');
             $newCommentId = null;
@@ -982,14 +990,14 @@ class HomeController extends Controller
                     }
 
                     \Log::info('Создан комментарий с ID:', ['id' => $newCommentId]);
-                    
+
                     // Создаем связь между заявкой и комментарием
                     DB::table('request_comments')->insert([
                         'request_id' => $requestId,
                         'comment_id' => $newCommentId,
                         'created_at' => now()->toDateTimeString()
                     ]);
-                    
+
                     \Log::info('Связь между заявкой и комментарием создана', [
                         'request_id' => $requestId,
                         'comment_id' => $newCommentId
@@ -1002,30 +1010,30 @@ class HomeController extends Controller
 
             // 5. Связываем существующий адрес с заявкой
             $addressId = $validated['address_id'];
-            
+
             // Получаем информацию об адресе
             $address = DB::table('addresses')->find($addressId);
-            
+
             if (!$address) {
                 throw new \Exception('Указанный адрес не найден');
             }
-            
+
             // Связываем адрес с заявкой без использования временных меток
             DB::table('request_addresses')->insert([
                 'request_id' => $requestId,
                 'address_id' => $addressId
                 // Убраны created_at и updated_at, так как их нет в таблице
             ]);
-            
+
             \Log::info('Создана связь заявки с адресом:', [
                 'request_id' => $requestId,
                 'address_id' => $addressId
             ]);
-            
+
             // Формируем ответ
             $response = [
                 'success' => true,
-                'message' => $clientId 
+                'message' => $clientId
                     ? ($isExistingClient ? 'Использован существующий клиент' : 'Создан новый клиент')
                     : 'Заявка создана без привязки к клиенту',
                 'data' => [
@@ -1075,7 +1083,7 @@ class HomeController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при создании заявки: ' . $e->getMessage(),

@@ -47,6 +47,25 @@ class RequestTeamFilterController extends Controller
     }
 
     /**
+     * Получить список бригад за текущий день
+     */
+    public function brigadesCurrentDay()
+    {
+        $today = now()->toDateString();
+
+        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE DATE(b.formation_date) >= '{$today}'";
+
+        $leaders = DB::select($sql);
+
+        return response()->json([
+            'success' => true,
+            '$today' => $today,
+            '$sql' => $sql,
+            '$leaders' => $leaders
+        ]);
+    }
+
+    /**
      * Получить список бригадиров
      */
     public function getBrigadeLeaders()

@@ -128,7 +128,7 @@
                         <!-- Filter Section -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex" style="max-width: 100%;">
+                                <div class="d-flex d-none" style="max-width: 100%;">
                                     <div id="request-filters" class="d-flex align-items-center"
                                          style="height: 2rem; border: 1px solid var(--card-border, #dee2e6); border-radius: 0.25rem 0 0 0.25rem; padding: 0 0.5rem; background-color: var(--card-bg, #ffffff);">
                                         <!-- <label class="me-2 mb-0">Фильтр заявок по:</label> -->
@@ -147,10 +147,13 @@
                                         <i class="bi bi-arrow-counterclockwise me-1"></i>Сброс
                                     </button>
                                 </div>
-                                <button type="button" class="btn btn-primary" id="new-request-button"
-                                        data-bs-toggle="modal" data-bs-target="#newRequestModal">
-                                    <i class="bi bi-plus-circle me-1"></i>Новая заявка
-                                </button>
+
+                                <div class="d-flex justify-content-end" style="flex: 1;">
+                                    <button type="button" class="btn btn-primary" id="new-request-button"
+                                            data-bs-toggle="modal" data-bs-target="#newRequestModal">
+                                        <i class="bi bi-plus-circle me-1"></i>Новая заявка
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -159,14 +162,18 @@
                             <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2" id="btn-open-calendar">
                                 <i class="bi bi-calendar me-1"></i>Календарь
                             </button>
+
                             <div id="status-buttons" class="d-flex flex-wrap gap-2  hide-me">
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->
                             </div>
+
                             <!-- Контейнер для выбора бригады -->
-                            <div id="brigade-leader-filter" class="ms-3 d-none">
+                            <div id="brigade-leader-filter" class="ms-3 d-none_">
                                 <select id="brigade-leader-select" class="form-select form-select-sm" style="width: 250px; margin-top: -12px;">
                                     <option value="" selected disabled>Выберите бригаду...</option>
-                                    <!-- Список бригадиров будет добавлен через JavaScript -->
+                                    @foreach ($brigadesCurrentDay as $brigade)
+                                        <option value="{{ $brigade->employee_id }}" data-brigade-id="{{ $brigade->brigade_id }}">{{ $brigade->leader_name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -204,8 +211,7 @@
                                     <th style="width: 15rem;">Адрес/Телефон</th>
                                     <th>Оператор/Создана</th>
                                     <th>Бригада</th>
-                                    <th style="width: 16rem;">Действия с заявкой</th>
-                                    <th style="width: 12rem;">Действия</th>
+                                    <th style="width: 16rem;" colspan="2">Действия с заявкой</th>
                                 </tr>
                                 </thead>
                                 <tbody>

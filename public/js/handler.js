@@ -1448,12 +1448,12 @@ function setupBrigadeAttachment() {
                             const checkedCheckbox = document.querySelector('input[type="checkbox"].request-checkbox:checked');
 
                             if (!select.value) {
-                                console.log('Бригадир не выбран!');
+                                showAlert('Бригада не выбрана!');
                                 return;
                             }
 
                             if (!checkedCheckbox) {
-                                console.log('Не выбрана ни одна заявка!');
+                                showAlert('Не выбрана ни одна заявка!');
                                 return;
                             }
 
