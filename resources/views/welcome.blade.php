@@ -131,14 +131,14 @@
                                 <div class="d-flex" style="max-width: 100%;">
                                     <div id="request-filters" class="d-flex align-items-center"
                                          style="height: 2rem; border: 1px solid var(--card-border, #dee2e6); border-radius: 0.25rem 0 0 0.25rem; padding: 0 0.5rem; background-color: var(--card-bg, #ffffff);">
-                                        <label class="me-2 mb-0">Фильтр заявок по:</label>
-                                        <div class="form-check form-check-inline">
+                                        <!-- <label class="me-2 mb-0">Фильтр заявок по:</label> -->
+                                        <div class="form-check form-check-inline hide-me">
                                             <input class="form-check-input" type="checkbox" id="filter-statuses">
                                             <label class="form-check-label" for="filter-statuses">статусам</label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" id="filter-teams">
-                                            <label class="form-check-label" for="filter-teams">бригадам</label>
+                                            <label class="form-check-label" for="filter-teams">Выбрать бригаду</label>
                                         </div>
                                     </div>
                                     <button type="button" class="btn btn-outline-secondary btn-sm"
@@ -159,13 +159,13 @@
                             <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2" id="btn-open-calendar">
                                 <i class="bi bi-calendar me-1"></i>Календарь
                             </button>
-                            <div id="status-buttons" class="d-flex flex-wrap gap-2">
+                            <div id="status-buttons" class="d-flex flex-wrap gap-2  hide-me">
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->
                             </div>
-                            <!-- Контейнер для выбора бригадира -->
+                            <!-- Контейнер для выбора бригады -->
                             <div id="brigade-leader-filter" class="ms-3 d-none">
                                 <select id="brigade-leader-select" class="form-select form-select-sm" style="width: 250px; margin-top: -12px;">
-                                    <option value="" selected disabled>Выберите бригадира...</option>
+                                    <option value="" selected disabled>Выберите бригаду...</option>
                                     <!-- Список бригадиров будет добавлен через JavaScript -->
                                 </select>
                             </div>

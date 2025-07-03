@@ -909,7 +909,7 @@ function initializePage() {
         teamCheckbox.addEventListener('change', async function () {
             if (this.checked) {
                 try {
-                    console.log('Запрос списка бригадиров...');
+                    console.log('Запрос списка бригад...');
                     const response = await fetch('/api/brigade-leaders', {
                         headers: {
                             'Accept': 'application/json',
@@ -930,13 +930,13 @@ function initializePage() {
                             brigadeLeaders = data.$leaders;
 
                             // Очищаем и заполняем выпадающий список
-                            brigadeLeaderSelect.innerHTML = '<option value="" selected disabled>Выберите бригадира...</option>';
+                            brigadeLeaderSelect.innerHTML = '<option value="" selected disabled>Выберите бригаду...</option>';
 
                             // Добавляем бригадиров в выпадающий список
                             brigadeLeaders.forEach(leader => {
                                 const option = document.createElement('option');
                                 option.value = leader.id;
-                                option.textContent = leader.name;
+                                option.textContent = '[Номер бригады:' + leader.brigade_id + '] ' + leader.name;
                                 option.setAttribute('data-brigade-id', leader.brigade_id),
                                 brigadeLeaderSelect.appendChild(option);
                             });
