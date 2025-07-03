@@ -16,7 +16,7 @@ function initBrigadesTab() {
 async function loadBrigades() {
     console.log('Loading brigades...');
     const brigadesList = document.getElementById('brigadesList');
-    
+
     if (!brigadesList) {
         console.error('Brigades list container not found');
         return;
@@ -31,21 +31,21 @@ async function loadBrigades() {
             <p class="mt-2">Загрузка списка бригад...</p>
             <div id="debugInfo" class="text-start small text-muted mt-3"></div>
         </div>`;
-        
+
     const debugEl = document.getElementById('debugInfo');
     const addDebug = (msg) => {
         if (debugEl) {
             debugEl.innerHTML += `<div>${new Date().toISOString()}: ${msg}</div>`;
         }
-        console.debug(msg);
+        // console.debug(msg);
     };
-    
+
     addDebug('Начало загрузки списка бригад...');
-    
+
     try {
         const url = '/api/brigades';
         addDebug(`Отправка запроса на ${url}...`);
-        
+
         const response = await fetch(url, {
             headers: {
                 'Accept': 'application/json',
@@ -54,12 +54,13 @@ async function loadBrigades() {
             },
             credentials: 'same-origin'
         });
-        
+
         addDebug(`Получен ответ: ${response.status} ${response.statusText}`);
-        
+
         const responseText = await response.text();
-        addDebug(`Получены данные: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`);
-        
+        addDebug(`Получены данные: ${responseText}`);
+        // addDebug(`Получены данные: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`);
+
         let data;
         try {
             data = JSON.parse(responseText);
@@ -69,16 +70,16 @@ async function loadBrigades() {
             addDebug(`Ошибка парсинга JSON: ${e.message}`);
             throw new Error('Неверный формат ответа от сервера');
         }
-        
+
         if (data.success === false) {
             const errorMsg = data.message || 'Неизвестная ошибка';
             addDebug(`Ошибка API: ${errorMsg}`);
             throw new Error(errorMsg);
         }
-        
+
         const brigades = Array.isArray(data.data) ? data.data : [];
         addDebug(`Получено бригад: ${brigades.length}`);
-        
+
         if (brigades.length === 0) {
             brigadesList.innerHTML = `
                 <div class="alert alert-info">
@@ -87,17 +88,17 @@ async function loadBrigades() {
                 </div>`;
             return;
         }
-        
+
         // Рендерим список бригад
         let html = '<div class="list-group">';
-        
+
         brigades.forEach(brigade => {
             const leaderName = [
                 brigade.leader_last_name,
                 brigade.leader_first_name,
                 brigade.leader_middle_name
             ].filter(Boolean).join(' ') || 'Не назначен';
-            
+
             html += `
                 <div class="list-group-item">
                     <div class="d-flex justify-content-between align-items-center">
@@ -109,21 +110,21 @@ async function loadBrigades() {
                                 ${brigade.leader_position ? `<span class="text-muted ms-2">(${brigade.leader_position})</span>` : ''}
                             </p>
                         </div>
-                        <button class="btn btn-sm btn-outline-primary" 
+                        <button class="btn btn-sm btn-outline-primary"
                                 onclick="showBrigadeDetails(${brigade.id})">
                             Подробнее
                         </button>
                     </div>
                 </div>`;
         });
-        
+
         html += '</div>';
         brigadesList.innerHTML = html;
-        
+
     } catch (error) {
         console.error('Ошибка при загрузке бригад:', error);
         const errorMessage = error.message || 'Неизвестная ошибка при загрузке списка бригад';
-        
+
         brigadesList.innerHTML = `
             <div class="alert alert-danger">
                 <p class="mb-2">${errorMessage}</p>
@@ -138,10 +139,10 @@ async function loadBrigades() {
 // Функция для отображения модального окна с детальной информацией о бригаде
 async function showBrigadeDetails(brigadeId) {
     console.log('Showing details for brigade ID:', brigadeId);
-    
+
     const modalElement = document.getElementById('brigadeDetailsModal');
     const modal = new bootstrap.Modal(modalElement);
-    
+
     // Показываем индикатор загрузки
     modalElement.querySelector('.modal-body').innerHTML = `
         <div class="text-center my-4">
@@ -150,9 +151,9 @@ async function showBrigadeDetails(brigadeId) {
             </div>
             <p class="mt-2">Загрузка данных о бригаде...</p>
         </div>`;
-    
+
     modal.show();
-    
+
     try {
         // Получаем данные о бригаде
         const response = await fetch(`/brigade/${brigadeId}`, {
@@ -164,20 +165,20 @@ async function showBrigadeDetails(brigadeId) {
             },
             credentials: 'same-origin'
         });
-        
+
         if (!response.ok) {
             throw new Error(`Ошибка HTTP: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log('Brigade details:', data);
-        
+
         if (!data.success) {
             throw new Error(data.message || 'Не удалось загрузить данные о бригаде');
         }
-        
+
         const { brigade, leader, members } = data;
-        
+
         // Формируем HTML для отображения
         let html = `
             <div class="mb-4">
@@ -196,7 +197,7 @@ async function showBrigadeDetails(brigadeId) {
                         </div>
                     </div>
                 ` : '<p class="text-muted">Бригадир не назначен</p>'}
-                
+
                 <div class="card">
                     <div class="card-header bg-light-2">
                         <h5 class="mb-0">Члены бригады</h5>
@@ -216,10 +217,10 @@ async function showBrigadeDetails(brigadeId) {
                     </div>
                 </div>
             </div>`;
-        
+
         // Вставляем сформированный HTML в модальное окно
         modalElement.querySelector('.modal-body').innerHTML = html;
-        
+
     } catch (error) {
         console.error('Ошибка при загрузке данных о бригаде:', error);
         modalElement.querySelector('.modal-body').innerHTML = `

@@ -180,7 +180,7 @@
                         <div id="requests-table-container" class="table-responsive mt-4 t-custom">
                             <!-- Легенда статусов -->
                             @if (!empty($request_statuses))
-                                <div class="p-4">
+                                <div class="p-4 hide-me">
                                     <div class="d-flex flex-column gap-2">
                                         @foreach ($request_statuses as $status)
                                             <div class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
@@ -194,23 +194,21 @@
                                 </div>
                             @endif
 
-                                <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
-                                    <thead class="bg-dark">
-                                    <tr>
-                                        <th style="width: 1rem;"></th>
-                                        <th style="width: 1rem;"></th>
-                                        <th style="width: 10rem;">Дата</th>
-                                        <th>Комментарий</th>
-                                        <th style="width: 15rem;">Адрес/Телефон</th>
-                                        <th>Оператор/Создана</th>
-                                        <th>Бригада</th>
-                                        <th style="width: 12rem;">Действия</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <style>
+                            <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
+                                <thead class="bg-dark">
+                                <tr>
+                                    <th style="width: 1rem;"></th>
+                                    <th style="width: 1rem;"></th>
+                                    <th style="width: 10rem;">Дата</th>
+                                    <th>Комментарий</th>
+                                    <th style="width: 15rem;">Адрес/Телефон</th>
+                                    <th>Оператор/Создана</th>
+                                    <th>Бригада</th>
+                                    <th style="width: 12rem;">Действия</th>
+                                </tr>
+                                </thead>
+                                <tbody>
 
-                                </style>
 
                                 @foreach ($requests as $request)
                                     @php
@@ -374,7 +372,7 @@
                                 <i class="bi bi-plus-circle"></i> Создать бригаду
                             </button>
                         </div>-->
-                        
+
                         <div class="card hide-me">
                             <div class="card-body">
                                 <div id="brigadesList" class="list-group">
@@ -387,7 +385,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
 
                         <form id="brigadeForm" action="{{ route('brigades.store') }}" method="POST">
                             @csrf
@@ -405,7 +403,7 @@
                                         <option value="{{ $emp->id }}">{{ $emp->fio }}</option>
                                     @endforeach
                                 </select>
-                            </div>  
+                            </div>
 
                             <div class="d-flex gap-3 mb-3" style="height: 450px;">
                                 <div class="d-flex flex-column" style="flex: 1.2;">
@@ -436,7 +434,7 @@
                             </div>
                         </form>
 
-                    </div>    
+                    </div>
 
                     <div class="tab-pane fade" id="addresses" role="tabpanel">
                         <h4>Адреса</h4>
@@ -518,7 +516,7 @@
                                         loadingOption.textContent = 'Загрузка городов...';
                                         selectElement.innerHTML = '';
                                         selectElement.appendChild(loadingOption);
-                                        
+
                                         // Загружаем города с сервера
                                         return fetch('/api/cities')
                                             .then(response => {
@@ -530,13 +528,13 @@
                                             .then(cities => {
                                                 // Очищаем список
                                                 selectElement.innerHTML = '';
-                                                
+
                                                 // Добавляем опцию по умолчанию
                                                 const defaultOption = document.createElement('option');
                                                 defaultOption.value = '';
                                                 defaultOption.textContent = 'Выберите город';
                                                 selectElement.appendChild(defaultOption);
-                                                
+
                                                 // Добавляем города в список
                                                 if (Array.isArray(cities) && cities.length > 0) {
                                                     cities.forEach(city => {
@@ -565,7 +563,7 @@
                                             loadCities(citySelect);
                                         }
                                     });
-                                    
+
                                     const testData = [
                                             {street: "Ленина", houses: "12А", district: "Центральный", city_id: "1"},
                                             {street: "Пушкина", houses: "5", district: "Северный", city_id: "2"},
@@ -636,16 +634,16 @@
                                     // Обработчик отправки формы добавления адреса
                                     document.getElementById('addressForm').addEventListener('submit', async function(e) {
                                         e.preventDefault();
-                                        
+
                                         const form = e.target;
                                         const submitBtn = form.querySelector('button[type="submit"]');
                                         const originalBtnText = submitBtn.innerHTML;
-                                        
+
                                         try {
                                             // Показываем индикатор загрузки
                                             submitBtn.disabled = true;
                                             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
-                                            
+
                                             const formData = new FormData(form);
                                             const response = await fetch(form.action, {
                                                 method: 'POST',
@@ -655,9 +653,9 @@
                                                 },
                                                 body: formData
                                             });
-                                            
+
                                             const result = await response.json();
-                                            
+
                                             if (response.ok) {
                                                 // Очищаем форму при успешном сохранении
                                                 form.reset();
@@ -1349,7 +1347,7 @@ while(mockData.length < 50) {
 document.getElementById('fillMockDataBtn').addEventListener('click', function() {
   const randomIndex = Math.floor(Math.random() * mockData.length);
   const data = mockData[randomIndex];
-  
+
   document.getElementById('clientName').value = data.name;
   document.getElementById('clientPhone').value = data.phone;
   document.getElementById('comment').value = data.comment;
@@ -2008,8 +2006,8 @@ function showAlert(message, type = 'success') {
 <!-- Brigades Script -->
 <script>
     // Передаем данные заявок в JavaScript
-    window.requestsData = @json($requests);
-    console.log('Данные заявок переданы в JavaScript:', window.requestsData);
+    {{--window.requestsData = @json($requests);--}}
+    // console.log('Данные заявок переданы в JavaScript:', window.requestsData);
 </script>
 <script src="{{ asset('js/brigades.js') }}"></script>
 <script src="{{ asset('js/calendar.js') }}"></script>

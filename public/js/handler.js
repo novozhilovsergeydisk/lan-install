@@ -213,9 +213,8 @@ function applyFilters() {
 
                                     // Экранируем кавычки для атрибута title
                                     const escapedComment = String(commentText).replace(/"/g, '&quot;');
-                                    const displayText = commentText.length > 50
-                                        ? commentText.substring(0, 50) + '...'
-                                        : commentText;
+                                    const displayText = commentText;
+                                    // const displayText = commentText.length > 50 ? commentText.substring(0, 50) + '...' : commentText;
 
                                     return `
                                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="${escapedComment}">
