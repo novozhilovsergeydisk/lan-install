@@ -922,12 +922,12 @@ function initializePage() {
                     }
 
                     const data = await response.json();
-                    console.log('Ответ сервера:', data);
+
+                    console.log('Ответ сервера:', data.$leaders);
 
                     if (data.success) {
-                        if (data.leaders && data.leaders.length > 0) {
-                            brigadeLeaders = data.leaders;
-                            console.log('Получен список бригадиров:', brigadeLeaders);
+                        if (data.$leaders && data.$leaders.length > 0) {
+                            brigadeLeaders = data.$leaders;
 
                             // Очищаем и заполняем выпадающий список
                             brigadeLeaderSelect.innerHTML = '<option value="" selected disabled>Выберите бригадира...</option>';
@@ -937,6 +937,7 @@ function initializePage() {
                                 const option = document.createElement('option');
                                 option.value = leader.id;
                                 option.textContent = leader.name;
+                                option.setAttribute('data-brigade-id', leader.brigade_id),
                                 brigadeLeaderSelect.appendChild(option);
                             });
 
@@ -1070,7 +1071,7 @@ function handlerCreateBrigade() {
                 }
 
                 const formData = new FormData(form);
-                
+
                 // Собираем все данные формы в объект
                 const formValues = {};
                 for (let [key, value] of formData.entries()) {
@@ -1121,7 +1122,159 @@ function handlerCreateBrigade() {
 
                 showAlert('Данные формы успешно обработаны!', 'success');
 
-                // Функция для отправки данных на сервер
+                // Функция для загрузки списка бригад
+window.loadBrigadesList = async () => {
+    try {
+        const brigadesList = document.getElementById('brigadesList');
+        if (!brigadesList) return;
+
+        // Показываем индикатор загрузки
+        brigadesList.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <p class="mt-2 mb-0">Загрузка списка бригад...</p>
+            </div>`;
+
+        const response = await fetch('/api/brigades');
+        if (!response.ok) {
+            throw new Error('Ошибка при загрузке списка бригад');
+        }
+
+        const brigades = await response.json();
+
+        if (brigades.length === 0) {
+            brigadesList.innerHTML = `
+                <div class="text-center py-4">
+                    <p class="text-muted">Список бригад пуст</p>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createBrigadeModal">
+                        <i class="bi bi-plus-circle"></i> Создать бригаду
+                    </button>
+                </div>`;
+            return;
+        }
+
+        // Формируем HTML для списка бригад
+        let html = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Список бригад</h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createBrigadeModal">
+                    <i class="bi bi-plus-circle"></i> Новая бригада
+                </button>
+            </div>`;
+
+        brigades.forEach(brigade => {
+            html += `
+            <div class="list-group-item list-group-item-action" data-brigade-id="${brigade.id}">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${brigade.name}</h6>
+                    <small>ID: ${brigade.id}</small>
+                </div>
+                <p class="mb-1">Бригадир: ${brigade.leader_name || 'Не назначен'}</p>
+                <small>Участников: ${brigade.members_count || 0}</small>
+            </div>`;
+        });
+
+        brigadesList.innerHTML = html;
+    } catch (error) {
+        console.error('Ошибка при загрузке списка бригад:', error);
+        const brigadesList = document.getElementById('brigadesList');
+        if (brigadesList) {
+            brigadesList.innerHTML = `
+                <div class="alert alert-danger">
+                    Ошибка при загрузке списка бригад. <button class="btn btn-link p-0" onclick="loadBrigadesList()">Повторить</button>
+                </div>`;
+        }
+    }
+};
+
+// Вспомогательная функция для создания элемента бригады
+function createBrigadeElement(brigade) {
+    const div = document.createElement('div');
+    div.className = 'list-group-item list-group-item-action';
+    div.dataset.brigadeId = brigade.id;
+    div.innerHTML = `
+        <div class="d-flex w-100 justify-content-between">
+            <h6 class="mb-1">${brigade.name}</h6>
+            <small>ID: ${brigade.id}</small>
+        </div>
+        <p class="mb-1">Бригадир: ${brigade.leader_name || 'Не назначен'}</p>
+        <small>Участников: ${brigade.members_count || 0}</small>
+    `;
+    return div;
+}
+
+// Функция для обновления списка после создания новой бригады
+window.updateBrigadesList = (newBrigade) => {
+    try {
+        const brigadesList = document.getElementById('brigadesList');
+        if (!brigadesList) {
+            console.log('Элемент с id="brigadesList" не найден');
+            return;
+        }
+
+        // Создаем новый элемент списка
+        const newItem = createBrigadeElement(newBrigade);
+
+        // Получаем все существующие элементы списка
+        const existingItems = brigadesList.querySelectorAll('.list-group-item');
+
+        // Если есть существующие элементы, вставляем новый перед первым
+        if (existingItems.length > 0) {
+            existingItems[0].before(newItem);
+        } else {
+            // Иначе создаем новый список
+            const listGroup = document.createElement('div');
+            listGroup.className = 'list-group';
+            listGroup.appendChild(newItem);
+
+            // Добавляем заголовок, если его нет
+            if (!brigadesList.querySelector('h5')) {
+                const header = document.createElement('div');
+                header.className = 'd-flex justify-content-between align-items-center mb-3';
+                header.innerHTML = `
+                    <h5 class="mb-0">Список бригад</h5>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createBrigadeModal">
+                        <i class="bi bi-plus-circle"></i> Новая бригада
+                    </button>
+                `;
+                brigadesList.prepend(header);
+            }
+
+            // Добавляем список, если его нет
+            if (!brigadesList.querySelector('.list-group')) {
+                brigadesList.appendChild(listGroup);
+            } else {
+                brigadesList.querySelector('.list-group').prepend(newItem);
+            }
+        }
+
+        // Удаляем сообщения о загрузке и пустом списке
+        const loadingMessages = brigadesList.querySelectorAll('.text-center.py-4, .text-muted');
+        loadingMessages.forEach(msg => msg.remove());
+
+    } catch (error) {
+        console.error('Ошибка при обновлении списка бригад:', error);
+        // В случае ошибки просто перезагружаем список полностью
+        if (typeof loadBrigadesList === 'function') {
+            loadBrigadesList();
+        }
+    }
+};
+
+// Загружаем список бригад при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    // Загружаем список бригад при открытии вкладки
+    const teamsTab = document.querySelector('a[data-bs-target="#teams"]');
+    if (teamsTab) {
+        teamsTab.addEventListener('shown.bs.tab', () => {
+            loadBrigadesList();
+        });
+    }
+});
+
+// Функция для отправки данных на сервер
                 const createBrigade = async () => {
                     try {
                         console.log('Отправка запроса на создание бригады...');
@@ -1130,7 +1283,7 @@ function handlerCreateBrigade() {
                             members: formJson.members.map(m => m.employee_id)
                         };
                         console.log('Данные для отправки:', requestData);
-                        
+
                         const response = await fetch('/brigades', {
                             method: 'POST',
                             headers: {
@@ -1145,7 +1298,7 @@ function handlerCreateBrigade() {
                         // Проверяем Content-Type ответа
                         const contentType = response.headers.get('content-type');
                         let data;
-                        
+
                         if (contentType && contentType.includes('application/json')) {
                             data = await response.json();
                         } else {
@@ -1161,46 +1314,39 @@ function handlerCreateBrigade() {
                         console.log('Ответ сервера:', data);
                         if (data.success) {
                             showAlert('Бригада успешно создана!', 'success');
-                            
+
                             // Закрываем модальное окно, если оно открыто
                             const modal = bootstrap.Modal.getInstance(document.getElementById('createBrigadeModal'));
                             if (modal) {
                                 modal.hide();
                             }
-                            
+
                             // Очищаем форму
                             const form = document.getElementById('brigadeForm');
                             if (form) {
                                 form.reset();
                             }
-                            
-                            // Обновляем список бригад (если есть такой элемент)
-                            const brigadesContainer = document.querySelector('[data-brigades-container]');
-                            if (brigadesContainer) {
-                                // Здесь можно добавить код для обновления списка бригад
-                                // Например, через AJAX-запрос за новым списком
-                                // или просто добавить новую бригаду в список
-                                console.log('Здесь будет обновление списка бригад');
+
+                            // Обновляем список бригад
+                            if (typeof window.updateBrigadesList === 'function') {
+                                window.updateBrigadesList(data.brigade);
+                            } else {
+                                // Если функция обновления не определена, перезагружаем страницу
+                                console.warn('Функция updateBrigadesList не найдена, выполняется перезагрузка страницы');
+                                setTimeout(() => window.location.reload(), 1000);
                             }
-                            
-                            // Если есть таблица с бригадами, можно обновить её
-                            const brigadesTable = document.querySelector('table[data-brigades-table]');
-                            if (brigadesTable) {
-                                // Здесь можно добавить строку с новой бригадой в таблицу
-                                console.log('Здесь будет обновление таблицы бригад');
-                            }
-                            
+
                         } else {
                             throw new Error(data.message || 'Неизвестная ошибка сервера');
                         }
-                        
+
                     } catch (error) {
                         console.error('Ошибка при создании бригады:', error);
                         console.error('Полный стек ошибки:', error.stack);
                         showAlert(`Ошибка: ${error.message}`, 'danger');
                     }
                 };
-                
+
                 // Вызываем функцию создания бригады
                 createBrigade();
 
@@ -1251,24 +1397,25 @@ function setupBrigadeAttachment() {
                             const leaderId = select.value;
                             const requestId = checkedCheckbox.value;
                             const brigadeName = select.options[select.selectedIndex].text;
+                            const selectedOption = select.options[select.selectedIndex];
+                            const brigade_id = selectedOption.getAttribute('data-brigade-id');
 
                             console.log(`ID выбранной заявки: ${requestId}`);
                             console.log(`ID выбранного бригадира: ${leaderId}`);
+                            console.log(`ID бригады: ${brigade_id}`);
+                            console.log(`Название бригады: ${brigadeName}`);
 
                             try {
                                 // console.log('1. Получаем данные о бригаде...');
-                                const brigadeResponse = await fetch(`/api/requests/brigade/by-leader/${leaderId}`);
+                                /*const brigadeResponse = await fetch(`/api/requests/brigade/by-leader/${leaderId}`);
                                 const brigadeData = await brigadeResponse.json();
-
-                                // console.log('Ответ от API бригады:', brigadeData);
-
                                 if (!brigadeResponse.ok) {
                                     throw new Error(brigadeData.message || `Ошибка ${brigadeResponse.status} при получении данных о бригаде`);
                                 }
 
                                 if (!brigadeData.data || !brigadeData.data.brigade_id) {
                                     throw new Error('Не удалось получить ID бригады из ответа сервера');
-                                }
+                                }*/
 
                                 // console.log('2. Отправляем запрос на обновление заявки...');
                                 const updateResponse = await fetch('/api/requests/update-brigade', {
@@ -1279,7 +1426,7 @@ function setupBrigadeAttachment() {
                                         'Accept': 'application/json'
                                     },
                                     body: JSON.stringify({
-                                        brigade_id: brigadeData.data.brigade_id,
+                                        brigade_id: brigade_id,
                                         request_id: requestId
                                     })
                                 });

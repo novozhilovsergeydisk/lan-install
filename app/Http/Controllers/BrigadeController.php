@@ -113,12 +113,33 @@ class BrigadeController extends Controller
                 DB::insert("INSERT INTO brigade_members (brigade_id, employee_id) VALUES " . implode(',', $values));
             }
 
+            // Получаем данные о созданной бригаде
+            $brigade = DB::selectOne(
+                "SELECT b.*, 
+                        COALESCE(e.fio, 'Не назначен') as leader_name, 
+                        (SELECT COUNT(*) FROM brigade_members WHERE brigade_id = ?) as members_count 
+                 FROM brigades b 
+                 LEFT JOIN employees e ON b.leader_id = e.id 
+                 WHERE b.id = ?", 
+                [$brigadeId, $brigadeId]
+            );
+            
+            // Убедимся, что у нас есть объект бригады
+            if (!$brigade) {
+                $brigade = (object)[
+                    'id' => $brigadeId,
+                    'name' => $validated['name'],
+                    'leader_name' => 'Ошибка загрузки данных',
+                    'members_count' => count($members)
+                ];
+            }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Бригада успешно создана',
-                'brigade_id' => $brigadeId
+                'brigade' => $brigade
             ]);
 
         } catch (\Exception $e) {

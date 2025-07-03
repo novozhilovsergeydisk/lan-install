@@ -9,19 +9,23 @@ class ControllerRequestModification extends Controller
 {
     /**
      * Получить ID бригады по ID бригадира за текущую дату
-     * 
+     *
      * @param int $leaderId ID бригадира
      * @return \Illuminate\Http\JsonResponse
      */
     public function getBrigadeByLeader($leaderId)
     {
         try {
-            $brigade = DB::table('brigades')
-                ->select('id as brigade_id', 'name as brigade_name', 'formation_date')
-                ->where('leader_id', $leaderId)
-                ->whereDate('formation_date', now()->toDateString())
-                ->orderBy('formation_date', 'desc')
-                ->first();
+//            $brigade = DB::table('brigades')
+//                ->select('id as brigade_id', 'name as brigade_name', 'formation_date')
+//                ->where('leader_id', $leaderId)
+//                ->whereDate('formation_date', now()->toDateString())
+//                ->orderBy('formation_date', 'desc')
+//                ->first();
+
+            $sql = "SELECT id AS brigade_id, name AS brigade_name, formation_date FROM brigades WHERE leader_id = ? AND DATE(formation_date) = CURRENT_DATE ORDER BY formation_date DESC LIMIT 1";
+
+            $brigade = DB::select($sql, [$leaderId])[0] ?? null;
 
             if (!$brigade) {
                 return response()->json([
@@ -32,7 +36,8 @@ class ControllerRequestModification extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $brigade
+                'data' => $brigade,
+                '$sql' => $sql
             ]);
 
         } catch (\Exception $e) {
@@ -46,20 +51,20 @@ class ControllerRequestModification extends Controller
 
     /**
      * Обновить бригаду у заявки
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function updateRequestBrigade(Request $request)
     {
         \Log::info('Получен запрос на обновление бригады заявки', $request->all());
-        
+
         try {
             $validated = $request->validate([
                 'brigade_id' => 'required|integer|exists:brigades,id',
                 'request_id' => 'required|integer|exists:requests,id'
             ]);
-            
+
             \Log::info('Валидация пройдена', $validated);
 
             $sql = "UPDATE requests SET brigade_id = ? WHERE id = ?";
@@ -97,7 +102,7 @@ class ControllerRequestModification extends Controller
                 'trace' => $e->getTraceAsString(),
                 'request' => $request->all()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при обновлении заявки: ' . $e->getMessage(),

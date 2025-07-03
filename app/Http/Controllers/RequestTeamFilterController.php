@@ -51,17 +51,17 @@ class RequestTeamFilterController extends Controller
      */
     public function getBrigadeLeaders()
     {
-        $leaders = DB::table('brigades as b')
-            ->join('employees as e', 'b.leader_id', '=', 'e.id')
-            ->whereDate('b.formation_date', '>=', now()->toDateString())
-            ->select('e.id', 'e.fio as name')
-            ->distinct()
-            ->get();
+        $today = now()->toDateString();
+
+        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE DATE(b.formation_date) >= '{$today}'";
+
+        $leaders = DB::select($sql);
 
         return response()->json([
             'success' => true,
-            'leaders' => $leaders,
-            'message' => $leaders->isEmpty() ? 'На сегодня не создано ни одной бригады!' : ''
+            '$today' => $today,
+            '$sql' => $sql,
+            '$leaders' => $leaders
         ]);
     }
 }
