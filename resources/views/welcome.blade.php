@@ -128,7 +128,7 @@
                         <!-- Filter Section -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex d-none" style="max-width: 100%;">
+                                <div class="d-flex d-none" style="max-width: 100%; display: none;">
                                     <div id="request-filters" class="d-flex align-items-center"
                                          style="height: 2rem; border: 1px solid var(--card-border, #dee2e6); border-radius: 0.25rem 0 0 0.25rem; padding: 0 0.5rem; background-color: var(--card-bg, #ffffff);">
                                         <!-- <label class="me-2 mb-0">Фильтр заявок по:</label> -->
@@ -172,7 +172,7 @@
                                 <select id="brigade-leader-select" class="form-select form-select-sm" style="width: 250px; margin-top: -12px;">
                                     <option value="" selected disabled>Выберите бригаду...</option>
                                     @foreach ($brigadesCurrentDay as $brigade)
-                                        <option value="{{ $brigade->employee_id }}" data-brigade-id="{{ $brigade->brigade_id }}">{{ $brigade->leader_name }}</option>
+                                        <option value="{{ $brigade->employee_id }}" data-brigade-id="{{ $brigade->brigade_id }}">[Номер бригады: {{ $brigade->brigade_id }} ] [Бригадир: {{ $brigade->leader_name }}]</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -207,15 +207,14 @@
                                     <th style="width: 1rem;"></th>
                                     <th style="width: 1rem;"></th>
                                     <th style="width: 10rem;">Дата</th>
-                                    <th>Комментарий</th>
                                     <th style="width: 15rem;">Адрес/Телефон</th>
+                                    <th>Комментарий</th>
                                     <th>Оператор/Создана</th>
                                     <th>Бригада</th>
                                     <th style="width: 16rem;" colspan="2">Действия с заявкой</th>
                                 </tr>
                                 </thead>
                                 <tbody>
-
 
                                 @foreach ($requests as $request)
                                     @php
@@ -234,6 +233,24 @@
                                         <td>
                                             <div>{{ $formattedDate }}</div>
                                             <div class="text-dark" style="font-size: 0.8rem;">{{ $requestNumber }}</div>
+                                        </td>
+
+                                        <!-- Клиент -->
+                                        <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                            @if(!empty($request->street))
+                                                <small class="text-dark text-truncate d-block"
+                                                       data-bs-toggle="tooltip"
+                                                       title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
+                                                    ул. {{ $request->street }}, д. {{ $request->houses }}
+                                                </small>
+                                            @else
+                                                <small class="text-dark text-truncate d-block">Адрес не
+                                                    указан</small>
+                                            @endif
+                                            <small
+                                                class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
+                                                {{ $request->client_phone ?? 'Нет телефона' }}
+                                            </small>
                                         </td>
 
                                         <!-- Комментарий -->
@@ -269,24 +286,6 @@
                                                     </button>
                                                 </div>
                                             @endif
-                                        </td>
-
-                                        <!-- Клиент -->
-                                        <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-                                            @if(!empty($request->street))
-                                                <small class="text-dark text-truncate d-block"
-                                                       data-bs-toggle="tooltip"
-                                                       title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
-                                                    ул. {{ $request->street }}, д. {{ $request->houses }}
-                                                </small>
-                                            @else
-                                                <small class="text-dark text-truncate d-block">Адрес не
-                                                    указан</small>
-                                            @endif
-                                            <small
-                                                class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
-                                                {{ $request->client_phone ?? 'Нет телефона' }}
-                                            </small>
                                         </td>
 
                                         <!-- Дата выполнения -->

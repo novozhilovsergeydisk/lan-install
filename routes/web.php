@@ -120,3 +120,8 @@ Route::prefix('api/geo')->middleware('auth')->group(function () {
     Route::post('/cities', [GeoController::class, 'addCity']);
     Route::post('/regions', [GeoController::class, 'addRegion']);
 });
+
+// API для получения списка бригад
+Route::get('/api/brigades/current-day', [BrigadeController::class, 'getCurrentDayBrigades'])
+    ->name('api.brigades.current-day')
+    ->middleware('auth');

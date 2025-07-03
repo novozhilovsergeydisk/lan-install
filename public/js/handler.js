@@ -191,6 +191,16 @@ function applyFilters() {
                                 <div>${formattedDate}</div>
                                 <div class="text-dark" style="font-size: 0.8rem;">${requestNumber}</div>
                             </td>
+
+                            <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
+                                    ${request.address || address}
+                                </small>
+                                <small class="text-success_ fw-bold_ text-truncate d-block">
+                                    ${request.phone || request.client_phone || ''}
+                                </small>
+                            </td>
+                            
                             <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
                                 ${(() => {
                                     if (!request.comments) return '---';
@@ -242,23 +252,32 @@ function applyFilters() {
                                     </button>
                                 </div>
                             </td>
-                            <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-                                <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
-                                    ${request.address || address}
-                                </small>
-                                <small class="text-success_ fw-bold_ text-truncate d-block">
-                                    ${request.phone || request.client_phone || ''}
-                                </small>
-                            </td>
+
                             <td>
                                 <span class="brigade-lead-text">${request.operator_name || 'Не указан'}</span><br>
                                 <span class="brigade-lead-text">${formattedDate}</span>
                             </td>
+
                             <td>
                                 <div style="font-size: 0.75rem; line-height: 1.2;">
                                     ${brigadeMembers}
                                 </div>
                             </td>
+
+                            <td class="text-nowrap">
+                                <div class="d-flex flex-column gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="${request.id}">
+                                        <i class="bi bi-people me-1"></i>Назначить бригаду
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-success transfer-request-btn p-1" style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;" data-request-id="${request.id}">
+                                        <i class="bi bi-arrow-left-right me-1"></i>Перенести заявку
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger cancel-request-btn p-1" data-request-id="${request.id}">
+                                        <i class="bi bi-x-circle me-1"></i>Отменить заявку
+                                    </button>
+                                </div>
+                            </td>
+
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
                                     ${request.status_name !== 'выполнена' ? `
@@ -1050,9 +1069,56 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM полностью загружен');
     initializePage();
     
-    // Инициализация обработчиков для кнопок заявок
+    // Инициализация кнопок заявок
     initRequestButtons();
-    
+
+    // Добавляем обработчик для вкладки заявок
+    const requestsTab = document.getElementById('requests-tab');
+    if (requestsTab) {
+        requestsTab.addEventListener('click', async function() {
+            console.log('Вкладка "Заявки" была нажата');
+            
+            try {
+                // Запрашиваем актуальный список бригад с сервера
+                const response = await fetch('/api/brigades/current-day');
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || 'Ошибка при загрузке списка бригад');
+                }
+                
+                // Обновляем выпадающий список
+                const select = document.getElementById('brigade-leader-select');
+                if (select) {
+                    // Сохраняем текущее выбранное значение
+                    const selectedValue = select.value;
+                    
+                    // Очищаем список, оставляя только первый элемент
+                    select.innerHTML = '<option value="" selected disabled>Выберите бригаду...</option>';
+                    
+                    // Добавляем новые опции
+                    result.data.forEach(brigade => {
+                        const option = document.createElement('option');
+                        option.value = brigade.leader_id;
+                        option.textContent = brigade.leader_name;
+                        option.setAttribute('data-brigade-id', brigade.brigade_id);
+                        select.appendChild(option);
+                    });
+                    
+                    // Восстанавливаем выбранное значение, если оно есть в новом списке
+                    if (selectedValue && Array.from(select.options).some(opt => opt.value === selectedValue)) {
+                        select.value = selectedValue;
+                    }
+                    
+                    console.log('Список бригад обновлен');
+                }
+            } catch (error) {
+                console.error('Ошибка при обновлении списка бригад:', error);
+                showAlert('Не удалось обновить список бригад: ' + error.message);
+            }
+        });
+    }
+
     // Перехватываем вызов applyFilters для обновления обработчиков после фильтрации
     const originalApplyFilters = window.applyFilters;
     window.applyFilters = function() {

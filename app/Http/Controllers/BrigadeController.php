@@ -75,9 +75,37 @@ class BrigadeController extends Controller
     {
         // Получаем список всех сотрудников
         $employees = DB::select("SELECT id, fio FROM employees ORDER BY fio");
-
-        
     }
+
+    public function getCurrentDayBrigades()
+    {
+        try {
+        $today = now()->toDateString();
+        
+        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS leader_name, e.id as employee_id 
+                FROM brigades AS b 
+                JOIN employees AS e ON b.leader_id = e.id 
+                WHERE DATE(b.formation_date) >= '{$today}'";
+        
+        $brigades = DB::select($sql);
+        
+        \Log::info('Successfully retrieved current day brigades', ['count' => count($brigades)]);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $brigades
+        ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in BrigadeController@getCurrentDayBrigades: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении списка бригад на текущий день',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+   }
 
     public function store(Request $request)
     {
