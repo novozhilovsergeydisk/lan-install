@@ -7,7 +7,8 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BrigadeController;
 use App\Http\Controllers\RequestFilterController;
 use App\Http\Controllers\RequestTeamFilterController;
-use App\Http\Controllers\GeoController;
+use App\Http\Controllers\GeoController; 
+use App\Http\Controllers\EmployeeUserController;
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/brigades/create', [BrigadeController::class, 'create'])->name('brigades.create');
@@ -124,4 +125,8 @@ Route::prefix('api/geo')->middleware('auth')->group(function () {
 // API для получения списка бригад
 Route::get('/api/brigades/current-day', [BrigadeController::class, 'getCurrentDayBrigades'])
     ->name('api.brigades.current-day')
+    ->middleware('auth');
+
+Route::post('/employees', [EmployeeUserController::class, 'store'])
+    ->name('employees.store')
     ->middleware('auth');

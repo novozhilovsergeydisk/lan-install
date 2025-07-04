@@ -72,15 +72,43 @@ document.addEventListener('DOMContentLoaded', function() {
         // Очищаем предыдущие сообщения
         messagesContainer.innerHTML = '';
         
+        // Добавляем заголовок Accept для JSON-ответа
+        const headers = new Headers();
+        headers.append('X-Requested-With', 'XMLHttpRequest');
+        headers.append('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        headers.append('Accept', 'application/json');
+        
+        // Отправляем форму с правильными заголовками
         fetch(form.action, {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: formData
+            headers: headers,
+            body: formData,
+            credentials: 'same-origin'
         })
-        .then(response => response.json())
+        .then(async response => {
+            const data = await response.json();
+            
+            if (!response.ok) {
+                // Если есть ошибки валидации, выводим их
+                if (data.errors) {
+                    let errorHtml = '<div class="alert alert-danger"><ul class="mb-0">';
+                    Object.values(data.errors).forEach(error => {
+                        errorHtml += `<li>${error[0]}</li>`;
+                    });
+                    errorHtml += '</ul></div>';
+                    messagesContainer.innerHTML = errorHtml;
+                } else if (data.message) {
+                    // Если есть сообщение об ошибке
+                    messagesContainer.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                } else {
+                    // Общее сообщение об ошибке
+                    messagesContainer.innerHTML = '<div class="alert alert-danger">Произошла ошибка при отправке формы. Пожалуйста, проверьте введенные данные и попробуйте снова.</div>';
+                }
+                // Возвращаем null вместо выбрасывания ошибки, чтобы не попадать в блок catch
+                return { success: false };
+            }
+            return data;
+        })
         .then(data => {
             if (data.success) {
                 // Очищаем форму
@@ -121,9 +149,11 @@ document.addEventListener('DOMContentLoaded', function() {
             messagesContainer.appendChild(errorAlert);
         })
         .finally(() => {
-            // Восстанавливаем кнопку
-            submitButton.disabled = false;
-            submitButton.innerHTML = originalButtonText;
+            // Восстанавливаем кнопку только если не было успешной отправки
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonText;
+            }
         });
     });
 });

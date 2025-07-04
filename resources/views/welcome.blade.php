@@ -59,7 +59,8 @@
 
         <!-- Main Content -->
         <div id="main-content" class="main-content">
-            <div id="content-wrapper" class="container-fluid position-relative" style="min-height: 100vh; overflow-x: hidden;">
+            <div id="content-wrapper" class="container-fluid position-relative"
+                 style="min-height: 100vh; overflow-x: hidden;">
                 <div id="header-section" class="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <h1 class="mb-0">Система управления заявками</h1>
@@ -159,7 +160,8 @@
 
                         <!-- Calendar and Status Buttons -->
                         <div class="pt-4 ps-4 pb-0 d-flex align-items-center">
-                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2" id="btn-open-calendar">
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
+                                    id="btn-open-calendar">
                                 <i class="bi bi-calendar me-1"></i>Календарь
                             </button>
 
@@ -169,10 +171,15 @@
 
                             <!-- Контейнер для выбора бригады -->
                             <div id="brigade-leader-filter" class="ms-3 d-none_">
-                                <select id="brigade-leader-select" class="form-select form-select-sm" style="width: 250px; margin-top: -12px;">
+                                <select id="brigade-leader-select" class="form-select form-select-sm"
+                                        style="width: 250px; margin-top: -12px;">
                                     <option value="" selected disabled>Выберите бригаду...</option>
                                     @foreach ($brigadesCurrentDay as $brigade)
-                                        <option value="{{ $brigade->employee_id }}" data-brigade-id="{{ $brigade->brigade_id }}">[Номер бригады: {{ $brigade->brigade_id }} ] [Бригадир: {{ $brigade->leader_name }}]</option>
+                                        <option value="{{ $brigade->employee_id }}"
+                                                data-brigade-id="{{ $brigade->brigade_id }}">[Номер
+                                            бригады: {{ $brigade->brigade_id }} ] [Бригадир: {{ $brigade->leader_name }}
+                                            ]
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -190,7 +197,8 @@
                                 <div class="p-4 hide-me">
                                     <div class="d-flex flex-column gap-2">
                                         @foreach ($request_statuses as $status)
-                                            <div class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
+                                            <div
+                                                class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
                                                 <div class="me-3 w-7 h-7 rounded-sm"
                                                      style="width: 8rem; height: 2rem; background-color: {{ $status->color }};">
                                                 </div>
@@ -201,7 +209,8 @@
                                 </div>
                             @endif
 
-                            <table class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
+                            <table class="table table-hover align-middle mb-0"
+                                   style="min-width: 992px; margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>
                                     <th style="width: 1rem;"></th>
@@ -222,18 +231,23 @@
                                         $rowNumber = $loop->iteration; 
                                         // Get the current loop iteration (1-based index)
                                     @endphp
-                                    <tr class="align-middle status-row" style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}" data-request-id="{{ $request->id }}">
+                                    <tr class="align-middle status-row"
+                                        style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
+                                        data-request-id="{{ $request->id }}">
                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
 
                                         <td class="text-center" style="width: 1rem;">
                                             @if($request->status_name !== 'выполнена')
-                                                <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
+                                                <input type="checkbox" id="request-{{ $request->id }}"
+                                                       class="form-check-input request-checkbox"
+                                                       value="{{ $request->id }}" aria-label="Выбрать заявку">
                                             @endif
                                         </td>
                                         <!-- Дата и номер заявки -->
                                         <td>
                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
-                                            <div class="text-dark" style="font-size: 0.8rem;">{{ $request->number }}</div>
+                                            <div class="text-dark"
+                                                 style="font-size: 0.8rem;">{{ $request->number }}</div>
                                         </td>
 
                                         <!-- Клиент -->
@@ -291,8 +305,10 @@
 
                                         <!-- Дата выполнения -->
                                         <td>
-                                            <span class="brigade-lead-text">{{ $request->operator_name ?? 'Не указан' }}</span><br>
-                                            <span class="brigade-lead-text">{{ $request->request_date ? \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') : 'Не указана' }}</span>
+                                            <span
+                                                class="brigade-lead-text">{{ $request->operator_name ?? 'Не указан' }}</span><br>
+                                            <span
+                                                class="brigade-lead-text">{{ $request->request_date ? \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') : 'Не указана' }}</span>
                                         </td>
 
                                         <!-- Состав бригады -->
@@ -302,56 +318,63 @@
                                                     $brigadeMembers = collect($brigadeMembersWithDetails)
                                                         ->where('brigade_id', $request->brigade_id);
                                                 @endphp
-                                                    @php
-                                                        $brigadeMembers = collect($brigadeMembersWithDetails)
-                                                            ->where('brigade_id', $request->brigade_id);
-                                                    @endphp
+                                                @php
+                                                    $brigadeMembers = collect($brigadeMembersWithDetails)
+                                                        ->where('brigade_id', $request->brigade_id);
+                                                @endphp
 
-                                                    @if($brigadeMembers->isNotEmpty())
-                                                        <div class="mb-2" style="font-size: 0.75rem; line-height: 1.2;">
-                                                            @foreach($brigadeMembers as $member)
-                                                                <div>
-                                                                    {{ $member->employee_name }}
-                                                                </div>
-                                                            @endforeach
-                                                        </div>
-                                                    @endif
-
-                                                    <a href="#"
-                                                       class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
-                                                       style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
-                                                       onmouseover="this.style.textDecoration='underline'"
-                                                       onmouseout="this.style.textDecoration='none'"
-                                                       data-bs-toggle="modal" data-bs-target="#brigadeModal"
-                                                       data-brigade-id="{{ $request->brigade_id }}">
-                                                        подробнее...
-                                                    </a>
-                                                @else
-                                                    <small class="text-muted d-block mb-1">Не назначена</small>
+                                                @if($brigadeMembers->isNotEmpty())
+                                                    <div class="mb-2" style="font-size: 0.75rem; line-height: 1.2;">
+                                                        @foreach($brigadeMembers as $member)
+                                                            <div>
+                                                                {{ $member->employee_name }}
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 @endif
-                                            </td>
 
-                                            <!-- Action Buttons Group -->
-                                            <td class="text-nowrap">
-                                                <div class="d-flex flex-column gap-1">
+                                                <a href="#"
+                                                   class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
+                                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
+                                                   onmouseover="this.style.textDecoration='underline'"
+                                                   onmouseout="this.style.textDecoration='none'"
+                                                   data-bs-toggle="modal" data-bs-target="#brigadeModal"
+                                                   data-brigade-id="{{ $request->brigade_id }}">
+                                                    подробнее...
+                                                </a>
+                                            @else
+                                                <small class="text-muted d-block mb-1">Не назначена</small>
+                                            @endif
+                                        </td>
+
+                                        <!-- Action Buttons Group -->
+                                        <td class="text-nowrap">
+                                            <div class="d-flex flex-column gap-1">
                                                 @if($request->status_name !== 'выполнена')
-                                                    <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="{{ $request->id }}">
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-primary assign-team-btn p-1"
+                                                            data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-people me-1"></i>Назначить бригаду
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-success transfer-request-btn p-1" style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;" data-request-id="{{ $request->id }}">
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-success transfer-request-btn p-1"
+                                                            style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;"
+                                                            data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-arrow-left-right me-1"></i>Перенести заявку
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger cancel-request-btn p-1" data-request-id="{{ $request->id }}">
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-danger cancel-request-btn p-1"
+                                                            data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-x-circle me-1"></i>Отменить заявку
                                                     </button>
                                                 @endif
-                                                </div>
-                                            </td>
+                                            </div>
+                                        </td>
 
-                                            <!-- Action Buttons -->
-                                            <td class="text-nowrap">
-                                                <div class="d-flex flex-column gap-1">
-                                                    @if($request->status_name !== 'выполнена')
+                                        <!-- Action Buttons -->
+                                        <td class="text-nowrap">
+                                            <div class="d-flex flex-column gap-1">
+                                                @if($request->status_name !== 'выполнена')
                                                     <button data-request-id="{{ $request->id }}" type="button"
                                                             class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                                         Закрыть заявку
@@ -364,24 +387,24 @@
                                                             data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-chat-left-text me-1"></i>Комментарий
                                                     </button>
-                                                    @endif
-                                                    <button data-request-id="{{ $request->id }}" type="button"
-                                                            class="btn btn-sm btn-outline-success add-photo-btn"
-                                                            onclick="console.log('Добавить фотоотчет', {{ $request->id }})">
-                                                        <i class="bi bi-camera me-1"></i>Фотоотчет
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                    </tbody>
-                                    <tr id="no-requests-row" class="d-none">
-                                        <td colspan="9" class="text-center py-4">
-                                            <div class="alert alert-info m-0">
-                                                <i class="bi bi-info-circle me-2"></i>Нет заявок для отображения.
+                                                @endif
+                                                <button data-request-id="{{ $request->id }}" type="button"
+                                                        class="btn btn-sm btn-outline-success add-photo-btn"
+                                                        onclick="console.log('Добавить фотоотчет', {{ $request->id }})">
+                                                    <i class="bi bi-camera me-1"></i>Фотоотчет
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
+                                @endforeach
+                                </tbody>
+                                <tr id="no-requests-row" class="d-none">
+                                    <td colspan="9" class="text-center py-4">
+                                        <div class="alert alert-info m-0">
+                                            <i class="bi bi-info-circle me-2"></i>Нет заявок для отображения.
+                                        </div>
+                                    </td>
+                                </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -416,7 +439,8 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Название бригады</label>
-                                <input type="text" id="brigadeName" name="name" class="form-control" value="Бригада технической интеграции видеосистем" required>
+                                <input type="text" id="brigadeName" name="name" class="form-control"
+                                       value="Бригада технической интеграции видеосистем" required>
                             </div>
 
                             <div class="mb-3">
@@ -434,13 +458,15 @@
                                     <label class="form-label">Выбрать сотрудника</label>
                                     <select name="members[]" id="employeesSelect" class="form-select h-100" multiple>
                                         @foreach ($employees as $emp)
-                                            <option value="{{ $emp->id }}" data-employee-id="{{ $emp->id }}">{{ $emp->fio }}</option>
+                                            <option value="{{ $emp->id }}"
+                                                    data-employee-id="{{ $emp->id }}">{{ $emp->fio }}</option>
                                         @endforeach
                                     </select>
                                 </div>
 
                                 <div class="d-flex flex-column justify-content-center">
-                                    <button type="button" id="addToBrigadeBtn" class="btn btn-outline-secondary" style="width: 50px; height: 50px; border-radius: 50%;">
+                                    <button type="button" id="addToBrigadeBtn" class="btn btn-outline-secondary"
+                                            style="width: 50px; height: 50px; border-radius: 50%;">
                                         <i class="bi bi-arrow-right"></i>
                                     </button>
                                 </div>
@@ -454,7 +480,8 @@
                             </div>
 
                             <div class="mt-4">
-                                <button type="button" id="createBrigadeBtn" class="btn btn-primary">Создать бригаду</button>
+                                <button type="button" id="createBrigadeBtn" class="btn btn-primary">Создать бригаду
+                                </button>
                             </div>
                         </form>
 
@@ -504,19 +531,23 @@
                                 <!-- Адрес -->
                                 <div>
                                     <h6>Добавить адрес</h6>
-                                    <form id="addressForm" class="row g-2 align-items-end" method="POST" action="{{ route('address.add') }}">
+                                    <form id="addressForm" class="row g-2 align-items-end" method="POST"
+                                          action="{{ route('address.add') }}">
                                         @csrf
                                         <div class="col-md-3">
                                             <label class="form-label">Улица</label>
-                                            <input type="text" name="street" class="form-control" placeholder="Улица" required>
+                                            <input type="text" name="street" class="form-control" placeholder="Улица"
+                                                   required>
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">Дом</label>
-                                            <input type="text" name="houses" class="form-control" placeholder="12А" required>
+                                            <input type="text" name="houses" class="form-control" placeholder="12А"
+                                                   required>
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label">Район</label>
-                                            <input type="text" name="district" class="form-control" placeholder="Центральный">
+                                            <input type="text" name="district" class="form-control"
+                                                   placeholder="Центральный">
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label">Город</label>
@@ -525,70 +556,73 @@
                                             </select>
                                         </div>
                                         <div class="col-auto">
-                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес</button>
+                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес
+                                            </button>
                                         </div>
                                         <div class="mt-3">
-                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Тестовое заполнение</button>
+                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Тестовое
+                                                заполнение
+                                            </button>
                                         </div>
                                     </form>
                                     <script>
-                                    // Функция для загрузки городов
-                                    function loadCities(selectElement) {
-                                        // Устанавливаем состояние загрузки
-                                        const loadingOption = document.createElement('option');
-                                        loadingOption.value = '';
-                                        loadingOption.textContent = 'Загрузка городов...';
-                                        selectElement.innerHTML = '';
-                                        selectElement.appendChild(loadingOption);
+                                        // Функция для загрузки городов
+                                        function loadCities(selectElement) {
+                                            // Устанавливаем состояние загрузки
+                                            const loadingOption = document.createElement('option');
+                                            loadingOption.value = '';
+                                            loadingOption.textContent = 'Загрузка городов...';
+                                            selectElement.innerHTML = '';
+                                            selectElement.appendChild(loadingOption);
 
-                                        // Загружаем города с сервера
-                                        return fetch('/api/cities')
-                                            .then(response => {
-                                                if (!response.ok) {
-                                                    throw new Error('Ошибка загрузки городов');
-                                                }
-                                                return response.json();
-                                            })
-                                            .then(cities => {
-                                                // Очищаем список
-                                                selectElement.innerHTML = '';
+                                            // Загружаем города с сервера
+                                            return fetch('/api/cities')
+                                                .then(response => {
+                                                    if (!response.ok) {
+                                                        throw new Error('Ошибка загрузки городов');
+                                                    }
+                                                    return response.json();
+                                                })
+                                                .then(cities => {
+                                                    // Очищаем список
+                                                    selectElement.innerHTML = '';
 
-                                                // Добавляем опцию по умолчанию
-                                                const defaultOption = document.createElement('option');
-                                                defaultOption.value = '';
-                                                defaultOption.textContent = 'Выберите город';
-                                                selectElement.appendChild(defaultOption);
+                                                    // Добавляем опцию по умолчанию
+                                                    const defaultOption = document.createElement('option');
+                                                    defaultOption.value = '';
+                                                    defaultOption.textContent = 'Выберите город';
+                                                    selectElement.appendChild(defaultOption);
 
-                                                // Добавляем города в список
-                                                if (Array.isArray(cities) && cities.length > 0) {
-                                                    cities.forEach(city => {
-                                                        const option = document.createElement('option');
-                                                        option.value = city.id;
-                                                        option.textContent = city.name;
-                                                        selectElement.appendChild(option);
-                                                    });
-                                                    // console.log('Загружено городов:', cities.length);
-                                                } else {
-                                                    console.warn('Получен пустой список городов');
-                                                }
-                                                return cities;
-                                            })
-                                            .catch(error => {
-                                                console.error('Ошибка при загрузке городов:', error);
-                                                selectElement.innerHTML = '<option value="">Ошибка загрузки</option>';
-                                                throw error;
-                                            });
-                                    }
-
-                                    // Загружаем города при загрузке страницы
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        const citySelect = document.getElementById('filter_city_id');
-                                        if (citySelect) {
-                                            loadCities(citySelect);
+                                                    // Добавляем города в список
+                                                    if (Array.isArray(cities) && cities.length > 0) {
+                                                        cities.forEach(city => {
+                                                            const option = document.createElement('option');
+                                                            option.value = city.id;
+                                                            option.textContent = city.name;
+                                                            selectElement.appendChild(option);
+                                                        });
+                                                        // console.log('Загружено городов:', cities.length);
+                                                    } else {
+                                                        console.warn('Получен пустой список городов');
+                                                    }
+                                                    return cities;
+                                                })
+                                                .catch(error => {
+                                                    console.error('Ошибка при загрузке городов:', error);
+                                                    selectElement.innerHTML = '<option value="">Ошибка загрузки</option>';
+                                                    throw error;
+                                                });
                                         }
-                                    });
 
-                                    const testData = [
+                                        // Загружаем города при загрузке страницы
+                                        document.addEventListener('DOMContentLoaded', function () {
+                                            const citySelect = document.getElementById('filter_city_id');
+                                            if (citySelect) {
+                                                loadCities(citySelect);
+                                            }
+                                        });
+
+                                        const testData = [
                                             {street: "Ленина", houses: "12А", district: "Центральный", city_id: "1"},
                                             {street: "Пушкина", houses: "5", district: "Северный", city_id: "2"},
                                             {street: "Крылова", houses: "34", district: "Южный", city_id: "3"},
@@ -614,11 +648,21 @@
                                             {street: "Парковая", houses: "9", district: "Южный", city_id: "3"},
                                             {street: "Кленовая", houses: "18", district: "Западный", city_id: "4"},
                                             {street: "Набережная", houses: "5А", district: "Восточный", city_id: "5"},
-                                            {street: "Магистральная", houses: "29", district: "Центральный", city_id: "1"},
+                                            {
+                                                street: "Магистральная",
+                                                houses: "29",
+                                                district: "Центральный",
+                                                city_id: "1"
+                                            },
                                             {street: "Советская", houses: "7Б", district: "Северный", city_id: "2"},
                                             {street: "Индустриальная", houses: "12", district: "Южный", city_id: "3"},
                                             {street: "Октябрьская", houses: "3А", district: "Западный", city_id: "4"},
-                                            {street: "Революционная", houses: "10", district: "Восточный", city_id: "5"},
+                                            {
+                                                street: "Революционная",
+                                                houses: "10",
+                                                district: "Восточный",
+                                                city_id: "5"
+                                            },
                                             {street: "Лазурная", houses: "8Б", district: "Центральный", city_id: "1"},
                                             {street: "Кирова", houses: "26", district: "Северный", city_id: "2"},
                                             {street: "Горького", houses: "13А", district: "Южный", city_id: "3"},
@@ -635,13 +679,18 @@
                                             {street: "Полярная", houses: "9Б", district: "Западный", city_id: "4"},
                                             {street: "Светлая", houses: "5А", district: "Восточный", city_id: "5"},
                                             {street: "Пионерская", houses: "3Б", district: "Центральный", city_id: "1"},
-                                            {street: "Водопроводная", houses: "12Б", district: "Северный", city_id: "2"},
+                                            {
+                                                street: "Водопроводная",
+                                                houses: "12Б",
+                                                district: "Северный",
+                                                city_id: "2"
+                                            },
                                             {street: "Золотая", houses: "7А", district: "Южный", city_id: "3"},
                                             {street: "Медовая", houses: "18Б", district: "Западный", city_id: "4"},
                                             {street: "Кавказская", houses: "10А", district: "Восточный", city_id: "5"}
                                         ];
 
-                                        document.getElementById('testFillBtn').addEventListener('click', function() {
+                                        document.getElementById('testFillBtn').addEventListener('click', function () {
                                             const randomIndex = Math.floor(Math.random() * testData.length);
                                             const data = testData[randomIndex];
 
@@ -655,81 +704,81 @@
                                     </script>
 
                                     <script>
-                                    // Обработчик отправки формы добавления адреса
-                                    document.getElementById('addressForm').addEventListener('submit', async function(e) {
-                                        e.preventDefault();
+                                        // Обработчик отправки формы добавления адреса
+                                        document.getElementById('addressForm').addEventListener('submit', async function (e) {
+                                            e.preventDefault();
 
-                                        const form = e.target;
-                                        const submitBtn = form.querySelector('button[type="submit"]');
-                                        const originalBtnText = submitBtn.innerHTML;
+                                            const form = e.target;
+                                            const submitBtn = form.querySelector('button[type="submit"]');
+                                            const originalBtnText = submitBtn.innerHTML;
 
-                                        try {
-                                            // Показываем индикатор загрузки
-                                            submitBtn.disabled = true;
-                                            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+                                            try {
+                                                // Показываем индикатор загрузки
+                                                submitBtn.disabled = true;
+                                                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
 
-                                            const formData = new FormData(form);
-                                            const response = await fetch(form.action, {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Accept': 'application/json',
-                                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                                },
-                                                body: formData
-                                            });
+                                                const formData = new FormData(form);
+                                                const response = await fetch(form.action, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Accept': 'application/json',
+                                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                                    },
+                                                    body: formData
+                                                });
 
-                                            const result = await response.json();
+                                                const result = await response.json();
 
-                                            if (response.ok) {
-                                                // Очищаем форму при успешном сохранении
-                                                form.reset();
-                                                // Сбрасываем выпадающий список городов
-                                                const citySelect = form.elements['city_id'];
-                                                citySelect.innerHTML = '<option value="">Выберите город</option>';
-                                                // Перезагружаем города
-                                                loadCities(citySelect);
-                                                // Показываем уведомление об успехе
-                                                if (typeof showAlert === 'function') {
-                                                    showAlert('Адрес успешно добавлен!', 'success');
+                                                if (response.ok) {
+                                                    // Очищаем форму при успешном сохранении
+                                                    form.reset();
+                                                    // Сбрасываем выпадающий список городов
+                                                    const citySelect = form.elements['city_id'];
+                                                    citySelect.innerHTML = '<option value="">Выберите город</option>';
+                                                    // Перезагружаем города
+                                                    loadCities(citySelect);
+                                                    // Показываем уведомление об успехе
+                                                    if (typeof showAlert === 'function') {
+                                                        showAlert('Адрес успешно добавлен!', 'success');
+                                                    } else {
+                                                        alert('Адрес успешно добавлен!');
+                                                    }
+                                                } else if (response.status === 422) {
+                                                    // Обработка ошибок валидации
+                                                    const errorMessages = [];
+                                                    for (const field in result.errors) {
+                                                        errorMessages.push(result.errors[field].join('\n'));
+                                                    }
+                                                    const errorMessage = errorMessages.join('\n');
+                                                    if (typeof showAlert === 'function') {
+                                                        showAlert(errorMessage, 'danger');
+                                                    } else {
+                                                        alert(errorMessage);
+                                                    }
+                                                    throw new Error(errorMessage);
                                                 } else {
-                                                    alert('Адрес успешно добавлен!');
+                                                    const errorMessage = result.message || 'Ошибка при сохранении адреса';
+                                                    if (typeof showAlert === 'function') {
+                                                        showAlert(errorMessage, 'danger');
+                                                    } else {
+                                                        alert(errorMessage);
+                                                    }
+                                                    throw new Error(errorMessage);
                                                 }
-                                            } else if (response.status === 422) {
-                                                // Обработка ошибок валидации
-                                                const errorMessages = [];
-                                                for (const field in result.errors) {
-                                                    errorMessages.push(result.errors[field].join('\n'));
-                                                }
-                                                const errorMessage = errorMessages.join('\n');
+                                            } catch (error) {
+                                                console.error('Ошибка:', error);
+                                                const errorMessage = error.message || 'Произошла ошибка при сохранении адреса';
                                                 if (typeof showAlert === 'function') {
                                                     showAlert(errorMessage, 'danger');
                                                 } else {
                                                     alert(errorMessage);
                                                 }
-                                                throw new Error(errorMessage);
-                                            } else {
-                                                const errorMessage = result.message || 'Ошибка при сохранении адреса';
-                                                if (typeof showAlert === 'function') {
-                                                    showAlert(errorMessage, 'danger');
-                                                } else {
-                                                    alert(errorMessage);
-                                                }
-                                                throw new Error(errorMessage);
+                                            } finally {
+                                                // Восстанавливаем кнопку
+                                                submitBtn.disabled = false;
+                                                submitBtn.innerHTML = originalBtnText;
                                             }
-                                        } catch (error) {
-console.error('Ошибка:', error);
-                                            const errorMessage = error.message || 'Произошла ошибка при сохранении адреса';
-                                            if (typeof showAlert === 'function') {
-                                                showAlert(errorMessage, 'danger');
-                                            } else {
-                                                alert(errorMessage);
-                                            }
-                                        } finally {
-                                            // Восстанавливаем кнопку
-                                            submitBtn.disabled = false;
-                                            submitBtn.innerHTML = originalBtnText;
-                                        }
-                                    });
+                                        });
                                     </script>
                                 </div>
 
@@ -750,7 +799,7 @@ console.error('Ошибка:', error);
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Таблица пользователей -->
                             <div id="usersTableContainer" class="col-lg-9">
                                 <div class="card h-100">
@@ -760,45 +809,116 @@ console.error('Ошибка:', error);
                                     <div class="card-body p-0">
                                         <div class="table-responsive">
                                             <style>
+                                                .table-container {
+                                                    height: 30rem;
+                                                    overflow-y: auto;
+                                                }
+                                                
                                                 [data-bs-theme="dark"] .users-table {
                                                     --bs-table-bg: transparent;
                                                     --bs-table-color: #fff;
                                                     --bs-table-hover-bg: rgba(255, 255, 255, 0.075);
                                                 }
+
                                                 [data-bs-theme="dark"] .users-table th,
                                                 [data-bs-theme="dark"] .users-table td {
                                                     color: #fff;
                                                     border-color: #495057;
                                                 }
+
                                                 [data-bs-theme="dark"] .users-table thead th {
                                                     border-bottom-color: #6c757d;
                                                 }
                                             </style>
-                                            <table class="table table-hover users-table mb-0">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>ID</th>
-                                                            <th>Имя</th>
-                                                            <th>Email</th>
-                                                            <th>Дата регистрации</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        @foreach(\App\Models\User::orderBy('created_at', 'desc')->get() as $user)
-                                                            <tr>
-                                                                <td>{{ $user->id }}</td>
-                                                                <td>{{ $user->name }}</td>
-                                                                <td>{{ $user->email }}</td>
-                                                                <td>{{ $user->created_at->format('d.m.Y H:i') }}</td>
-                                                            </tr>
-                                                        @endforeach
-                                                    </tbody>
-                                                </table>
+                                            <div class="table-container">
+                                                <table class="table table-hover users-table mb-0">
+                                                <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Имя</th>
+                                                    <th>Email</th>
+                                                    <th>Дата регистрации</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                @foreach(\App\Models\User::orderBy('created_at', 'desc')->get() as $user)
+                                                    <tr>
+                                                        <td>{{ $user->id }}</td>
+                                                        <td>{{ $user->name }}</td>
+                                                        <td>{{ $user->email }}</td>
+                                                        <td>{{ $user->created_at->format('d.m.Y H:i') }}</td>
+                                                    </tr>
+                                                @endforeach
+                                                </tbody>
+                                            </table>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="row">
+                        <div id="employeesFormContainer" class="col-lg-6">
+                                <form action="{{ route('employees.store') }}" method="POST">
+                                    @csrf
+
+                                    <input type="hidden" name="user_id" value="{{ auth()->id() }}"> {{-- или другой user ID --}}
+
+                                    <div class="mb-2">
+                                        <label class="form-label">ФИО</label>
+                                        <input type="text" name="fio" class="form-control" required>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label class="form-label">Телефон</label>
+                                        <input type="text" name="phone" class="form-control">
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label class="form-label">Дата рождения</label>
+                                        <input type="date" name="birth_date" class="form-control">
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label class="form-label">Место рождения</label>
+                                        <input type="text" name="birth_place" class="form-control">
+                                    </div>
+
+                                    <hr>
+
+                                    <div class="mb-2">
+                                        <label class="form-label">Паспорт (серия и номер)</label>
+                                        <input type="text" name="passport_series" class="form-control">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Кем выдан</label>
+                                        <input type="text" name="passport_issued_by" class="form-control">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Дата выдачи</label>
+                                        <input type="date" name="passport_issued_at" class="form-control">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Код подразделения</label>
+                                        <input type="text" name="passport_department_code" class="form-control">
+                                    </div>
+
+                                    <hr>
+
+                                    <div class="mb-2">
+                                        <label class="form-label">Марка машины</label>
+                                        <input type="text" name="car_brand" class="form-control">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Госномер</label>
+                                        <input type="text" name="car_plate" class="form-control">
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
+                                </form>
+                            </div>  
+                        </div>
 
                     </div>
 
@@ -1074,7 +1194,7 @@ console.error('Ошибка:', error);
                             button.view-comments-btn[data-request-id="${requestId}"]
                         `);
 
-                     // console.log(`Found ${commentButtons.length} comment buttons to update in row`);
+                    // console.log(`Found ${commentButtons.length} comment buttons to update in row`);
 
                     commentButtons.forEach(button => {
                         // console.log('Updating comment button:', button);
@@ -1206,7 +1326,8 @@ console.error('Ошибка:', error);
 </div>
 
 <!-- New Request Modal -->
-<div class="modal fade" id="newRequestModal" tabindex="-1" aria-labelledby="newRequestModalLabel" aria-hidden="true" role="dialog">
+<div class="modal fade" id="newRequestModal" tabindex="-1" aria-labelledby="newRequestModalLabel" aria-hidden="true"
+     role="dialog">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -1301,7 +1422,9 @@ console.error('Ошибка:', error);
                     <div class="mb-3">
                         <h6>Комментарий к заявке</h6>
                         <div class="mb-3">
-                            <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Введите комментарий к заявке" required minlength="3" maxlength="1000"></textarea>
+                            <textarea class="form-control" id="comment" name="comment" rows="3"
+                                      placeholder="Введите комментарий к заявке" required minlength="3"
+                                      maxlength="1000"></textarea>
                             <div class="invalid-feedback">
                                 Пожалуйста, введите комментарий (от 3 до 1000 символов)
                             </div>
@@ -1310,9 +1433,13 @@ console.error('Ошибка:', error);
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Заполнить тестовыми данными</button>
+                <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Заполнить
+                    тестовыми данными
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать заявку</button>
+                <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать
+                    заявку
+                </button>
             </div>
         </div>
     </div>
@@ -1320,99 +1447,99 @@ console.error('Ошибка:', error);
 
 <script>
     const newComments = [
-  "Ваше обращение принято в обработку. Специалист отдела обслуживания свяжется с вами для завершения подготовки к работам.",
-  "Принята ваша заявка на выполнение монтажа. Менеджеры скоро перезвонят для уточнения условий.",
-  "Заказ успешно передан в отдел обработки заявок. Наши сотрудники подробно проконсультируют вас по предстоящему проекту.",
-  "Получили ваш запрос и начали подготовительные мероприятия. Согласуем нюансы монтажа по телефону.",
-  "Обработка вашей заявки началась. После проверки информации с вами свяжутся наши специалисты.",
-  "Ваша заявка принята в производственный цикл. Детали будут оговорены дополнительно при контакте.",
-  "Информация по вашему запросу зафиксирована. В скором времени мы будем обсуждать организацию монтажа.",
-  "Оформление вашей заявки завершилось успешно. Вы получите звонок для утверждения сроков начала работ.",
-  "Работаем над вашим проектом. Ждите контакта от наших сотрудников для подтверждения деталей.",
-  "Спасибо за отправленную заявку! Наши менеджеры обязательно свяжутся с вами для координации процесса установки оборудования.",
-  "Ваша заявка внесена в рабочий график. Связываемся с вами для точного определения плана действий.",
-  "Начало процедуры оформления вашей заявки. По вопросам уточняющей информации свяжитесь с нашим представителем.",
-  "Запрос принят. Ожидайте дальнейшего взаимодействия от менеджера для организации монтажных мероприятий.",
-  "Подтверждение приема заявки получено. Организуем встречу или телефонный разговор для согласования технических аспектов.",
-  "Уведомляем о принятии вашей заявки. Дожидаетесь контактирования специалистов для обсуждения деталей реализации.",
-  "Выполнено принятие заявки на оказание услуг. Направлен запрос менеджеру для согласования порядка исполнения.",
-  "Началась обработка вашей заявки. Будет произведена связь с вами для внесения дополнений и обсуждений.",
-  "Фиксация заявки состоялась. Сообщение поступит от координатора проектов для рассмотрения деталей и сроков выполнения.",
-  "Предложение зафиксировано и передано специалистам. Следующий этап — обсуждение ваших пожеланий относительно монтажа.",
-  "Официально подтверждено начало обработки заявки. Осталось лишь согласовать ряд вопросов с нашими сотрудниками."
-];
+        "Ваше обращение принято в обработку. Специалист отдела обслуживания свяжется с вами для завершения подготовки к работам.",
+        "Принята ваша заявка на выполнение монтажа. Менеджеры скоро перезвонят для уточнения условий.",
+        "Заказ успешно передан в отдел обработки заявок. Наши сотрудники подробно проконсультируют вас по предстоящему проекту.",
+        "Получили ваш запрос и начали подготовительные мероприятия. Согласуем нюансы монтажа по телефону.",
+        "Обработка вашей заявки началась. После проверки информации с вами свяжутся наши специалисты.",
+        "Ваша заявка принята в производственный цикл. Детали будут оговорены дополнительно при контакте.",
+        "Информация по вашему запросу зафиксирована. В скором времени мы будем обсуждать организацию монтажа.",
+        "Оформление вашей заявки завершилось успешно. Вы получите звонок для утверждения сроков начала работ.",
+        "Работаем над вашим проектом. Ждите контакта от наших сотрудников для подтверждения деталей.",
+        "Спасибо за отправленную заявку! Наши менеджеры обязательно свяжутся с вами для координации процесса установки оборудования.",
+        "Ваша заявка внесена в рабочий график. Связываемся с вами для точного определения плана действий.",
+        "Начало процедуры оформления вашей заявки. По вопросам уточняющей информации свяжитесь с нашим представителем.",
+        "Запрос принят. Ожидайте дальнейшего взаимодействия от менеджера для организации монтажных мероприятий.",
+        "Подтверждение приема заявки получено. Организуем встречу или телефонный разговор для согласования технических аспектов.",
+        "Уведомляем о принятии вашей заявки. Дожидаетесь контактирования специалистов для обсуждения деталей реализации.",
+        "Выполнено принятие заявки на оказание услуг. Направлен запрос менеджеру для согласования порядка исполнения.",
+        "Началась обработка вашей заявки. Будет произведена связь с вами для внесения дополнений и обсуждений.",
+        "Фиксация заявки состоялась. Сообщение поступит от координатора проектов для рассмотрения деталей и сроков выполнения.",
+        "Предложение зафиксировано и передано специалистам. Следующий этап — обсуждение ваших пожеланий относительно монтажа.",
+        "Официально подтверждено начало обработки заявки. Осталось лишь согласовать ряд вопросов с нашими сотрудниками."
+    ];
 
-const mockData = [
-  {name: "Иван Иванов", phone: "+7 (999) 111-11-01", comment: newComments[0]},
-  {name: "Мария Петрова", phone: "+7 (999) 111-11-02", comment: newComments[1]},
-  {name: "Алексей Смирнов", phone: "+7 (999) 111-11-03", comment: newComments[2]},
-  {name: "Елена Кузнецова", phone: "+7 (999) 111-11-04", comment: newComments[3]},
-  {name: "Дмитрий Соколов", phone: "+7 (999) 111-11-05", comment: newComments[4]},
-  {name: "Ольга Морозова", phone: "+7 (999) 111-11-06", comment: newComments[5]},
-  {name: "Николай Васильев", phone: "+7 (999) 111-11-07", comment: newComments[6]},
-  {name: "Татьяна Орлова", phone: "+7 (999) 111-11-08", comment: newComments[7]},
-  {name: "Сергей Павлов", phone: "+7 (999) 111-11-09", comment: newComments[8]},
-  {name: "Анна Федорова", phone: "+7 (999) 111-11-10", comment: newComments[9]},
-  {name: "Владимир Беляев", phone: "+7 (999) 111-11-11", comment: newComments[10]},
-  {name: "Екатерина Никитина", phone: "+7 (999) 111-11-12", comment: newComments[11]},
-  {name: "Андрей Сидоров", phone: "+7 (999) 111-11-13", comment: newComments[12]},
-  {name: "Ирина Григорьева", phone: "+7 (999) 111-11-14", comment: newComments[13]},
-  {name: "Павел Егоров", phone: "+7 (999) 111-11-15", comment: newComments[14]},
-  {name: "Людмила Киселева", phone: "+7 (999) 111-11-16", comment: newComments[15]},
-  {name: "Михаил Козлов", phone: "+7 (999) 111-11-17", comment: newComments[16]},
-  {name: "Светлана Михайлова", phone: "+7 (999) 111-11-18", comment: newComments[17]},
-  {name: "Виктор Фролов", phone: "+7 (999) 111-11-19", comment: newComments[18]},
-  {name: "Оксана Дмитриева", phone: "+7 (999) 111-11-20", comment: newComments[19]},
-  {name: "Роман Кузьмин", phone: "+7 (999) 111-11-21", comment: newComments[0]},
-  {name: "Наталья Алексеева", phone: "+7 (999) 111-11-22", comment: newComments[1]},
-  {name: "Константин Власов", phone: "+7 (999) 111-11-23", comment: newComments[2]},
-  {name: "Алёна Николаева", phone: "+7 (999) 111-11-24", comment: newComments[3]},
-  {name: "Игорь Тимофеев", phone: "+7 (999) 111-11-25", comment: newComments[4]},
-  {name: "Галина Павлова", phone: "+7 (999) 111-11-26", comment: newComments[5]},
-  {name: "Денис Мельников", phone: "+7 (999) 111-11-27", comment: newComments[6]},
-  {name: "Алла Сергеева", phone: "+7 (999) 111-11-28", comment: newComments[7]},
-  {name: "Василий Лебедев", phone: "+7 (999) 111-11-29", comment: newComments[8]},
-  {name: "Евгения Тихонова", phone: "+7 (999) 111-11-30", comment: newComments[9]},
-  {name: "Олег Зайцев", phone: "+7 (999) 111-11-31", comment: newComments[10]},
-  {name: "Нина Орехова", phone: "+7 (999) 111-11-32", comment: newComments[11]},
-  {name: "Вячеслав Соколов", phone: "+7 (999) 111-11-33", comment: newComments[12]},
-  {name: "Лариса Денисова", phone: "+7 (999) 111-11-34", comment: newComments[13]},
-  {name: "Артур Крылов", phone: "+7 (999) 111-11-35", comment: newComments[14]},
-  {name: "Ирина Соловьева", phone: "+7 (999) 111-11-36", comment: newComments[15]},
-  {name: "Дмитрий Климов", phone: "+7 (999) 111-11-37", comment: newComments[16]},
-  {name: "Марина Белова", phone: "+7 (999) 111-11-38", comment: newComments[17]},
-  {name: "Владислав Орлов", phone: "+7 (999) 111-11-39", comment: newComments[18]},
-  {name: "Софья Федотова", phone: "+7 (999) 111-11-40", comment: newComments[19]},
-  {name: "Егор Панфилов", phone: "+7 (999) 111-11-41", comment: newComments[0]},
-  {name: "Олеся Захарова", phone: "+7 (999) 111-11-42", comment: newComments[1]},
-  {name: "Максим Ширяев", phone: "+7 (999) 111-11-43", comment: newComments[2]},
-  {name: "Вероника Борисова", phone: "+7 (999) 111-11-44", comment: newComments[3]},
-  {name: "Артём Дмитриев", phone: "+7 (999) 111-11-45", comment: newComments[4]},
-  {name: "Людмила Соколова", phone: "+7 (999) 111-11-46", comment: newComments[5]},
-  {name: "Никита Романов", phone: "+7 (999) 111-11-47", comment: newComments[6]},
-  {name: "Елена Крылова", phone: "+7 (999) 111-11-48", comment: newComments[7]},
-  {name: "Павел Гусев", phone: "+7 (999) 111-11-49", comment: newComments[8]},
-  {name: "Алина Иванова", phone: "+7 (999) 111-11-50", comment: newComments[9]},
-];
+    const mockData = [
+        {name: "Иван Иванов", phone: "+7 (999) 111-11-01", comment: newComments[0]},
+        {name: "Мария Петрова", phone: "+7 (999) 111-11-02", comment: newComments[1]},
+        {name: "Алексей Смирнов", phone: "+7 (999) 111-11-03", comment: newComments[2]},
+        {name: "Елена Кузнецова", phone: "+7 (999) 111-11-04", comment: newComments[3]},
+        {name: "Дмитрий Соколов", phone: "+7 (999) 111-11-05", comment: newComments[4]},
+        {name: "Ольга Морозова", phone: "+7 (999) 111-11-06", comment: newComments[5]},
+        {name: "Николай Васильев", phone: "+7 (999) 111-11-07", comment: newComments[6]},
+        {name: "Татьяна Орлова", phone: "+7 (999) 111-11-08", comment: newComments[7]},
+        {name: "Сергей Павлов", phone: "+7 (999) 111-11-09", comment: newComments[8]},
+        {name: "Анна Федорова", phone: "+7 (999) 111-11-10", comment: newComments[9]},
+        {name: "Владимир Беляев", phone: "+7 (999) 111-11-11", comment: newComments[10]},
+        {name: "Екатерина Никитина", phone: "+7 (999) 111-11-12", comment: newComments[11]},
+        {name: "Андрей Сидоров", phone: "+7 (999) 111-11-13", comment: newComments[12]},
+        {name: "Ирина Григорьева", phone: "+7 (999) 111-11-14", comment: newComments[13]},
+        {name: "Павел Егоров", phone: "+7 (999) 111-11-15", comment: newComments[14]},
+        {name: "Людмила Киселева", phone: "+7 (999) 111-11-16", comment: newComments[15]},
+        {name: "Михаил Козлов", phone: "+7 (999) 111-11-17", comment: newComments[16]},
+        {name: "Светлана Михайлова", phone: "+7 (999) 111-11-18", comment: newComments[17]},
+        {name: "Виктор Фролов", phone: "+7 (999) 111-11-19", comment: newComments[18]},
+        {name: "Оксана Дмитриева", phone: "+7 (999) 111-11-20", comment: newComments[19]},
+        {name: "Роман Кузьмин", phone: "+7 (999) 111-11-21", comment: newComments[0]},
+        {name: "Наталья Алексеева", phone: "+7 (999) 111-11-22", comment: newComments[1]},
+        {name: "Константин Власов", phone: "+7 (999) 111-11-23", comment: newComments[2]},
+        {name: "Алёна Николаева", phone: "+7 (999) 111-11-24", comment: newComments[3]},
+        {name: "Игорь Тимофеев", phone: "+7 (999) 111-11-25", comment: newComments[4]},
+        {name: "Галина Павлова", phone: "+7 (999) 111-11-26", comment: newComments[5]},
+        {name: "Денис Мельников", phone: "+7 (999) 111-11-27", comment: newComments[6]},
+        {name: "Алла Сергеева", phone: "+7 (999) 111-11-28", comment: newComments[7]},
+        {name: "Василий Лебедев", phone: "+7 (999) 111-11-29", comment: newComments[8]},
+        {name: "Евгения Тихонова", phone: "+7 (999) 111-11-30", comment: newComments[9]},
+        {name: "Олег Зайцев", phone: "+7 (999) 111-11-31", comment: newComments[10]},
+        {name: "Нина Орехова", phone: "+7 (999) 111-11-32", comment: newComments[11]},
+        {name: "Вячеслав Соколов", phone: "+7 (999) 111-11-33", comment: newComments[12]},
+        {name: "Лариса Денисова", phone: "+7 (999) 111-11-34", comment: newComments[13]},
+        {name: "Артур Крылов", phone: "+7 (999) 111-11-35", comment: newComments[14]},
+        {name: "Ирина Соловьева", phone: "+7 (999) 111-11-36", comment: newComments[15]},
+        {name: "Дмитрий Климов", phone: "+7 (999) 111-11-37", comment: newComments[16]},
+        {name: "Марина Белова", phone: "+7 (999) 111-11-38", comment: newComments[17]},
+        {name: "Владислав Орлов", phone: "+7 (999) 111-11-39", comment: newComments[18]},
+        {name: "Софья Федотова", phone: "+7 (999) 111-11-40", comment: newComments[19]},
+        {name: "Егор Панфилов", phone: "+7 (999) 111-11-41", comment: newComments[0]},
+        {name: "Олеся Захарова", phone: "+7 (999) 111-11-42", comment: newComments[1]},
+        {name: "Максим Ширяев", phone: "+7 (999) 111-11-43", comment: newComments[2]},
+        {name: "Вероника Борисова", phone: "+7 (999) 111-11-44", comment: newComments[3]},
+        {name: "Артём Дмитриев", phone: "+7 (999) 111-11-45", comment: newComments[4]},
+        {name: "Людмила Соколова", phone: "+7 (999) 111-11-46", comment: newComments[5]},
+        {name: "Никита Романов", phone: "+7 (999) 111-11-47", comment: newComments[6]},
+        {name: "Елена Крылова", phone: "+7 (999) 111-11-48", comment: newComments[7]},
+        {name: "Павел Гусев", phone: "+7 (999) 111-11-49", comment: newComments[8]},
+        {name: "Алина Иванова", phone: "+7 (999) 111-11-50", comment: newComments[9]},
+    ];
 
-// Если нужно ровно 50, можно циклом дополнить:
-while(mockData.length < 50) {
-  const i = mockData.length % comments.length;
-  mockData.push({
-    name: `Пользователь ${mockData.length + 1}`,
-    phone: `+7 (999) 111-11-${(mockData.length + 1).toString().padStart(2, '0')}`,
-    comment: comments[i]
-  });
-}
+    // Если нужно ровно 50, можно циклом дополнить:
+    while (mockData.length < 50) {
+        const i = mockData.length % comments.length;
+        mockData.push({
+            name: `Пользователь ${mockData.length + 1}`,
+            phone: `+7 (999) 111-11-${(mockData.length + 1).toString().padStart(2, '0')}`,
+            comment: comments[i]
+        });
+    }
 
-document.getElementById('fillMockDataBtn').addEventListener('click', function() {
-  const randomIndex = Math.floor(Math.random() * mockData.length);
-  const data = mockData[randomIndex];
+    document.getElementById('fillMockDataBtn').addEventListener('click', function () {
+        const randomIndex = Math.floor(Math.random() * mockData.length);
+        const data = mockData[randomIndex];
 
-  document.getElementById('clientName').value = data.name;
-  document.getElementById('clientPhone').value = data.phone;
-  document.getElementById('comment').value = data.comment;
-});
+        document.getElementById('clientName').value = data.name;
+        document.getElementById('clientPhone').value = data.phone;
+        document.getElementById('comment').value = data.comment;
+    });
 </script>
 
 <script>
@@ -1423,7 +1550,7 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
         // Initialize modal with proper ARIA attributes
         if (newRequestModal) {
             // Set up event listeners for modal show/hide
-            newRequestModal.addEventListener('show.bs.modal', function() {
+            newRequestModal.addEventListener('show.bs.modal', function () {
                 this.setAttribute('aria-hidden', 'false');
                 document.body.classList.add('modal-open');
                 // Add inert to the rest of the page when modal is open
@@ -1433,7 +1560,7 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
                 }
             });
 
-            newRequestModal.addEventListener('hidden.bs.modal', function() {
+            newRequestModal.addEventListener('hidden.bs.modal', function () {
                 this.setAttribute('aria-hidden', 'true');
                 document.body.classList.remove('modal-open');
                 // Remove inert from the main content when modal is closed
@@ -1589,10 +1716,10 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
         }
 
         // Add real-time validation for comment field
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const commentField = document.getElementById('comment');
             if (commentField) {
-                commentField.addEventListener('input', function() {
+                commentField.addEventListener('input', function () {
                     if (this.value.length < 3 || this.value.length > 1000) {
                         this.classList.add('is-invalid');
                     } else {
@@ -1641,7 +1768,7 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
 
                 // Get all form inputs
                 const formInputs = form.querySelectorAll('input, select, textarea');
-                const data = { _token: '' };
+                const data = {_token: ''};
 
                 // Convert form data to object
                 formInputs.forEach(input => {
@@ -1666,7 +1793,6 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
                         }
                     }
                 });
-
 
 
                 // Process addresses
@@ -1921,11 +2047,13 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
 </script>
 
 <!-- Modal for Closing Request -->
-<div class="modal fade" id="closeRequestModal" tabindex="-1" aria-labelledby="closeRequestModalLabel" aria-hidden="true">
+<div class="modal fade" id="closeRequestModal" tabindex="-1" aria-labelledby="closeRequestModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="closeRequestModalLabel">Закрытие заявки <span id="modalRequestId"></span></h5>
+                <h5 class="modal-title" id="closeRequestModalLabel">Закрытие заявки <span id="modalRequestId"></span>
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -1947,103 +2075,101 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
 </div>
 
 <script>
-// Обработчик для кнопки закрытия заявки в таблице
-document.addEventListener('DOMContentLoaded', function() {
-    // Обработчик для кнопки "Закрыть заявку" в таблице
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.close-request-btn')) {
-            e.preventDefault();
-            const requestId = e.target.closest('.close-request-btn').getAttribute('data-request-id');
-            const modal = new bootstrap.Modal(document.getElementById('closeRequestModal'));
+    // Обработчик для кнопки закрытия заявки в таблице
+    document.addEventListener('DOMContentLoaded', function () {
+        // Обработчик для кнопки "Закрыть заявку" в таблице
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.close-request-btn')) {
+                e.preventDefault();
+                const requestId = e.target.closest('.close-request-btn').getAttribute('data-request-id');
+                const modal = new bootstrap.Modal(document.getElementById('closeRequestModal'));
 
-            // Устанавливаем ID заявки в скрытое поле и заголовок
-            document.getElementById('requestIdToClose').value = requestId;
-            document.getElementById('modalRequestId').textContent = '#' + requestId;
+                // Устанавливаем ID заявки в скрытое поле и заголовок
+                document.getElementById('requestIdToClose').value = requestId;
+                document.getElementById('modalRequestId').textContent = '#' + requestId;
 
-            // Показываем модальное окно
-            modal.show();
-        }
-    });
-
-    // Обработчик для кнопки подтверждения в модальном окне
-    document.getElementById('confirmCloseRequest').addEventListener('click', async function() {
-        const form = document.getElementById('closeRequestForm');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-
-        const requestId = document.getElementById('requestIdToClose').value;
-        const comment = document.getElementById('closeComment').value;
-        const submitBtn = this;
-        const originalBtnText = submitBtn.innerHTML;
-
-        try {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...';
-
-            const response = await fetch(`/requests/${requestId}/close`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    comment: comment,
-                    _token: document.querySelector('input[name="_token"]').value
-                })
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                showAlert('Заявка успешно закрыта', 'success');
-                // Закрываем модальное окно
-                const modal = bootstrap.Modal.getInstance(document.getElementById('closeRequestModal'));
-                modal.hide();
-                // Обновляем страницу
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                throw new Error(result.message || 'Неизвестная ошибка при закрытии заявки');
+                // Показываем модальное окно
+                modal.show();
             }
-        } catch (error) {
-            console.error('Ошибка при закрытии заявки:', error);
-            showAlert(`Ошибка при закрытии заявки: ${error.message}`, 'danger');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
-        }
-    });
-});
+        });
 
-// Функция для отображения уведомлений
-function showAlert(message, type = 'success') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.top = '20px';
-    alertDiv.style.right = '20px';
-    alertDiv.style.zIndex = '2000';
-    alertDiv.role = 'alert';
-    alertDiv.innerHTML = `
+        // Обработчик для кнопки подтверждения в модальном окне
+        document.getElementById('confirmCloseRequest').addEventListener('click', async function () {
+            const form = document.getElementById('closeRequestForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const requestId = document.getElementById('requestIdToClose').value;
+            const comment = document.getElementById('closeComment').value;
+            const submitBtn = this;
+            const originalBtnText = submitBtn.innerHTML;
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...';
+
+                const response = await fetch(`/requests/${requestId}/close`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        comment: comment,
+                        _token: document.querySelector('input[name="_token"]').value
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('Заявка успешно закрыта', 'success');
+                    // Закрываем модальное окно
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('closeRequestModal'));
+                    modal.hide();
+                    // Обновляем страницу
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    throw new Error(result.message || 'Неизвестная ошибка при закрытии заявки');
+                }
+            } catch (error) {
+                console.error('Ошибка при закрытии заявки:', error);
+                showAlert(`Ошибка при закрытии заявки: ${error.message}`, 'danger');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        });
+    });
+
+    // Функция для отображения уведомлений
+    function showAlert(message, type = 'success') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '2000';
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
-    document.body.appendChild(alertDiv);
+        document.body.appendChild(alertDiv);
 
-    // Автоматическое скрытие через 5 секунд
-    setTimeout(() => {
-        const bsAlert = new bootstrap.Alert(alertDiv);
-        bsAlert.close();
-    }, 5000);
-}
+        // Автоматическое скрытие через 5 секунд
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 5000);
+    }
 </script>
 
 
-
-
-
 <!-- Modal for Brigade Details -->
-<div class="modal fade" id="brigadeDetailsModal" tabindex="-1" aria-labelledby="brigadeDetailsModalLabel" aria-hidden="true">
+<div class="modal fade" id="brigadeDetailsModal" tabindex="-1" aria-labelledby="brigadeDetailsModalLabel"
+     aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
