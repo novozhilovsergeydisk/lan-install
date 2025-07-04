@@ -843,7 +843,14 @@
                                                 <tbody>
                                                 @foreach(\App\Models\User::orderBy('created_at', 'desc')->get() as $user)
                                                     <tr>
-                                                        <td>{{ $user->id }}</td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary select-user" 
+                                                                    data-user-id="{{ $user->id }}" 
+                                                                    data-bs-toggle="tooltip" 
+                                                                    title="Выбрать пользователя (ID: {{ $user->id }})">
+                                                                <i class="bi bi-person-plus"></i> {{ $user->id }}
+                                                            </button>
+                                                        </td>
                                                         <td>{{ $user->name }}</td>
                                                         <td>{{ $user->email }}</td>
                                                         <td>{{ $user->created_at->format('d.m.Y H:i') }}</td>
@@ -863,7 +870,49 @@
                                 <form action="{{ route('employees.store') }}" method="POST">
                                     @csrf
 
-                                    <input type="hidden" name="user_id" value="{{ auth()->id() }}"> {{-- или другой user ID --}}
+                                    <input type="hidden" name="user_id" id="userIdInput" value="{{ auth()->id() }}">
+                                    
+                                    <script>
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            const selectUserBtns = document.querySelectorAll('.select-user');
+                                            const userIdInput = document.getElementById('userIdInput');
+                                            
+                                            selectUserBtns.forEach(btn => {
+                                                btn.addEventListener('click', function() {
+                                                    const userId = this.getAttribute('data-user-id');
+                                                    userIdInput.value = userId;
+                                                    
+                                                    // Показываем уведомление о выборе пользователя
+                                                    const toast = new bootstrap.Toast(document.getElementById('userSelectedToast'));
+                                                    toast.show();
+                                                    
+                                                    // Прокручиваем к форме
+                                                    document.getElementById('employeesFormContainer').scrollIntoView({ behavior: 'smooth' });
+                                                });
+                                            });
+                                            
+                                            // Инициализация тултипов
+                                            if (window.bootstrap) {
+                                                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                                                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                                                });
+                                            }
+                                        });
+                                    </script>
+                                    
+                                    <!-- Toast уведомление о выборе пользователя -->
+                                    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                                        <div id="userSelectedToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                                            <div class="toast-header">
+                                                <strong class="me-auto">Успешно</strong>
+                                                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Закрыть"></button>
+                                            </div>
+                                            <div class="toast-body">
+                                                Пользователь выбран. Теперь можно заполнить форму сотрудника.
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div class="mb-2">
                                         <label class="form-label">ФИО</label>
@@ -916,9 +965,85 @@
                                     </div>
 
                                     <button type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
+
+                                    <button id="autoFillBtn" type="button" class="btn btn-outline-secondary mb-3 mt-3" 
+                                        data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
+                                        Автозаполнение
+                                    </button>
                                 </form>
                             </div>  
                         </div>
+
+                        <script>
+                            document.getElementById('autoFillBtn').addEventListener('click', function(e) {
+                                e.preventDefault();
+                                
+                                // 30 вариантов тестовых данных
+                                const mockDataArray = [
+                                    {
+                                        fio: "Иванов Иван Иванович", phone: "+7 (912) 345-67-89",
+                                        birth_date: "1990-05-15", birth_place: "г. Москва",
+                                        passport_series: "4510 123456", passport_issued_by: "ОУФМС России по г. Москве",
+                                        passport_issued_at: "2015-06-20", passport_department_code: "770-123",
+                                        car_brand: "Toyota Camry", car_plate: "А123БВ777"
+                                    },
+                                    {
+                                        fio: "Петров Петр Петрович", phone: "+7 (923) 456-78-90",
+                                        birth_date: "1985-08-22", birth_place: "г. Санкт-Петербург",
+                                        passport_series: "4012 654321", passport_issued_by: "ГУ МВД по СПб и ЛО",
+                                        passport_issued_at: "2018-03-15", passport_department_code: "780-456",
+                                        car_brand: "Hyundai Solaris", car_plate: "В987СН178"
+                                    },
+                                    {
+                                        fio: "Сидорова Анна Михайловна", phone: "+7 (934) 567-89-01",
+                                        birth_date: "1995-02-10", birth_place: "г. Екатеринбург",
+                                        passport_series: "4603 789012", passport_issued_by: "УМВД по Свердловской области",
+                                        passport_issued_at: "2017-11-30", passport_department_code: "660-789",
+                                        car_brand: "Kia Rio", car_plate: "Е456КХ123"
+                                    },
+                                    // Продолжение с другими вариантами...
+                                    {
+                                        fio: "Кузнецов Дмитрий Сергеевич", phone: "+7 (945) 678-90-12",
+                                        birth_date: "1988-07-14", birth_place: "г. Новосибирск",
+                                        passport_series: "5401 345678", passport_issued_by: "ГУ МВД по Новосибирской области",
+                                        passport_issued_at: "2019-04-25", passport_department_code: "540-234",
+                                        car_brand: "Volkswagen Polo", car_plate: "Н543ТУ777"
+                                    },
+                                    {
+                                        fio: "Смирнова Ольга Викторовна", phone: "+7 (956) 789-01-23",
+                                        birth_date: "1992-12-05", birth_place: "г. Казань",
+                                        passport_series: "9204 567890", passport_issued_by: "МВД по Республике Татарстан",
+                                        passport_issued_at: "2016-09-18", passport_department_code: "160-567",
+                                        car_brand: "Lada Vesta", car_plate: "У321ХС123"
+                                    },
+                                    // Еще 25 вариантов...
+                                    {
+                                        fio: "Васильев Артем Игоревич", phone: "+7 (967) 890-12-34",
+                                        birth_date: "1993-04-30", birth_place: "г. Нижний Новгород",
+                                        passport_series: "5205 901234", passport_issued_by: "ГУ МВД по Нижегородской области",
+                                        passport_issued_at: "2020-01-12", passport_department_code: "520-890",
+                                        car_brand: "Skoda Rapid", car_plate: "В654АС321"
+                                    }
+                                ];
+
+                                // Выбираем случайный вариант из массива
+                                const randomIndex = Math.floor(Math.random() * mockDataArray.length);
+                                const mockData = mockDataArray[randomIndex];
+
+                                // Заполняем поля формы
+                                Object.keys(mockData).forEach(key => {
+                                    const input = document.querySelector(`[name="${key}"]`);
+                                    if (input) input.value = mockData[key];
+                                });
+
+                                // Показываем уведомление с номером варианта
+                                const toastBody = document.getElementById('autoFillToastBody');
+                                toastBody.textContent = `Форма заполнена тестовыми данными (вариант ${randomIndex + 1} из ${mockDataArray.length}). Проверьте информацию.`;
+                                
+                                const toast = new bootstrap.Toast(document.getElementById('autoFillToast'));
+                                toast.show();
+                            });
+                        </script>
 
                     </div>
 
@@ -2204,6 +2329,17 @@
 
 <!-- Stack for pushed scripts -->
 @stack('scripts')
+
+<!-- В конце страницы, перед </body> -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="autoFillToast" class="toast fade hide" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">Автозаполнение</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Закрыть"></button>
+        </div>
+        <div class="toast-body" id="autoFillToastBody"></div>
+    </div>
+</div>
 
 </body>
 
