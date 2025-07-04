@@ -206,25 +206,24 @@
                                 <tr>
                                     <th style="width: 1rem;"></th>
                                     <th style="width: 1rem;"></th>
-                                    <th style="width: 10rem;">Дата</th>
-                                    <th style="width: 15rem;">Адрес/Телефон</th>
-                                    <th>Комментарий</th>
-                                    <th>Оператор/Создана</th>
-                                    <th>Бригада</th>
-                                    <th style="width: 16rem;" colspan="2">Действия с заявкой</th>
+                                    <th style="width: 10rem;">Дата исполнения</th>
+                                    <th style="width: 10rem;">Адрес/Телефон</th>
+                                    <th style="width: 30rem;">Комментарий</th>
+                                    <th style="width: 15rem;">Оператор / Дата создания</th>
+                                    <th style="width: 15rem;">Бригада</th>
+                                    <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
+                                    <th style="width: 3rem;"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
 
-                                @foreach ($requests as $request)
+                                @foreach ($requests as $index => $request)
                                     @php
-                                        $formattedDate = $request->request_date
-                                            ? \Carbon\Carbon::parse($request->request_date)->format('d.m.Y, H:i')
-                                            : ($request->created_at ? \Carbon\Carbon::parse($request->created_at)->format('d.m.Y, H:i') : 'Не указана');
-                                        $requestNumber = 'REQ-' . \Carbon\Carbon::parse($request->request_date ?? $request->created_at)->format('dmY, H:i') . '-' . str_pad($request->id, 4, '0', STR_PAD_LEFT);
+                                        $rowNumber = $loop->iteration; 
+                                        // Get the current loop iteration (1-based index)
                                     @endphp
                                     <tr class="align-middle status-row" style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}" data-request-id="{{ $request->id }}">
-                                        <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $request->id }}</td>
+                                        <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
 
                                         <td class="text-center" style="width: 1rem;">
                                             @if($request->status_name !== 'выполнена')
@@ -233,8 +232,8 @@
                                         </td>
                                         <!-- Дата и номер заявки -->
                                         <td>
-                                            <div>{{ $formattedDate }}</div>
-                                            <div class="text-dark" style="font-size: 0.8rem;">{{ $requestNumber }}</div>
+                                            <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
+                                            <div class="text-dark" style="font-size: 0.8rem;">{{ $request->number }}</div>
                                         </td>
 
                                         <!-- Клиент -->
@@ -293,7 +292,7 @@
                                         <!-- Дата выполнения -->
                                         <td>
                                             <span class="brigade-lead-text">{{ $request->operator_name ?? 'Не указан' }}</span><br>
-                                            <span class="brigade-lead-text">{{ $formattedDate }}</span>
+                                            <span class="brigade-lead-text">{{ $request->request_date ? \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') : 'Не указана' }}</span>
                                         </td>
 
                                         <!-- Состав бригады -->
