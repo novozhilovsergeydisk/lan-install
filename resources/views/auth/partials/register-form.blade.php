@@ -44,12 +44,12 @@
                required>
     </div>
 
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary w-100">
-                <i class="bi bi-person-plus me-1"></i> Зарегистрировать пользователя
-            </button>
-        </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-person-plus me-1"></i> Зарегистрировать пользователя
+        </button>
     </div>
+
 </form>
 
 @push('scripts')

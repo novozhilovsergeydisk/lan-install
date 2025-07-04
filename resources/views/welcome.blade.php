@@ -735,9 +735,9 @@ console.error('Ошибка:', error);
                     </div>
 
                     <div class="tab-pane fade" id="users" role="tabpanel">
-                        <div class="row g-4">
+                        <div class="row g-4 flex-nowrap">
                             <!-- Форма регистрации -->
-                            <div class="col-lg-5">
+                            <div id="registerFormContainer" class="col-lg-3">
                                 <div class="card h-100">
                                     <div class="card-header">
                                         <h5 class="mb-0">Добавить нового пользователя</h5>
@@ -749,7 +749,7 @@ console.error('Ошибка:', error);
                             </div>
                             
                             <!-- Таблица пользователей -->
-                            <div class="col-lg-7 mt-3">
+                            <div id="usersTableContainer" class="col-lg-9">
                                 <div class="card h-100">
                                     <div class="card-header">
                                         <h5 class="mb-0">Список пользователей</h5>
@@ -796,7 +796,6 @@ console.error('Ошибка:', error);
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
                     </div>
 
