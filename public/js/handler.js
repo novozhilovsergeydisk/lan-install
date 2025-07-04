@@ -185,7 +185,9 @@ function applyFilters() {
                         row.innerHTML = `
                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${request.id}</td>
                             <td class="text-center" style="width: 1rem;">
+                            ${request.status_name !== 'выполнена' ? `
                                 <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
+                            ` : ''}
                             </td>
                             <td>
                                 <div>${formattedDate}</div>
@@ -266,6 +268,7 @@ function applyFilters() {
 
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
+                                ${request.status_name !== 'выполнена' ? `
                                     <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="${request.id}">
                                         <i class="bi bi-people me-1"></i>Назначить бригаду
                                     </button>
@@ -275,6 +278,7 @@ function applyFilters() {
                                     <button type="button" class="btn btn-sm btn-outline-danger cancel-request-btn p-1" data-request-id="${request.id}">
                                         <i class="bi bi-x-circle me-1"></i>Отменить заявку
                                     </button>
+                                ` : ''}
                                 </div>
                             </td>
 

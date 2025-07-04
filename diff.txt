@@ -1,55 +1,102 @@
-diff --git a/resources/views/auth/partials/register-form.blade.php b/resources/views/auth/partials/register-form.blade.php
-index b386431..d0994fd 100644
---- a/resources/views/auth/partials/register-form.blade.php
-+++ b/resources/views/auth/partials/register-form.blade.php
-@@ -44,12 +44,12 @@ class="form-control"
-                required>
-     </div>
+diff --git a/public/js/handler.js b/public/js/handler.js
+index a82160b..c82945b 100644
+--- a/public/js/handler.js
++++ b/public/js/handler.js
+@@ -185,7 +185,9 @@ function applyFilters() {
+                         row.innerHTML = `
+                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${request.id}</td>
+                             <td class="text-center" style="width: 1rem;">
++                            ${request.status_name !== 'выполнена' ? `
+                                 <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
++                            ` : ''}
+                             </td>
+                             <td>
+                                 <div>${formattedDate}</div>
+@@ -266,6 +268,7 @@ function applyFilters() {
  
--        <div class="col-12">
--            <button type="submit" class="btn btn-primary w-100">
--                <i class="bi bi-person-plus me-1"></i> Зарегистрировать пользователя
--            </button>
--        </div>
-+    <div class="col-12">
-+        <button type="submit" class="btn btn-primary w-100">
-+            <i class="bi bi-person-plus me-1"></i> Зарегистрировать пользователя
-+        </button>
-     </div>
-+
- </form>
+                             <td class="text-nowrap">
+                                 <div class="d-flex flex-column gap-1">
++                                ${request.status_name !== 'выполнена' ? `
+                                     <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="${request.id}">
+                                         <i class="bi bi-people me-1"></i>Назначить бригаду
+                                     </button>
+@@ -275,6 +278,7 @@ function applyFilters() {
+                                     <button type="button" class="btn btn-sm btn-outline-danger cancel-request-btn p-1" data-request-id="${request.id}">
+                                         <i class="bi bi-x-circle me-1"></i>Отменить заявку
+                                     </button>
++                                ` : ''}
+                                 </div>
+                             </td>
  
- @push('scripts')
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index af29732..777a71f 100644
+index 777a71f..71eec2f 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -735,9 +735,9 @@ function loadCities(selectElement) {
-                     </div>
+@@ -227,7 +227,9 @@
+                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $request->id }}</td>
  
-                     <div class="tab-pane fade" id="users" role="tabpanel">
--                        <div class="row g-4">
-+                        <div class="row g-4 flex-nowrap">
-                             <!-- Форма регистрации -->
--                            <div class="col-lg-5">
-+                            <div id="registerFormContainer" class="col-lg-3">
-                                 <div class="card h-100">
-                                     <div class="card-header">
-                                         <h5 class="mb-0">Добавить нового пользователя</h5>
-@@ -749,7 +749,7 @@ function loadCities(selectElement) {
-                             </div>
-                             
-                             <!-- Таблица пользователей -->
--                            <div class="col-lg-7 mt-3">
-+                            <div id="usersTableContainer" class="col-lg-9">
-                                 <div class="card h-100">
-                                     <div class="card-header">
-                                         <h5 class="mb-0">Список пользователей</h5>
-@@ -796,7 +796,6 @@ function loadCities(selectElement) {
-                                     </div>
-                                 </div>
-                             </div>
--                        </div>
+                                         <td class="text-center" style="width: 1rem;">
+-                                            <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
++                                            @if($request->status_name !== 'выполнена')
++                                                <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
++                                            @endif
+                                         </td>
+                                         <!-- Дата и номер заявки -->
+                                         <td>
+@@ -333,6 +335,7 @@ class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
+                                             <!-- Action Buttons Group -->
+                                             <td class="text-nowrap">
+                                                 <div class="d-flex flex-column gap-1">
++                                                @if($request->status_name !== 'выполнена')
+                                                     <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="{{ $request->id }}">
+                                                         <i class="bi bi-people me-1"></i>Назначить бригаду
+                                                     </button>
+@@ -342,6 +345,7 @@ class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
+                                                     <button type="button" class="btn btn-sm btn-outline-danger cancel-request-btn p-1" data-request-id="{{ $request->id }}">
+                                                         <i class="bi bi-x-circle me-1"></i>Отменить заявку
+                                                     </button>
++                                                @endif
+                                                 </div>
+                                             </td>
  
-                     </div>
- 
+@@ -349,18 +353,18 @@ class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
+                                             <td class="text-nowrap">
+                                                 <div class="d-flex flex-column gap-1">
+                                                     @if($request->status_name !== 'выполнена')
+-                                                        <button data-request-id="{{ $request->id }}" type="button"
+-                                                                class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+-                                                            Закрыть заявку
+-                                                        </button>
+-                                                        <button type="button"
+-                                                                id="btn-comment"
+-                                                                class="btn btn-sm btn-outline-primary p-1 comment-btn"
+-                                                                data-bs-toggle="modal"
+-                                                                data-bs-target="#commentsModal"
+-                                                                data-request-id="{{ $request->id }}">
+-                                                            <i class="bi bi-chat-left-text me-1"></i>Комментарий
+-                                                        </button>
++                                                    <button data-request-id="{{ $request->id }}" type="button"
++                                                            class="btn btn-sm btn-custom-brown p-1 close-request-btn">
++                                                        Закрыть заявку
++                                                    </button>
++                                                    <button type="button"
++                                                            id="btn-comment"
++                                                            class="btn btn-sm btn-outline-primary p-1 comment-btn"
++                                                            data-bs-toggle="modal"
++                                                            data-bs-target="#commentsModal"
++                                                            data-request-id="{{ $request->id }}">
++                                                        <i class="bi bi-chat-left-text me-1"></i>Комментарий
++                                                    </button>
+                                                     @endif
+                                                     <button data-request-id="{{ $request->id }}" type="button"
+                                                             class="btn btn-sm btn-outline-success add-photo-btn"
+@@ -1888,7 +1892,9 @@ function createRequestRow(request) {
+             row.innerHTML = `
+                 <td>${request.id}</td>
+                 <td class="text-center">
++                ${request.status_name !== 'выполнена' ? `
+                     <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
++                ` : ''}
+                 </td>
+                 <td>${formattedDate}</td>
+                 <td>${request.number || 'Нет номера'}</td>

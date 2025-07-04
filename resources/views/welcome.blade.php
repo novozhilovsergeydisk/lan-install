@@ -227,7 +227,9 @@
                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $request->id }}</td>
 
                                         <td class="text-center" style="width: 1rem;">
-                                            <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
+                                            @if($request->status_name !== 'выполнена')
+                                                <input type="checkbox" id="request-{{ $request->id }}" class="form-check-input request-checkbox" value="{{ $request->id }}" aria-label="Выбрать заявку">
+                                            @endif
                                         </td>
                                         <!-- Дата и номер заявки -->
                                         <td>
@@ -333,6 +335,7 @@
                                             <!-- Action Buttons Group -->
                                             <td class="text-nowrap">
                                                 <div class="d-flex flex-column gap-1">
+                                                @if($request->status_name !== 'выполнена')
                                                     <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-people me-1"></i>Назначить бригаду
                                                     </button>
@@ -342,6 +345,7 @@
                                                     <button type="button" class="btn btn-sm btn-outline-danger cancel-request-btn p-1" data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-x-circle me-1"></i>Отменить заявку
                                                     </button>
+                                                @endif
                                                 </div>
                                             </td>
 
@@ -349,18 +353,18 @@
                                             <td class="text-nowrap">
                                                 <div class="d-flex flex-column gap-1">
                                                     @if($request->status_name !== 'выполнена')
-                                                        <button data-request-id="{{ $request->id }}" type="button"
-                                                                class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                                                            Закрыть заявку
-                                                        </button>
-                                                        <button type="button"
-                                                                id="btn-comment"
-                                                                class="btn btn-sm btn-outline-primary p-1 comment-btn"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#commentsModal"
-                                                                data-request-id="{{ $request->id }}">
-                                                            <i class="bi bi-chat-left-text me-1"></i>Комментарий
-                                                        </button>
+                                                    <button data-request-id="{{ $request->id }}" type="button"
+                                                            class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                                                        Закрыть заявку
+                                                    </button>
+                                                    <button type="button"
+                                                            id="btn-comment"
+                                                            class="btn btn-sm btn-outline-primary p-1 comment-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#commentsModal"
+                                                            data-request-id="{{ $request->id }}">
+                                                        <i class="bi bi-chat-left-text me-1"></i>Комментарий
+                                                    </button>
                                                     @endif
                                                     <button data-request-id="{{ $request->id }}" type="button"
                                                             class="btn btn-sm btn-outline-success add-photo-btn"
@@ -1888,7 +1892,9 @@ document.getElementById('fillMockDataBtn').addEventListener('click', function() 
             row.innerHTML = `
                 <td>${request.id}</td>
                 <td class="text-center">
+                ${request.status_name !== 'выполнена' ? `
                     <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
+                ` : ''}
                 </td>
                 <td>${formattedDate}</td>
                 <td>${request.number || 'Нет номера'}</td>
