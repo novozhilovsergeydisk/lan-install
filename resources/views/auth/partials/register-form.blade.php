@@ -121,21 +121,66 @@ document.addEventListener('DOMContentLoaded', function() {
                 messagesContainer.appendChild(successAlert);
                 
                 // Добавляем нового пользователя в таблицу
-                const tbody = document.querySelector('#users table tbody');
+                const tbody = document.querySelector('table.table-hover.users-table tbody');
                 if (tbody) {
                     const newRow = document.createElement('tr');
+                    const createdDate = new Date(data.user.created_at);
+                    const formattedDate = createdDate.toLocaleString('ru-RU', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
                     newRow.innerHTML = `
-                        <td>${data.user.id}</td>
-                        <td>${data.user.name}</td>
-                        <td>${data.user.email}</td>
-                        <td>${data.user.created_at}</td>
+                        <td>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-primary select-user" 
+                                    data-user-id="${data.user.id}" 
+                                    data-bs-toggle="tooltip" 
+                                    title="Выбрать пользователя (ID: ${data.user.id})">
+                                <i class="bi bi-person-plus"></i> ${data.user.id}
+                            </button>
+                        </td>
+                        <td>${data.user.name || ''}</td>
+                        <td>${data.user.email || ''}</td>
+                        <td>${formattedDate}</td>
                     `;
+                    
                     // Вставляем новую строку в начало таблицы
                     tbody.insertBefore(newRow, tbody.firstChild);
+                    
+                    // Инициализируем тултип для новой кнопки
+                    if (window.bootstrap) {
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                        tooltipTriggerList.map(function (tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
+                    }
+                    
+                    // Добавляем обработчик события для новой кнопки
+                    const newButton = newRow.querySelector('.select-user');
+                    if (newButton) {
+                        newButton.addEventListener('click', function() {
+                            const userId = this.getAttribute('data-user-id');
+                            const userIdInput = document.getElementById('userIdInput');
+                            if (userIdInput) {
+                                userIdInput.value = userId;
+                                
+                                // Показываем уведомление
+                                const toast = new bootstrap.Toast(document.getElementById('userSelectedToast'));
+                                toast.show();
+                                
+                                // Прокручиваем к форме
+                                document.getElementById('employeesFormContainer').scrollIntoView({ behavior: 'smooth' });
+                            }
+                        });
+                    }
                 }
                 
                 // Прокручиваем к верху таблицы
-                const usersTable = document.querySelector('#users .card');
+                const usersTable = document.querySelector('.table-hover.users-table');
                 if (usersTable) {
                     usersTable.scrollIntoView({ behavior: 'smooth' });
                 }

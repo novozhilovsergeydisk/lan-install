@@ -870,7 +870,7 @@
                                 <form action="{{ route('employees.store') }}" method="POST">
                                     @csrf
 
-                                    <input type="hidden" name="user_id" id="userIdInput" value="{{ auth()->id() }}">
+                                    <input type="hidden" name="user_id" id="userIdInput" value="">
                                     
                                     <script>
                                         document.addEventListener('DOMContentLoaded', function() {
@@ -964,7 +964,9 @@
                                         <input type="text" name="car_plate" class="form-control">
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
+                                    <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
+
+                                    <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3">Изменить</button>
 
                                     <button id="autoFillBtn" type="button" class="btn btn-outline-secondary mb-3 mt-3" 
                                         data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
