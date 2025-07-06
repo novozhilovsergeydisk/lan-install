@@ -30,7 +30,7 @@ async function submitRequestForm() {
     });
 
     const addressId = document.getElementById('addresses_id').value;
-    
+
     if (!addressId) {
         showAlert('Пожалуйста, выберите адрес из списка', 'danger');
         submitBtn.disabled = false;
@@ -56,13 +56,15 @@ async function submitRequestForm() {
     // Логируем данные перед отправкой
     console.log('Отправляемые данные:', requestData);
 
+    // return;
+
     try {
         const result = await postData('/api/requests', requestData);
         if (result.success) {
             showAlert('Заявка успешно создана!', 'success');
             const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
             modal.hide();
-            window.location.reload();
+            // window.location.reload();
         } else {
             throw new Error(result.message || 'Ошибка при создании заявки');
         }

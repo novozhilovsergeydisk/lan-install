@@ -826,6 +826,25 @@ class HomeController extends Controller
                 'address_id' => $input['address_id'] ?? null
             ];
 
+            // Преобразуем user_id в employee_id если нужно
+            if (isset($validationData['operator_id'])) {
+                $employee = \DB::table('employees')
+                    ->where('user_id', $validationData['operator_id'])
+                    ->first();
+                
+                if ($employee) {
+                    $validationData['operator_id'] = $employee->id;
+                    \Log::info('Преобразовали operator_id:', [
+                        'user_id' => $input['operator_id'],
+                        'employee_id' => $employee->id
+                    ]);
+                } else {
+                    \Log::warning('Не найден сотрудник с user_id:', [
+                        'user_id' => $validationData['operator_id']
+                    ]);
+                }
+            }
+
             // Правила валидации
             $rules = [
                 'client_name' => 'nullable|string|max:255',
@@ -839,6 +858,12 @@ class HomeController extends Controller
                 'operator_id' => 'required|exists:employees,id',
                 'address_id' => 'required|exists:addresses,id'
             ];
+
+            // Логируем входные данные для отладки
+            \Log::info('Входные данные для валидации:', [
+                'validationData' => $validationData,
+                'rules' => $rules
+            ]);
 
             // Валидация входных данных
             $validator = \Validator::make($validationData, $rules);
