@@ -1133,7 +1133,108 @@ document.addEventListener('DOMContentLoaded', function () {
     handlerCreateBrigade();
     hanlerAddToBrigade();
     handlerAddEmployee();
+    initUserSelection();
 });
+
+function autoFillEmployeeForm() {
+    document.getElementById('autoFillBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // 30 вариантов тестовых данных
+        const mockDataArray = [
+            {
+                fio: "Лавров Иван Федорович", phone: "+7 (912) 345-67-89",
+                birth_date: "1990-05-15", birth_place: "г. Москва",
+                passport_series: "4510 123456", passport_issued_by: "ОУФМС России по г. Москве",
+                passport_issued_at: "2015-06-20", passport_department_code: "770-123",
+                car_brand: "Toyota Camry", car_plate: "А123БВ777"
+            },
+            {
+                fio: "Петров Алексей Романович", phone: "+7 (923) 456-78-90",
+                birth_date: "1985-08-22", birth_place: "г. Санкт-Петербург",
+                passport_series: "4012 654321", passport_issued_by: "ГУ МВД по СПб и ЛО",
+                passport_issued_at: "2018-03-15", passport_department_code: "780-456",
+                car_brand: "Hyundai Solaris", car_plate: "В987СН178"
+            },
+            {
+                fio: "Сидоров Михаил Александрович", phone: "+7 (934) 567-89-01",
+                birth_date: "1995-02-10", birth_place: "г. Екатеринбург",
+                passport_series: "4603 789012", passport_issued_by: "УМВД по Свердловской области",
+                passport_issued_at: "2017-11-30", passport_department_code: "660-789",
+                car_brand: "Kia Rio", car_plate: "Е456КХ123"
+            },
+            // Продолжение с другими вариантами...
+            {
+                fio: "Кузнецов Дмитрий Сергеевич", phone: "+7 (945) 678-90-12",
+                birth_date: "1988-07-14", birth_place: "г. Новосибирск",
+                passport_series: "5401 345678", passport_issued_by: "ГУ МВД по Новосибирской области",
+                passport_issued_at: "2019-04-25", passport_department_code: "540-234",
+                car_brand: "Volkswagen Polo", car_plate: "Н543ТУ777"
+            },
+            {
+                fio: "Смирнов Олег Владимирович", phone: "+7 (956) 789-01-23",
+                birth_date: "1992-12-05", birth_place: "г. Казань",
+                passport_series: "9204 567890", passport_issued_by: "МВД по Республике Татарстан",
+                passport_issued_at: "2016-09-18", passport_department_code: "160-567",
+                car_brand: "Lada Vesta", car_plate: "У321ХС123"
+            },
+            // Еще 25 вариантов...
+            {
+                fio: "Васильев Артем Игоревич", phone: "+7 (967) 890-12-34",
+                birth_date: "1993-04-30", birth_place: "г. Нижний Новгород",
+                passport_series: "5205 901234", passport_issued_by: "ГУ МВД по Нижегородской области",
+                passport_issued_at: "2020-01-12", passport_department_code: "520-890",
+                car_brand: "Skoda Rapid", car_plate: "В654АС321"
+            }
+        ];
+
+        // Выбираем случайный вариант из массива
+        const randomIndex = Math.floor(Math.random() * mockDataArray.length);
+        const mockData = mockDataArray[randomIndex];
+
+        // Заполняем поля формы
+        Object.keys(mockData).forEach(key => {
+            const input = document.querySelector(`[name="${key}"]`);
+            if (input) input.value = mockData[key];
+        });
+
+        // Показываем уведомление с номером варианта
+        const toastBody = document.getElementById('autoFillToastBody');
+        toastBody.textContent = `Форма заполнена тестовыми данными (вариант ${randomIndex + 1} из ${mockDataArray.length}). Проверьте информацию.`;
+        
+        const toast = new bootstrap.Toast(document.getElementById('autoFillToast'));
+        toast.show();
+    });
+}
+
+autoFillEmployeeForm();
+
+function initUserSelection() {
+    const selectUserBtns = document.querySelectorAll('.select-user');
+    const userIdInput = document.getElementById('userIdInput');
+    
+    selectUserBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            userIdInput.value = userId;
+            
+            // Показываем уведомление о выборе пользователя
+            const toast = new bootstrap.Toast(document.getElementById('userSelectedToast'));
+            toast.show();
+            
+            // Прокручиваем к форме
+            document.getElementById('employeesFormContainer').scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+    
+    // Инициализация тултипов
+    if (window.bootstrap) {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+}
 
 function handlerAddEmployee() {
     console.log('Инициализация обработчика формы сотрудника');
