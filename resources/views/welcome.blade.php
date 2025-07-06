@@ -867,7 +867,7 @@
 
                         <div class="row">
                         <div id="employeesFormContainer" class="col-lg-6">
-                                <form action="{{ route('employees.store') }}" method="POST">
+                                <form id="employeeForm" action="{{ route('employees.store') }}" method="POST" class="needs-validation" novalidate>
                                     @csrf
 
                                     <input type="hidden" name="user_id" id="userIdInput" value="">
@@ -914,63 +914,80 @@
                                         </div>
                                     </div>
 
-                                    <div class="mb-2">
-                                        <label class="form-label">ФИО</label>
-                                        <input type="text" name="fio" class="form-control" required>
-                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">ФИО</label>
+                                                <input type="text" name="fio" class="form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Телефон</label>
+                                                <input type="text" name="phone" class="form-control" required>
+                                            </div>
+                                        </div>
 
-                                    <div class="mb-2">
-                                        <label class="form-label">Телефон</label>
-                                        <input type="text" name="phone" class="form-control">
-                                    </div>
+                                        <div class="col-12">
+                                            <select name="positions" id="positions" class="form-select mb-4" required>
+                                                <option value="">Выберите должность</option>    
+                                                @foreach ($positions as $position)
+                                                    <option value="{{ $position->id }}">{{ $position->name }}</option>
+                                                @endforeach 
+                                            </select>
+                                        </div>
 
-                                    <div class="mb-2">
-                                        <label class="form-label">Дата рождения</label>
-                                        <input type="date" name="birth_date" class="form-control">
-                                    </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Дата рождения</label>
+                                                <input type="date" name="birth_date" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Место рождения</label>
+                                                <input type="text" name="birth_place" class="form-control">
+                                            </div>
+                                        </div>
 
-                                    <div class="mb-2">
-                                        <label class="form-label">Место рождения</label>
-                                        <input type="text" name="birth_place" class="form-control">
-                                    </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Паспорт (серия и номер)</label>
+                                                <input type="text" name="passport_series" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Кем выдан</label>
+                                                <input type="text" name="passport_issued_by" class="form-control">
+                                            </div>
+                                        </div>
 
-                                    <hr>
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Дата выдачи</label>
+                                                <input type="date" name="passport_issued_at" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Код подразделения</label>
+                                                <input type="text" name="passport_department_code" class="form-control">
+                                            </div>
+                                        </div>
 
-                                    <select name="positions" id="positions" class="form-select">
-                                        <option value="">Выберите должность</option>    
-                                        @foreach ($positions as $position)
-                                            <option value="{{ $position->id }}">{{ $position->name }}</option>
-                                        @endforeach 
-                                    </select>
-
-                                    <hr>
-
-                                    <div class="mb-2">
-                                        <label class="form-label">Паспорт (серия и номер)</label>
-                                        <input type="text" name="passport_series" class="form-control">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Кем выдан</label>
-                                        <input type="text" name="passport_issued_by" class="form-control">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Дата выдачи</label>
-                                        <input type="date" name="passport_issued_at" class="form-control">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Код подразделения</label>
-                                        <input type="text" name="passport_department_code" class="form-control">
-                                    </div>
-
-                                    <hr>
-
-                                    <div class="mb-2">
-                                        <label class="form-label">Марка машины</label>
-                                        <input type="text" name="car_brand" class="form-control">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Госномер</label>
-                                        <input type="text" name="car_plate" class="form-control">
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Марка машины</label>
+                                                <input type="text" name="car_brand" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Госномер</label>
+                                                <input type="text" name="car_plate" class="form-control">
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <button id="saveBtn" type="button" class="btn btn-primary w-100 mt-3">Сохранить</button>
@@ -992,21 +1009,21 @@
                                 // 30 вариантов тестовых данных
                                 const mockDataArray = [
                                     {
-                                        fio: "Иванов Иван Иванович", phone: "+7 (912) 345-67-89",
+                                        fio: "Лавров Иван Федорович", phone: "+7 (912) 345-67-89",
                                         birth_date: "1990-05-15", birth_place: "г. Москва",
                                         passport_series: "4510 123456", passport_issued_by: "ОУФМС России по г. Москве",
                                         passport_issued_at: "2015-06-20", passport_department_code: "770-123",
                                         car_brand: "Toyota Camry", car_plate: "А123БВ777"
                                     },
                                     {
-                                        fio: "Петров Петр Петрович", phone: "+7 (923) 456-78-90",
+                                        fio: "Петров Алексей Романович", phone: "+7 (923) 456-78-90",
                                         birth_date: "1985-08-22", birth_place: "г. Санкт-Петербург",
                                         passport_series: "4012 654321", passport_issued_by: "ГУ МВД по СПб и ЛО",
                                         passport_issued_at: "2018-03-15", passport_department_code: "780-456",
                                         car_brand: "Hyundai Solaris", car_plate: "В987СН178"
                                     },
                                     {
-                                        fio: "Сидорова Анна Михайловна", phone: "+7 (934) 567-89-01",
+                                        fio: "Сидоров Михаил Александрович", phone: "+7 (934) 567-89-01",
                                         birth_date: "1995-02-10", birth_place: "г. Екатеринбург",
                                         passport_series: "4603 789012", passport_issued_by: "УМВД по Свердловской области",
                                         passport_issued_at: "2017-11-30", passport_department_code: "660-789",
@@ -1021,7 +1038,7 @@
                                         car_brand: "Volkswagen Polo", car_plate: "Н543ТУ777"
                                     },
                                     {
-                                        fio: "Смирнова Ольга Викторовна", phone: "+7 (956) 789-01-23",
+                                        fio: "Смирнов Олег Владимирович", phone: "+7 (956) 789-01-23",
                                         birth_date: "1992-12-05", birth_place: "г. Казань",
                                         passport_series: "9204 567890", passport_issued_by: "МВД по Республике Татарстан",
                                         passport_issued_at: "2016-09-18", passport_department_code: "160-567",

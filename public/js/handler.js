@@ -53,109 +53,109 @@ function applyFilters() {
             },
             credentials: 'same-origin'
         })
-        .then(async response => {
-            const data = await response.json().catch(() => ({}));
+            .then(async response => {
+                const data = await response.json().catch(() => ({}));
 
-            // Логи ответов отключены
+                // Логи ответов отключены
 
-            if (!response.ok) {
-                const error = new Error(data.message || `Ошибка HTTP: ${response.status}`);
-                error.response = response;
-                error.data = data;
-                throw error;
-            }
-
-            return data;
-        })
-        .then(data => {
-            // Логи ответов отключены
-            if (data) {
-                if (data.success === false) {
-                    // Логи сообщений отключены
-                    showAlert(data.message || 'Ошибка при загрузке заявок', 'danger');
-                    return;
+                if (!response.ok) {
+                    const error = new Error(data.message || `Ошибка HTTP: ${response.status}`);
+                    error.response = response;
+                    error.data = data;
+                    throw error;
                 }
 
-                // Логи данных заявок отключены
+                return data;
+            })
+            .then(data => {
+                // Логи ответов отключены
+                if (data) {
+                    if (data.success === false) {
+                        // Логи сообщений отключены
+                        showAlert(data.message || 'Ошибка при загрузке заявок', 'danger');
+                        return;
+                    }
 
-                // Логируем первую заявку для отладки
-                if (data.data && data.data.length > 0) {
-                    // Отладочные логи полей заявки отключены
-                } else {
-                    console.info('На выбранную дату заявок нет');
-                }
+                    // Логи данных заявок отключены
 
-                const tbody = document.querySelector('table.table-hover tbody');
-                if (!tbody) {
-                    console.error('Не найден элемент tbody для вставки данных');
-                    return;
-                }
+                    // Логируем первую заявку для отладки
+                    if (data.data && data.data.length > 0) {
+                        // Отладочные логи полей заявки отключены
+                    } else {
+                        console.info('На выбранную дату заявок нет');
+                    }
 
-                // Очищаем существующие строки и скрываем сообщение о пустом списке
-                tbody.innerHTML = '';
-                const noRequestsRow = document.getElementById('no-requests-row');
-                if (noRequestsRow) {
-                    noRequestsRow.classList.add('d-none');
-                }
+                    const tbody = document.querySelector('table.table-hover tbody');
+                    if (!tbody) {
+                        console.error('Не найден элемент tbody для вставки данных');
+                        return;
+                    }
 
-                // Добавляем новые строки с данными
-                if (Array.isArray(data.data) && data.data.length > 0) {
-                    // Скрываем сообщение о пустом списке
+                    // Очищаем существующие строки и скрываем сообщение о пустом списке
+                    tbody.innerHTML = '';
                     const noRequestsRow = document.getElementById('no-requests-row');
                     if (noRequestsRow) {
                         noRequestsRow.classList.add('d-none');
                     }
-                    data.data.forEach(request => {
-                        // Отладочная информация
-                        // Логи заявок отключены
 
-                        // Форматируем дату с проверкой на валидность
-                        let formattedDate = 'Не указана';
-                        let requestDate = '';
-                        try {
-                            // Пробуем использовать request_date, если он есть, иначе created_at
-                            const dateStr = request.request_date || request.created_at;
-                            // Логи дат отключены
-
-                            if (dateStr) {
-                                const date = new Date(dateStr);
-                                if (!isNaN(date.getTime())) {
-                                    formattedDate = date.toLocaleDateString('ru-RU', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric'
-                                    });
-
-                                    // Форматируем дату для номера заявки
-                                    requestDate = [
-                                        String(date.getDate()).padStart(2, '0'),
-                                        String(date.getMonth() + 1).padStart(2, '0'),
-                                        date.getFullYear()
-                                    ].join('');
-                                }
-                            }
-                        } catch (e) {
-                            console.error('Ошибка форматирования даты:', e, 'Request:', request);
+                    // Добавляем новые строки с данными
+                    if (Array.isArray(data.data) && data.data.length > 0) {
+                        // Скрываем сообщение о пустом списке
+                        const noRequestsRow = document.getElementById('no-requests-row');
+                        if (noRequestsRow) {
+                            noRequestsRow.classList.add('d-none');
                         }
+                        data.data.forEach(request => {
+                            // Отладочная информация
+                            // Логи заявок отключены
 
-                        // Формируем номер заявки
-                        const requestNumber = request.number ||
-                            `REQ-${requestDate}-${String(request.id).padStart(4, '0')}`;
+                            // Форматируем дату с проверкой на валидность
+                            let formattedDate = 'Не указана';
+                            let requestDate = '';
+                            try {
+                                // Пробуем использовать request_date, если он есть, иначе created_at
+                                const dateStr = request.request_date || request.created_at;
+                                // Логи дат отключены
 
-                        // Формируем адрес
-                        const address = [
-                            request.street ? `ул. ${request.street}` : '',
-                            request.houses ? `д. ${request.houses}` : ''
-                        ].filter(Boolean).join(', ') || 'Не указан';
+                                if (dateStr) {
+                                    const date = new Date(dateStr);
+                                    if (!isNaN(date.getTime())) {
+                                        formattedDate = date.toLocaleDateString('ru-RU', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric'
+                                        });
 
-                        // Создаем строку с составом бригады
-                        let brigadeMembers = 'Не назначена';
-                        if (request.brigade_members && request.brigade_members.length > 0) {
-                            brigadeMembers = request.brigade_members
-                                .map(member => `<div>${member.name || member}</div>`)
-                                .join('');
+                                        // Форматируем дату для номера заявки
+                                        requestDate = [
+                                            String(date.getDate()).padStart(2, '0'),
+                                            String(date.getMonth() + 1).padStart(2, '0'),
+                                            date.getFullYear()
+                                        ].join('');
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Ошибка форматирования даты:', e, 'Request:', request);
+                            }
 
-                            brigadeMembers += `
+                            // Формируем номер заявки
+                            const requestNumber = request.number ||
+                                `REQ-${requestDate}-${String(request.id).padStart(4, '0')}`;
+
+                            // Формируем адрес
+                            const address = [
+                                request.street ? `ул. ${request.street}` : '',
+                                request.houses ? `д. ${request.houses}` : ''
+                            ].filter(Boolean).join(', ') || 'Не указан';
+
+                            // Создаем строку с составом бригады
+                            let brigadeMembers = 'Не назначена';
+                            if (request.brigade_members && request.brigade_members.length > 0) {
+                                brigadeMembers = request.brigade_members
+                                    .map(member => `<div>${member.name || member}</div>`)
+                                    .join('');
+
+                                brigadeMembers += `
                                 <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
                                    style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
                                    onmouseover="this.style.textDecoration='underline'"
@@ -165,21 +165,21 @@ function applyFilters() {
                                    data-brigade-id="${request.brigade_id || ''}">
                                     подробнее...
                                 </a>`;
-                        }
+                            }
 
 
-                        // Создаем HTML строки таблицы
-                        const row = document.createElement('tr');
-                        row.className = 'align-middle status-row';
-                        row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
-                        // Отладочный вывод
-                        // Логи данных запроса отключены
+                            // Создаем HTML строки таблицы
+                            const row = document.createElement('tr');
+                            row.className = 'align-middle status-row';
+                            row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
+                            // Отладочный вывод
+                            // Логи данных запроса отключены
 
-                        row.setAttribute('data-request-id', request.id);
+                            row.setAttribute('data-request-id', request.id);
 
-                        // console.log(request);
+                            // console.log(request);
 
-                        row.innerHTML = `
+                            row.innerHTML = `
                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${request.id}</td>
                             <td class="text-center" style="width: 1rem;">
                             ${request.status_name !== 'выполнена' ? `
@@ -199,7 +199,7 @@ function applyFilters() {
                                     ${request.phone || request.client_phone || ''}
                                 </small>
                             </td>
-                            
+
                             <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
                                 ${(() => {
                                     if (!request.comments) return '---';
@@ -243,11 +243,11 @@ function applyFilters() {
                                             ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ? '' : 'disabled'}>
                                         <i class="bi bi-chat-left-text me-1"></i>Все комментарии
                                         ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ?
-                                            `<span class="badge bg-primary rounded-pill ms-1">
+                                    `<span class="badge bg-primary rounded-pill ms-1">
                                                 ${request.comments_count || (request.comments ? request.comments.length : 0)}
                                             </span>` :
-                                            ''
-                                        }
+                                    ''
+                                }
                                     </button>
                                 </div>
                             </td>
@@ -296,38 +296,38 @@ function applyFilters() {
                             </td>
                         `;
 
-                        tbody.appendChild(row);
-                    });
+                            tbody.appendChild(row);
+                        });
 
-                    // Инициализируем тултипы
-                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                    tooltipTriggerList.map(function (tooltipTriggerEl) {
-                        return new bootstrap.Tooltip(tooltipTriggerEl);
-                    });
-                } else {
-                    // Если данных нет, показываем сообщение
-                    const noRequestsRow = document.getElementById('no-requests-row');
-                    if (noRequestsRow) {
-                        noRequestsRow.classList.remove('d-none');
+                        // Инициализируем тултипы
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                        tooltipTriggerList.map(function (tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
+                    } else {
+                        // Если данных нет, показываем сообщение
+                        const noRequestsRow = document.getElementById('no-requests-row');
+                        if (noRequestsRow) {
+                            noRequestsRow.classList.remove('d-none');
+                        }
                     }
-                }
 
-                // Обновляем счетчик загруженных заявок
-                updateRequestsCount(Array.isArray(data.data) ? data.data.length : 0);
+                    // Обновляем счетчик загруженных заявок
+                    updateRequestsCount(Array.isArray(data.data) ? data.data.length : 0);
 
-                // Обновляем отображение счетчика
-                const countElement = document.querySelector('.requests-count');
-                if (countElement) {
-                    countElement.textContent = data.count || 0;
+                    // Обновляем отображение счетчика
+                    const countElement = document.querySelector('.requests-count');
+                    if (countElement) {
+                        countElement.textContent = data.count || 0;
+                    }
+                    showAlert(`Загружено заявок: ${data.count}`, 'success');
                 }
-                showAlert(`Загружено заявок: ${data.count}`, 'success');
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка при загрузке заявок 2:', error);
-            const errorMessage = error.data?.message || error.message || 'Неизвестная ошибка';
-            showAlert(`Ошибка при загрузке заявок: ${errorMessage}`, 'danger');
-        });
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке заявок 2:', error);
+                const errorMessage = error.data?.message || error.message || 'Неизвестная ошибка';
+                showAlert(`Ошибка при загрузке заявок: ${errorMessage}`, 'danger');
+            });
     }
 
     // Логи фильтров отключены
@@ -415,46 +415,46 @@ function loadStatusButtons() {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Ошибка при загрузке статусов');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success && data.statuses) {
-            const statusButtonsContainer = document.getElementById('status-buttons');
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка при загрузке статусов');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.statuses) {
+                const statusButtonsContainer = document.getElementById('status-buttons');
 
-            // Очищаем контейнер перед добавлением кнопок
-            statusButtonsContainer.innerHTML = '';
+                // Очищаем контейнер перед добавлением кнопок
+                statusButtonsContainer.innerHTML = '';
 
-            // Создаем кнопку для всех статусов
-            const allButton = document.createElement('button');
-            allButton.type = 'button';
-            allButton.className = 'btn btn-outline-secondary btn-sm mb-3';
-            allButton.textContent = 'Все';
-            allButton.dataset.statusId = 'all';
-            allButton.addEventListener('click', () => handleStatusFilterClick('all'));
-            statusButtonsContainer.appendChild(allButton);
+                // Создаем кнопку для всех статусов
+                const allButton = document.createElement('button');
+                allButton.type = 'button';
+                allButton.className = 'btn btn-outline-secondary btn-sm mb-3';
+                allButton.textContent = 'Все';
+                allButton.dataset.statusId = 'all';
+                allButton.addEventListener('click', () => handleStatusFilterClick('all'));
+                statusButtonsContainer.appendChild(allButton);
 
-            // Создаем кнопки для каждого статуса
-            data.statuses.forEach(status => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'btn btn-sm mb-3';
-                button.style.backgroundColor = status.color || '#6c757d';
-                button.style.borderColor = status.color || '#6c757d';
-                button.style.color = getContrastColor(status.color || '#6c757d');
-                button.textContent = status.name;
-                button.dataset.statusId = status.id;
-                button.addEventListener('click', () => handleStatusFilterClick(status.id));
-                statusButtonsContainer.appendChild(button);
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка при загрузке статусов:', error);
-    });
+                // Создаем кнопки для каждого статуса
+                data.statuses.forEach(status => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'btn btn-sm mb-3';
+                    button.style.backgroundColor = status.color || '#6c757d';
+                    button.style.borderColor = status.color || '#6c757d';
+                    button.style.color = getContrastColor(status.color || '#6c757d');
+                    button.textContent = status.name;
+                    button.dataset.statusId = status.id;
+                    button.addEventListener('click', () => handleStatusFilterClick(status.id));
+                    statusButtonsContainer.appendChild(button);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке статусов:', error);
+        });
 }
 
 // Функция для определения контрастного цвета текста
@@ -958,7 +958,7 @@ function initializePage() {
                                 option.value = leader.id;
                                 option.textContent = '[Номер бригады:' + leader.brigade_id + '] ' + leader.name;
                                 option.setAttribute('data-brigade-id', leader.brigade_id),
-                                brigadeLeaderSelect.appendChild(option);
+                                    brigadeLeaderSelect.appendChild(option);
                             });
 
                             // Показываем контейнер с выбором бригадира
@@ -1003,7 +1003,7 @@ function initializePage() {
         });
 
         // Обработчик выбора бригадира
-        brigadeLeaderSelect.addEventListener('change', function() {
+        brigadeLeaderSelect.addEventListener('change', function () {
             const selectedLeaderId = this.value;
             if (selectedLeaderId) {
                 console.log('Выбран бригадир с ID:', selectedLeaderId);
@@ -1066,37 +1066,37 @@ function initRequestButtons() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM полностью загружен');
     initializePage();
-    
+
     // Инициализация кнопок заявок
     initRequestButtons();
 
     // Добавляем обработчик для вкладки заявок
     const requestsTab = document.getElementById('requests-tab');
     if (requestsTab) {
-        requestsTab.addEventListener('click', async function() {
+        requestsTab.addEventListener('click', async function () {
             console.log('Вкладка "Заявки" была нажата');
-            
+
             try {
                 // Запрашиваем актуальный список бригад с сервера
                 const response = await fetch('/api/brigades/current-day');
                 const result = await response.json();
-                
+
                 if (!response.ok) {
                     throw new Error(result.message || 'Ошибка при загрузке списка бригад');
                 }
-                
+
                 // Обновляем выпадающий список
                 const select = document.getElementById('brigade-leader-select');
                 if (select) {
                     // Сохраняем текущее выбранное значение
                     const selectedValue = select.value;
-                    
+
                     // Очищаем список, оставляя только первый элемент
                     select.innerHTML = '<option value="" selected disabled>Выберите бригаду...</option>';
-                    
+
                     // Добавляем новые опции
                     result.data.forEach(brigade => {
                         const option = document.createElement('option');
@@ -1105,12 +1105,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         option.setAttribute('data-brigade-id', brigade.brigade_id);
                         select.appendChild(option);
                     });
-                    
+
                     // Восстанавливаем выбранное значение, если оно есть в новом списке
                     if (selectedValue && Array.from(select.options).some(opt => opt.value === selectedValue)) {
                         select.value = selectedValue;
                     }
-                    
+
                     console.log('Список бригад обновлен');
                 }
             } catch (error) {
@@ -1122,20 +1122,179 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Перехватываем вызов applyFilters для обновления обработчиков после фильтрации
     const originalApplyFilters = window.applyFilters;
-    window.applyFilters = function() {
+    window.applyFilters = function () {
         return originalApplyFilters.apply(this, arguments).then(() => {
             initRequestButtons();
         });
     };
-    
+
 
     setupBrigadeAttachment();
     handlerCreateBrigade();
     hanlerAddToBrigade();
+    handlerAddEmployee();
 });
 
+function handlerAddEmployee() {
+    console.log('Инициализация обработчика формы сотрудника');
+    const form = document.querySelector('form#employeeForm');
+    
+    if (!form) {
+        console.error('Форма сотрудника не найдена');
+        return;
+    }
+
+    // Инициализация обработчика отправки формы
+    initEmployeeForm(form);
+
+    /**
+     * Инициализирует обработчик отправки формы сотрудника
+     * @param {HTMLFormElement} form - Элемент формы
+     */
+    function initEmployeeForm(form) {
+        form.addEventListener('submit', handleEmployeeFormSubmit);
+    }
+
+    /**
+     * Обрабатывает отправку формы сотрудника
+     * @param {Event} e - Событие отправки формы
+     */
+    async function handleEmployeeFormSubmit(e) {
+        e.preventDefault();
+
+        if (!validateForm(this)) {
+            return;
+        }
+
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+
+        try {
+            // Показываем индикатор загрузки
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+
+            console.log(formData);
+            return;
+
+            const response = await fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                handleFormErrors(this, response, data);
+            } else {
+                handleFormSuccess(this);
+            }
+        } catch (error) {
+            console.error('Ошибка при сохранении сотрудника:', error);
+            showAlert(error.message || 'Произошла ошибка при сохранении', 'danger');
+        } finally {
+            // Восстанавливаем состояние кнопки
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    }
+
+    /**
+     * Валидирует форму
+     * @param {HTMLFormElement} form - Элемент формы
+     * @returns {boolean} - Возвращает true, если форма валидна
+     */
+    function validateForm(form) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+
+        if (!isValid) {
+            showAlert('Пожалуйста, заполните все обязательные поля', 'warning');
+        }
+
+        return isValid;
+    }
+
+    /**
+     * Обрабатывает ошибки формы
+     * @param {HTMLFormElement} form - Элемент формы
+     * @param {Response} response - Ответ сервера
+     * @param {Object} data - Данные ответа
+     */
+    function handleFormErrors(form, response, data) {
+        // Обработка ошибок валидации
+        if (response.status === 422 && data.errors) {
+            // Очищаем предыдущие ошибки
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            
+            // Показываем ошибки валидации
+            Object.entries(data.errors).forEach(([field, messages]) => {
+                const input = form.querySelector(`[name="${field}"]`);
+                if (input) {
+                    input.classList.add('is-invalid');
+                    const feedback = input.nextElementSibling || document.createElement('div');
+                    if (!feedback.classList.contains('invalid-feedback')) {
+                        feedback.className = 'invalid-feedback';
+                        input.parentNode.insertBefore(feedback, input.nextSibling);
+                    }
+                    feedback.textContent = messages[0];
+                }
+            });
+            showAlert('Пожалуйста, исправьте ошибки в форме', 'danger');
+        } else {
+            throw new Error(data.message || 'Произошла ошибка при сохранении');
+        }
+    }
+
+    /**
+     * Обрабатывает успешное сохранение формы
+     * @param {HTMLFormElement} form - Элемент формы
+     */
+    function handleFormSuccess(form) {
+        // Успешное сохранение
+        showAlert('Данные сотрудника успешно сохранены', 'success');
+        
+        // Обновляем таблицу сотрудников
+        if (window.loadEmployees) {
+            loadEmployees();
+        }
+        
+        // Сбрасываем форму
+        form.reset();
+    }
+
+    // Обработчик для кнопки "Изменить"
+    const editBtn = document.getElementById('editBtn');
+    if (editBtn) {
+        editBtn.addEventListener('click', function () {
+            // Разблокируем поля для редактирования
+            document.querySelectorAll('form input, form select').forEach(input => {
+                input.readOnly = false;
+            });
+
+            // Показываем кнопку "Сохранить" и скрываем "Изменить"
+            this.classList.add('d-none');
+            document.getElementById('saveBtn').classList.remove('d-none');
+        });
+    }
+}
+
 function hanlerAddToBrigade() {
-    document.getElementById('addToBrigadeBtn').addEventListener('click', function() {
+    document.getElementById('addToBrigadeBtn').addEventListener('click', function () {
         const select = document.getElementById('employeesSelect');
         const brigadeMembers = document.getElementById('brigadeMembers');
         const selectedOptions = Array.from(select.selectedOptions);
@@ -1154,7 +1313,7 @@ function hanlerAddToBrigade() {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'btn btn-sm btn-outline-danger';
                 deleteBtn.innerHTML = '&times;';
-                deleteBtn.onclick = function() {
+                deleteBtn.onclick = function () {
                     memberDiv.remove();
                     // Разблокируем опцию в селекте
                     option.selected = false;
@@ -1186,80 +1345,80 @@ function hanlerAddToBrigade() {
 }
 
 function handlerCreateBrigade() {
-        const createBtn = document.getElementById('createBrigadeBtn');
+    const createBtn = document.getElementById('createBrigadeBtn');
 
-        if (createBtn) {
-            createBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.clear();
+    if (createBtn) {
+        createBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            console.clear();
 
-                // Получаем данные формы
-                const form = document.getElementById('brigadeForm');
-                if (!form) {
-                    console.error('Форма не найдена');
-                    return;
-                }
+            // Получаем данные формы
+            const form = document.getElementById('brigadeForm');
+            if (!form) {
+                console.error('Форма не найдена');
+                return;
+            }
 
-                const formData = new FormData(form);
+            const formData = new FormData(form);
 
-                // Собираем все данные формы в объект
-                const formValues = {};
-                for (let [key, value] of formData.entries()) {
-                    // Обрабатываем массивы (например, brigade_members[])
-                    if (key.endsWith('[]')) {
-                        const baseKey = key.slice(0, -2);
-                        if (!formValues[baseKey]) {
-                            formValues[baseKey] = [];
-                        }
-                        formValues[baseKey].push(value);
-                    } else {
-                        formValues[key] = value;
+            // Собираем все данные формы в объект
+            const formValues = {};
+            for (let [key, value] of formData.entries()) {
+                // Обрабатываем массивы (например, brigade_members[])
+                if (key.endsWith('[]')) {
+                    const baseKey = key.slice(0, -2);
+                    if (!formValues[baseKey]) {
+                        formValues[baseKey] = [];
                     }
+                    formValues[baseKey].push(value);
+                } else {
+                    formValues[key] = value;
                 }
+            }
 
-                // Получаем дополнительную информацию о выбранных сотрудниках
-                const brigadeMembers = document.querySelectorAll('#brigadeMembers [name="brigade_members[]"]');
-                const membersInfo = Array.from(brigadeMembers).map(member => ({
-                    id: parseInt(member.value),
-                    employee_id: parseInt(member.dataset.employeeId)
-                }));
+            // Получаем дополнительную информацию о выбранных сотрудниках
+            const brigadeMembers = document.querySelectorAll('#brigadeMembers [name="brigade_members[]"]');
+            const membersInfo = Array.from(brigadeMembers).map(member => ({
+                id: parseInt(member.value),
+                employee_id: parseInt(member.dataset.employeeId)
+            }));
 
-                // Формируем итоговый JSON
-                const formJson = {
-                    formData: formValues,
-                    members: membersInfo,
-                    metadata: {
-                        totalMembers: membersInfo.length,
-                        hasLeader: !!formValues.leader_id,
-                        timestamp: new Date().toISOString()
-                    }
-                };
-
-                // Выводим JSON в консоль
-                console.log('=== ДАННЫЕ ФОРМЫ В ФОРМАТЕ JSON ===');
-                console.log(JSON.stringify(formJson, null, 2));
-
-                // Проверяем обязательные поля
-                if (!formValues.leader_id) {
-                    showAlert('Пожалуйста, выберите бригадира', 'warning');
-                    return;
+            // Формируем итоговый JSON
+            const formJson = {
+                formData: formValues,
+                members: membersInfo,
+                metadata: {
+                    totalMembers: membersInfo.length,
+                    hasLeader: !!formValues.leader_id,
+                    timestamp: new Date().toISOString()
                 }
+            };
 
-                if (membersInfo.length === 0) {
-                    showAlert('Пожалуйста, добавьте хотя бы одного сотрудника в бригаду', 'warning');
-                    return;
-                }
+            // Выводим JSON в консоль
+            console.log('=== ДАННЫЕ ФОРМЫ В ФОРМАТЕ JSON ===');
+            console.log(JSON.stringify(formJson, null, 2));
 
-                showAlert('Данные формы успешно обработаны!', 'success');
+            // Проверяем обязательные поля
+            if (!formValues.leader_id) {
+                showAlert('Пожалуйста, выберите бригадира', 'warning');
+                return;
+            }
 
-                // Функция для загрузки списка бригад
-window.loadBrigadesList = async () => {
-    try {
-        const brigadesList = document.getElementById('brigadesList');
-        if (!brigadesList) return;
+            if (membersInfo.length === 0) {
+                showAlert('Пожалуйста, добавьте хотя бы одного сотрудника в бригаду', 'warning');
+                return;
+            }
 
-        // Показываем индикатор загрузки
-        brigadesList.innerHTML = `
+            showAlert('Данные формы успешно обработаны!', 'success');
+
+            // Функция для загрузки списка бригад
+            window.loadBrigadesList = async () => {
+                try {
+                    const brigadesList = document.getElementById('brigadesList');
+                    if (!brigadesList) return;
+
+                    // Показываем индикатор загрузки
+                    brigadesList.innerHTML = `
             <div class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Загрузка...</span>
@@ -1267,26 +1426,26 @@ window.loadBrigadesList = async () => {
                 <p class="mt-2 mb-0">Загрузка списка бригад...</p>
             </div>`;
 
-        const response = await fetch('/api/brigades');
-        if (!response.ok) {
-            throw new Error('Ошибка при загрузке списка бригад');
-        }
+                    const response = await fetch('/api/brigades');
+                    if (!response.ok) {
+                        throw new Error('Ошибка при загрузке списка бригад');
+                    }
 
-        const brigades = await response.json();
+                    const brigades = await response.json();
 
-        if (brigades.length === 0) {
-            brigadesList.innerHTML = `
+                    if (brigades.length === 0) {
+                        brigadesList.innerHTML = `
                 <div class="text-center py-4">
                     <p class="text-muted">Список бригад пуст</p>
                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createBrigadeModal">
                         <i class="bi bi-plus-circle"></i> Создать бригаду
                     </button>
                 </div>`;
-            return;
-        }
+                        return;
+                    }
 
-        // Формируем HTML для списка бригад
-        let html = `
+                    // Формируем HTML для списка бригад
+                    let html = `
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">Список бригад</h5>
                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createBrigadeModal">
@@ -1294,8 +1453,8 @@ window.loadBrigadesList = async () => {
                 </button>
             </div>`;
 
-        brigades.forEach(brigade => {
-            html += `
+                    brigades.forEach(brigade => {
+                        html += `
             <div class="list-group-item list-group-item-action" data-brigade-id="${brigade.id}">
                 <div class="d-flex w-100 justify-content-between">
                     <h6 class="mb-1">${brigade.name}</h6>
@@ -1304,27 +1463,27 @@ window.loadBrigadesList = async () => {
                 <p class="mb-1">Бригадир: ${brigade.leader_name || 'Не назначен'}</p>
                 <small>Участников: ${brigade.members_count || 0}</small>
             </div>`;
-        });
+                    });
 
-        brigadesList.innerHTML = html;
-    } catch (error) {
-        console.error('Ошибка при загрузке списка бригад:', error);
-        const brigadesList = document.getElementById('brigadesList');
-        if (brigadesList) {
-            brigadesList.innerHTML = `
+                    brigadesList.innerHTML = html;
+                } catch (error) {
+                    console.error('Ошибка при загрузке списка бригад:', error);
+                    const brigadesList = document.getElementById('brigadesList');
+                    if (brigadesList) {
+                        brigadesList.innerHTML = `
                 <div class="alert alert-danger">
                     Ошибка при загрузке списка бригад. <button class="btn btn-link p-0" onclick="loadBrigadesList()">Повторить</button>
                 </div>`;
-        }
-    }
-};
+                    }
+                }
+            };
 
-// Вспомогательная функция для создания элемента бригады
-function createBrigadeElement(brigade) {
-    const div = document.createElement('div');
-    div.className = 'list-group-item list-group-item-action';
-    div.dataset.brigadeId = brigade.id;
-    div.innerHTML = `
+            // Вспомогательная функция для создания элемента бригады
+            function createBrigadeElement(brigade) {
+                const div = document.createElement('div');
+                div.className = 'list-group-item list-group-item-action';
+                div.dataset.brigadeId = brigade.id;
+                div.innerHTML = `
         <div class="d-flex w-100 justify-content-between">
             <h6 class="mb-1">${brigade.name}</h6>
             <small>ID: ${brigade.id}</small>
@@ -1332,166 +1491,166 @@ function createBrigadeElement(brigade) {
         <p class="mb-1">Бригадир: ${brigade.leader_name || 'Не назначен'}</p>
         <small>Участников: ${brigade.members_count || 0}</small>
     `;
-    return div;
-}
+                return div;
+            }
 
-// Функция для обновления списка после создания новой бригады
-window.updateBrigadesList = (newBrigade) => {
-    try {
-        const brigadesList = document.getElementById('brigadesList');
-        if (!brigadesList) {
-            console.log('Элемент с id="brigadesList" не найден');
-            return;
-        }
+            // Функция для обновления списка после создания новой бригады
+            window.updateBrigadesList = (newBrigade) => {
+                try {
+                    const brigadesList = document.getElementById('brigadesList');
+                    if (!brigadesList) {
+                        console.log('Элемент с id="brigadesList" не найден');
+                        return;
+                    }
 
-        // Создаем новый элемент списка
-        const newItem = createBrigadeElement(newBrigade);
+                    // Создаем новый элемент списка
+                    const newItem = createBrigadeElement(newBrigade);
 
-        // Получаем все существующие элементы списка
-        const existingItems = brigadesList.querySelectorAll('.list-group-item');
+                    // Получаем все существующие элементы списка
+                    const existingItems = brigadesList.querySelectorAll('.list-group-item');
 
-        // Если есть существующие элементы, вставляем новый перед первым
-        if (existingItems.length > 0) {
-            existingItems[0].before(newItem);
-        } else {
-            // Иначе создаем новый список
-            const listGroup = document.createElement('div');
-            listGroup.className = 'list-group';
-            listGroup.appendChild(newItem);
+                    // Если есть существующие элементы, вставляем новый перед первым
+                    if (existingItems.length > 0) {
+                        existingItems[0].before(newItem);
+                    } else {
+                        // Иначе создаем новый список
+                        const listGroup = document.createElement('div');
+                        listGroup.className = 'list-group';
+                        listGroup.appendChild(newItem);
 
-            // Добавляем заголовок, если его нет
-            if (!brigadesList.querySelector('h5')) {
-                const header = document.createElement('div');
-                header.className = 'd-flex justify-content-between align-items-center mb-3';
-                header.innerHTML = `
+                        // Добавляем заголовок, если его нет
+                        if (!brigadesList.querySelector('h5')) {
+                            const header = document.createElement('div');
+                            header.className = 'd-flex justify-content-between align-items-center mb-3';
+                            header.innerHTML = `
                     <h5 class="mb-0">Список бригад</h5>
                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createBrigadeModal">
                         <i class="bi bi-plus-circle"></i> Новая бригада
                     </button>
                 `;
-                brigadesList.prepend(header);
-            }
+                            brigadesList.prepend(header);
+                        }
 
-            // Добавляем список, если его нет
-            if (!brigadesList.querySelector('.list-group')) {
-                brigadesList.appendChild(listGroup);
-            } else {
-                brigadesList.querySelector('.list-group').prepend(newItem);
-            }
-        }
-
-        // Удаляем сообщения о загрузке и пустом списке
-        const loadingMessages = brigadesList.querySelectorAll('.text-center.py-4, .text-muted');
-        loadingMessages.forEach(msg => msg.remove());
-
-    } catch (error) {
-        console.error('Ошибка при обновлении списка бригад:', error);
-        // В случае ошибки просто перезагружаем список полностью
-        if (typeof loadBrigadesList === 'function') {
-            loadBrigadesList();
-        }
-    }
-};
-
-// Загружаем список бригад при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    // Загружаем список бригад при открытии вкладки
-    const teamsTab = document.querySelector('a[data-bs-target="#teams"]');
-    if (teamsTab) {
-        teamsTab.addEventListener('shown.bs.tab', () => {
-            loadBrigadesList();
-        });
-    }
-});
-
-// Функция для отправки данных на сервер
-                const createBrigade = async () => {
-                    try {
-                        console.log('Отправка запроса на создание бригады...');
-                        const requestData = {
-                            ...formJson.formData,
-                            members: formJson.members.map(m => m.employee_id)
-                        };
-                        console.log('Данные для отправки:', requestData);
-
-                        const response = await fetch('/brigades', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': formJson.formData._token,
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            body: JSON.stringify(requestData)
-                        });
-
-                        // Проверяем Content-Type ответа
-                        const contentType = response.headers.get('content-type');
-                        let data;
-
-                        if (contentType && contentType.includes('application/json')) {
-                            data = await response.json();
+                        // Добавляем список, если его нет
+                        if (!brigadesList.querySelector('.list-group')) {
+                            brigadesList.appendChild(listGroup);
                         } else {
-                            const text = await response.text();
-                            console.error('Ожидался JSON, но получен:', text);
-                            throw new Error('Сервер вернул неожиданный ответ. Проверьте консоль для деталей.');
+                            brigadesList.querySelector('.list-group').prepend(newItem);
                         }
-
-                        if (!response.ok) {
-                            throw new Error(data.message || `Ошибка ${response.status}: ${response.statusText}`);
-                        }
-
-                        console.log('Ответ сервера:', data);
-                        if (data.success) {
-                            showAlert('Бригада успешно создана!', 'success');
-
-                            // Закрываем модальное окно, если оно открыто
-                            const modal = bootstrap.Modal.getInstance(document.getElementById('createBrigadeModal'));
-                            if (modal) {
-                                modal.hide();
-                            }
-
-                            // Очищаем форму
-                            const form = document.getElementById('brigadeForm');
-                            if (form) {
-                                form.reset();
-                            }
-
-                            // Обновляем список бригад
-                            if (typeof window.updateBrigadesList === 'function') {
-                                window.updateBrigadesList(data.brigade);
-                            } else {
-                                // Если функция обновления не определена, перезагружаем страницу
-                                console.warn('Функция updateBrigadesList не найдена, выполняется перезагрузка страницы');
-                                setTimeout(() => window.location.reload(), 1000);
-                            }
-
-                        } else {
-                            throw new Error(data.message || 'Неизвестная ошибка сервера');
-                        }
-
-                    } catch (error) {
-                        console.error('Ошибка при создании бригады:', error);
-                        console.error('Полный стек ошибки:', error.stack);
-                        showAlert(`Ошибка: ${error.message}`, 'danger');
                     }
-                };
 
-                // Вызываем функцию создания бригады
-                createBrigade();
+                    // Удаляем сообщения о загрузке и пустом списке
+                    const loadingMessages = brigadesList.querySelectorAll('.text-center.py-4, .text-muted');
+                    loadingMessages.forEach(msg => msg.remove());
 
-                // Для отправки формы раскомментируйте строку ниже
-                // form.submit();
+                } catch (error) {
+                    console.error('Ошибка при обновлении списка бригад:', error);
+                    // В случае ошибки просто перезагружаем список полностью
+                    if (typeof loadBrigadesList === 'function') {
+                        loadBrigadesList();
+                    }
+                }
+            };
+
+            // Загружаем список бригад при загрузке страницы
+            document.addEventListener('DOMContentLoaded', () => {
+                // Загружаем список бригад при открытии вкладки
+                const teamsTab = document.querySelector('a[data-bs-target="#teams"]');
+                if (teamsTab) {
+                    teamsTab.addEventListener('shown.bs.tab', () => {
+                        loadBrigadesList();
+                    });
+                }
             });
-        } else {
-            console.warn('Кнопка createBrigadeBtn не найдена');
-        }
+
+            // Функция для отправки данных на сервер
+            const createBrigade = async () => {
+                try {
+                    console.log('Отправка запроса на создание бригады...');
+                    const requestData = {
+                        ...formJson.formData,
+                        members: formJson.members.map(m => m.employee_id)
+                    };
+                    console.log('Данные для отправки:', requestData);
+
+                    const response = await fetch('/brigades', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': formJson.formData._token,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+
+                    // Проверяем Content-Type ответа
+                    const contentType = response.headers.get('content-type');
+                    let data;
+
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        const text = await response.text();
+                        console.error('Ожидался JSON, но получен:', text);
+                        throw new Error('Сервер вернул неожиданный ответ. Проверьте консоль для деталей.');
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(data.message || `Ошибка ${response.status}: ${response.statusText}`);
+                    }
+
+                    console.log('Ответ сервера:', data);
+                    if (data.success) {
+                        showAlert('Бригада успешно создана!', 'success');
+
+                        // Закрываем модальное окно, если оно открыто
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('createBrigadeModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+
+                        // Очищаем форму
+                        const form = document.getElementById('brigadeForm');
+                        if (form) {
+                            form.reset();
+                        }
+
+                        // Обновляем список бригад
+                        if (typeof window.updateBrigadesList === 'function') {
+                            window.updateBrigadesList(data.brigade);
+                        } else {
+                            // Если функция обновления не определена, перезагружаем страницу
+                            console.warn('Функция updateBrigadesList не найдена, выполняется перезагрузка страницы');
+                            setTimeout(() => window.location.reload(), 1000);
+                        }
+
+                    } else {
+                        throw new Error(data.message || 'Неизвестная ошибка сервера');
+                    }
+
+                } catch (error) {
+                    console.error('Ошибка при создании бригады:', error);
+                    console.error('Полный стек ошибки:', error.stack);
+                    showAlert(`Ошибка: ${error.message}`, 'danger');
+                }
+            };
+
+            // Вызываем функцию создания бригады
+            createBrigade();
+
+            // Для отправки формы раскомментируйте строку ниже
+            // form.submit();
+        });
+    } else {
+        console.warn('Кнопка createBrigadeBtn не найдена');
+    }
 }
 
 // Функция для настройки прикрепления бригады к заявке
 function setupBrigadeAttachment() {
     // Обработчик изменения состояния чекбоксов заявок
-    document.addEventListener('change', function(e) {
+    document.addEventListener('change', function (e) {
         if (e.target && e.target.matches('input[type="checkbox"].request-checkbox')) {
             const brigadeSelect = document.getElementById('brigade-leader-select');
             const attachButton = document.getElementById('attach-brigade-button');
@@ -1510,7 +1669,7 @@ function setupBrigadeAttachment() {
                         button.style.whiteSpace = 'nowrap'; // Предотвращаем перенос текста
                         button.style.marginTop = '-12px'; // Выравнивание по вертикали с селектом
                         button.textContent = 'Прикрепить бригаду к заявке';
-                        button.onclick = async function() {
+                        button.onclick = async function () {
                             const select = document.getElementById('brigade-leader-select');
                             const checkedCheckbox = document.querySelector('input[type="checkbox"].request-checkbox:checked');
 
@@ -1566,8 +1725,8 @@ function setupBrigadeAttachment() {
 
                                 if (!updateResponse.ok) {
                                     const errorMessage = updateData.message ||
-                                                       updateData.error ||
-                                                       (updateData.error_details ? JSON.stringify(updateData.error_details) : 'Неизвестная ошибка');
+                                        updateData.error ||
+                                        (updateData.error_details ? JSON.stringify(updateData.error_details) : 'Неизвестная ошибка');
                                     throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
                                 }
 
@@ -1604,7 +1763,7 @@ function setupBrigadeAttachment() {
         }
     });
     // Обработчик изменения состояния чекбоксов
-    document.addEventListener('change', function(e) {
+    document.addEventListener('change', function (e) {
         if (e.target && e.target.matches('.request-checkbox')) {
             const checkbox = e.target;
             const requestId = checkbox.value;
@@ -1628,7 +1787,7 @@ function setupBrigadeAttachment() {
                     button.style.marginLeft = '10px';
 
                     // Моковый обработчик
-                    button.addEventListener('click', function() {
+                    button.addEventListener('click', function () {
                         console.log('Кнопка нажата для заявки', requestId);
                         console.log('Выбран бригадир с ID:', brigadeSelect.value);
                     });

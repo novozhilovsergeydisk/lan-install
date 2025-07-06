@@ -25,6 +25,7 @@
         <input type="email" name="email" id="email"
                class="form-control"
                placeholder="Введите email"
+               autocomplete="username"
                value="{{ old('email') }}" required>
     </div>
 
@@ -33,6 +34,7 @@
         <input type="password" name="password" id="password"
                class="form-control"
                placeholder="Введите пароль"
+               autocomplete="new-password"
                required>
     </div>
 
@@ -41,6 +43,7 @@
         <input type="password" name="password_confirmation" id="password_confirmation"
                class="form-control"
                placeholder="Подтвердите пароль"
+               autocomplete="new-password"
                required>
     </div>
 
