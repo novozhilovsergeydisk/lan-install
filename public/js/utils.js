@@ -65,11 +65,37 @@ async function postData(url, body) {
             credentials: 'same-origin'
         });
 
-        if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`);
-        return await response.json();
+        const responseData = await response.json();
+
+        if (!response.ok) {
+            if (response.status === 422) {
+                // Проверяем сообщение об ошибке от сервера
+                if (responseData.message && responseData.message.includes('Сотрудник не найден')) {
+                    showAlert('Необходимо создать сотрудника для данного пользователя', 'danger');
+                    throw new Error('EMPLOYEE_NOT_FOUND');
+                }
+                // Проверяем ошибки валидации для operator_id
+                if (responseData.errors && responseData.errors.operator_id) {
+                    const errorMessage = responseData.errors.operator_id[0];
+                    if (errorMessage.includes('employee') || errorMessage.includes('not found')) {
+                        showAlert('Необходимо создать сотрудника для данного пользователя', 'danger');
+                        throw new Error('EMPLOYEE_NOT_FOUND');
+                    }
+                }
+                // Для других ошибок валидации показываем первое сообщение об ошибке
+                const firstError = responseData.message || Object.values(responseData.errors || {}).flat()[0];
+                showAlert(firstError || 'Ошибка валидации данных', 'danger');
+                throw new Error(firstError || 'Ошибка валидации данных');
+            }
+            // Обработка других HTTP ошибок
+            throw new Error(responseData.message || `Ошибка сервера: ${response.status}`);
+        }
+        return responseData;
     } catch (error) {
         console.error('Ошибка отправки:', error);
-        showAlert(`Ошибка отправки данных: ${error.message}`, 'danger');
+        if (error.message !== 'EMPLOYEE_NOT_FOUND') {
+            showAlert(error.message || 'Произошла ошибка при отправке данных', 'danger');
+        }
         throw error;
     }
 }

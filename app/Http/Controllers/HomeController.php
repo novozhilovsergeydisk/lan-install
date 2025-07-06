@@ -812,6 +812,14 @@ class HomeController extends Controller
             // Получаем данные из запроса
             $input = $request->all();
 
+            $isImployeeExists = DB::table('employees')
+                ->where('user_id', $input['operator_id'])
+                ->exists();
+
+            if (!$isImployeeExists) {
+                throw new \Exception('Сотрудник не найден, нужно создать нового сотрудника');
+            }
+
             // Формируем массив для валидации
             $validationData = [
                 'client_name' => $input['client_name'] ?? null,

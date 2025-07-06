@@ -83,7 +83,11 @@ async function submitRequestForm() {
             throw new Error(result.message || 'Ошибка при создании заявки');
         }
     } catch (error) {
-        showAlert(error.message || 'Произошла ошибка при создании заявки', 'danger');
+        // Не показываем сообщение об ошибке, если это ошибка "Сотрудник не найден"
+        // так как мы уже показали alert в функции postData
+        if (error.message !== 'EMPLOYEE_NOT_FOUND') {
+            showAlert(error.message || 'Произошла ошибка при создании заявки', 'danger');
+        }
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Создать заявку';
