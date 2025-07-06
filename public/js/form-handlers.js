@@ -64,7 +64,21 @@ async function submitRequestForm() {
             showAlert('Заявка успешно создана!', 'success');
             const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
             modal.hide();
-            // window.location.reload();
+            
+            // Reset the form
+            form.reset();
+            
+            // Dispatch event to notify other components about the new request
+            const event = new CustomEvent('requestCreated', { detail: result.data });
+            document.dispatchEvent(event);
+            
+            // If there's a refreshRequestsTable function, call it
+            if (typeof window.refreshRequestsTable === 'function') {
+                window.refreshRequestsTable();
+            } else {
+                // Fallback to page reload if the function doesn't exist
+                window.location.reload();
+            }
         } else {
             throw new Error(result.message || 'Ошибка при создании заявки');
         }

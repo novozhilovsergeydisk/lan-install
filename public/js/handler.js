@@ -23,6 +23,19 @@ const filterState = {
     date: null
 };
 
+// Функция для обновления таблицы заявок
+window.refreshRequestsTable = function() {
+    console.log('Обновление таблицы заявок...');
+    
+    // Если есть активная дата, используем её для фильтрации
+    if (filterState.date) {
+        applyFilters();
+    } else {
+        // Иначе просто перезагружаем страницу
+        window.location.reload();
+    }
+};
+
 // Функция для применения фильтров
 function applyFilters() {
     // Собираем все выбранные фильтры
@@ -32,7 +45,7 @@ function applyFilters() {
         date: filterState.date
     };
 
-    // Логи фильтров отключены
+    console.log('Применение фильтров:', activeFilters);
 
     // Если выбрана дата, делаем запрос на сервер
     if (filterState.date) {

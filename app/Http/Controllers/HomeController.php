@@ -831,7 +831,7 @@ class HomeController extends Controller
                 $employee = \DB::table('employees')
                     ->where('user_id', $validationData['operator_id'])
                     ->first();
-                
+
                 if ($employee) {
                     $validationData['operator_id'] = $employee->id;
                     \Log::info('Преобразовали operator_id:', [
@@ -987,6 +987,8 @@ class HomeController extends Controller
                 ]
             );
 
+            $requestId = $result[0]->id;
+
             \Log::info('Результат вставки заявки:', ['result' => $result, 'type' => gettype($result)]);
 
             if (empty($result)) {
@@ -1059,6 +1061,32 @@ class HomeController extends Controller
                 'address_id' => $addressId
             ]);
 
+            // 🔽 Комплексный запрос получения списка заявок с подключением к employees
+            $requestById = DB::select('
+                SELECT
+                    r.*,
+                    c.fio AS client_fio,
+                    c.phone AS client_phone,
+                    rs.name AS status_name,
+                    rs.color AS status_color,
+                    b.name AS brigade_name,
+                    e.fio AS brigade_lead,
+                    op.fio AS operator_name,
+                    addr.street,
+                    addr.houses,
+                    addr.district,
+                    addr.city_id
+                FROM requests r
+                LEFT JOIN clients c ON r.client_id = c.id
+                LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                LEFT JOIN brigades b ON r.brigade_id = b.id
+                LEFT JOIN employees e ON b.leader_id = e.id
+                LEFT JOIN employees op ON r.operator_id = op.id
+                LEFT JOIN request_addresses ra ON r.id = ra.request_id
+                LEFT JOIN addresses addr ON ra.address_id = addr.id
+                WHERE r.id = ' . $requestId . '
+            ');
+
             // Формируем ответ
             $response = [
                 'success' => true,
@@ -1072,7 +1100,7 @@ class HomeController extends Controller
                         'type_id' => $validated['request_type_id'],
                         'status_id' => $validated['status_id'],
                         'execution_date' => $validated['execution_date'],
-                        'execution_time' => $validated['execution_time']
+                        'requestById' => $requestById,
                     ],
                     'client' => $clientId ? [
                         'id' => $clientId,
