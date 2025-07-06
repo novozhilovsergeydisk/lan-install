@@ -57,6 +57,9 @@ class HomeController extends Controller
         // Запрашиваем addresses
         $addresses = DB::select('SELECT * FROM addresses');
 
+        // Запрашиваем positions
+        $positions = DB::select('SELECT * FROM positions');
+
         // Комплексный запрос для получения информации о членах бригад с данными о бригадах
         $brigadeMembersWithDetails = DB::select(
             'SELECT
@@ -181,7 +184,8 @@ class HomeController extends Controller
             'requests_types' => $requests_types,
             'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
             'brigadesCurrentDay' => $brigadesCurrentDay,
-            'flags' => $flags
+            'flags' => $flags,
+            'positions' => $positions
         ];
 
         // Логируем данные для отладки

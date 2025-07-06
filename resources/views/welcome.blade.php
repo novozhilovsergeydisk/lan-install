@@ -936,6 +936,15 @@
 
                                     <hr>
 
+                                    <select name="positions" id="positions" class="form-select">
+                                        <option value="">Выберите должность</option>    
+                                        @foreach ($positions as $position)
+                                            <option value="{{ $position->id }}">{{ $position->name }}</option>
+                                        @endforeach 
+                                    </select>
+
+                                    <hr>
+
                                     <div class="mb-2">
                                         <label class="form-label">Паспорт (серия и номер)</label>
                                         <input type="text" name="passport_series" class="form-control">
@@ -964,9 +973,9 @@
                                         <input type="text" name="car_plate" class="form-control">
                                     </div>
 
-                                    <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
+                                    <button id="saveBtn" type="button" class="btn btn-primary w-100 mt-3">Сохранить</button>
 
-                                    <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3">Изменить</button>
+                                    <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
 
                                     <button id="autoFillBtn" type="button" class="btn btn-outline-secondary mb-3 mt-3" 
                                         data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
