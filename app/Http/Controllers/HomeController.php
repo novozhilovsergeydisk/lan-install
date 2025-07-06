@@ -15,6 +15,22 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
+    /**
+     * Получить список всех сотрудников
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getEmployees()
+    {
+        $employees = DB::select('SELECT * FROM employees ORDER BY fio');
+        return response()->json($employees);
+    }
+
+    /**
+     * Get list of addresses for select element
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getAddresses()
     {
         $sql = "

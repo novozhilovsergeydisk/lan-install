@@ -132,6 +132,11 @@ Route::get('/api/brigades/current-day', [BrigadeController::class, 'getCurrentDa
     ->name('api.brigades.current-day')
     ->middleware('auth');
 
+// API для работы с сотрудниками
+Route::get('/api/employees', [HomeController::class, 'getEmployees'])
+    ->name('api.employees')
+    ->middleware('auth');
+
 Route::post('/employees', [EmployeeUserController::class, 'store'])
     ->name('employees.store')
     ->middleware('auth');

@@ -646,11 +646,68 @@ function initializePage() {
             }
             // Добавляем специальный обработчик для вкладки бригад
             else if (tab === 'teams') {
-                tabElement.addEventListener('click', function(e) {
-                    console.log('Клик по вкладке "Бригады"');
-                    console.log('ID элемента:', e.target.id);
-                    console.log('Классы элемента:', e.target.className);
-                    console.log('Атрибут data-bs-target:', e.target.getAttribute('data-bs-target'));
+                tabElement.addEventListener('shown.bs.tab', async function() {
+                    try {
+                        const response = await fetch('/api/employees', {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Ошибка при загрузке списка сотрудников');
+                        }
+                        
+                        const employees = await response.json();
+                        
+                        // Обновляем select бригадира
+                        const brigadeLeaderSelect = document.getElementById('brigadeLeader');
+                        if (brigadeLeaderSelect) {
+                            // Сохраняем текущее выбранное значение
+                            const currentLeader = brigadeLeaderSelect.value;
+                            
+                            // Очищаем список, оставляя только первый элемент
+                            while (brigadeLeaderSelect.options.length > 1) {
+                                brigadeLeaderSelect.remove(1);
+                            }
+                            
+                            // Добавляем сотрудников
+                            employees.forEach(emp => {
+                                const option = new Option(emp.fio, emp.id, false, false);
+                                brigadeLeaderSelect.add(option);
+                            });
+                            
+                            // Восстанавливаем выбранное значение, если оно есть в новом списке
+                            if (currentLeader && Array.from(brigadeLeaderSelect.options).some(opt => opt.value === currentLeader)) {
+                                brigadeLeaderSelect.value = currentLeader;
+                            }
+                        }
+                        
+                        // Обновляем multiple select сотрудников
+                        const employeesSelect = document.getElementById('employeesSelect');
+                        if (employeesSelect) {
+                            // Сохраняем текущие выбранные значения
+                            const selectedEmployees = Array.from(employeesSelect.selectedOptions).map(opt => opt.value);
+                            
+                            // Очищаем список полностью
+                            employeesSelect.innerHTML = '';
+                            
+                            // Добавляем сотрудников
+                            employees.forEach(emp => {
+                                const option = new Option(emp.fio, emp.id, false, false);
+                                option.dataset.employeeId = emp.id;
+                                employeesSelect.add(option);
+                                
+                                // Восстанавливаем выбранные значения
+                                if (selectedEmployees.includes(emp.id.toString())) {
+                                    option.selected = true;
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Ошибка при обновлении списка сотрудников:', error);
+                    }
                 });
             }
             
