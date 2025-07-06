@@ -863,7 +863,7 @@ class HomeController extends Controller
                 'execution_date' => 'required|date',
                 'execution_time' => 'nullable|date_format:H:i',
                 'brigade_id' => 'nullable|exists:brigades,id',
-                'operator_id' => 'required|exists:employees,id',
+                'operator_id' => 'required',
                 'address_id' => 'required|exists:addresses,id'
             ];
 

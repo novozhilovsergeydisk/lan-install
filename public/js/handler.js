@@ -595,6 +595,17 @@ function initializePage() {
     NAV_TABS.forEach(tab => {
         const tabElement = document.getElementById(`${tab}-tab`);
         if (tabElement) {
+            // Добавляем специальный обработчик для вкладки бригад
+            if (tab === 'teams') {
+                tabElement.addEventListener('click', function(e) {
+                    console.log('Клик по вкладке "Бригады"');
+                    console.log('ID элемента:', e.target.id);
+                    console.log('Классы элемента:', e.target.className);
+                    console.log('Атрибут data-bs-target:', e.target.getAttribute('data-bs-target'));
+                });
+            }
+            
+            // Общий обработчик для всех вкладок
             tabElement.addEventListener('click', function () {
                 logButtonClick(`${tab}-tab`, `Вкладка ${tab}`);
             });
@@ -1091,6 +1102,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (requestsTab) {
         requestsTab.addEventListener('click', async function () {
             console.log('Вкладка "Заявки" была нажата');
+
+            // Обновить данные об адресах
+            loadAddresses();
 
             try {
                 // Запрашиваем актуальный список бригад с сервера
