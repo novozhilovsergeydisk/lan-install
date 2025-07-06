@@ -595,8 +595,57 @@ function initializePage() {
     NAV_TABS.forEach(tab => {
         const tabElement = document.getElementById(`${tab}-tab`);
         if (tabElement) {
+            // Добавляем специальный обработчик для вкладки заявок
+            if (tab === 'requests') {
+                tabElement.addEventListener('shown.bs.tab', async function() {
+                    try {
+                        const response = await fetch('/api/brigades/current', {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Ошибка при загрузке бригад');
+                        }
+                        
+                        const brigades = await response.json();
+                        const select = document.getElementById('brigade-leader-select');
+                        
+                        if (select) {
+                            // Сохраняем текущее выбранное значение
+                            const currentValue = select.value;
+                            
+                            // Очищаем список, оставляя только первый элемент
+                            while (select.options.length > 1) {
+                                select.remove(1);
+                            }
+                            
+                            // Добавляем актуальные бригады
+                            brigades.forEach(brigade => {
+                                const option = new Option(
+                                    `[Бригада: ${brigade.brigade_id}] [Бригадир: ${brigade.leader_name}]`,
+                                    brigade.employee_id,
+                                    false,
+                                    false
+                                );
+                                option.dataset.brigadeId = brigade.brigade_id;
+                                select.add(option);
+                            });
+                            
+                            // Восстанавливаем выбранное значение, если оно есть в новом списке
+                            if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+                                select.value = currentValue;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Ошибка при обновлении списка бригад:', error);
+                    }
+                });
+            }
             // Добавляем специальный обработчик для вкладки бригад
-            if (tab === 'teams') {
+            else if (tab === 'teams') {
                 tabElement.addEventListener('click', function(e) {
                     console.log('Клик по вкладке "Бригады"');
                     console.log('ID элемента:', e.target.id);

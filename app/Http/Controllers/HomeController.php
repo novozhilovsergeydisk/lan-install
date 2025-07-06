@@ -35,6 +35,25 @@ class HomeController extends Controller
         return response()->json($addresses);
     }
 
+    /**
+     * Получить список текущих бригад
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCurrentBrigades()
+    {
+        $today = now()->toDateString();
+        
+        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS leader_name, e.id as employee_id 
+                FROM brigades AS b 
+                JOIN employees AS e ON b.leader_id = e.id 
+                WHERE DATE(b.formation_date) >= '{$today}'";
+
+        $brigades = DB::select($sql);
+        
+        return response()->json($brigades);
+    }
+
     public function index()
     {
         // Получаем текущего пользователя

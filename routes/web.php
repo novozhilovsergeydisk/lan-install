@@ -47,6 +47,11 @@ Route::get('/api/requests/{request}/comments', [HomeController::class, 'getComme
 // API Route for getting brigade data
 Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'getBrigadeData'])->name('brigade.data');
 
+// API Route for getting current brigades
+Route::get('/api/brigades/current', [HomeController::class, 'getCurrentBrigades'])
+    ->middleware('auth')
+    ->name('api.brigades.current');
+
 // API Route for filtering requests by statuses
 Route::get('/api/requests/by-status', [RequestFilterController::class, 'filterByStatuses'])
     ->middleware('auth')
