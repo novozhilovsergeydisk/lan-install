@@ -1268,27 +1268,42 @@ function handlerAddEmployee() {
         }
 
         const formData = new FormData(this);
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn.innerHTML;
+        const submitBtn = document.getElementById('saveBtn');
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Сохранить';
 
         try {
             // Показываем индикатор загрузки
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
 
-            console.log(formData);
-            return;
+            // Отладочная информация
+            console.log('=== ДАННЫЕ ФОРМЫ ===');
+            console.log('URL запроса:', this.action);
+            console.log('Метод: POST');
+            console.log('Заголовки:', {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                'Accept': 'application/json'
+            });
+            
+            // Выводим все поля формы
+            const formDataObj = {};
+            for (let [key, value] of formData.entries()) {
+                formDataObj[key] = value;
+            }
+            console.log('Данные формы:', formDataObj);
 
             const response = await fetch(this.action, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: formData
+                body: JSON.stringify(Object.fromEntries(formData))
             });
 
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
+            console.log('Ответ сервера:', data);
 
             if (!response.ok) {
                 handleFormErrors(this, response, data);
@@ -1390,6 +1405,22 @@ function handlerAddEmployee() {
             // Показываем кнопку "Сохранить" и скрываем "Изменить"
             this.classList.add('d-none');
             document.getElementById('saveBtn').classList.remove('d-none');
+        });
+    }
+
+    // Add event listener for the save button
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            console.log('Save button clicked');
+            const form = document.querySelector('form#employeeForm');
+            if (form) {
+                const submitEvent = new Event('submit', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                form.dispatchEvent(submitEvent);
+            }
         });
     }
 }

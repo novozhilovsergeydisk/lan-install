@@ -565,6 +565,7 @@
                                             </button>
                                         </div>
                                     </form>
+
                                     <script>
                                         // Функция для загрузки городов
                                         function loadCities(selectElement) {
@@ -885,7 +886,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="row g-3">
+                                    <div class="row g-3 mt-3">
                                         <div class="col-md-6">
                                             <div class="mb-4">
                                                 <label class="form-label">ФИО</label>
@@ -893,7 +894,7 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="mb-4">
+                                            <div class="mb-3">
                                                 <label class="form-label">Телефон</label>
                                                 <input type="text" name="phone" class="form-control" required>
                                             </div>
@@ -909,52 +910,52 @@
                                         </div>
 
                                         <div class="col-md-6">
-                                            <div class="mb-4">
+                                            <div class="mb-3">
                                                 <label class="form-label">Дата рождения</label>
                                                 <input type="date" name="birth_date" class="form-control">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="mb-4">
+                                            <div class="mb-3">
                                                 <label class="form-label">Место рождения</label>
                                                 <input type="text" name="birth_place" class="form-control">
                                             </div>
                                         </div>
 
                                         <div class="col-md-6">
-                                            <div class="mb-4">
+                                            <div class="mb-3">
                                                 <label class="form-label">Паспорт (серия и номер)</label>
                                                 <input type="text" name="passport_series" class="form-control">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="mb-4">
+                                            <div class="mb-3">
                                                 <label class="form-label">Кем выдан</label>
                                                 <input type="text" name="passport_issued_by" class="form-control">
                                             </div>
                                         </div>
 
                                         <div class="col-md-6">
-                                            <div class="mb-4">
+                                            <div class="mb-3">
                                                 <label class="form-label">Дата выдачи</label>
                                                 <input type="date" name="passport_issued_at" class="form-control">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="mb-4">
+                                            <div class="mb-3">
                                                 <label class="form-label">Код подразделения</label>
                                                 <input type="text" name="passport_department_code" class="form-control">
                                             </div>
                                         </div>
 
                                         <div class="col-md-6">
-                                            <div class="mb-4">
+                                            <div class="mb-3">
                                                 <label class="form-label">Марка машины</label>
                                                 <input type="text" name="car_brand" class="form-control">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="mb-4">
+                                            <div class="mb-3">
                                                 <label class="form-label">Госномер</label>
                                                 <input type="text" name="car_plate" class="form-control">
                                             </div>
