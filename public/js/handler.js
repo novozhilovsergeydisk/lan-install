@@ -26,7 +26,7 @@ const filterState = {
 // Функция для обновления таблицы заявок
 window.refreshRequestsTable = function() {
     console.log('Обновление таблицы заявок...');
-    
+
     // Если есть активная дата, используем её для фильтрации
     if (filterState.date) {
         applyFilters();
@@ -564,7 +564,7 @@ function getAllBrigadeMembers() {
     const memberInputs = Array.from(document.querySelectorAll('input[name^="brigade_members["]'));
     const members = [];
     const memberIds = new Set();
-    
+
     // 1. Собираем всех участников из скрытых полей
     memberInputs.forEach(input => {
         if (input.value) {
@@ -579,12 +579,12 @@ function getAllBrigadeMembers() {
             }
         }
     });
-    
+
     // 2. Добавляем бригадира, если его еще нет в списке
     if (leaderId && !memberIds.has(leaderId)) {
         const leaderSelect = document.querySelector('select[name="leader_id"]');
         const leaderOption = leaderSelect?.options[leaderSelect.selectedIndex];
-        
+
         members.unshift({
             employee_id: leaderId,
             is_leader: true,
@@ -592,7 +592,7 @@ function getAllBrigadeMembers() {
         });
         memberIds.add(leaderId);
     }
-    
+
     return members;
 }
 
@@ -601,7 +601,7 @@ function validateBrigadeMembers() {
     // Обновляем данные перед валидацией
     const members = getAllBrigadeMembers();
     const leaderId = document.querySelector('select[name="leader_id"]')?.value;
-    
+
     // Обновляем скрытое поле с данными
     let hiddenField = document.getElementById('brigade_members_data');
     if (!hiddenField) {
@@ -612,36 +612,36 @@ function validateBrigadeMembers() {
         document.getElementById('brigadeForm')?.appendChild(hiddenField);
     }
     hiddenField.value = JSON.stringify(members);
-    
+
     // Проверяем валидность
     const hasLeader = !!leaderId;
     const totalMembers = members.length;
     const isValid = hasLeader && totalMembers >= 2;
-    
+
     // Обновляем UI
     const errorElement = document.querySelector('#brigade-members-error');
     if (errorElement) {
         errorElement.style.display = isValid ? 'none' : 'block';
         const missing = 2 - totalMembers;
-        errorElement.textContent = missing > 0 
+        errorElement.textContent = missing > 0
             ? `Добавьте ещё ${missing} участника`
             : 'В бригаде должно быть минимум 2 участника, включая бригадира';
     }
-    
+
     const submitButton = document.querySelector('button[type="submit"]');
     if (submitButton) {
         submitButton.disabled = !isValid;
     }
-    
-    console.log('Валидация бригады:', { 
+
+    console.log('Валидация бригады:', {
         members,
-        totalMembers, 
-        hasLeader, 
+        totalMembers,
+        hasLeader,
         isValid,
         hiddenFieldValue: hiddenField.value,
         formData: Array.from(new FormData(document.getElementById('brigadeForm')))
     });
-    
+
     return isValid;
 }
 
@@ -698,23 +698,23 @@ function initializePage() {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                             }
                         });
-                        
+
                         if (!response.ok) {
                             throw new Error('Ошибка при загрузке бригад');
                         }
-                        
+
                         const brigades = await response.json();
                         const select = document.getElementById('brigade-leader-select');
-                        
+
                         if (select) {
                             // Сохраняем текущее выбранное значение
                             const currentValue = select.value;
-                            
+
                             // Очищаем список, оставляя только первый элемент
                             while (select.options.length > 1) {
                                 select.remove(1);
                             }
-                            
+
                             // Добавляем актуальные бригады
                             brigades.forEach(brigade => {
                                 const option = new Option(
@@ -726,7 +726,7 @@ function initializePage() {
                                 option.dataset.brigadeId = brigade.brigade_id;
                                 select.add(option);
                             });
-                            
+
                             // Восстанавливаем выбранное значение, если оно есть в новом списке
                             if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
                                 select.value = currentValue;
@@ -747,26 +747,30 @@ function initializePage() {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                             }
                         });
-                        
+
                         if (!response.ok) {
                             throw new Error('Ошибка при загрузке списка сотрудников');
                         }
-                        
+
                         const employees = await response.json();
-                        
+
                         // Обновляем select бригадира
                         const brigadeLeaderSelect = document.getElementById('brigadeLeader');
                         if (brigadeLeaderSelect) {
                             // Обработчик изменения выбранного бригадира
                             brigadeLeaderSelect.addEventListener('change', function() {
                                 const selectedLeaderId = this.value;
-                                
+
+                                const selectedLeaderName = this.options[this.selectedIndex].textContent;
+
+                                console.log('selectedLeaderName :', selectedLeaderName);
+
                                 // Обновляем скрытое поле leader_id сразу
                                 const leaderIdInput = document.querySelector('input[name="leader_id"]');
                                 if (leaderIdInput) {
                                     leaderIdInput.value = selectedLeaderId;
                                 }
-                                
+
                                 if (!selectedLeaderId) {
                                     updateBrigadeMembersFormField();
                                     return;
@@ -785,19 +789,20 @@ function initializePage() {
                                 // Если участника еще нет в списке, добавляем его
                                 if (!existingMember) {
                                     const leaderData = this.options[this.selectedIndex].dataset;
+
                                     const leaderName = leaderData.fullName || `Бригадир ${selectedLeaderId}`;
-                                    
+
                                     // Создаем элемент для отображения участника
                                     const memberElement = document.createElement('div');
                                     memberElement.className = 'd-flex justify-content-between align-items-center mb-2';
                                     memberElement.dataset.employeeId = selectedLeaderId;
                                     memberElement.dataset.isLeader = 'true';
-                                    
+
                                     // Добавляем имя участника
                                     const nameSpan = document.createElement('span');
-                                    nameSpan.textContent = leaderName + ' (Бригадир)';
+                                    nameSpan.textContent = selectedLeaderName + ' (Бригадир)';
                                     memberElement.appendChild(nameSpan);
-                                    
+
                                     // Добавляем кнопку удаления
                                     const deleteButton = document.createElement('button');
                                     deleteButton.className = 'btn btn-sm btn-outline-danger';
@@ -808,7 +813,7 @@ function initializePage() {
                                         updateBrigadeMembersFormField();
                                     };
                                     memberElement.appendChild(deleteButton);
-                                    
+
                                     // Добавляем участника в начало списка
                                     brigadeMembersContainer.insertBefore(memberElement, brigadeMembersContainer.firstChild);
                                 }
@@ -818,39 +823,39 @@ function initializePage() {
                             });
                             // Сохраняем текущее выбранное значение
                             const currentLeader = brigadeLeaderSelect.value;
-                            
+
                             // Очищаем список, оставляя только первый элемент
                             while (brigadeLeaderSelect.options.length > 1) {
                                 brigadeLeaderSelect.remove(1);
                             }
-                            
+
                             // Добавляем сотрудников
                             employees.forEach(emp => {
                                 const option = new Option(emp.fio, emp.id, false, false);
                                 brigadeLeaderSelect.add(option);
                             });
-                            
+
                             // Восстанавливаем выбранное значение, если оно есть в новом списке
                             if (currentLeader && Array.from(brigadeLeaderSelect.options).some(opt => opt.value === currentLeader)) {
                                 brigadeLeaderSelect.value = currentLeader;
                             }
                         }
-                        
+
                         // Обновляем multiple select сотрудников
                         const employeesSelect = document.getElementById('employeesSelect');
                         if (employeesSelect) {
                             // Сохраняем текущие выбранные значения
                             const selectedEmployees = Array.from(employeesSelect.selectedOptions).map(opt => opt.value);
-                            
+
                             // Очищаем список полностью
                             employeesSelect.innerHTML = '';
-                            
+
                             // Добавляем сотрудников
                             employees.forEach(emp => {
                                 const option = new Option(emp.fio, emp.id, false, false);
                                 option.dataset.employeeId = emp.id;
                                 employeesSelect.add(option);
-                                
+
                                 // Восстанавливаем выбранные значения
                                 if (selectedEmployees.includes(emp.id.toString())) {
                                     option.selected = true;
@@ -862,7 +867,7 @@ function initializePage() {
                     }
                 });
             }
-            
+
             // Общий обработчик для всех вкладок
             tabElement.addEventListener('click', function () {
                 logButtonClick(`${tab}-tab`, `Вкладка ${tab}`);
@@ -1427,7 +1432,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function autoFillEmployeeForm() {
     document.getElementById('autoFillBtn').addEventListener('click', function(e) {
         e.preventDefault();
-        
+
         // 30 вариантов тестовых данных
         const mockDataArray = [
             {
@@ -1489,7 +1494,7 @@ function autoFillEmployeeForm() {
         // Показываем уведомление с номером варианта
         const toastBody = document.getElementById('autoFillToastBody');
         toastBody.textContent = `Форма заполнена тестовыми данными (вариант ${randomIndex + 1} из ${mockDataArray.length}). Проверьте информацию.`;
-        
+
         const toast = new bootstrap.Toast(document.getElementById('autoFillToast'));
         toast.show();
     });
@@ -1500,21 +1505,21 @@ autoFillEmployeeForm();
 function initUserSelection() {
     const selectUserBtns = document.querySelectorAll('.select-user');
     const userIdInput = document.getElementById('userIdInput');
-    
+
     selectUserBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const userId = this.getAttribute('data-user-id');
             userIdInput.value = userId;
-            
+
             // Показываем уведомление о выборе пользователя
             const toast = new bootstrap.Toast(document.getElementById('userSelectedToast'));
             toast.show();
-            
+
             // Прокручиваем к форме
             document.getElementById('employeesFormContainer').scrollIntoView({ behavior: 'smooth' });
         });
     });
-    
+
     // Инициализация тултипов
     if (window.bootstrap) {
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -1527,7 +1532,7 @@ function initUserSelection() {
 function handlerAddEmployee() {
     console.log('Инициализация обработчика формы сотрудника');
     const form = document.querySelector('form#employeeForm');
-    
+
     if (!form) {
         console.error('Форма сотрудника не найдена');
         return;
@@ -1572,7 +1577,7 @@ function handlerAddEmployee() {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
                 'Accept': 'application/json'
             });
-            
+
             // Выводим все поля формы
             const formDataObj = {};
             for (let [key, value] of formData.entries()) {
@@ -1644,7 +1649,7 @@ function handlerAddEmployee() {
         if (response.status === 422 && data.errors) {
             // Очищаем предыдущие ошибки
             form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            
+
             // Показываем ошибки валидации
             Object.entries(data.errors).forEach(([field, messages]) => {
                 const input = form.querySelector(`[name="${field}"]`);
@@ -1671,12 +1676,12 @@ function handlerAddEmployee() {
     function handleFormSuccess(form) {
         // Успешное сохранение
         showAlert('Данные сотрудника успешно сохранены', 'success');
-        
+
         // Обновляем таблицу сотрудников
         if (window.loadEmployees) {
             loadEmployees();
         }
-        
+
         // Сбрасываем форму
         form.reset();
     }
@@ -1765,7 +1770,7 @@ function hanlerAddToBrigade() {
                 option.disabled = true;
                 option.selected = false;
             });
-            
+
             // Обновляем скрытое поле с данными о составе бригады
             updateBrigadeMembersFormField();
         } else {
@@ -1777,7 +1782,7 @@ function hanlerAddToBrigade() {
 function handlerCreateBrigade() {
     console.log('Инициализация handlerCreateBrigade...');
     const createBtn = document.getElementById('createBrigadeBtn');
-    
+
     console.log('Найдена кнопка createBrigadeBtn:', !!createBtn);
 
     if (createBtn) {
@@ -1793,24 +1798,24 @@ function handlerCreateBrigade() {
                 console.error('Форма не найдена');
                 return;
             }
-            
+
             // Обновляем данные бригады перед отправкой
             const members = getAllBrigadeMembers();
             const leaderId = document.querySelector('select[name="leader_id"]')?.value;
-            
+
             // Проверяем валидность
             if (!leaderId) {
                 showAlert('Пожалуйста, выберите бригадира', 'warning');
                 return;
             }
-            
+
             if (members.length < 2) {
                 showAlert('В бригаде должно быть минимум 2 участника', 'warning');
                 return;
             }
-            
+
             // Обновляем скрытое поле с данными
-            const hiddenField = document.getElementById('brigade_members_data') || 
+            const hiddenField = document.getElementById('brigade_members_data') ||
                 (() => {
                     const el = document.createElement('input');
                     el.type = 'hidden';
@@ -1819,17 +1824,17 @@ function handlerCreateBrigade() {
                     form.appendChild(el);
                     return el;
                 })();
-                
+
             hiddenField.value = JSON.stringify(members);
-            
+
             // Создаем FormData и добавляем все необходимые поля
             const formData = new FormData(form);
-            
+
             // Очищаем старые данные о членах бригады
             document.querySelectorAll('input[name^="brigade_members["]').forEach(input => {
                 input.remove();
             });
-            
+
             // Добавляем всех участников в форму
             members.forEach((member, index) => {
                 if (!member.is_leader) {
@@ -1840,7 +1845,7 @@ function handlerCreateBrigade() {
                     form.appendChild(input);
                 }
             });
-            
+
             // Обновляем FormData
             formData.delete('brigade_members[]');
             members.forEach((member, index) => {
@@ -1848,7 +1853,7 @@ function handlerCreateBrigade() {
                     formData.append('brigade_members[]', member.employee_id);
                 }
             });
-            
+
             // Логируем данные перед отправкой
             console.log('Отправка данных бригады:', {
                 formData: Object.fromEntries(formData.entries()),
@@ -1872,7 +1877,7 @@ function handlerCreateBrigade() {
 
             // Получаем данные о членах бригады
             const brigadeMembersData = JSON.parse(formValues.brigade_members_data || '[]');
-            
+
             // Формируем данные для логирования
             const formJson = {
                 formData: formValues,
@@ -1901,7 +1906,7 @@ function handlerCreateBrigade() {
             }
 
             // Проверяем, что бригадир есть в списке участников
-            const leaderInMembers = formJson.members.some(member => 
+            const leaderInMembers = formJson.members.some(member =>
                 member.employee_id === formValues.leader_id
             );
 
@@ -2071,25 +2076,25 @@ function handlerCreateBrigade() {
             /*
                 {_token: 'WhlfBIUMYIRpxc1zBMiLWo6yiq9k4QOqt5lNdo5f', name: 'Бригада технической интеграции видеосистем', leader_id: '34', brigade_members: Array(1), members: Array(1)}
                 brigade_members
-                : 
+                :
                 Array(1)
                 0
-                : 
+                :
                 "34"
                 length
-                : 
+                :
                 1
                 [[Prototype]]
-                : 
+                :
                 Array(0)
                 leader_id
-                : 
+                :
                 "34"
                 members
-                : 
+                :
                 Array(1)
                 0: 34
- 
+
                 Array(0)
                 name: "Бригада технической интеграции видеосистем"
                 _token: "WhlfBIUMYIRpxc1zBMiLWo6yiq9k4QOqt5lNdo5f"
@@ -2097,10 +2102,10 @@ function handlerCreateBrigade() {
             const createBrigade = async () => {
                 try {
                     console.log('Отправка запроса на создание бригады...');
-                    
+
                     // Парсим данные о членах бригады из JSON
                     const membersData = JSON.parse(formJson.formData.brigade_members_data || '[]');
-                    
+
                     // Формируем данные для отправки
                     const requestData = {
                         name: formJson.formData.name,
@@ -2109,7 +2114,7 @@ function handlerCreateBrigade() {
                             .filter(member => !member.is_leader) // Исключаем бригадира из списка участников
                             .map(member => member.employee_id)
                     };
-                    
+
                     console.log('Данные для отправки:', requestData);
 
                     const response = await fetch('/brigades', {
@@ -2140,7 +2145,7 @@ function handlerCreateBrigade() {
                     }
 
                     console.log('Ответ сервера:', data);
-                    
+
                     if (data.success) {
                         showAlert('Бригада успешно создана!', 'success');
 
@@ -2155,7 +2160,7 @@ function handlerCreateBrigade() {
                         if (form) {
                             form.reset();
                         }
-                        
+
                         // Очищаем список участников бригады
                         const brigadeMembers = document.getElementById('brigadeMembers');
                         if (brigadeMembers) {
