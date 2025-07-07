@@ -1389,8 +1389,16 @@ function handleTransferRequest(button) {
             
             if (response.ok) {
                 showAlert('Заявка успешно перенесена', 'success');
-                // Обновляем таблицу заявок
-                applyFilters();
+                // Обновляем цвет строки без перезагрузки
+                const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+                if (row) {
+                    row.style.setProperty('--status-color', '#BBDEFB');
+                    // Обновляем текст статуса, если он отображается
+                    const statusCell = row.querySelector('.status-badge');
+                    if (statusCell) {
+                        statusCell.textContent = 'перенесена';
+                    }
+                }
                 // Закрываем модальное окно
                 modal.hide();
                 // Удаляем модальное окно из DOM
