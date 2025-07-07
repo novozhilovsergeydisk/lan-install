@@ -412,14 +412,6 @@
                     </div>
 
                     <div class="tab-pane fade" id="teams" role="tabpanel">
-                        <!--
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h4 class="mb-0">Бригады</h4>
-                            <button type="button" class="btn btn-primary" id="createBrigadeBtn">
-                                <i class="bi bi-plus-circle"></i> Создать бригаду
-                            </button>
-                        </div>-->
-
                         <div class="card hide-me">
                             <div class="card-body">
                                 <div id="brigadesList" class="list-group">

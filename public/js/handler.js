@@ -1721,6 +1721,13 @@ function hanlerAddToBrigade() {
 
         if (selectedOptions.length > 0) {
             selectedOptions.forEach(option => {
+                // Проверяем, не является ли добавляемый сотрудник уже бригадиром
+                const leaderSelect = document.querySelector('select[name="leader_id"]');
+                if (leaderSelect && leaderSelect.value === option.value) {
+                    showAlert('Этот сотрудник уже является бригадиром', 'warning');
+                    option.selected = false;
+                    return; // Пропускаем добавление, если это бригадир
+                }
                 // Создаем элемент для отображения сотрудника
                 const memberDiv = document.createElement('div');
                 memberDiv.className = 'd-flex justify-content-between align-items-center p-2 mb-2 border rounded';
@@ -1758,6 +1765,9 @@ function hanlerAddToBrigade() {
                 option.disabled = true;
                 option.selected = false;
             });
+            
+            // Обновляем скрытое поле с данными о составе бригады
+            updateBrigadeMembersFormField();
         } else {
             console.log('Выберите хотя бы одного сотрудника');
         }
@@ -2130,6 +2140,7 @@ function handlerCreateBrigade() {
                     }
 
                     console.log('Ответ сервера:', data);
+                    
                     if (data.success) {
                         showAlert('Бригада успешно создана!', 'success');
 
@@ -2139,10 +2150,16 @@ function handlerCreateBrigade() {
                             modal.hide();
                         }
 
-                        // Очищаем форму
+                        // Очищаем форму и список участников бригады
                         const form = document.getElementById('brigadeForm');
                         if (form) {
                             form.reset();
+                        }
+                        
+                        // Очищаем список участников бригады
+                        const brigadeMembers = document.getElementById('brigadeMembers');
+                        if (brigadeMembers) {
+                            brigadeMembers.innerHTML = '';
                         }
 
                         // Обновляем список бригад
