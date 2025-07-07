@@ -127,7 +127,7 @@ function applyFilters() {
                             let requestDate = '';
                             try {
                                 // Пробуем использовать request_date, если он есть, иначе created_at
-                                const dateStr = request.request_date || request.created_at;
+                                const dateStr = request.execution_date;
                                 // Логи дат отключены
 
                                 if (dateStr) {

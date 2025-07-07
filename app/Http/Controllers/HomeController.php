@@ -268,7 +268,7 @@ class HomeController extends Controller
             LEFT JOIN employees op ON r.operator_id = op.id
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
-            WHERE r.request_date::date = CURRENT_DATE
+            WHERE r.execution_date::date = CURRENT_DATE
             ORDER BY r.id DESC
         ');
 
@@ -555,7 +555,7 @@ class HomeController extends Controller
                 LEFT JOIN employees op ON r.operator_id = op.id
                 LEFT JOIN request_addresses ra ON r.id = ra.request_id
                 LEFT JOIN addresses addr ON ra.address_id = addr.id
-                WHERE DATE(r.request_date) = ?
+                WHERE DATE(r.execution_date) = ?
                 ORDER BY r.id DESC
             ", [$requestDate]);
 

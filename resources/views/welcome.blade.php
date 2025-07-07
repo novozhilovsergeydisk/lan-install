@@ -246,8 +246,7 @@
                                         <!-- Дата и номер заявки -->
                                         <td>
                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
-                                            <div class="text-dark"
-                                                 style="font-size: 0.8rem;">{{ $request->number }}</div>
+                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
                                         </td>
 
                                         <!-- Клиент -->

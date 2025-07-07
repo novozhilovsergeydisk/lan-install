@@ -1,74 +1,49 @@
+diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
+index 30abed5..be2edb8 100644
+--- a/app/Http/Controllers/HomeController.php
++++ b/app/Http/Controllers/HomeController.php
+@@ -268,7 +268,7 @@ public function index()
+             LEFT JOIN employees op ON r.operator_id = op.id
+             LEFT JOIN request_addresses ra ON r.id = ra.request_id
+             LEFT JOIN addresses addr ON ra.address_id = addr.id
+-            WHERE r.request_date::date = CURRENT_DATE
++            WHERE r.execution_date::date = CURRENT_DATE
+             ORDER BY r.id DESC
+         ');
+ 
+@@ -555,7 +555,7 @@ public function getRequestsByDate($date)
+                 LEFT JOIN employees op ON r.operator_id = op.id
+                 LEFT JOIN request_addresses ra ON r.id = ra.request_id
+                 LEFT JOIN addresses addr ON ra.address_id = addr.id
+-                WHERE DATE(r.request_date) = ?
++                WHERE DATE(r.execution_date) = ?
+                 ORDER BY r.id DESC
+             ", [$requestDate]);
+ 
 diff --git a/public/js/handler.js b/public/js/handler.js
-index f267c9f..1bfd82c 100644
+index 86832ec..a231de7 100644
 --- a/public/js/handler.js
 +++ b/public/js/handler.js
-@@ -1721,6 +1721,13 @@ function hanlerAddToBrigade() {
+@@ -127,7 +127,7 @@ function applyFilters() {
+                             let requestDate = '';
+                             try {
+                                 // Пробуем использовать request_date, если он есть, иначе created_at
+-                                const dateStr = request.request_date || request.created_at;
++                                const dateStr = request.execution_date;
+                                 // Логи дат отключены
  
-         if (selectedOptions.length > 0) {
-             selectedOptions.forEach(option => {
-+                // Проверяем, не является ли добавляемый сотрудник уже бригадиром
-+                const leaderSelect = document.querySelector('select[name="leader_id"]');
-+                if (leaderSelect && leaderSelect.value === option.value) {
-+                    showAlert('Этот сотрудник уже является бригадиром', 'warning');
-+                    option.selected = false;
-+                    return; // Пропускаем добавление, если это бригадир
-+                }
-                 // Создаем элемент для отображения сотрудника
-                 const memberDiv = document.createElement('div');
-                 memberDiv.className = 'd-flex justify-content-between align-items-center p-2 mb-2 border rounded';
-@@ -1758,6 +1765,9 @@ function hanlerAddToBrigade() {
-                 option.disabled = true;
-                 option.selected = false;
-             });
-+            
-+            // Обновляем скрытое поле с данными о составе бригады
-+            updateBrigadeMembersFormField();
-         } else {
-             console.log('Выберите хотя бы одного сотрудника');
-         }
-@@ -2130,6 +2140,7 @@ function handlerCreateBrigade() {
-                     }
- 
-                     console.log('Ответ сервера:', data);
-+                    
-                     if (data.success) {
-                         showAlert('Бригада успешно создана!', 'success');
- 
-@@ -2139,11 +2150,17 @@ function handlerCreateBrigade() {
-                             modal.hide();
-                         }
- 
--                        // Очищаем форму
-+                        // Очищаем форму и список участников бригады
-                         const form = document.getElementById('brigadeForm');
-                         if (form) {
-                             form.reset();
-                         }
-+                        
-+                        // Очищаем список участников бригады
-+                        const brigadeMembers = document.getElementById('brigadeMembers');
-+                        if (brigadeMembers) {
-+                            brigadeMembers.innerHTML = '';
-+                        }
- 
-                         // Обновляем список бригад
-                         if (typeof window.updateBrigadesList === 'function') {
+                                 if (dateStr) {
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index ce6a799..012e56c 100644
+index 11d0ecd..6aef8f0 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -412,14 +412,6 @@ class="btn btn-sm btn-outline-success add-photo-btn"
-                     </div>
+@@ -246,8 +246,7 @@ class="form-check-input request-checkbox"
+                                         <!-- Дата и номер заявки -->
+                                         <td>
+                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
+-                                            <div class="text-dark"
+-                                                 style="font-size: 0.8rem;">{{ $request->number }}</div>
++                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
+                                         </td>
  
-                     <div class="tab-pane fade" id="teams" role="tabpanel">
--                        <!--
--                        <div class="d-flex justify-content-between align-items-center mb-4">
--                            <h4 class="mb-0">Бригады</h4>
--                            <button type="button" class="btn btn-primary" id="createBrigadeBtn">
--                                <i class="bi bi-plus-circle"></i> Создать бригаду
--                            </button>
--                        </div>-->
--
-                         <div class="card hide-me">
-                             <div class="card-body">
-                                 <div id="brigadesList" class="list-group">
+                                         <!-- Клиент -->
