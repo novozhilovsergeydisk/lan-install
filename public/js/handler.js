@@ -1460,28 +1460,23 @@ function handleCancelRequest(button) {
 
 // Инициализация обработчиков для кнопок заявок
 function initRequestButtons() {
-    // Обработчик для кнопки 'Назначить бригаду'
-    document.querySelectorAll('.assign-team-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
+    // Используем делегирование событий для всех кнопок
+    document.addEventListener('click', function(e) {
+        // Обработка кнопки 'Назначить бригаду'
+        if (e.target.closest('.assign-team-btn')) {
             e.preventDefault();
-            handleAssignTeam(button);
-        });
-    });
-
-    // Обработчик для кнопки 'Перенести заявку'
-    document.querySelectorAll('.transfer-request-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
+            handleAssignTeam(e.target.closest('.assign-team-btn'));
+        }
+        // Обработка кнопки 'Перенести заявку'
+        else if (e.target.closest('.transfer-request-btn')) {
             e.preventDefault();
-            handleTransferRequest(button);
-        });
-    });
-
-    // Обработчик для кнопки 'Отменить заявку'
-    document.querySelectorAll('.cancel-request-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
+            handleTransferRequest(e.target.closest('.transfer-request-btn'));
+        }
+        // Обработка кнопки 'Отменить заявку'
+        else if (e.target.closest('.cancel-request-btn')) {
             e.preventDefault();
-            handleCancelRequest(button);
-        });
+            handleCancelRequest(e.target.closest('.cancel-request-btn'));
+        }
     });
 }
 
