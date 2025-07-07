@@ -1315,8 +1315,102 @@ function handleAssignTeam(button) {
 function handleTransferRequest(button) {
     const requestId = button.dataset.requestId;
     console.log('Перенос заявки:', requestId);
-    // Здесь будет логика переноса заявки
-    showAlert(`Функционал 'Перенести заявку' для заявки ${requestId} будет реализован позже`, 'info');
+    
+    // Создаем модальное окно для выбора даты переноса
+    const modalHtml = `
+        <div class="modal fade" id="transferRequestModal" tabindex="-1" aria-labelledby="transferRequestModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="transferRequestModalLabel">Перенос заявки #${requestId}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="transferDate" class="form-label">Выберите новую дату для заявки:</label>
+                            <input type="date" class="form-control" id="transferDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transferReason" class="form-label">Причина переноса:</label>
+                            <textarea class="form-control" id="transferReason" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" id="confirmTransfer">Перенести</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    // Добавляем модальное окно в DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Инициализируем модальное окно
+    const modalElement = document.getElementById('transferRequestModal');
+    const modal = new bootstrap.Modal(modalElement);
+    
+    // Устанавливаем минимальную дату - завтрашний день
+    const dateInput = modalElement.querySelector('#transferDate');
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.min = tomorrow.toISOString().split('T')[0];
+    
+    // Обработчик подтверждения переноса
+    modalElement.querySelector('#confirmTransfer').addEventListener('click', async () => {
+        const selectedDate = dateInput.value;
+        const reason = document.getElementById('transferReason').value.trim();
+        
+        if (!selectedDate) {
+            showAlert('Пожалуйста, выберите дату для переноса', 'info');
+            return;
+        }
+        
+        if (!reason) {
+            showAlert('Пожалуйста, укажите причину переноса', 'info');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/requests/transfer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    request_id: requestId,
+                    new_date: selectedDate,
+                    reason: reason
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert('Заявка успешно перенесена', 'success');
+                // Обновляем таблицу заявок
+                applyFilters();
+                // Закрываем модальное окно
+                modal.hide();
+                // Удаляем модальное окно из DOM
+                modalElement.remove();
+            } else {
+                throw new Error(result.message || 'Ошибка при переносе заявки');
+            }
+        } catch (error) {
+            console.error('Ошибка при переносе заявки:', error);
+            showAlert(error.message || 'Произошла ошибка при переносе заявки', 'error');
+        }
+    });
+    
+    // Обработчик закрытия модального окна
+    modalElement.addEventListener('hidden.bs.modal', () => {
+        modalElement.remove();
+    });
+    
+    // Показываем модальное окно
+    modal.show();
 }
 
 // Обработчик кнопки 'Отменить заявку'

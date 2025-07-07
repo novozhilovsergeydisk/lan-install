@@ -11,6 +11,81 @@ use App\Http\Controllers\RequestTeamFilterController;
 class HomeController extends Controller
 {
     /**
+     * Transfer a request to a new date
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function transferRequest(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'request_id' => 'required|integer|exists:requests,id',
+                'new_date' => 'required|date|after:today',
+                'reason' => 'required|string|max:1000'
+            ]);
+
+            // Begin transaction
+            DB::beginTransaction();
+
+            // Get the request
+            $requestData = DB::table('requests')
+                ->where('id', $validated['request_id'])
+                ->first();
+
+            if (!$requestData) {
+                throw new \Exception('Заявка не найдена');
+            }
+
+            // Create a comment about the transfer
+            $comment = "Заявка перенесена с " . $requestData->execution_date . " на " . $validated['new_date'] . ". Причина: " . $validated['reason'];
+
+            // Add comment
+            $commentId = DB::table('comments')->insertGetId([
+                'comment' => $comment,
+                'created_at' => now()
+            ]);
+            
+            // Link comment to request
+            DB::table('request_comments')->insert([
+                'request_id' => $validated['request_id'],
+                'comment_id' => $commentId,
+                'created_at' => now()
+            ]);
+
+            // Update the request date and status
+            DB::table('requests')
+                ->where('id', $validated['request_id'])
+                ->update([
+                    'execution_date' => $validated['new_date'],
+                    'status_id' => 3 // ID статуса 'перенесена'
+                ]);
+
+            // Commit transaction
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявка успешно перенесена'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при переносе заявки: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    /**
      * Get list of addresses for select element
      *
      * @return \Illuminate\Http\JsonResponse
