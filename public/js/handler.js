@@ -1398,6 +1398,36 @@ function handleTransferRequest(button) {
                     if (statusCell) {
                         statusCell.textContent = 'перенесена';
                     }
+
+                    // Обновляем блок комментариев
+                    const commentsContainer = row.querySelector('.comment-preview').parentElement;
+                    if (commentsContainer) {
+                        const existingButton = commentsContainer.querySelector('.view-comments-btn');
+                        const commentsCount = result.comments_count || 1; // Используем переданное количество или 1 по умолчанию
+                        
+                        if (!existingButton) {
+                            // Создаем новую кнопку, если её нет
+                            const buttonHtml = `
+                                <div class="mt-1">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#commentsModal" 
+                                            data-request-id="${requestId}" 
+                                            style="position: relative; z-index: 1;">
+                                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                                        <span class="badge bg-primary rounded-pill ms-1">${commentsCount}</span>
+                                    </button>
+                                </div>`;
+                            commentsContainer.insertAdjacentHTML('beforeend', buttonHtml);
+                            
+                            // Инициализируем tooltip для новой кнопки
+                            const tooltipTriggerList = [].slice.call(commentsContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                return new bootstrap.Tooltip(tooltipTriggerEl);
+                            });
+                        }
+                    }
                 }
                 // Закрываем модальное окно
                 modal.hide();

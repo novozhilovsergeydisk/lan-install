@@ -61,12 +61,19 @@ class HomeController extends Controller
                     'status_id' => 3 // ID статуса 'перенесена'
                 ]);
 
+            // Get comments count (including the one we just added)
+            $commentsCount = DB::table('comments')
+                ->join('request_comments', 'comments.id', '=', 'request_comments.comment_id')
+                ->where('request_comments.request_id', $validated['request_id'])
+                ->count();
+
             // Commit transaction
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Заявка успешно перенесена'
+                'message' => 'Заявка успешно перенесена',
+                'comments_count' => $commentsCount
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
