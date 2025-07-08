@@ -1617,9 +1617,9 @@
                 }
             });
             // Set default execution date to tomorrow
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            document.getElementById('executionDate').valueAsDate = tomorrow;
+            const today = new Date();
+            // today.setDate(today.getDate() + 1);
+            document.getElementById('executionDate').valueAsDate = today;
 
             // Load dynamic data when modal is shown
             newRequestModal.addEventListener('show.bs.modal', async function () {

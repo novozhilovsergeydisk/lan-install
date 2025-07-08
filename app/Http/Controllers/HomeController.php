@@ -73,6 +73,7 @@ class HomeController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Заявка успешно перенесена',
+                'execution_date' => $validated['new_date'],
                 'comments_count' => $commentsCount
             ]);
 

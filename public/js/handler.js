@@ -1386,6 +1386,34 @@ function handleTransferRequest(button) {
             });
             
             const result = await response.json();
+
+            console.log(result);
+            
+            // Проверяем дату выполнения из ответа сервера
+            if (result.execution_date) {
+                const serverDate = new Date(result.execution_date);
+                const currentDate = new Date();
+                
+                // Сбрасываем время для корректного сравнения только дат
+                serverDate.setHours(0, 0, 0, 0);
+                currentDate.setHours(0, 0, 0, 0);
+                
+                console.log('Дата выполнения от сервера:', serverDate);
+                console.log('Текущая дата:', currentDate);
+                
+                if (serverDate < currentDate) {
+                    console.log('Внимание: Дата выполнения заявки уже прошла!');
+                } else if (serverDate.getTime() === currentDate.getTime()) {
+                    console.log('Заявка запланирована на сегодня');
+                } else {
+                    // скрыть заявку, если она запланирована на будущее
+                    console.log('Заявка запланирована на будущее');
+                    const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+                    if (row) {
+                        row.style.display = 'none';
+                    }
+                }
+            }
             
             if (response.ok) {
                 showAlert('Заявка успешно перенесена', 'success');
