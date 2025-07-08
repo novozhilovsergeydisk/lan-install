@@ -1527,13 +1527,14 @@ function handleCancelRequest(button) {
         try {
             console.log('Отправка запроса на отмену заявки:', { requestId, reason });
             
-            // Здесь будет код для отправки запроса на сервер
-            /*
-            const response = await fetch('/api/requests/cancel', {
+            // Отправка запроса на отмену заявки
+            const response = await fetch('/requests/cancel', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
                     request_id: requestId,
@@ -1545,23 +1546,38 @@ function handleCancelRequest(button) {
             
             if (response.ok) {
                 showAlert('Заявка успешно отменена', 'success');
+                console.log('Заявка отменена:', result);
+                
                 // Обновляем интерфейс
                 const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
                 if (row) {
+                    // Обновляем статус
                     row.style.setProperty('--status-color', '#ffebee');
                     const statusCell = row.querySelector('.status-badge');
                     if (statusCell) {
                         statusCell.textContent = 'отменена';
                     }
+                    
+                    // Обновляем кнопки
+                    const buttonsContainer = row.querySelector('.btn-group');
+                    if (buttonsContainer) {
+                        buttonsContainer.innerHTML = `
+                            <button type="button" class="btn btn-sm btn-outline-primary comment-btn" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#commentsModal" 
+                                    data-request-id="${requestId}">
+                                <i class="bi bi-chat-left-text me-1"></i>Комментарий
+                            </button>
+                        `;
+                    }
                 }
+                
+                // Обновляем счетчик заявок, если он есть
+                updateRequestsCount();
+                
             } else {
                 throw new Error(result.message || 'Ошибка при отмене заявки');
             }
-            */
-            
-            // Временный вывод в консоль для тестирования
-            console.log('Заявка отменена (заглушка для тестирования)');
-            showAlert('Функционал отмены заявки в разработке', 'info');
             
         } catch (error) {
             console.error('Ошибка при отмене заявки:', error);

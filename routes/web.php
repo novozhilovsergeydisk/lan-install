@@ -37,6 +37,9 @@ Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest']
 // Transfer request
 Route::post('/api/requests/transfer', [HomeController::class, 'transferRequest'])->name('requests.transfer')->middleware('auth');
 
+// Cancel request
+Route::post('/requests/cancel', [HomeController::class, 'cancelRequest'])->name('requests.cancel')->middleware('auth');
+
 // Обработка комментариев
 Route::post('/requests/comment', [HomeController::class, 'addComment'])
     ->middleware('auth')

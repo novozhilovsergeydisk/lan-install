@@ -7,9 +7,106 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\RequestTeamFilterController;
+use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
+    /**
+     * Отмена заявки
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function cancelRequest(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'request_id' => 'required|integer|exists:requests,id',
+                'reason' => 'required|string|max:1000'
+            ]);
+
+            // Начинаем транзакцию
+            DB::beginTransaction();
+
+            // Получаем заявку
+            $requestData = DB::table('requests')
+                ->where('id', $validated['request_id'])
+                ->first();
+
+            if (!$requestData) {
+                throw new \Exception('Заявка не найдена');
+            }
+
+            // Проверяем, что заявка еще не отменена
+            if ($requestData->status_id === 5) { // 5 - ID статуса "отменена"
+                throw new \Exception('Заявка уже отменена');
+            }
+
+            // Получаем ID статуса "отменена"
+            $canceledStatus = DB::table('request_statuses')
+                ->where('name', 'отменена')
+                ->first();
+
+            if (!$canceledStatus) {
+                throw new \Exception('Статус "отменена" не найден в системе');
+            }
+
+            // Создаем комментарий об отмене
+            $comment = "Заявка отменена. Причина: " . $validated['reason'];
+
+            // Добавляем комментарий
+            $commentId = DB::table('comments')->insertGetId([
+                'comment' => $comment,
+                'created_at' => now()
+            ]);
+            
+            // Привязываем комментарий к заявке
+            DB::table('request_comments')->insert([
+                'request_id' => $validated['request_id'],
+                'comment_id' => $commentId,
+                'created_at' => now()
+            ]);
+
+            // Обновляем статус заявки
+            DB::table('requests')
+                ->where('id', $validated['request_id'])
+                ->update([
+                    'status_id' => $canceledStatus->id
+                ]);
+
+            // Фиксируем изменения
+            DB::commit();
+
+            // Получаем обновленное количество комментариев
+            $commentsCount = DB::table('request_comments')
+                ->where('request_id', $validated['request_id'])
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявка успешно отменена',
+                'comments_count' => $commentsCount,
+                'execution_date' => $requestData->execution_date
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            // Откатываем транзакцию в случае ошибки
+            DB::rollBack();
+            Log::error('Ошибка при отмене заявки: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Transfer a request to a new date
      *
