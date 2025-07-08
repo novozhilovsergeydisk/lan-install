@@ -1483,7 +1483,104 @@ function handleTransferRequest(button) {
 function handleCancelRequest(button) {
     const requestId = button.dataset.requestId;
     console.log('Отмена заявки:', requestId);
-    showAlert('Функционал будет реализован позже', 'info');
+    
+    // Создаем модальное окно для подтверждения отмены
+    const modalHtml = `
+        <div class="modal fade" id="cancelRequestModal" tabindex="-1" aria-labelledby="cancelRequestModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="cancelRequestModalLabel">Подтверждение отмены</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Вы уверены, что хотите отменить заявку #${requestId}?</p>
+                        <div class="mb-3">
+                            <label for="cancelReason" class="form-label">Причина отмены:</label>
+                            <textarea class="form-control" id="cancelReason" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="button" class="btn btn-danger" id="confirmCancel">Подтвердить отмену</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    // Добавляем модальное окно в DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Инициализируем модальное окно
+    const modalElement = document.getElementById('cancelRequestModal');
+    const modal = new bootstrap.Modal(modalElement);
+    
+    // Обработчик подтверждения отмены
+    modalElement.querySelector('#confirmCancel').addEventListener('click', async () => {
+        const reason = document.getElementById('cancelReason').value.trim();
+        
+        if (!reason) {
+            showAlert('Пожалуйста, укажите причину отмены', 'info');
+            return;
+        }
+        
+        try {
+            console.log('Отправка запроса на отмену заявки:', { requestId, reason });
+            
+            // Здесь будет код для отправки запроса на сервер
+            /*
+            const response = await fetch('/api/requests/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    request_id: requestId,
+                    reason: reason
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert('Заявка успешно отменена', 'success');
+                // Обновляем интерфейс
+                const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+                if (row) {
+                    row.style.setProperty('--status-color', '#ffebee');
+                    const statusCell = row.querySelector('.status-badge');
+                    if (statusCell) {
+                        statusCell.textContent = 'отменена';
+                    }
+                }
+            } else {
+                throw new Error(result.message || 'Ошибка при отмене заявки');
+            }
+            */
+            
+            // Временный вывод в консоль для тестирования
+            console.log('Заявка отменена (заглушка для тестирования)');
+            showAlert('Функционал отмены заявки в разработке', 'info');
+            
+        } catch (error) {
+            console.error('Ошибка при отмене заявки:', error);
+            showAlert(error.message || 'Произошла ошибка при отмене заявки', 'error');
+        } finally {
+            // Закрываем модальное окно
+            modal.hide();
+            // Удаляем модальное окно из DOM
+            modalElement.remove();
+        }
+    });
+    
+    // Обработчик закрытия модального окна
+    modalElement.addEventListener('hidden.bs.modal', () => {
+        modalElement.remove();
+    });
+    
+    // Показываем модальное окно
+    modal.show();
 }
 
 // Инициализация обработчиков для кнопок заявок
