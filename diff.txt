@@ -1,49 +1,330 @@
 diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index 30abed5..be2edb8 100644
+index e59f9a7..9e12278 100644
 --- a/app/Http/Controllers/HomeController.php
 +++ b/app/Http/Controllers/HomeController.php
-@@ -268,7 +268,7 @@ public function index()
-             LEFT JOIN employees op ON r.operator_id = op.id
-             LEFT JOIN request_addresses ra ON r.id = ra.request_id
-             LEFT JOIN addresses addr ON ra.address_id = addr.id
--            WHERE r.request_date::date = CURRENT_DATE
-+            WHERE r.execution_date::date = CURRENT_DATE
-             ORDER BY r.id DESC
-         ');
+@@ -51,6 +51,8 @@ public function cancelRequest(Request $request)
+                 throw new \Exception('Статус "отменена" не найден в системе');
+             }
  
-@@ -555,7 +555,7 @@ public function getRequestsByDate($date)
-                 LEFT JOIN employees op ON r.operator_id = op.id
-                 LEFT JOIN request_addresses ra ON r.id = ra.request_id
-                 LEFT JOIN addresses addr ON ra.address_id = addr.id
--                WHERE DATE(r.request_date) = ?
-+                WHERE DATE(r.execution_date) = ?
-                 ORDER BY r.id DESC
-             ", [$requestDate]);
++            $status_color = $canceledStatus->color;  
++
+             // Создаем комментарий об отмене
+             $comment = "Заявка отменена. Причина: " . $validated['reason'];
  
+@@ -86,7 +88,8 @@ public function cancelRequest(Request $request)
+                 'success' => true,
+                 'message' => 'Заявка успешно отменена',
+                 'comments_count' => $commentsCount,
+-                'execution_date' => $requestData->execution_date
++                'execution_date' => $requestData->execution_date,
++                'status_color' => $status_color 
+             ]);
+ 
+         } catch (\Illuminate\Validation\ValidationException $e) {
 diff --git a/public/js/handler.js b/public/js/handler.js
-index 86832ec..a231de7 100644
+index cc25424..bd4dd77 100644
 --- a/public/js/handler.js
 +++ b/public/js/handler.js
-@@ -127,7 +127,7 @@ function applyFilters() {
-                             let requestDate = '';
-                             try {
-                                 // Пробуем использовать request_date, если он есть, иначе created_at
--                                const dateStr = request.request_date || request.created_at;
-+                                const dateStr = request.execution_date;
-                                 // Логи дат отключены
+@@ -346,6 +346,173 @@ function applyFilters() {
+     // Логи фильтров отключены
+ }
  
-                                 if (dateStr) {
++// ================================
++// Управление статусами заявок
++// ================================
++
++/**
++ * Загружает список статусов с сервера и отображает их в таблице
++ */
++function loadStatuses() {
++    const tbody = document.getElementById('statusesList');
++    if (!tbody) return;
++    
++    fetch('/statuses')
++        .then(response => response.json())
++        .then(data => {
++            tbody.innerHTML = '';
++            
++            if (data.length === 0) {
++                tbody.innerHTML = `
++                    <tr>
++                        <td colspan="5" class="text-center py-4">
++                            <p class="text-muted mb-0">Статусы не найдены</p>
++                        </td>
++                    </tr>`;
++                return;
++            }
++            
++            data.forEach(status => {
++                const row = document.createElement('tr');
++                row.innerHTML = `
++                    <td>${status.id}</td>
++                    <td>
++                        <span class="badge" style="background-color: ${status.color};">
++                            ${status.name}
++                        </span>
++                    </td>
++                    <td>
++                        <div class="d-flex align-items-center">
++                            <div style="width: 20px; height: 20px; background-color: ${status.color}; border-radius: 4px; margin-right: 8px;"></div>
++                            <span>${status.color}</span>
++                        </div>
++                    </td>
++                    <td>${status.requests_count || 0}</td>
++                    <td class="text-end">
++                        <button class="btn btn-sm btn-outline-primary edit-status-btn me-1" 
++                                data-id="${status.id}" 
++                                data-name="${status.name}" 
++                                data-color="${status.color}">
++                            <i class="bi bi-pencil"></i>
++                        </button>
++                        ${status.requests_count == 0 ? 
++                            `<button class="btn btn-sm btn-outline-danger delete-status-btn" 
++                                    data-id="${status.id}">
++                                <i class="bi bi-trash"></i>
++                            </button>` : 
++                            `<button class="btn btn-sm btn-outline-secondary" disabled>
++                                <i class="bi bi-trash"></i>
++                            </button>`
++                        }
++                    </td>`;
++                tbody.appendChild(row);
++            });
++            
++            // Добавляем обработчики для кнопок редактирования
++            document.querySelectorAll('.edit-status-btn').forEach(btn => {
++                btn.addEventListener('click', function() {
++                    const id = this.getAttribute('data-id');
++                    const name = this.getAttribute('data-name');
++                    const color = this.getAttribute('data-color');
++                    
++                    document.getElementById('statusId').value = id;
++                    document.getElementById('statusName').value = name;
++                    document.getElementById('statusColor').value = color;
++                    
++                    const modal = new bootstrap.Modal(document.getElementById('addStatusModal'));
++                    document.querySelector('#addStatusModal .modal-title').textContent = 'Редактировать статус';
++                    modal.show();
++                });
++            });
++            
++            // Добавляем обработчики для кнопок удаления
++            document.querySelectorAll('.delete-status-btn').forEach(btn => {
++                btn.addEventListener('click', function() {
++                    if (confirm('Вы уверены, что хотите удалить этот статус?')) {
++                        const statusId = this.getAttribute('data-id');
++                        deleteStatus(statusId);
++                    }
++                });
++            });
++            
++        })
++        .catch(error => {
++            console.error('Ошибка при загрузке статусов:', error);
++            showAlert('Не удалось загрузить список статусов', 'error');
++        });
++}
++
++/**
++ * Сохраняет статус (создает новый или обновляет существующий)
++ */
++function saveStatus() {
++    const id = document.getElementById('statusId').value;
++    const name = document.getElementById('statusName').value.trim();
++    const color = document.getElementById('statusColor').value;
++    
++    if (!name) {
++        showAlert('Пожалуйста, укажите название статуса', 'error');
++        return;
++    }
++    
++    const url = id ? `/statuses/${id}` : '/statuses';
++    const method = id ? 'PUT' : 'POST';
++    
++    fetch(url, {
++        method: method,
++        headers: {
++            'Content-Type': 'application/json',
++            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
++            'Accept': 'application/json'
++        },
++        body: JSON.stringify({ name, color })
++    })
++    .then(response => response.json())
++    .then(data => {
++        if (data.success) {
++            showAlert(`Статус успешно ${id ? 'обновлен' : 'добавлен'}`, 'success');
++            loadStatuses();
++            
++            // Закрываем модальное окно
++            const modal = bootstrap.Modal.getInstance(document.getElementById('addStatusModal'));
++            modal.hide();
++        } else {
++            throw new Error(data.message || 'Произошла ошибка');
++        }
++    })
++    .catch(error => {
++        console.error('Ошибка при сохранении статуса:', error);
++        showAlert(error.message || 'Не удалось сохранить статус', 'error');
++    });
++}
++
++/**
++ * Удаляет статус по ID
++ * @param {string} id - ID статуса для удаления
++ */
++function deleteStatus(id) {
++    fetch(`/statuses/${id}`, {
++        method: 'DELETE',
++        headers: {
++            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
++            'Accept': 'application/json'
++        }
++    })
++    .then(response => response.json())
++    .then(data => {
++        if (data.success) {
++            showAlert('Статус успешно удален', 'success');
++            loadStatuses();
++        } else {
++            throw new Error(data.message || 'Произошла ошибка');
++        }
++    })
++    .catch(error => {
++        console.error('Ошибка при удалении статуса:', error);
++        showAlert(error.message || 'Не удалось удалить статус', 'error');
++    });
++}
++
+ // Функция для обновления счетчика заявок
+ function updateRequestsCount(count) {
+     const counterElement = document.querySelector('.requests-count');
+@@ -1552,7 +1719,7 @@ function handleCancelRequest(button) {
+                 const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+                 if (row) {
+                     // Обновляем статус
+-                    row.style.setProperty('--status-color', '#B8B799');
++                    row.style.setProperty('--status-color', result.status_color);
+                     const statusCell = row.querySelector('.status-badge');
+                     if (statusCell) {
+                         statusCell.textContent = 'отменена';
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index 11d0ecd..6aef8f0 100644
+index 76ac5e9..e6a5d20 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -246,8 +246,7 @@ class="form-check-input request-checkbox"
-                                         <!-- Дата и номер заявки -->
-                                         <td>
-                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
--                                            <div class="text-dark"
--                                                 style="font-size: 0.8rem;">{{ $request->number }}</div>
-+                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
-                                         </td>
+@@ -115,6 +115,11 @@
+                                 type="button" role="tab">Пользователи
+                         </button>
+                     </li>
++                    <!-- <li class="nav-item" role="presentation">
++                        <button class="nav-link" id="statuses-tab" data-bs-toggle="tab" data-bs-target="#statuses"
++                                type="button" role="tab">Статусы    
++                        </button>
++                    </li> -->
+                     <li class="nav-item" role="presentation">
+                         <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports"
+                                 type="button" role="tab">Отчеты
+@@ -969,6 +974,72 @@ function loadCities(selectElement) {
  
-                                         <!-- Клиент -->
+                     </div>
+ 
++                    <div class="tab-pane fade d-none" id="statuses" role="tabpanel">
++                        <div class="d-flex justify-content-between align-items-center mb-4">
++                            <h4 class="mb-0">Управление статусами заявок</h4>
++                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStatusModal">
++                                <i class="bi bi-plus-circle me-1"></i>Добавить статус
++                            </button>
++                        </div>
++                        
++                        <div class="card">
++                            <div class="card-body p-0">
++                                <div class="table-responsive">
++                                    <table class="table table-hover mb-0">
++                                        <thead class="table-light">
++                                            <tr>
++                                                <th style="width: 50px;">ID</th>
++                                                <th>Название</th>
++                                                <th>Цвет</th>
++                                                <th>Количество заявок</th>
++                                                <th class="text-end">Действия</th>
++                                            </tr>
++                                        </thead>
++                                        <tbody id="statusesList">
++                                            <tr>
++                                                <td colspan="5" class="text-center py-4">
++                                                    <div class="spinner-border text-primary" role="status">
++                                                        <span class="visually-hidden">Загрузка...</span>
++                                                    </div>
++                                                    <p class="mt-2 mb-0">Загрузка списка статусов...</p>
++                                                </td>
++                                            </tr>
++                                        </tbody>
++                                    </table>
++                                </div>
++                            </div>
++                        </div>
++                        
++                        <!-- Модальное окно добавления/редактирования статуса -->
++                        <div class="modal fade" id="addStatusModal" tabindex="-1" aria-hidden="true">
++                            <div class="modal-dialog">
++                                <div class="modal-content">
++                                    <div class="modal-header">
++                                        <h5 class="modal-title">Добавить новый статус</h5>
++                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
++                                    </div>
++                                    <div class="modal-body">
++                                        <form id="statusForm">
++                                            <input type="hidden" id="statusId" value="">
++                                            <div class="mb-3">
++                                                <label for="statusName" class="form-label">Название статуса</label>
++                                                <input type="text" class="form-control" id="statusName" required>
++                                            </div>
++                                            <div class="mb-3">
++                                                <label for="statusColor" class="form-label">Цвет</label>
++                                                <input type="color" class="form-control form-control-color" id="statusColor" value="#e2e0e6" title="Выберите цвет">
++                                            </div>
++                                        </form>
++                                    </div>
++                                    <div class="modal-footer">
++                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
++                                        <button type="button" class="btn btn-primary" id="saveStatusBtn">Сохранить</button>
++                                    </div>
++                                </div>
++                            </div>
++                        </div>
++                    </div>
++
+                     <div class="tab-pane fade" id="reports" role="tabpanel">
+                         <h4>Отчеты</h4>
+                         <p>В этом разделе доступны различные отчеты по деятельности компании. Вы можете
+@@ -2246,6 +2317,7 @@ function showAlert(message, type = 'success') {
+     // console.log('Данные заявок переданы в JavaScript:', window.requestsData);
+ </script>
+ <script src="{{ asset('js/brigades.js') }}"></script>
++<script type="module" src="{{ asset('js/handler.js') }}"></script>
+ <script src="{{ asset('js/calendar.js') }}"></script>
+ <script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
+ 
+diff --git a/routes/web.php b/routes/web.php
+index 0909a1d..534b5cf 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -37,9 +37,17 @@
+ // Transfer request
+ Route::post('/api/requests/transfer', [HomeController::class, 'transferRequest'])->name('requests.transfer')->middleware('auth');
+ 
+-// Cancel request
++// Маршруты для работы с заявками
+ Route::post('/requests/cancel', [HomeController::class, 'cancelRequest'])->name('requests.cancel')->middleware('auth');
+ 
++// Маршруты для работы со статусами заявок
++Route::prefix('statuses')->middleware('auth')->group(function () {
++    Route::get('/', [StatusController::class, 'index']);
++    Route::post('/', [StatusController::class, 'store']);
++    Route::put('/{id}', [StatusController::class, 'update']);
++    Route::delete('/{id}', [StatusController::class, 'destroy']);
++});
++
+ // Обработка комментариев
+ Route::post('/requests/comment', [HomeController::class, 'addComment'])
+     ->middleware('auth')

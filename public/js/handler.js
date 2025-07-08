@@ -346,6 +346,173 @@ function applyFilters() {
     // Логи фильтров отключены
 }
 
+// ================================
+// Управление статусами заявок
+// ================================
+
+/**
+ * Загружает список статусов с сервера и отображает их в таблице
+ */
+function loadStatuses() {
+    const tbody = document.getElementById('statusesList');
+    if (!tbody) return;
+    
+    fetch('/statuses')
+        .then(response => response.json())
+        .then(data => {
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <p class="text-muted mb-0">Статусы не найдены</p>
+                        </td>
+                    </tr>`;
+                return;
+            }
+            
+            data.forEach(status => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${status.id}</td>
+                    <td>
+                        <span class="badge" style="background-color: ${status.color};">
+                            ${status.name}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div style="width: 20px; height: 20px; background-color: ${status.color}; border-radius: 4px; margin-right: 8px;"></div>
+                            <span>${status.color}</span>
+                        </div>
+                    </td>
+                    <td>${status.requests_count || 0}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary edit-status-btn me-1" 
+                                data-id="${status.id}" 
+                                data-name="${status.name}" 
+                                data-color="${status.color}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        ${status.requests_count == 0 ? 
+                            `<button class="btn btn-sm btn-outline-danger delete-status-btn" 
+                                    data-id="${status.id}">
+                                <i class="bi bi-trash"></i>
+                            </button>` : 
+                            `<button class="btn btn-sm btn-outline-secondary" disabled>
+                                <i class="bi bi-trash"></i>
+                            </button>`
+                        }
+                    </td>`;
+                tbody.appendChild(row);
+            });
+            
+            // Добавляем обработчики для кнопок редактирования
+            document.querySelectorAll('.edit-status-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name');
+                    const color = this.getAttribute('data-color');
+                    
+                    document.getElementById('statusId').value = id;
+                    document.getElementById('statusName').value = name;
+                    document.getElementById('statusColor').value = color;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('addStatusModal'));
+                    document.querySelector('#addStatusModal .modal-title').textContent = 'Редактировать статус';
+                    modal.show();
+                });
+            });
+            
+            // Добавляем обработчики для кнопок удаления
+            document.querySelectorAll('.delete-status-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (confirm('Вы уверены, что хотите удалить этот статус?')) {
+                        const statusId = this.getAttribute('data-id');
+                        deleteStatus(statusId);
+                    }
+                });
+            });
+            
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке статусов:', error);
+            showAlert('Не удалось загрузить список статусов', 'error');
+        });
+}
+
+/**
+ * Сохраняет статус (создает новый или обновляет существующий)
+ */
+function saveStatus() {
+    const id = document.getElementById('statusId').value;
+    const name = document.getElementById('statusName').value.trim();
+    const color = document.getElementById('statusColor').value;
+    
+    if (!name) {
+        showAlert('Пожалуйста, укажите название статуса', 'error');
+        return;
+    }
+    
+    const url = id ? `/statuses/${id}` : '/statuses';
+    const method = id ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ name, color })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`Статус успешно ${id ? 'обновлен' : 'добавлен'}`, 'success');
+            loadStatuses();
+            
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addStatusModal'));
+            modal.hide();
+        } else {
+            throw new Error(data.message || 'Произошла ошибка');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при сохранении статуса:', error);
+        showAlert(error.message || 'Не удалось сохранить статус', 'error');
+    });
+}
+
+/**
+ * Удаляет статус по ID
+ * @param {string} id - ID статуса для удаления
+ */
+function deleteStatus(id) {
+    fetch(`/statuses/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Статус успешно удален', 'success');
+            loadStatuses();
+        } else {
+            throw new Error(data.message || 'Произошла ошибка');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при удалении статуса:', error);
+        showAlert(error.message || 'Не удалось удалить статус', 'error');
+    });
+}
+
 // Функция для обновления счетчика заявок
 function updateRequestsCount(count) {
     const counterElement = document.querySelector('.requests-count');
@@ -1552,7 +1719,7 @@ function handleCancelRequest(button) {
                 const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
                 if (row) {
                     // Обновляем статус
-                    row.style.setProperty('--status-color', '#B8B799');
+                    row.style.setProperty('--status-color', result.status_color);
                     const statusCell = row.querySelector('.status-badge');
                     if (statusCell) {
                         statusCell.textContent = 'отменена';

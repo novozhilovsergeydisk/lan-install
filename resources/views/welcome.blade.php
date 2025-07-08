@@ -115,6 +115,11 @@
                                 type="button" role="tab">Пользователи
                         </button>
                     </li>
+                    <!-- <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="statuses-tab" data-bs-toggle="tab" data-bs-target="#statuses"
+                                type="button" role="tab">Статусы    
+                        </button>
+                    </li> -->
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports"
                                 type="button" role="tab">Отчеты
@@ -967,6 +972,72 @@
                             </div>  
                         </div>
 
+                    </div>
+
+                    <div class="tab-pane fade d-none" id="statuses" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0">Управление статусами заявок</h4>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStatusModal">
+                                <i class="bi bi-plus-circle me-1"></i>Добавить статус
+                            </button>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 50px;">ID</th>
+                                                <th>Название</th>
+                                                <th>Цвет</th>
+                                                <th>Количество заявок</th>
+                                                <th class="text-end">Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="statusesList">
+                                            <tr>
+                                                <td colspan="5" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Загрузка...</span>
+                                                    </div>
+                                                    <p class="mt-2 mb-0">Загрузка списка статусов...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Модальное окно добавления/редактирования статуса -->
+                        <div class="modal fade" id="addStatusModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Добавить новый статус</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="statusForm">
+                                            <input type="hidden" id="statusId" value="">
+                                            <div class="mb-3">
+                                                <label for="statusName" class="form-label">Название статуса</label>
+                                                <input type="text" class="form-control" id="statusName" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="statusColor" class="form-label">Цвет</label>
+                                                <input type="color" class="form-control form-control-color" id="statusColor" value="#e2e0e6" title="Выберите цвет">
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                        <button type="button" class="btn btn-primary" id="saveStatusBtn">Сохранить</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="tab-pane fade" id="reports" role="tabpanel">
@@ -2246,6 +2317,7 @@
     // console.log('Данные заявок переданы в JavaScript:', window.requestsData);
 </script>
 <script src="{{ asset('js/brigades.js') }}"></script>
+<script type="module" src="{{ asset('js/handler.js') }}"></script>
 <script src="{{ asset('js/calendar.js') }}"></script>
 <script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
 

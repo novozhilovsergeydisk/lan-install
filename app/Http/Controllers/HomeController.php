@@ -51,6 +51,8 @@ class HomeController extends Controller
                 throw new \Exception('Статус "отменена" не найден в системе');
             }
 
+            $status_color = $canceledStatus->color;  
+
             // Создаем комментарий об отмене
             $comment = "Заявка отменена. Причина: " . $validated['reason'];
 
@@ -86,7 +88,8 @@ class HomeController extends Controller
                 'success' => true,
                 'message' => 'Заявка успешно отменена',
                 'comments_count' => $commentsCount,
-                'execution_date' => $requestData->execution_date
+                'execution_date' => $requestData->execution_date,
+                'status_color' => $status_color 
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {

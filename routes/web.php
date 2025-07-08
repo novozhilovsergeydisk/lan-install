@@ -37,8 +37,16 @@ Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest']
 // Transfer request
 Route::post('/api/requests/transfer', [HomeController::class, 'transferRequest'])->name('requests.transfer')->middleware('auth');
 
-// Cancel request
+// Маршруты для работы с заявками
 Route::post('/requests/cancel', [HomeController::class, 'cancelRequest'])->name('requests.cancel')->middleware('auth');
+
+// Маршруты для работы со статусами заявок
+Route::prefix('statuses')->middleware('auth')->group(function () {
+    Route::get('/', [StatusController::class, 'index']);
+    Route::post('/', [StatusController::class, 'store']);
+    Route::put('/{id}', [StatusController::class, 'update']);
+    Route::delete('/{id}', [StatusController::class, 'destroy']);
+});
 
 // Обработка комментариев
 Route::post('/requests/comment', [HomeController::class, 'addComment'])
