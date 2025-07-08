@@ -195,11 +195,11 @@ function applyFilters() {
                             row.innerHTML = `
                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${request.id}</td>
                             <td class="text-center" style="width: 1rem;">
-                            ${request.status_name !== 'выполнена' ? `
-                                <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
-                            ` : ''}
+                                ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
+                                    <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
+                                ` : ''}
                             </td>
-                            <td>
+                            <td>        
                                 <div>${formattedDate}</div>
                                 <div class="text-dark" style="font-size: 0.8rem;">${requestNumber}</div>
                             </td>
@@ -278,7 +278,7 @@ function applyFilters() {
 
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
-                                ${request.status_name !== 'выполнена' ? `
+                                ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
                                     <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="${request.id}">
                                         <i class="bi bi-people me-1"></i>Назначить бригаду
                                     </button>
@@ -294,7 +294,7 @@ function applyFilters() {
 
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
-                                    ${request.status_name !== 'выполнена' ? `
+                                    ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? ` 
                                         <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                             Закрыть заявку
                                         </button>
