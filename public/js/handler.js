@@ -1552,7 +1552,7 @@ function handleCancelRequest(button) {
                 const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
                 if (row) {
                     // Обновляем статус
-                    row.style.setProperty('--status-color', '#ffebee');
+                    row.style.setProperty('--status-color', '#B8B799');
                     const statusCell = row.querySelector('.status-badge');
                     if (statusCell) {
                         statusCell.textContent = 'отменена';
@@ -1569,6 +1569,35 @@ function handleCancelRequest(button) {
                                 <i class="bi bi-chat-left-text me-1"></i>Комментарий
                             </button>
                         `;
+                    }
+                }
+
+                // Находим строку заявки
+                const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
+                
+                if (requestRow) {
+                    // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
+                    const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
+                    if (firstActionBlock) {
+                        const buttonsToHide = firstActionBlock.querySelectorAll('button');
+                        buttonsToHide.forEach(button => {
+                            button.style.display = 'none';
+                        });
+                        
+                        // Добавляем текст "Заявка отменена"
+                        const statusText = document.createElement('div');
+                        statusText.className = 'text-muted small';
+                        statusText.textContent = 'Заявка отменена';
+                        firstActionBlock.appendChild(statusText);
+                    }
+                    
+                    // Скрываем кнопки во втором блоке, кроме кнопки Фотоотчет
+                    const secondActionBlock = requestRow.querySelectorAll('td.text-nowrap .d-flex.flex-column.gap-1')[1];
+                    if (secondActionBlock) {
+                        const buttonsToHide = secondActionBlock.querySelectorAll('button:not(.add-photo-btn)');
+                        buttonsToHide.forEach(button => {
+                            button.style.display = 'none';
+                        });
                     }
                 }
                 

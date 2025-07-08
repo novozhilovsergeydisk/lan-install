@@ -349,7 +349,7 @@
                                         <!-- Action Buttons Group -->
                                         <td class="text-nowrap">
                                             <div class="d-flex flex-column gap-1">
-                                                @if($request->status_name !== 'выполнена')
+                                                @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-primary assign-team-btn p-1"
                                                             data-request-id="{{ $request->id }}">
@@ -375,7 +375,7 @@
                                         <!-- Action Buttons -->
                                         <td class="text-nowrap">
                                             <div class="d-flex flex-column gap-1">
-                                                @if($request->status_name !== 'выполнена')
+                                                @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
                                                     <button data-request-id="{{ $request->id }}" type="button"
                                                             class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                                         Закрыть заявку
