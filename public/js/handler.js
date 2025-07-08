@@ -118,7 +118,7 @@ function applyFilters() {
                         if (noRequestsRow) {
                             noRequestsRow.classList.add('d-none');
                         }
-                        data.data.forEach(request => {
+                        data.data.forEach((request, index) => {
                             // Отладочная информация
                             // Логи заявок отключены
 
@@ -192,8 +192,11 @@ function applyFilters() {
 
                             // console.log(request);
 
+                            // Добавляем счетчик для нумерации строк (начинаем с 1)
+                            const rowNumber = index + 1;
+                            
                             row.innerHTML = `
-                            <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${request.id}</td>
+                            <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
                             <td class="text-center" style="width: 1rem;">
                                 ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
                                     <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
