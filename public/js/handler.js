@@ -927,6 +927,25 @@ function initializePage() {
                         // Обновляем select бригадира
                         const brigadeLeaderSelect = document.getElementById('brigadeLeader');
                         if (brigadeLeaderSelect) {
+                            // Сохраняем текущее выбранное значение
+                            const currentLeader = brigadeLeaderSelect.value;
+
+                            // Очищаем список, оставляя только первый элемент
+                            while (brigadeLeaderSelect.options.length > 1) {
+                                brigadeLeaderSelect.remove(1);
+                            }
+
+                            // Добавляем сотрудников
+                            employees.forEach(emp => {
+                                const option = new Option(emp.fio, emp.id, false, false);
+                                brigadeLeaderSelect.add(option);
+                            });
+
+                            // Восстанавливаем выбранное значение, если оно есть в новом списке
+                            if (currentLeader && Array.from(brigadeLeaderSelect.options).some(opt => opt.value === currentLeader)) {
+                                brigadeLeaderSelect.value = currentLeader;
+                            }
+
                             // Обработчик изменения выбранного бригадира
                             brigadeLeaderSelect.addEventListener('change', function() {
                                 const selectedLeaderId = this.value;
@@ -992,7 +1011,7 @@ function initializePage() {
                                 updateBrigadeMembersFormField();
                             });
                             // Сохраняем текущее выбранное значение
-                            const currentLeader = brigadeLeaderSelect.value;
+                            const currentBrigadeLeader = brigadeLeaderSelect.value;
 
                             // Очищаем список, оставляя только первый элемент
                             while (brigadeLeaderSelect.options.length > 1) {
@@ -1650,6 +1669,7 @@ function handleTransferRequest(button) {
 }
 
 // Обработчик кнопки 'Отменить заявку'
+
 function handleCancelRequest(button) {
     const requestId = button.dataset.requestId;
     console.log('Отмена заявки:', requestId);
@@ -1999,9 +2019,18 @@ function initUserSelection() {
 function handlerAddEmployee() {
     console.log('Инициализация обработчика формы сотрудника');
     const form = document.querySelector('form#employeeForm');
+    console.log('Найдена форма:', form);
 
     if (!form) {
         console.error('Форма сотрудника не найдена');
+        // Попробуем найти форму снова через 500мс на случай, если DOM ещё не загружен
+        setTimeout(() => {
+            const formRetry = document.querySelector('form#employeeForm');
+            console.log('Повторная попытка найти форму:', formRetry);
+            if (formRetry) {
+                initEmployeeForm(formRetry);
+            }
+        }, 500);
         return;
     }
 
@@ -2013,70 +2042,234 @@ function handlerAddEmployee() {
      * @param {HTMLFormElement} form - Элемент формы
      */
     function initEmployeeForm(form) {
-        form.addEventListener('submit', handleEmployeeFormSubmit);
+        console.log('Инициализация обработчика отправки формы');
+        form.addEventListener('submit', function(e) {
+            console.log('Событие отправки формы перехвачено');
+            handleEmployeeFormSubmit.call(this, e);
+        });
+    }
+
+    /**
+     * Отправляет данные формы на сервер для создания пользователя и сотрудника
+     * @param {FormData} formData - Данные формы
+     * @returns {Promise<Object>} - Ответ сервера
+     */
+    async function submitEmployeeForm(formData) {
+        const response = await fetch('/employees', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+
+        return await response.json();
     }
 
     /**
      * Обрабатывает отправку формы сотрудника
      * @param {Event} e - Событие отправки формы
      */
+    }
+
     async function handleEmployeeFormSubmit(e) {
+        console.log('Начало обработки отправки формы');
         e.preventDefault();
 
-        if (!validateForm(this)) {
-            return;
+        const form = this;
+        const formData = new FormData(form);
+        const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');
+        console.log('Найдена кнопка сохранения:', submitBtn);
+        const messagesContainer = document.getElementById('formMessages');
+        
+        console.log('Найдены элементы:', { form, submitBtn, messagesContainer });
+        console.log('Данные формы:', Object.fromEntries(formData.entries()));
+
+        // Очищаем предыдущие сообщения
+        if (messagesContainer) {
+            messagesContainer.innerHTML = '';
+        } else {
+            console.warn('Контейнер для сообщений не найден');
         }
 
-        const formData = new FormData(this);
-        const submitBtn = document.getElementById('saveBtn');
-        const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Сохранить';
+        // Валидируем форму на клиенте
+        console.log('Проверка валидации формы...');
+        const { isValid, errors } = window.formValidator.validate(form);
+        console.log('Результат валидации:', { isValid, errors });
+        
+        if (!isValid) {
+            console.log('Ошибки валидации, отмена отправки');
+            window.formValidator.displayErrors(errors, messagesContainer);
+            return;
+        }
+        
+        console.log('Форма прошла валидацию, подготовка к отправке...');
 
         try {
+            // Сохраняем оригинальный текст кнопки
+            const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+            
             // Показываем индикатор загрузки
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
-
-            // Отладочная информация
-            console.log('=== ДАННЫЕ ФОРМЫ ===');
-            console.log('URL запроса:', this.action);
-            console.log('Метод: POST');
-            console.log('Заголовки:', {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                'Accept': 'application/json'
-            });
-
-            // Выводим все поля формы
-            const formDataObj = {};
-            for (let [key, value] of formData.entries()) {
-                formDataObj[key] = value;
-            }
-            console.log('Данные формы:', formDataObj);
-
-            const response = await fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(Object.fromEntries(formData))
-            });
-
-            const data = await response.json().catch(() => ({}));
-            console.log('Ответ сервера:', data);
-
-            if (!response.ok) {
-                handleFormErrors(this, response, data);
+            console.log('Показ индикатора загрузки...');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Регистрация...';
             } else {
-                handleFormSuccess(this);
+                console.warn('Кнопка отправки не найдена, невозможно показать индикатор загрузки');
+            }
+
+            try {
+                // Собираем данные формы в объект
+                const formDataObj = {};
+                new FormData(form).forEach((value, key) => {
+                    // Если поле уже существует и является массивом, добавляем к нему значение
+                    if (formDataObj[key] !== undefined) {
+                        if (!Array.isArray(formDataObj[key])) {
+                            formDataObj[key] = [formDataObj[key]];
+                        }
+                        formDataObj[key].push(value);
+                    } else {
+                        formDataObj[key] = value;
+                    }
+                });
+                
+                console.log('Отправляемые данные:', formDataObj);
+                
+                // Отправляем форму на сервер
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(formDataObj)
+                });
+
+                const data = await response.json();
+                console.log('Ответ сервера:', { status: response.status, data });
+                
+                if (!response.ok) {
+                    // Если это ошибка валидации (422), обрабатываем её отдельно
+                    if (response.status === 422) {
+                        console.log('Ошибки валидации с сервера (422):', data);
+                        
+                        // Собираем все ошибки в один массив
+                        const allErrors = [];
+                        
+                        if (data.errors) {
+                            // Laravel-style errors - преобразуем объект ошибок в массив сообщений
+                            Object.entries(data.errors).forEach(([field, messages]) => {
+                                if (Array.isArray(messages)) {
+                                    allErrors.push(...messages);
+                                } else if (typeof messages === 'string') {
+                                    allErrors.push(messages);
+                                }
+                                
+                                // Выделяем невалидные поля
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    input.classList.add('is-invalid');
+                                    const feedback = input.nextElementSibling || document.createElement('div');
+                                    if (!feedback.classList.contains('invalid-feedback')) {
+                                        feedback.className = 'invalid-feedback';
+                                        input.parentNode.insertBefore(feedback, input.nextSibling);
+                                    }
+                                    feedback.textContent = Array.isArray(messages) ? messages[0] : messages;
+                                }
+                            });
+                        } else if (data.message) {
+                            // Стандартное сообщение об ошибке
+                            allErrors.push(data.message);
+                        } else {
+                            allErrors.push('Пожалуйста, заполните все обязательные поля');
+                        }
+                        
+                        // Отображаем ошибки
+                        if (window.formValidator && window.formValidator.displayErrors) {
+                            window.formValidator.displayErrors(allErrors, messagesContainer);
+                        } else {
+                            showAlert(allErrors.join('\n'), 'danger', messagesContainer);
+                        }
+                        return;
+                    }
+                    
+                    // Для других ошибок бросаем исключение
+                    throw { response, data };
+                }
+
+                // Успешное завершение
+                console.log('Сотрудник успешно создан', data);
+                showAlert('Сотрудник успешно создан', 'success', messagesContainer);
+                form.reset();
+                
+                // Обновляем таблицу сотрудников, если она есть на странице
+                const employeesTable = document.querySelector('.employees-table');
+                if (employeesTable && window.DataTable) {
+                    const table = window.DataTable(employeesTable);
+                    if (table && typeof table.ajax.reload === 'function') {
+                        table.ajax.reload();
+                    }
+                }
+
+            } catch (error) {
+                console.error('Ошибка при сохранении:', error);
+                let errorMessage = 'Произошла ошибка при сохранении. Пожалуйста, попробуйте еще раз.';
+                
+                if (error.response) {
+                    // Обработка HTTP ошибок
+                    console.error('Данные ответа об ошибке:', error.data);
+                    console.error('Статус ошибки:', error.response.status);
+                    
+                    // Пытаемся получить сообщение об ошибке из ответа
+                    if (error.data) {
+                        if (error.data.message) {
+                            errorMessage = error.data.message;
+                        } else if (error.data.errors) {
+                            // Обработка ошибок валидации Laravel
+                            const errors = Object.values(error.data.errors).flat();
+                            errorMessage = errors.join('\n');
+                        }
+                    }
+                    
+                    // Общие сообщения для стандартных кодов ошибок
+                    if (error.response.status === 401) {
+                        errorMessage = 'Требуется авторизация';
+                    } else if (error.response.status === 403) {
+                        errorMessage = 'Доступ запрещен';
+                    } else if (error.response.status === 404) {
+                        errorMessage = 'Ресурс не найден';
+                    } else if (error.response.status >= 500) {
+                        errorMessage = 'Ошибка на сервере. Пожалуйста, попробуйте позже.';
+                    }
+                } else if (error.request) {
+                    // Запрос был сделан, но ответ не получен
+                    console.error('Не удалось получить ответ от сервера');
+                    errorMessage = 'Не удалось соединиться с сервером. Пожалуйста, проверьте подключение к интернету и попробуйте снова.';
+                } else if (error instanceof Error) {
+                    // Ошибка JavaScript
+                    errorMessage = error.message;
+                    console.error('Ошибка JavaScript:', error.stack);
+                } else {
+                    // Неизвестная ошибка
+                    console.error('Неизвестная ошибка:', error);
+                    errorMessage = 'Произошла непредвиденная ошибка. Пожалуйста, сообщите об этом в службу поддержки.';
+                }
+                
+                showAlert(errorMessage, 'danger', messagesContainer);
+            } finally {
+                // Восстанавливаем кнопку
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText || 'Сохранить';
+                }
             }
         } catch (error) {
-            console.error('Ошибка при сохранении сотрудника:', error);
-            showAlert(error.message || 'Произошла ошибка при сохранении', 'danger');
-        } finally {
-            // Восстанавливаем состояние кнопки
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
+            console.error('Неожиданная ошибка:', error);
+            showAlert('Произошла непредвиденная ошибка', 'danger', messagesContainer);
         }
     }
 
@@ -2183,7 +2376,6 @@ function handlerAddEmployee() {
             }
         });
     }
-}
 
 function hanlerAddToBrigade() {
     document.getElementById('addToBrigadeBtn').addEventListener('click', function () {

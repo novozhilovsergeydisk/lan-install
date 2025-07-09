@@ -787,20 +787,8 @@
 
                     <div class="tab-pane fade" id="users" role="tabpanel">
                         <div class="row g-4 flex-nowrap">
-                            <!-- Форма регистрации -->
-                            <div id="registerFormContainer" class="col-lg-3">
-                                <div class="card h-100">
-                                    <div class="card-header">
-                                        <h5 class="mb-0">Добавить нового пользователя</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        @include('auth.partials.register-form')
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- Таблица пользователей -->
-                            <div id="usersTableContainer" class="col-lg-9">
+                            <div id="usersTableContainer" class="col-12">
                                 <div class="card h-100">
                                     <div class="card-header">
                                         <h5 class="mb-0">Список пользователей</h5>
@@ -870,6 +858,38 @@
                                     @csrf
 
                                     <input type="hidden" name="user_id" id="userIdInput" value="">
+                                    
+                                    <div id="formMessages" class="mb-3"></div>
+                                    
+                                    <h5 class="mb-3">Учетные данные</h5>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="name" class="form-label">Имя пользователя:</label>
+                                                <input type="text" name="name" id="name" class="form-control" placeholder="Введите имя" value="{{ old('name') }}" required autofocus>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="email" class="form-label">Email:</label>
+                                                <input type="email" name="email" id="email" class="form-control" placeholder="Введите email" autocomplete="username" value="{{ old('email') }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="password" class="form-label">Пароль:</label>
+                                                <input type="password" name="password" id="password" class="form-control" placeholder="Введите пароль" autocomplete="new-password" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="password_confirmation" class="form-label">Подтвердите пароль:</label>
+                                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Подтвердите пароль" autocomplete="new-password" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 class="mb-3 mt-4">Личные данные</h5>
                                     
                                     <!-- Toast уведомление о выборе пользователя -->
                                     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
@@ -960,7 +980,9 @@
                                         </div>
                                     </div>
 
-                                    <button id="saveBtn" type="button" class="btn btn-primary w-100 mt-3">Сохранить</button>
+                
+
+                                    <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
 
                                     <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
 
@@ -1380,6 +1402,9 @@
 <!-- Custom Application JS -->
 <script src="{{ asset('js/app.js') }}"></script>
 <script type="module" src="{{ asset('js/utils.js') }}"></script>
+
+<!-- Form Validation -->
+<script src="{{ asset('js/form-validator.js') }}"></script>
 
 <!-- Event Handlers -->
 <script type="module" src="{{ asset('js/handler.js') }}"></script>

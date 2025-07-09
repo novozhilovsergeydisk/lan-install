@@ -2,33 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class EmployeeUserController extends Controller
 {
     public function store(Request $request)
     {
         // Валидация
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
+        $validated = $request->validate([
+            // Поля пользователя (обязательные на фронтенде)
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'password_confirmation' => 'required_with:password|same:password',
+            
+            // Поля сотрудника (обязательные на фронтенде)
             'fio' => 'required|string|max:255',
+            'positions' => 'required|exists:positions,id',
+            
+            // Необязательные поля
             'phone' => 'nullable|string|max:50',
             'birth_date' => 'nullable|date',
             'birth_place' => 'nullable|string|max:255',
-
             'passport_series' => 'nullable|string|max:20',
             'passport_issued_by' => 'nullable|string|max:255',
             'passport_issued_at' => 'nullable|date',
             'passport_department_code' => 'nullable|string|max:20',
-
             'car_brand' => 'nullable|string|max:100',
             'car_plate' => 'nullable|string|max:20',
+        ], [
+            'name.required' => 'Поле "Имя пользователя" обязательно для заполнения',
+            'email.required' => 'Поле "Email" обязательно для заполнения',
+            'email.email' => 'Укажите корректный email',
+            'email.unique' => 'Пользователь с таким email уже существует',
+            'password.required' => 'Поле "Пароль" обязательно для заполнения',
+            'password.min' => 'Пароль должен содержать минимум 8 символов',
+            'password.confirmed' => 'Пароли не совпадают',
+            'password_confirmation.required_with' => 'Подтверждение пароля обязательно',
+            'password_confirmation.same' => 'Пароли не совпадают',
+            'fio.required' => 'Поле "ФИО" обязательно для заполнения',
+            'positions.required' => 'Поле "Должность" обязательно для выбора',
+            'positions.exists' => 'Выбранная должность недействительна',
         ]);
 
         DB::beginTransaction();
 
         try {
+            // Создаем пользователя
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'email_verified_at' => now(),
+                'remember_token' => Str::random(10),
+            ]);
+
             // Вставка сотрудника с user_id
             DB::insert("
                 INSERT INTO employees (fio, phone, birth_date, birth_place, user_id)
@@ -38,7 +70,7 @@ class EmployeeUserController extends Controller
                 $request->phone,
                 $request->birth_date,
                 $request->birth_place,
-                $request->user_id
+                $user->id
             ]);
 
             $employeeId = DB::getPdo()->lastInsertId();
@@ -70,10 +102,31 @@ class EmployeeUserController extends Controller
             }
 
             DB::commit();
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Сотрудник успешно создан',
+                    'employee_id' => $employeeId,
+                    'user_id' => $user->id
+                ], 201);
+            }
+            
             return redirect()->back()->with('success', 'Сотрудник успешно добавлен');
+            
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Ошибка: ' . $e->getMessage());
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Ошибка при создании сотрудника',
+                    'error' => $e->getMessage(),
+                    'errors' => ['general' => $e->getMessage()]
+                ], 422);
+            }
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Ошибка: ' . $e->getMessage());
         }
     }
 

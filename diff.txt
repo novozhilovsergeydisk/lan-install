@@ -1,330 +1,773 @@
-diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index e59f9a7..9e12278 100644
---- a/app/Http/Controllers/HomeController.php
-+++ b/app/Http/Controllers/HomeController.php
-@@ -51,6 +51,8 @@ public function cancelRequest(Request $request)
-                 throw new \Exception('Статус "отменена" не найден в системе');
-             }
+diff --git a/app/Http/Controllers/EmployeeUserController.php b/app/Http/Controllers/EmployeeUserController.php
+index ee1c654..0199448 100644
+--- a/app/Http/Controllers/EmployeeUserController.php
++++ b/app/Http/Controllers/EmployeeUserController.php
+@@ -2,33 +2,65 @@
  
-+            $status_color = $canceledStatus->color;  
+ namespace App\Http\Controllers;
+ 
++use App\Models\User;
+ use Illuminate\Http\Request;
+ use Illuminate\Support\Facades\DB;
++use Illuminate\Support\Facades\Hash;
++use Illuminate\Support\Str;
+ 
+ class EmployeeUserController extends Controller
+ {
+     public function store(Request $request)
+     {
+         // Валидация
+-        $request->validate([
+-            'user_id' => 'required|exists:users,id',
++        $validated = $request->validate([
++            // Поля пользователя (обязательные на фронтенде)
++            'name' => 'required|string|max:255',
++            'email' => 'required|string|email|max:255|unique:users',
++            'password' => 'required|string|min:8|confirmed',
++            'password_confirmation' => 'required_with:password|same:password',
++            
++            // Поля сотрудника (обязательные на фронтенде)
+             'fio' => 'required|string|max:255',
++            'positions' => 'required|exists:positions,id',
++            
++            // Необязательные поля
+             'phone' => 'nullable|string|max:50',
+             'birth_date' => 'nullable|date',
+             'birth_place' => 'nullable|string|max:255',
+-
+             'passport_series' => 'nullable|string|max:20',
+             'passport_issued_by' => 'nullable|string|max:255',
+             'passport_issued_at' => 'nullable|date',
+             'passport_department_code' => 'nullable|string|max:20',
+-
+             'car_brand' => 'nullable|string|max:100',
+             'car_plate' => 'nullable|string|max:20',
++        ], [
++            'name.required' => 'Поле "Имя пользователя" обязательно для заполнения',
++            'email.required' => 'Поле "Email" обязательно для заполнения',
++            'email.email' => 'Укажите корректный email',
++            'email.unique' => 'Пользователь с таким email уже существует',
++            'password.required' => 'Поле "Пароль" обязательно для заполнения',
++            'password.min' => 'Пароль должен содержать минимум 8 символов',
++            'password.confirmed' => 'Пароли не совпадают',
++            'password_confirmation.required_with' => 'Подтверждение пароля обязательно',
++            'password_confirmation.same' => 'Пароли не совпадают',
++            'fio.required' => 'Поле "ФИО" обязательно для заполнения',
++            'positions.required' => 'Поле "Должность" обязательно для выбора',
++            'positions.exists' => 'Выбранная должность недействительна',
+         ]);
+ 
+         DB::beginTransaction();
+ 
+         try {
++            // Создаем пользователя
++            $user = User::create([
++                'name' => $request->name,
++                'email' => $request->email,
++                'password' => Hash::make($request->password),
++                'email_verified_at' => now(),
++                'remember_token' => Str::random(10),
++            ]);
 +
-             // Создаем комментарий об отмене
-             $comment = "Заявка отменена. Причина: " . $validated['reason'];
- 
-@@ -86,7 +88,8 @@ public function cancelRequest(Request $request)
-                 'success' => true,
-                 'message' => 'Заявка успешно отменена',
-                 'comments_count' => $commentsCount,
--                'execution_date' => $requestData->execution_date
-+                'execution_date' => $requestData->execution_date,
-+                'status_color' => $status_color 
+             // Вставка сотрудника с user_id
+             DB::insert("
+                 INSERT INTO employees (fio, phone, birth_date, birth_place, user_id)
+@@ -38,7 +70,7 @@ public function store(Request $request)
+                 $request->phone,
+                 $request->birth_date,
+                 $request->birth_place,
+-                $request->user_id
++                $user->id
              ]);
  
-         } catch (\Illuminate\Validation\ValidationException $e) {
-diff --git a/public/js/handler.js b/public/js/handler.js
-index cc25424..bd4dd77 100644
---- a/public/js/handler.js
-+++ b/public/js/handler.js
-@@ -346,6 +346,173 @@ function applyFilters() {
-     // Логи фильтров отключены
- }
+             $employeeId = DB::getPdo()->lastInsertId();
+@@ -70,10 +102,31 @@ public function store(Request $request)
+             }
  
-+// ================================
-+// Управление статусами заявок
-+// ================================
-+
-+/**
-+ * Загружает список статусов с сервера и отображает их в таблице
-+ */
-+function loadStatuses() {
-+    const tbody = document.getElementById('statusesList');
-+    if (!tbody) return;
-+    
-+    fetch('/statuses')
-+        .then(response => response.json())
-+        .then(data => {
-+            tbody.innerHTML = '';
+             DB::commit();
 +            
-+            if (data.length === 0) {
-+                tbody.innerHTML = `
-+                    <tr>
-+                        <td colspan="5" class="text-center py-4">
-+                            <p class="text-muted mb-0">Статусы не найдены</p>
-+                        </td>
-+                    </tr>`;
-+                return;
++            if ($request->wantsJson()) {
++                return response()->json([
++                    'message' => 'Сотрудник успешно создан',
++                    'employee_id' => $employeeId,
++                    'user_id' => $user->id
++                ], 201);
 +            }
 +            
-+            data.forEach(status => {
-+                const row = document.createElement('tr');
-+                row.innerHTML = `
-+                    <td>${status.id}</td>
-+                    <td>
-+                        <span class="badge" style="background-color: ${status.color};">
-+                            ${status.name}
-+                        </span>
-+                    </td>
-+                    <td>
-+                        <div class="d-flex align-items-center">
-+                            <div style="width: 20px; height: 20px; background-color: ${status.color}; border-radius: 4px; margin-right: 8px;"></div>
-+                            <span>${status.color}</span>
-+                        </div>
-+                    </td>
-+                    <td>${status.requests_count || 0}</td>
-+                    <td class="text-end">
-+                        <button class="btn btn-sm btn-outline-primary edit-status-btn me-1" 
-+                                data-id="${status.id}" 
-+                                data-name="${status.name}" 
-+                                data-color="${status.color}">
-+                            <i class="bi bi-pencil"></i>
-+                        </button>
-+                        ${status.requests_count == 0 ? 
-+                            `<button class="btn btn-sm btn-outline-danger delete-status-btn" 
-+                                    data-id="${status.id}">
-+                                <i class="bi bi-trash"></i>
-+                            </button>` : 
-+                            `<button class="btn btn-sm btn-outline-secondary" disabled>
-+                                <i class="bi bi-trash"></i>
-+                            </button>`
+             return redirect()->back()->with('success', 'Сотрудник успешно добавлен');
++            
+         } catch (\Exception $e) {
+             DB::rollBack();
+-            return redirect()->back()->with('error', 'Ошибка: ' . $e->getMessage());
++            
++            if ($request->wantsJson()) {
++                return response()->json([
++                    'message' => 'Ошибка при создании сотрудника',
++                    'error' => $e->getMessage(),
++                    'errors' => ['general' => $e->getMessage()]
++                ], 422);
++            }
++            
++            return redirect()->back()
++                ->withInput()
++                ->with('error', 'Ошибка: ' . $e->getMessage());
+         }
+     }
+ 
+diff --git a/public/js/handler.js b/public/js/handler.js
+index 8da6647..d0f586c 100644
+--- a/public/js/handler.js
++++ b/public/js/handler.js
+@@ -927,6 +927,25 @@ function initializePage() {
+                         // Обновляем select бригадира
+                         const brigadeLeaderSelect = document.getElementById('brigadeLeader');
+                         if (brigadeLeaderSelect) {
++                            // Сохраняем текущее выбранное значение
++                            const currentLeader = brigadeLeaderSelect.value;
++
++                            // Очищаем список, оставляя только первый элемент
++                            while (brigadeLeaderSelect.options.length > 1) {
++                                brigadeLeaderSelect.remove(1);
++                            }
++
++                            // Добавляем сотрудников
++                            employees.forEach(emp => {
++                                const option = new Option(emp.fio, emp.id, false, false);
++                                brigadeLeaderSelect.add(option);
++                            });
++
++                            // Восстанавливаем выбранное значение, если оно есть в новом списке
++                            if (currentLeader && Array.from(brigadeLeaderSelect.options).some(opt => opt.value === currentLeader)) {
++                                brigadeLeaderSelect.value = currentLeader;
++                            }
++
+                             // Обработчик изменения выбранного бригадира
+                             brigadeLeaderSelect.addEventListener('change', function() {
+                                 const selectedLeaderId = this.value;
+@@ -992,7 +1011,7 @@ function initializePage() {
+                                 updateBrigadeMembersFormField();
+                             });
+                             // Сохраняем текущее выбранное значение
+-                            const currentLeader = brigadeLeaderSelect.value;
++                            const currentBrigadeLeader = brigadeLeaderSelect.value;
+ 
+                             // Очищаем список, оставляя только первый элемент
+                             while (brigadeLeaderSelect.options.length > 1) {
+@@ -1650,6 +1669,7 @@ function handleTransferRequest(button) {
+ }
+ 
+ // Обработчик кнопки 'Отменить заявку'
++
+ function handleCancelRequest(button) {
+     const requestId = button.dataset.requestId;
+     console.log('Отмена заявки:', requestId);
+@@ -1999,9 +2019,18 @@ function initUserSelection() {
+ function handlerAddEmployee() {
+     console.log('Инициализация обработчика формы сотрудника');
+     const form = document.querySelector('form#employeeForm');
++    console.log('Найдена форма:', form);
+ 
+     if (!form) {
+         console.error('Форма сотрудника не найдена');
++        // Попробуем найти форму снова через 500мс на случай, если DOM ещё не загружен
++        setTimeout(() => {
++            const formRetry = document.querySelector('form#employeeForm');
++            console.log('Повторная попытка найти форму:', formRetry);
++            if (formRetry) {
++                initEmployeeForm(formRetry);
++            }
++        }, 500);
+         return;
+     }
+ 
+@@ -2013,70 +2042,234 @@ function handlerAddEmployee() {
+      * @param {HTMLFormElement} form - Элемент формы
+      */
+     function initEmployeeForm(form) {
+-        form.addEventListener('submit', handleEmployeeFormSubmit);
++        console.log('Инициализация обработчика отправки формы');
++        form.addEventListener('submit', function(e) {
++            console.log('Событие отправки формы перехвачено');
++            handleEmployeeFormSubmit.call(this, e);
++        });
++    }
++
++    /**
++     * Отправляет данные формы на сервер для создания пользователя и сотрудника
++     * @param {FormData} formData - Данные формы
++     * @returns {Promise<Object>} - Ответ сервера
++     */
++    async function submitEmployeeForm(formData) {
++        const response = await fetch('/employees', {
++            method: 'POST',
++            headers: {
++                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
++                'Accept': 'application/json',
++                'X-Requested-With': 'XMLHttpRequest'
++            },
++            body: formData
++        });
++
++        return await response.json();
+     }
+ 
+     /**
+      * Обрабатывает отправку формы сотрудника
+      * @param {Event} e - Событие отправки формы
+      */
++    }
++
+     async function handleEmployeeFormSubmit(e) {
++        console.log('Начало обработки отправки формы');
+         e.preventDefault();
+ 
+-        if (!validateForm(this)) {
+-            return;
++        const form = this;
++        const formData = new FormData(form);
++        const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');
++        console.log('Найдена кнопка сохранения:', submitBtn);
++        const messagesContainer = document.getElementById('formMessages');
++        
++        console.log('Найдены элементы:', { form, submitBtn, messagesContainer });
++        console.log('Данные формы:', Object.fromEntries(formData.entries()));
++
++        // Очищаем предыдущие сообщения
++        if (messagesContainer) {
++            messagesContainer.innerHTML = '';
++        } else {
++            console.warn('Контейнер для сообщений не найден');
+         }
+ 
+-        const formData = new FormData(this);
+-        const submitBtn = document.getElementById('saveBtn');
+-        const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Сохранить';
++        // Валидируем форму на клиенте
++        console.log('Проверка валидации формы...');
++        const { isValid, errors } = window.formValidator.validate(form);
++        console.log('Результат валидации:', { isValid, errors });
++        
++        if (!isValid) {
++            console.log('Ошибки валидации, отмена отправки');
++            window.formValidator.displayErrors(errors, messagesContainer);
++            return;
++        }
++        
++        console.log('Форма прошла валидацию, подготовка к отправке...');
+ 
+         try {
++            // Сохраняем оригинальный текст кнопки
++            const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
++            
+             // Показываем индикатор загрузки
+-            submitBtn.disabled = true;
+-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+-
+-            // Отладочная информация
+-            console.log('=== ДАННЫЕ ФОРМЫ ===');
+-            console.log('URL запроса:', this.action);
+-            console.log('Метод: POST');
+-            console.log('Заголовки:', {
+-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+-                'Accept': 'application/json'
+-            });
+-
+-            // Выводим все поля формы
+-            const formDataObj = {};
+-            for (let [key, value] of formData.entries()) {
+-                formDataObj[key] = value;
++            console.log('Показ индикатора загрузки...');
++            if (submitBtn) {
++                submitBtn.disabled = true;
++                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Регистрация...';
++            } else {
++                console.warn('Кнопка отправки не найдена, невозможно показать индикатор загрузки');
+             }
+-            console.log('Данные формы:', formDataObj);
+ 
+-            const response = await fetch(this.action, {
+-                method: 'POST',
+-                headers: {
+-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+-                    'Accept': 'application/json',
+-                    'Content-Type': 'application/json'
+-                },
+-                body: JSON.stringify(Object.fromEntries(formData))
+-            });
++            try {
++                // Собираем данные формы в объект
++                const formDataObj = {};
++                new FormData(form).forEach((value, key) => {
++                    // Если поле уже существует и является массивом, добавляем к нему значение
++                    if (formDataObj[key] !== undefined) {
++                        if (!Array.isArray(formDataObj[key])) {
++                            formDataObj[key] = [formDataObj[key]];
 +                        }
-+                    </td>`;
-+                tbody.appendChild(row);
-+            });
-+            
-+            // Добавляем обработчики для кнопок редактирования
-+            document.querySelectorAll('.edit-status-btn').forEach(btn => {
-+                btn.addEventListener('click', function() {
-+                    const id = this.getAttribute('data-id');
-+                    const name = this.getAttribute('data-name');
-+                    const color = this.getAttribute('data-color');
-+                    
-+                    document.getElementById('statusId').value = id;
-+                    document.getElementById('statusName').value = name;
-+                    document.getElementById('statusColor').value = color;
-+                    
-+                    const modal = new bootstrap.Modal(document.getElementById('addStatusModal'));
-+                    document.querySelector('#addStatusModal .modal-title').textContent = 'Редактировать статус';
-+                    modal.show();
-+                });
-+            });
-+            
-+            // Добавляем обработчики для кнопок удаления
-+            document.querySelectorAll('.delete-status-btn').forEach(btn => {
-+                btn.addEventListener('click', function() {
-+                    if (confirm('Вы уверены, что хотите удалить этот статус?')) {
-+                        const statusId = this.getAttribute('data-id');
-+                        deleteStatus(statusId);
++                        formDataObj[key].push(value);
++                    } else {
++                        formDataObj[key] = value;
 +                    }
 +                });
-+            });
-+            
-+        })
-+        .catch(error => {
-+            console.error('Ошибка при загрузке статусов:', error);
-+            showAlert('Не удалось загрузить список статусов', 'error');
-+        });
-+}
++                
++                console.log('Отправляемые данные:', formDataObj);
++                
++                // Отправляем форму на сервер
++                const response = await fetch(form.action, {
++                    method: 'POST',
++                    headers: {
++                        'Content-Type': 'application/json',
++                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
++                        'Accept': 'application/json',
++                        'X-Requested-With': 'XMLHttpRequest'
++                    },
++                    body: JSON.stringify(formDataObj)
++                });
+ 
+-            const data = await response.json().catch(() => ({}));
+-            console.log('Ответ сервера:', data);
++                const data = await response.json();
++                console.log('Ответ сервера:', { status: response.status, data });
++                
++                if (!response.ok) {
++                    // Если это ошибка валидации (422), обрабатываем её отдельно
++                    if (response.status === 422) {
++                        console.log('Ошибки валидации с сервера (422):', data);
++                        
++                        // Собираем все ошибки в один массив
++                        const allErrors = [];
++                        
++                        if (data.errors) {
++                            // Laravel-style errors - преобразуем объект ошибок в массив сообщений
++                            Object.entries(data.errors).forEach(([field, messages]) => {
++                                if (Array.isArray(messages)) {
++                                    allErrors.push(...messages);
++                                } else if (typeof messages === 'string') {
++                                    allErrors.push(messages);
++                                }
++                                
++                                // Выделяем невалидные поля
++                                const input = form.querySelector(`[name="${field}"]`);
++                                if (input) {
++                                    input.classList.add('is-invalid');
++                                    const feedback = input.nextElementSibling || document.createElement('div');
++                                    if (!feedback.classList.contains('invalid-feedback')) {
++                                        feedback.className = 'invalid-feedback';
++                                        input.parentNode.insertBefore(feedback, input.nextSibling);
++                                    }
++                                    feedback.textContent = Array.isArray(messages) ? messages[0] : messages;
++                                }
++                            });
++                        } else if (data.message) {
++                            // Стандартное сообщение об ошибке
++                            allErrors.push(data.message);
++                        } else {
++                            allErrors.push('Пожалуйста, заполните все обязательные поля');
++                        }
++                        
++                        // Отображаем ошибки
++                        if (window.formValidator && window.formValidator.displayErrors) {
++                            window.formValidator.displayErrors(allErrors, messagesContainer);
++                        } else {
++                            showAlert(allErrors.join('\n'), 'danger', messagesContainer);
++                        }
++                        return;
++                    }
++                    
++                    // Для других ошибок бросаем исключение
++                    throw { response, data };
++                }
+ 
+-            if (!response.ok) {
+-                handleFormErrors(this, response, data);
+-            } else {
+-                handleFormSuccess(this);
++                // Успешное завершение
++                console.log('Сотрудник успешно создан', data);
++                showAlert('Сотрудник успешно создан', 'success', messagesContainer);
++                form.reset();
++                
++                // Обновляем таблицу сотрудников, если она есть на странице
++                const employeesTable = document.querySelector('.employees-table');
++                if (employeesTable && window.DataTable) {
++                    const table = window.DataTable(employeesTable);
++                    if (table && typeof table.ajax.reload === 'function') {
++                        table.ajax.reload();
++                    }
++                }
 +
-+/**
-+ * Сохраняет статус (создает новый или обновляет существующий)
-+ */
-+function saveStatus() {
-+    const id = document.getElementById('statusId').value;
-+    const name = document.getElementById('statusName').value.trim();
-+    const color = document.getElementById('statusColor').value;
-+    
-+    if (!name) {
-+        showAlert('Пожалуйста, укажите название статуса', 'error');
-+        return;
-+    }
-+    
-+    const url = id ? `/statuses/${id}` : '/statuses';
-+    const method = id ? 'PUT' : 'POST';
-+    
-+    fetch(url, {
-+        method: method,
-+        headers: {
-+            'Content-Type': 'application/json',
-+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-+            'Accept': 'application/json'
-+        },
-+        body: JSON.stringify({ name, color })
-+    })
-+    .then(response => response.json())
-+    .then(data => {
-+        if (data.success) {
-+            showAlert(`Статус успешно ${id ? 'обновлен' : 'добавлен'}`, 'success');
-+            loadStatuses();
-+            
-+            // Закрываем модальное окно
-+            const modal = bootstrap.Modal.getInstance(document.getElementById('addStatusModal'));
-+            modal.hide();
-+        } else {
-+            throw new Error(data.message || 'Произошла ошибка');
-+        }
-+    })
-+    .catch(error => {
-+        console.error('Ошибка при сохранении статуса:', error);
-+        showAlert(error.message || 'Не удалось сохранить статус', 'error');
-+    });
-+}
-+
-+/**
-+ * Удаляет статус по ID
-+ * @param {string} id - ID статуса для удаления
-+ */
-+function deleteStatus(id) {
-+    fetch(`/statuses/${id}`, {
-+        method: 'DELETE',
-+        headers: {
-+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-+            'Accept': 'application/json'
-+        }
-+    })
-+    .then(response => response.json())
-+    .then(data => {
-+        if (data.success) {
-+            showAlert('Статус успешно удален', 'success');
-+            loadStatuses();
-+        } else {
-+            throw new Error(data.message || 'Произошла ошибка');
-+        }
-+    })
-+    .catch(error => {
-+        console.error('Ошибка при удалении статуса:', error);
-+        showAlert(error.message || 'Не удалось удалить статус', 'error');
-+    });
-+}
-+
- // Функция для обновления счетчика заявок
- function updateRequestsCount(count) {
-     const counterElement = document.querySelector('.requests-count');
-@@ -1552,7 +1719,7 @@ function handleCancelRequest(button) {
-                 const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
-                 if (row) {
-                     // Обновляем статус
--                    row.style.setProperty('--status-color', '#B8B799');
-+                    row.style.setProperty('--status-color', result.status_color);
-                     const statusCell = row.querySelector('.status-badge');
-                     if (statusCell) {
-                         statusCell.textContent = 'отменена';
++            } catch (error) {
++                console.error('Ошибка при сохранении:', error);
++                let errorMessage = 'Произошла ошибка при сохранении. Пожалуйста, попробуйте еще раз.';
++                
++                if (error.response) {
++                    // Обработка HTTP ошибок
++                    console.error('Данные ответа об ошибке:', error.data);
++                    console.error('Статус ошибки:', error.response.status);
++                    
++                    // Пытаемся получить сообщение об ошибке из ответа
++                    if (error.data) {
++                        if (error.data.message) {
++                            errorMessage = error.data.message;
++                        } else if (error.data.errors) {
++                            // Обработка ошибок валидации Laravel
++                            const errors = Object.values(error.data.errors).flat();
++                            errorMessage = errors.join('\n');
++                        }
++                    }
++                    
++                    // Общие сообщения для стандартных кодов ошибок
++                    if (error.response.status === 401) {
++                        errorMessage = 'Требуется авторизация';
++                    } else if (error.response.status === 403) {
++                        errorMessage = 'Доступ запрещен';
++                    } else if (error.response.status === 404) {
++                        errorMessage = 'Ресурс не найден';
++                    } else if (error.response.status >= 500) {
++                        errorMessage = 'Ошибка на сервере. Пожалуйста, попробуйте позже.';
++                    }
++                } else if (error.request) {
++                    // Запрос был сделан, но ответ не получен
++                    console.error('Не удалось получить ответ от сервера');
++                    errorMessage = 'Не удалось соединиться с сервером. Пожалуйста, проверьте подключение к интернету и попробуйте снова.';
++                } else if (error instanceof Error) {
++                    // Ошибка JavaScript
++                    errorMessage = error.message;
++                    console.error('Ошибка JavaScript:', error.stack);
++                } else {
++                    // Неизвестная ошибка
++                    console.error('Неизвестная ошибка:', error);
++                    errorMessage = 'Произошла непредвиденная ошибка. Пожалуйста, сообщите об этом в службу поддержки.';
++                }
++                
++                showAlert(errorMessage, 'danger', messagesContainer);
++            } finally {
++                // Восстанавливаем кнопку
++                if (submitBtn) {
++                    submitBtn.disabled = false;
++                    submitBtn.innerHTML = originalBtnText || 'Сохранить';
++                }
+             }
+         } catch (error) {
+-            console.error('Ошибка при сохранении сотрудника:', error);
+-            showAlert(error.message || 'Произошла ошибка при сохранении', 'danger');
+-        } finally {
+-            // Восстанавливаем состояние кнопки
+-            submitBtn.disabled = false;
+-            submitBtn.innerHTML = originalBtnText;
++            console.error('Неожиданная ошибка:', error);
++            showAlert('Произошла непредвиденная ошибка', 'danger', messagesContainer);
+         }
+     }
+ 
+@@ -2183,7 +2376,6 @@ function handlerAddEmployee() {
+             }
+         });
+     }
+-}
+ 
+ function hanlerAddToBrigade() {
+     document.getElementById('addToBrigadeBtn').addEventListener('click', function () {
+diff --git a/resources/views/auth/partials/register-form.blade.php b/resources/views/auth/partials/register-form.blade.php
+index 2f5beb2..556b6d5 100644
+--- a/resources/views/auth/partials/register-form.blade.php
++++ b/resources/views/auth/partials/register-form.blade.php
+@@ -1,209 +1,4 @@
+-@if ($errors->any())
+-    <div class="alert alert-danger mb-3" role="alert">
+-        <ul class="mb-0">
+-            @foreach ($errors->all() as $error)
+-                <li>{{ $error }}</li>
+-            @endforeach
+-        </ul>
+-    </div>
+-@endif
+-
+-<form id="registerForm" method="POST" action="{{ route('register') }}" class="mb-4">
+-    @csrf
+-    <div id="formMessages"></div>
+-
+-    <div class="mb-3">
+-        <label for="name" class="form-label">Имя:</label>
+-        <input type="text" name="name" id="name"
+-               class="form-control"
+-               placeholder="Введите имя"
+-               value="{{ old('name') }}" required autofocus>
+-    </div>
+-
+-    <div class="mb-3">
+-        <label for="email" class="form-label">Email:</label>
+-        <input type="email" name="email" id="email"
+-               class="form-control"
+-               placeholder="Введите email"
+-               autocomplete="username"
+-               value="{{ old('email') }}" required>
+-    </div>
+-
+-    <div class="mb-3">
+-        <label for="password" class="form-label">Пароль:</label>
+-        <input type="password" name="password" id="password"
+-               class="form-control"
+-               placeholder="Введите пароль"
+-               autocomplete="new-password"
+-               required>
+-    </div>
+-
+-    <div class="mb-3">
+-        <label for="password_confirmation" class="form-label">Подтвердите пароль:</label>
+-        <input type="password" name="password_confirmation" id="password_confirmation"
+-               class="form-control"
+-               placeholder="Подтвердите пароль"
+-               autocomplete="new-password"
+-               required>
+-    </div>
+-
+-    <div class="col-12">
+-        <button type="submit" class="btn btn-primary w-100">
+-            <i class="bi bi-person-plus me-1"></i> Зарегистрировать пользователя
+-        </button>
+-    </div>
+-
+-</form>
+-
+-@push('scripts')
+-<script>
+-document.addEventListener('DOMContentLoaded', function() {
+-    const form = document.getElementById('registerForm');
+-    const messagesContainer = document.getElementById('formMessages');
+-
+-    form.addEventListener('submit', function(e) {
+-        e.preventDefault();
+-        
+-        const formData = new FormData(form);
+-        const submitButton = form.querySelector('button[type="submit"]');
+-        const originalButtonText = submitButton.innerHTML;
+-        
+-        // Показываем индикатор загрузки
+-        submitButton.disabled = true;
+-        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Регистрация...';
+-        
+-        // Очищаем предыдущие сообщения
+-        messagesContainer.innerHTML = '';
+-        
+-        // Добавляем заголовок Accept для JSON-ответа
+-        const headers = new Headers();
+-        headers.append('X-Requested-With', 'XMLHttpRequest');
+-        headers.append('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+-        headers.append('Accept', 'application/json');
+-        
+-        // Отправляем форму с правильными заголовками
+-        fetch(form.action, {
+-            method: 'POST',
+-            headers: headers,
+-            body: formData,
+-            credentials: 'same-origin'
+-        })
+-        .then(async response => {
+-            const data = await response.json();
+-            
+-            if (!response.ok) {
+-                // Если есть ошибки валидации, выводим их
+-                if (data.errors) {
+-                    let errorHtml = '<div class="alert alert-danger"><ul class="mb-0">';
+-                    Object.values(data.errors).forEach(error => {
+-                        errorHtml += `<li>${error[0]}</li>`;
+-                    });
+-                    errorHtml += '</ul></div>';
+-                    messagesContainer.innerHTML = errorHtml;
+-                } else if (data.message) {
+-                    // Если есть сообщение об ошибке
+-                    messagesContainer.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+-                } else {
+-                    // Общее сообщение об ошибке
+-                    messagesContainer.innerHTML = '<div class="alert alert-danger">Произошла ошибка при отправке формы. Пожалуйста, проверьте введенные данные и попробуйте снова.</div>';
+-                }
+-                // Возвращаем null вместо выбрасывания ошибки, чтобы не попадать в блок catch
+-                return { success: false };
+-            }
+-            return data;
+-        })
+-        .then(data => {
+-            if (data.success) {
+-                // Очищаем форму
+-                form.reset();
+-                
+-                // Показываем сообщение об успехе
+-                const successAlert = document.createElement('div');
+-                successAlert.className = 'alert alert-success';
+-                successAlert.textContent = data.message;
+-                messagesContainer.appendChild(successAlert);
+-                
+-                // Добавляем нового пользователя в таблицу
+-                const tbody = document.querySelector('table.table-hover.users-table tbody');
+-                if (tbody) {
+-                    const newRow = document.createElement('tr');
+-                    const createdDate = new Date(data.user.created_at);
+-                    const formattedDate = createdDate.toLocaleString('ru-RU', {
+-                        day: '2-digit',
+-                        month: '2-digit',
+-                        year: 'numeric',
+-                        hour: '2-digit',
+-                        minute: '2-digit'
+-                    });
+-                    
+-                    newRow.innerHTML = `
+-                        <td>
+-                            <button type="button" 
+-                                    class="btn btn-sm btn-outline-primary select-user" 
+-                                    data-user-id="${data.user.id}" 
+-                                    data-bs-toggle="tooltip" 
+-                                    title="Выбрать пользователя (ID: ${data.user.id})">
+-                                <i class="bi bi-person-plus"></i> ${data.user.id}
+-                            </button>
+-                        </td>
+-                        <td>${data.user.name || ''}</td>
+-                        <td>${data.user.email || ''}</td>
+-                        <td>${formattedDate}</td>
+-                    `;
+-                    
+-                    // Вставляем новую строку в начало таблицы
+-                    tbody.insertBefore(newRow, tbody.firstChild);
+-                    
+-                    // Инициализируем тултип для новой кнопки
+-                    if (window.bootstrap) {
+-                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+-                        tooltipTriggerList.map(function (tooltipTriggerEl) {
+-                            return new bootstrap.Tooltip(tooltipTriggerEl);
+-                        });
+-                    }
+-                    
+-                    // Добавляем обработчик события для новой кнопки
+-                    const newButton = newRow.querySelector('.select-user');
+-                    if (newButton) {
+-                        newButton.addEventListener('click', function() {
+-                            const userId = this.getAttribute('data-user-id');
+-                            const userIdInput = document.getElementById('userIdInput');
+-                            if (userIdInput) {
+-                                userIdInput.value = userId;
+-                                
+-                                // Показываем уведомление
+-                                const toast = new bootstrap.Toast(document.getElementById('userSelectedToast'));
+-                                toast.show();
+-                                
+-                                // Прокручиваем к форме
+-                                document.getElementById('employeesFormContainer').scrollIntoView({ behavior: 'smooth' });
+-                            }
+-                        });
+-                    }
+-                }
+-                
+-                // Прокручиваем к верху таблицы
+-                const usersTable = document.querySelector('.table-hover.users-table');
+-                if (usersTable) {
+-                    usersTable.scrollIntoView({ behavior: 'smooth' });
+-                }
+-            }
+-        })
+-        .catch(error => {
+-            console.error('Error:', error);
+-            const errorAlert = document.createElement('div');
+-            errorAlert.className = 'alert alert-danger';
+-            errorAlert.textContent = 'Произошла ошибка при регистрации. Пожалуйста, попробуйте еще раз.';
+-            messagesContainer.appendChild(errorAlert);
+-        })
+-        .finally(() => {
+-            // Восстанавливаем кнопку только если не было успешной отправки
+-            if (submitButton) {
+-                submitButton.disabled = false;
+-                submitButton.innerHTML = originalButtonText;
+-            }
+-        });
+-    });
+-});
+-</script>
+-@endpush
++{{--
++    Эта форма была перенесена в форму сотрудника.
++    Все функции регистрации теперь доступны через кнопку "Сохранить" в форме сотрудника.
++--}}
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index 76ac5e9..e6a5d20 100644
+index e6a5d20..0de2e63 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -115,6 +115,11 @@
-                                 type="button" role="tab">Пользователи
-                         </button>
-                     </li>
-+                    <!-- <li class="nav-item" role="presentation">
-+                        <button class="nav-link" id="statuses-tab" data-bs-toggle="tab" data-bs-target="#statuses"
-+                                type="button" role="tab">Статусы    
-+                        </button>
-+                    </li> -->
-                     <li class="nav-item" role="presentation">
-                         <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports"
-                                 type="button" role="tab">Отчеты
-@@ -969,6 +974,72 @@ function loadCities(selectElement) {
+@@ -787,20 +787,8 @@ function loadCities(selectElement) {
  
-                     </div>
+                     <div class="tab-pane fade" id="users" role="tabpanel">
+                         <div class="row g-4 flex-nowrap">
+-                            <!-- Форма регистрации -->
+-                            <div id="registerFormContainer" class="col-lg-3">
+-                                <div class="card h-100">
+-                                    <div class="card-header">
+-                                        <h5 class="mb-0">Добавить нового пользователя</h5>
+-                                    </div>
+-                                    <div class="card-body">
+-                                        @include('auth.partials.register-form')
+-                                    </div>
+-                                </div>
+-                            </div>
+-
+                             <!-- Таблица пользователей -->
+-                            <div id="usersTableContainer" class="col-lg-9">
++                            <div id="usersTableContainer" class="col-12">
+                                 <div class="card h-100">
+                                     <div class="card-header">
+                                         <h5 class="mb-0">Список пользователей</h5>
+@@ -871,6 +859,38 @@ function loadCities(selectElement) {
  
-+                    <div class="tab-pane fade d-none" id="statuses" role="tabpanel">
-+                        <div class="d-flex justify-content-between align-items-center mb-4">
-+                            <h4 class="mb-0">Управление статусами заявок</h4>
-+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStatusModal">
-+                                <i class="bi bi-plus-circle me-1"></i>Добавить статус
-+                            </button>
-+                        </div>
-+                        
-+                        <div class="card">
-+                            <div class="card-body p-0">
-+                                <div class="table-responsive">
-+                                    <table class="table table-hover mb-0">
-+                                        <thead class="table-light">
-+                                            <tr>
-+                                                <th style="width: 50px;">ID</th>
-+                                                <th>Название</th>
-+                                                <th>Цвет</th>
-+                                                <th>Количество заявок</th>
-+                                                <th class="text-end">Действия</th>
-+                                            </tr>
-+                                        </thead>
-+                                        <tbody id="statusesList">
-+                                            <tr>
-+                                                <td colspan="5" class="text-center py-4">
-+                                                    <div class="spinner-border text-primary" role="status">
-+                                                        <span class="visually-hidden">Загрузка...</span>
-+                                                    </div>
-+                                                    <p class="mt-2 mb-0">Загрузка списка статусов...</p>
-+                                                </td>
-+                                            </tr>
-+                                        </tbody>
-+                                    </table>
-+                                </div>
-+                            </div>
-+                        </div>
-+                        
-+                        <!-- Модальное окно добавления/редактирования статуса -->
-+                        <div class="modal fade" id="addStatusModal" tabindex="-1" aria-hidden="true">
-+                            <div class="modal-dialog">
-+                                <div class="modal-content">
-+                                    <div class="modal-header">
-+                                        <h5 class="modal-title">Добавить новый статус</h5>
-+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-+                                    </div>
-+                                    <div class="modal-body">
-+                                        <form id="statusForm">
-+                                            <input type="hidden" id="statusId" value="">
+                                     <input type="hidden" name="user_id" id="userIdInput" value="">
+                                     
++                                    <div id="formMessages" class="mb-3"></div>
++                                    
++                                    <h5 class="mb-3">Учетные данные</h5>
++                                    <div class="row g-3">
++                                        <div class="col-md-6">
 +                                            <div class="mb-3">
-+                                                <label for="statusName" class="form-label">Название статуса</label>
-+                                                <input type="text" class="form-control" id="statusName" required>
++                                                <label for="name" class="form-label">Имя пользователя:</label>
++                                                <input type="text" name="name" id="name" class="form-control" placeholder="Введите имя" value="{{ old('name') }}" required autofocus>
 +                                            </div>
++                                        </div>
++                                        <div class="col-md-6">
 +                                            <div class="mb-3">
-+                                                <label for="statusColor" class="form-label">Цвет</label>
-+                                                <input type="color" class="form-control form-control-color" id="statusColor" value="#e2e0e6" title="Выберите цвет">
++                                                <label for="email" class="form-label">Email:</label>
++                                                <input type="email" name="email" id="email" class="form-control" placeholder="Введите email" autocomplete="username" value="{{ old('email') }}" required>
 +                                            </div>
-+                                        </form>
++                                        </div>
++                                        <div class="col-md-6">
++                                            <div class="mb-3">
++                                                <label for="password" class="form-label">Пароль:</label>
++                                                <input type="password" name="password" id="password" class="form-control" placeholder="Введите пароль" autocomplete="new-password" required>
++                                            </div>
++                                        </div>
++                                        <div class="col-md-6">
++                                            <div class="mb-3">
++                                                <label for="password_confirmation" class="form-label">Подтвердите пароль:</label>
++                                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Подтвердите пароль" autocomplete="new-password" required>
++                                            </div>
++                                        </div>
 +                                    </div>
-+                                    <div class="modal-footer">
-+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-+                                        <button type="button" class="btn btn-primary" id="saveStatusBtn">Сохранить</button>
-+                                    </div>
-+                                </div>
-+                            </div>
-+                        </div>
-+                    </div>
++                                    
++                                    <h5 class="mb-3 mt-4">Личные данные</h5>
++                                    
+                                     <!-- Toast уведомление о выборе пользователя -->
+                                     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                                         <div id="userSelectedToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+@@ -960,7 +980,9 @@ function loadCities(selectElement) {
+                                         </div>
+                                     </div>
+ 
+-                                    <button id="saveBtn" type="button" class="btn btn-primary w-100 mt-3">Сохранить</button>
++                
 +
-                     <div class="tab-pane fade" id="reports" role="tabpanel">
-                         <h4>Отчеты</h4>
-                         <p>В этом разделе доступны различные отчеты по деятельности компании. Вы можете
-@@ -2246,6 +2317,7 @@ function showAlert(message, type = 'success') {
-     // console.log('Данные заявок переданы в JavaScript:', window.requestsData);
- </script>
- <script src="{{ asset('js/brigades.js') }}"></script>
-+<script type="module" src="{{ asset('js/handler.js') }}"></script>
- <script src="{{ asset('js/calendar.js') }}"></script>
- <script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
++                                    <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
  
-diff --git a/routes/web.php b/routes/web.php
-index 0909a1d..534b5cf 100644
---- a/routes/web.php
-+++ b/routes/web.php
-@@ -37,9 +37,17 @@
- // Transfer request
- Route::post('/api/requests/transfer', [HomeController::class, 'transferRequest'])->name('requests.transfer')->middleware('auth');
+                                     <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
  
--// Cancel request
-+// Маршруты для работы с заявками
- Route::post('/requests/cancel', [HomeController::class, 'cancelRequest'])->name('requests.cancel')->middleware('auth');
+@@ -1381,6 +1403,9 @@ function updateCommentsBadge(requestId) {
+ <script src="{{ asset('js/app.js') }}"></script>
+ <script type="module" src="{{ asset('js/utils.js') }}"></script>
  
-+// Маршруты для работы со статусами заявок
-+Route::prefix('statuses')->middleware('auth')->group(function () {
-+    Route::get('/', [StatusController::class, 'index']);
-+    Route::post('/', [StatusController::class, 'store']);
-+    Route::put('/{id}', [StatusController::class, 'update']);
-+    Route::delete('/{id}', [StatusController::class, 'destroy']);
-+});
++<!-- Form Validation -->
++<script src="{{ asset('js/form-validator.js') }}"></script>
 +
- // Обработка комментариев
- Route::post('/requests/comment', [HomeController::class, 'addComment'])
-     ->middleware('auth')
+ <!-- Event Handlers -->
+ <script type="module" src="{{ asset('js/handler.js') }}"></script>
+ 
