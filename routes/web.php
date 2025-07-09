@@ -9,6 +9,9 @@ use App\Http\Controllers\RequestFilterController;
 use App\Http\Controllers\RequestTeamFilterController;
 use App\Http\Controllers\GeoController; 
 use App\Http\Controllers\EmployeeUserController;
+use App\Http\Controllers\EmployeesUserPositionPassportController;
+
+Route::get('/employees', [EmployeesUserPositionPassportController::class, 'index'])->name('employees.index');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/brigades/create', [BrigadeController::class, 'create'])->name('brigades.create');

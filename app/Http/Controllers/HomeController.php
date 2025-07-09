@@ -269,8 +269,23 @@ class HomeController extends Controller
         // Запрашиваем brigades
         $brigades = DB::select('SELECT * FROM brigades');
 
-        // Запрашиваем employees
-        $employees = DB::select('SELECT * FROM employees');
+        // Запрашиваем employees с паспортными данными и должностями
+        $employees = DB::select("
+            SELECT 
+                e.*,
+                p.series_number,
+                p.issued_at as passport_issued_at,
+                p.issued_by as passport_issued_by,
+                p.department_code,
+                pos.name as position,
+                c.brand as car_brand,
+                c.license_plate as car_plate
+            FROM employees e
+            LEFT JOIN passports p ON e.id = p.employee_id
+            LEFT JOIN positions pos ON e.position_id = pos.id
+            LEFT JOIN cars c ON e.id = c.employee_id
+            ORDER BY e.fio
+        ");
 
         // Запрашиваем addresses
         $addresses = DB::select('SELECT * FROM addresses');

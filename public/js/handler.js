@@ -1990,6 +1990,11 @@ function autoFillEmployeeForm() {
 autoFillEmployeeForm();
 
 function initUserSelection() {
+
+    console.log('Инициализация обработчика выбора пользователя');
+
+    return;
+
     const selectUserBtns = document.querySelectorAll('.select-user');
     const userIdInput = document.getElementById('userIdInput');
 

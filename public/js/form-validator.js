@@ -11,9 +11,19 @@ function validateForm(form) {
     const requiredFields = form.querySelectorAll('[required]');
     requiredFields.forEach(field => {
         if (!field.value.trim()) {
-            const fieldName = field.labels && field.labels.length > 0 
-                ? field.labels[0].textContent.replace(':', '').trim()
-                : field.name;
+            // Пробуем получить название поля из data-field-name, затем из label, и только потом из name
+            let fieldName = field.getAttribute('data-field-name');
+            
+            if (!fieldName && field.labels && field.labels.length > 0) {
+                fieldName = field.labels[0].textContent.replace(':', '').trim();
+            }
+            
+            if (!fieldName) {
+                // Если поле name в camelCase, добавляем пробелы перед заглавными буквами
+                fieldName = field.name.replace(/([A-Z])/g, ' $1').trim();
+                // Делаем первую букву заглавной
+                fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+            }
             errors.push(`Поле "${fieldName}" обязательно для заполнения`);
             isValid = false;
         }
@@ -55,7 +65,7 @@ function displayValidationErrors(errors, container) {
     
     const errorHtml = `
         <div class="alert alert-danger">
-            <h6 class="alert-heading">Пожалуйста, исправьте следующие ошибки:</h6>
+            <h6 class="alert-heading">Пожалуйста, заполните обязательные поля:</h6>
             <ul class="mb-0">
                 ${errors.map(error => `<li>${error}</li>`).join('')}
             </ul>

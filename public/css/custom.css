@@ -25,6 +25,29 @@
 
 /**/
 
+/* Table container styles id="usersTable" */
+#usersTable {
+    height: 30rem;
+    overflow-y: auto;
+}
+
+/* Dark theme styles for users table */
+[data-bs-theme="dark"] #usersTable {
+    --bs-table-bg: transparent;
+    --bs-table-color: #fff;
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.075);
+}
+
+[data-bs-theme="dark"] #usersTable th,
+[data-bs-theme="dark"] #usersTable td {
+    color: #fff;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] #usersTable thead th {
+    border-bottom-color: #6c757d;
+}
+
 /* Hide remove button for the first address entry */
 .address-entry:first-child .remove-address {
     display: none;
@@ -134,3 +157,26 @@
 }
 
 /**/
+
+/* Table container styles */
+.table-container {
+    height: 30rem;
+    overflow-y: auto;
+}
+
+/* Dark theme styles for users table */
+[data-bs-theme="dark"] .users-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #fff;
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.075);
+}
+
+[data-bs-theme="dark"] .users-table th,
+[data-bs-theme="dark"] .users-table td {
+    color: #fff;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .users-table thead th {
+    border-bottom-color: #6c757d;
+}

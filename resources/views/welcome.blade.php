@@ -512,12 +512,12 @@
                                     <h6>Добавить город</h6>
                                     <form id="cityForm" class="row g-2 align-items-end">
                                         <div class="col-md-4">
-                                            <label class="form-label">Название города</label>
+                                            <label class="form-label" data-field-name="Название города">Название города</label>
                                             <input type="text" name="name" class="form-control" placeholder="Например: Коломна" required>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Регион</label>
-                                            <select name="region_id" class="form-select" required></select>
+                                            <label class="form-label" data-field-name="Регион">Регион</label>
+                                            <select name="positions" class="form-select" required data-field-name="Должность"></select>
                                         </div>
                                         <div class="col-auto">
                                             <button type="submit" class="btn btn-outline-primary">Добавить город</button>
@@ -786,72 +786,6 @@
                     </div>
 
                     <div class="tab-pane fade" id="users" role="tabpanel">
-                        <div class="row g-4 flex-nowrap">
-                            <!-- Таблица пользователей -->
-                            <div id="usersTableContainer" class="col-12">
-                                <div class="card h-100">
-                                    <div class="card-header">
-                                        <h5 class="mb-0">Список пользователей</h5>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <div class="table-responsive">
-                                            <style>
-                                                .table-container {
-                                                    height: 30rem;
-                                                    overflow-y: auto;
-                                                }
-                                                
-                                                [data-bs-theme="dark"] .users-table {
-                                                    --bs-table-bg: transparent;
-                                                    --bs-table-color: #fff;
-                                                    --bs-table-hover-bg: rgba(255, 255, 255, 0.075);
-                                                }
-
-                                                [data-bs-theme="dark"] .users-table th,
-                                                [data-bs-theme="dark"] .users-table td {
-                                                    color: #fff;
-                                                    border-color: #495057;
-                                                }
-
-                                                [data-bs-theme="dark"] .users-table thead th {
-                                                    border-bottom-color: #6c757d;
-                                                }
-                                            </style>
-                                            <div class="table-container">
-                                                <table class="table table-hover users-table mb-0">
-                                                <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Имя</th>
-                                                    <th>Email</th>
-                                                    <th>Дата регистрации</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody>
-                                                @foreach(\App\Models\User::orderBy('created_at', 'desc')->get() as $user)
-                                                    <tr>
-                                                        <td>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary select-user" 
-                                                                    data-user-id="{{ $user->id }}" 
-                                                                    data-bs-toggle="tooltip" 
-                                                                    title="Выбрать пользователя (ID: {{ $user->id }})">
-                                                                <i class="bi bi-person-plus"></i> {{ $user->id }}
-                                                            </button>
-                                                        </td>
-                                                        <td>{{ $user->name }}</td>
-                                                        <td>{{ $user->email }}</td>
-                                                        <td>{{ $user->created_at->format('d.m.Y H:i') }}</td>
-                                                    </tr>
-                                                @endforeach
-                                                </tbody>
-                                            </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="row">
                             <div id="employeesFormContainer" class="col-lg-6">
                                 <form id="employeeForm" action="{{ route('employees.store') }}" method="POST" class="needs-validation" novalidate>
@@ -861,35 +795,36 @@
                                     
                                     <div id="formMessages" class="mb-3"></div>
                                     
-                                    <h5 class="mb-3">Учетные данные</h5>
+                                    <h5 class="mb-3 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Учетные данные</h5>
+                                    
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="name" class="form-label">Имя пользователя:</label>
-                                                <input type="text" name="name" id="name" class="form-control" placeholder="Введите имя" value="{{ old('name') }}" required autofocus>
+                                                <input type="text" name="name" id="name" class="form-control" placeholder="Введите имя" value="{{ old('name') }}" required autofocus data-field-name="Имя пользователя">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="email" class="form-label">Email:</label>
-                                                <input type="email" name="email" id="email" class="form-control" placeholder="Введите email" autocomplete="username" value="{{ old('email') }}" required>
+                                                <input type="email" name="email" id="email" class="form-control" placeholder="Введите email" autocomplete="username" value="{{ old('email') }}" required data-field-name="Email">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="password" class="form-label">Пароль:</label>
-                                                <input type="password" name="password" id="password" class="form-control" placeholder="Введите пароль" autocomplete="new-password" required>
+                                                <input type="password" name="password" id="password" class="form-control" placeholder="Введите пароль" autocomplete="new-password" required data-field-name="Пароль">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="password_confirmation" class="form-label">Подтвердите пароль:</label>
-                                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Подтвердите пароль" autocomplete="new-password" required>
+                                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Подтвердите пароль" autocomplete="new-password" required data-field-name="Подтверждение пароля">
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <h5 class="mb-3 mt-4">Личные данные</h5>
+                                    <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
                                     
                                     <!-- Toast уведомление о выборе пользователя -->
                                     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
@@ -908,18 +843,18 @@
                                         <div class="col-md-6">
                                             <div class="mb-4">
                                                 <label class="form-label">ФИО</label>
-                                                <input type="text" name="fio" class="form-control" required>
+                                                <input type="text" name="fio" class="form-control" required data-field-name="ФИО">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label class="form-label">Телефон</label>
-                                                <input type="text" name="phone" class="form-control" required>
+                                                <input type="text" name="phone" class="form-control" required data-field-name="Телефон">
                                             </div>
                                         </div>
 
                                         <div class="col-12">
-                                            <select name="positions" id="positions" class="form-select mb-4" required>
+                                            <select name="positions" id="positions" class="form-select mb-4" required data-field-name="Должность">
                                                 <option value="">Выберите должность</option>    
                                                 @foreach ($positions as $position)
                                                     <option value="{{ $position->id }}">{{ $position->name }}</option>
@@ -980,8 +915,6 @@
                                         </div>
                                     </div>
 
-                
-
                                     <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
 
                                     <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
@@ -994,6 +927,82 @@
                             </div>  
                         </div>
 
+                        <div class="row g-4 flex-nowrap">
+                            <!-- Таблица пользователей -->
+                            <div id="usersTableContainer" class="col-12">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Список пользователей</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <div class="table-container">
+                                                <!-- <table id="usersTable" class="table table-hover users-table mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>Имя</th>
+                                                            <th>Email</th>
+                                                            <th>Дата регистрации</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    @foreach(\App\Models\User::orderBy('created_at', 'desc')->get() as $user)
+                                                        <tr>
+                                                            <td>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary select-user" 
+                                                                    data-user-id="{{ $user->id }}" 
+                                                                    data-bs-toggle="tooltip" 
+                                                                    title="Выбрать пользователя (ID: {{ $user->id }})">
+                                                                <i class="bi bi-person-plus"></i> {{ $user->id }}
+                                                            </button>
+                                                        </td>
+                                                        <td>{{ $user->name }}</td>
+                                                        <td>{{ $user->email }}</td>
+                                                        <td>{{ $user->created_at->format('d.m.Y H:i') }}</td>
+                                                    </tr>
+                                                    @endforeach
+                                                    </tbody>
+                                                </table> -->
+
+                                                <table id="employeesTable" class="table table-hover users-table mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Имя</th>
+                                                            <th>Телефон</th>
+                                                            <th>Дата/место рождения</th>
+                                                            <th>Паспорт</th>
+                                                            <th>Должность</th>
+                                                            <th>Дата выдачи</th>
+                                                            <th>Кем выдан</th>
+                                                            <th>Код подразделения</th>
+                                                            <th>Марка машины</th>
+                                                            <th>Госномер</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    @foreach($employees as $employee)
+                                                        <tr>
+                                                            <td>{{ $employee->fio }}</td>
+                                                            <td>{{ $employee->phone }}</td>
+                                                            <td>{{ $employee->birth_date }}</td>
+                                                            <td>{{ $employee->series_number }}</td>
+                                                            <td>{{ $employee->position }}</td>
+                                                            <td>{{ $employee->passport_issued_at }}</td>
+                                                            <td>{{ $employee->passport_issued_by }}</td>
+                                                            <td>{{ $employee->department_code }}</td>
+                                                            <td>{{ $employee->car_brand }}</td>
+                                                            <td>{{ $employee->car_plate }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="tab-pane fade d-none" id="statuses" role="tabpanel">
