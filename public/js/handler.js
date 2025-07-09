@@ -1914,6 +1914,29 @@ document.addEventListener('DOMContentLoaded', function () {
     hanlerAddToBrigade();
     handlerAddEmployee();
     initUserSelection();
+
+    // // Устанавливаем текущую дату + 1 день в формате YYYY-MM-DD
+    // const today = new Date();
+    // // Добавляем 1 день, чтобы компенсировать разницу в датах
+    // today.setDate(today.getDate() + 1);
+    // const dateStr = today.toISOString().split('T')[0];
+    // const dateInput = document.getElementById('executionDate');
+    // if (dateInput) {
+    //     dateInput.value = dateStr;
+    //     console.log('Установлена дата:', dateStr);
+    // }
+
+    // Получаем текущую дату с учетом локального времени
+    const now = new Date();
+    // Получаем смещение в минутах и конвертируем в миллисекунды
+    const timezoneOffset = now.getTimezoneOffset() * 60000;
+    // Вычитаем смещение, чтобы получить корректную локальную дату
+    const localDate = new Date(now - timezoneOffset).toISOString().split('T')[0];
+    const dateInput = document.getElementById('executionDate');
+    if (dateInput) {
+        dateInput.value = localDate;
+        console.log('Установлена локальная дата:', localDate);
+    }
 });
 
 function autoFillEmployeeForm() {
