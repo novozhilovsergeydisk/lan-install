@@ -787,152 +787,180 @@
 
                     <div class="tab-pane fade" id="users" role="tabpanel">
                         <div class="row">
-                            <div id="employeesFormContainer" class="col-lg-6">
-                                <form id="employeeForm" action="{{ route('employees.store') }}" method="POST" class="needs-validation" novalidate>
-                                    @csrf
+                            <div class="mb-3 text-end">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newEmployeeModal">Новый сотрудник</button>
+                            </div>
+                            
+                            <!-- Модальное окно для нового сотрудника -->
+                            <div class="modal fade" id="newEmployeeModal" tabindex="-1" aria-labelledby="newEmployeeModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="newEmployeeModalLabel">Добавление нового сотрудника</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <!-- Блок для отображения ошибок валидации -->
+                                            <div id="formMessages" class="mb-3">
+                                                <div class="alert alert-danger d-none">
+                                                    <h6 class="alert-heading">Пожалуйста, заполните обязательные поля:</h6>
+                                                    <ul class="mb-0">
+                                                        <!-- Сюда будут добавляться ошибки валидации -->
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            
+                                            <div id="employeesFormContainer" class="">
+                                                <form id="employeeForm" action="{{ route('employees.store') }}" method="POST" class="needs-validation" novalidate>
+                                                    @csrf
 
-                                    <input type="hidden" name="user_id" id="userIdInput" value="">
-                                    
-                                    <div id="formMessages" class="mb-3"></div>
-                                    
-                                    <h5 class="mb-3 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Учетные данные</h5>
-                                    
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="name" class="form-label">Имя пользователя:</label>
-                                                <input type="text" name="name" id="name" class="form-control" placeholder="Введите имя" value="{{ old('name') }}" required autofocus data-field-name="Имя пользователя">
-                                            </div>
+                                                    <input type="hidden" name="user_id" id="userIdInput" value="">
+                                                    
+                                                    <h5 class="mb-3 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Учетные данные</h5>
+                                                    
+                                                    <div class="row g-3">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="name" class="form-label">Имя пользователя:</label>
+                                                                <input type="text" name="name" id="name" class="form-control" placeholder="Введите имя" value="{{ old('name') }}" required autofocus data-field-name="Имя пользователя">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="email" class="form-label">Email:</label>
+                                                                <input type="email" name="email" id="email" class="form-control" placeholder="Введите email" autocomplete="username" value="{{ old('email') }}" required data-field-name="Email">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="password" class="form-label">Пароль:</label>
+                                                                <input type="password" name="password" id="password" class="form-control" placeholder="Введите пароль" autocomplete="new-password" required data-field-name="Пароль">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label for="password_confirmation" class="form-label">Подтвердите пароль:</label>
+                                                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Подтвердите пароль" autocomplete="new-password" required data-field-name="Подтверждение пароля">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
+                                                    
+                                                    <!-- Toast уведомление о выборе пользователя -->
+                                                    <!-- <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                                                        <div id="userSelectedToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                                                            <div class="toast-header">
+                                                                <strong class="me-auto">Успешно</strong>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Закрыть"></button>
+                                                            </div>
+                                                            <div class="toast-body">
+                                                                Пользователь выбран. Теперь можно заполнить форму сотрудника.
+                                                            </div>
+                                                        </div>
+                                                    </div> -->
+
+                                                    <div class="row g-3 mt-3">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-4">
+                                                                <label class="form-label">ФИО</label>
+                                                                <input type="text" name="fio" class="form-control" required data-field-name="ФИО">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Телефон</label>
+                                                                <input type="text" name="phone" class="form-control" required data-field-name="Телефон">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Должность</label> 
+                                                            <select name="positions" id="positions" class="form-select mb-4" required data-field-name="Должность">
+                                                                <option value="">Выберите должность</option>    
+                                                                @foreach ($positions as $position)
+                                                                    <option value="{{ $position->id }}">{{ $position->name }}</option>
+                                                                @endforeach 
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Место регистрации</label>
+                                                                <input type="text" name="registration_place" class="form-control" required data-field-name="Место регистрации">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Дата рождения</label>
+                                                                <input type="date" name="birth_date" class="form-control">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Место рождения</label>
+                                                                <input type="text" name="birth_place" class="form-control">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Паспорт (серия и номер)</label>
+                                                                <input type="text" name="passport_series" class="form-control">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Кем выдан</label>
+                                                                <input type="text" name="passport_issued_by" class="form-control">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Дата выдачи</label>
+                                                                <input type="date" name="passport_issued_at" class="form-control">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Код подразделения</label>
+                                                                <input type="text" name="passport_department_code" class="form-control">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Марка машины</label>
+                                                                <input type="text" name="car_brand" class="form-control">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Госномер</label>
+                                                                <input type="text" name="car_plate" class="form-control">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
+
+                                                    <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
+
+                                                    <button id="autoFillBtn" type="button" class="btn btn-outline-secondary mb-3 mt-3" 
+                                                        data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
+                                                        Автозаполнение
+                                                    </button>
+                                                </form>
+                                            </div>  
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="email" class="form-label">Email:</label>
-                                                <input type="email" name="email" id="email" class="form-control" placeholder="Введите email" autocomplete="username" value="{{ old('email') }}" required data-field-name="Email">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="password" class="form-label">Пароль:</label>
-                                                <input type="password" name="password" id="password" class="form-control" placeholder="Введите пароль" autocomplete="new-password" required data-field-name="Пароль">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="password_confirmation" class="form-label">Подтвердите пароль:</label>
-                                                <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Подтвердите пароль" autocomplete="new-password" required data-field-name="Подтверждение пароля">
-                                            </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
                                         </div>
                                     </div>
-                                    
-                                    <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
-                                    
-                                    <!-- Toast уведомление о выборе пользователя -->
-                                    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-                                        <div id="userSelectedToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                                            <div class="toast-header">
-                                                <strong class="me-auto">Успешно</strong>
-                                                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Закрыть"></button>
-                                            </div>
-                                            <div class="toast-body">
-                                                Пользователь выбран. Теперь можно заполнить форму сотрудника.
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row g-3 mt-3">
-                                        <div class="col-md-6">
-                                            <div class="mb-4">
-                                                <label class="form-label">ФИО</label>
-                                                <input type="text" name="fio" class="form-control" required data-field-name="ФИО">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Телефон</label>
-                                                <input type="text" name="phone" class="form-control" required data-field-name="Телефон">
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <label class="form-label">Должность</label> 
-                                            <select name="positions" id="positions" class="form-select mb-4" required data-field-name="Должность">
-                                                <option value="">Выберите должность</option>    
-                                                @foreach ($positions as $position)
-                                                    <option value="{{ $position->id }}">{{ $position->name }}</option>
-                                                @endforeach 
-                                            </select>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Место регистрации</label>
-                                                <input type="text" name="registration_place" class="form-control" required data-field-name="Место регистрации">
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Дата рождения</label>
-                                                <input type="date" name="birth_date" class="form-control">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Место рождения</label>
-                                                <input type="text" name="birth_place" class="form-control">
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Паспорт (серия и номер)</label>
-                                                <input type="text" name="passport_series" class="form-control">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Кем выдан</label>
-                                                <input type="text" name="passport_issued_by" class="form-control">
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Дата выдачи</label>
-                                                <input type="date" name="passport_issued_at" class="form-control">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Код подразделения</label>
-                                                <input type="text" name="passport_department_code" class="form-control">
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Марка машины</label>
-                                                <input type="text" name="car_brand" class="form-control">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Госномер</label>
-                                                <input type="text" name="car_plate" class="form-control">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
-
-                                    <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
-
-                                    <button id="autoFillBtn" type="button" class="btn btn-outline-secondary mb-3 mt-3" 
-                                        data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
-                                        Автозаполнение
-                                    </button>
-                                </form>
-                            </div>  
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row g-4 flex-nowrap">

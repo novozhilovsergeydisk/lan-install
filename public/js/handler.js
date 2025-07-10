@@ -1943,7 +1943,7 @@ function autoFillEmployeeForm() {
     document.getElementById('autoFillBtn').addEventListener('click', function(e) {
         e.preventDefault();
 
-        // 30 вариантов тестовых данных
+        // 20 вариантов тестовых данных
         const mockDataArray = [
             {
                 fio: "Лавров Иван Федорович", phone: "+7 (912) 345-67-89",
@@ -1998,100 +1998,126 @@ function autoFillEmployeeForm() {
                 birth_date: "1987-03-11", birth_place: "г. Самара",
                 passport_series: "3802 456789", passport_issued_by: "УМВД по Самарской области",
                 passport_issued_at: "2014-08-05", passport_department_code: "630-111",
-                car_brand: "Ford Focus", car_plate: "К876МО63"
+                car_brand: "Ford Focus", car_plate: "К876МО63",
+                registration_place: "г. Самара, ул. Карла Маркса, д. 47"
             },
             {
                 fio: "Николаев Сергей Петрович", phone: "+7 (989) 012-34-56",
                 birth_date: "1991-11-25", birth_place: "г. Уфа",
                 passport_series: "8904 321654", passport_issued_by: "МВД по Республике Башкортостан",
                 passport_issued_at: "2017-02-14", passport_department_code: "800-222",
-                car_brand: "Renault Logan", car_plate: "Р432КР102"
+                car_brand: "Renault Logan", car_plate: "Р432КР102",
+                registration_place: "г. Уфа, ул. Ленина, д. 88"
             },
             {
                 fio: "Федоров Максим Юрьевич", phone: "+7 (900) 123-45-67",
                 birth_date: "1989-09-07", birth_place: "г. Красноярск",
                 passport_series: "6603 987654", passport_issued_by: "ГУ МВД по Красноярскому краю",
                 passport_issued_at: "2016-12-25", passport_department_code: "760-333",
-                car_brand: "Nissan Qashqai", car_plate: "К789КР24"
+                car_brand: "Nissan Qashqai", car_plate: "К789КР24",
+                registration_place: "г. Красноярск, ул. Суворова, д. 101"
             },
             {
                 fio: "Андреев Денис Викторович", phone: "+7 (901) 234-56-78",
                 birth_date: "1994-06-18", birth_place: "г. Пермь",
                 passport_series: "5901 654321", passport_issued_by: "УМВД по Пермскому краю",
                 passport_issued_at: "2019-07-10", passport_department_code: "590-444",
-                car_brand: "Mazda 6", car_plate: "П654МА59"
+                car_brand: "Mazda 6", car_plate: "П654МА59",
+                registration_place: "г. Пермь, ул. Дзержинского, д. 5"
             },
             {
                 fio: "Морозов Владимир Алексеевич", phone: "+7 (902) 345-67-89",
                 birth_date: "1986-01-30", birth_place: "г. Волгоград",
                 passport_series: "3405 112233", passport_issued_by: "УМВД по Волгоградской области",
                 passport_issued_at: "2013-04-19", passport_department_code: "340-555",
-                car_brand: "Honda Civic", car_plate: "В321НО34"
+                car_brand: "Honda Civic", car_plate: "В321НО34",
+                registration_place: "г. Волгоград, ул. Пушкина, д. 7"
             },
             {
                 fio: "Крыжнев Игорь Сергеевич", phone: "+7 (903) 456-78-90",
                 birth_date: "1996-10-12", birth_place: "г. Омск",
                 passport_series: "5502 998877", passport_issued_by: "ГУ МВД по Омской области",
                 passport_issued_at: "2020-11-03", passport_department_code: "550-666",
-                car_brand: "Subaru Impreza", car_plate: "О876РЕ55"
+                car_brand: "Subaru Impreza", car_plate: "О876РЕ55",
+                registration_place: "г. Омск, ул. Мира, д. 33"
             },
             {
                 fio: "Зайцев Александр Дмитриевич", phone: "+7 (904) 567-89-01",
                 birth_date: "1998-04-21", birth_place: "г. Челябинск",
                 passport_series: "7501 445566", passport_issued_by: "УМВД по Челябинской области",
                 passport_issued_at: "2021-05-17", passport_department_code: "750-777",
-                car_brand: "BMW X5", car_plate: "Ч765ТЕ74"
+                car_brand: "BMW X5", car_plate: "Ч765ТЕ74",
+                registration_place: "г. Челябинск, ул. Лермонтова, д. 19"
             },
             {
                 fio: "Ковалев Роман Павлович", phone: "+7 (905) 678-90-12",
                 birth_date: "1984-07-09", birth_place: "г. Владивосток",
                 passport_series: "9503 334455", passport_issued_by: "УМВД по Приморскому краю",
                 passport_issued_at: "2012-10-22", passport_department_code: "950-888",
-                car_brand: "Mercedes-Benz E-Class", car_plate: "В987ОС25"
+                car_brand: "Mercedes-Benz E-Class", car_plate: "В987ОС25",
+                registration_place: "г. Владивосток, ул. Советская, д. 44"
             },
             {
                 fio: "Белов Никита Андреевич", phone: "+7 (906) 789-01-23",
                 birth_date: "1999-12-31", birth_place: "г. Ростов-на-Дону",
                 passport_series: "6104 223344", passport_issued_by: "ГУ МВД по Ростовской области",
                 passport_issued_at: "2022-01-15", passport_department_code: "610-999",
-                car_brand: "Audi A4", car_plate: "Р654ЛО61"
+                car_brand: "Audi A4", car_plate: "Р654ЛО61",
+                registration_place: "г. Ростов-на-Дону, ул. Чехова, д. 6"
             },
             {
                 fio: "Титов Павел Олегович", phone: "+7 (907) 890-12-34",
                 birth_date: "1983-02-14", birth_place: "г. Краснодар",
                 passport_series: "8601 112233", passport_issued_by: "ГУ МВД по Краснодарскому краю",
                 passport_issued_at: "2011-03-08", passport_department_code: "860-101",
-                car_brand: "Jeep Grand Cherokee", car_plate: "К543ХХ86"
+                car_brand: "Jeep Grand Cherokee", car_plate: "К543ХХ86",
+                registration_place: "г. Краснодар, ул. Гагарина, д. 71"
             },
             {
                 fio: "Сорокин Максим Ильич", phone: "+7 (908) 901-23-45",
                 birth_date: "1997-08-05", birth_place: "г. Ульяновск",
                 passport_series: "7302 998877", passport_issued_by: "УМВД по Ульяновской области",
                 passport_issued_at: "2020-09-12", passport_department_code: "730-112",
-                car_brand: "Citroen C4", car_plate: "У321АН73"
+                car_brand: "Citroen C4", car_plate: "У321АН73",
+                registration_place: "г. Ульяновск, ул. Ленина, д. 13"
             },
             {
                 fio: "Громов Антон Владимирович", phone: "+7 (909) 012-34-56",
                 birth_date: "1982-11-17", birth_place: "г. Тюмень",
                 passport_series: "7103 445566", passport_issued_by: "УМВД по Тюменской области",
                 passport_issued_at: "2010-12-01", passport_department_code: "710-123",
-                car_brand: "Volvo XC60", car_plate: "Т876РО71"
+                car_brand: "Volvo XC60", car_plate: "Т876РО71",
+                registration_place: "г. Тюмень, ул. Пушкина, д. 9"
             },
             {
                 fio: "Ширяев Алексей Михайлович", phone: "+7 (910) 123-45-67",
                 birth_date: "1994-01-01", birth_place: "г. Иркутск",
                 passport_series: "5304 334455", passport_issued_by: "ГУ МВД по Иркутской области",
                 passport_issued_at: "2018-02-14", passport_department_code: "530-224",
-                car_brand: "Peugeot 408", car_plate: "И765ЛЬ53"
+                car_brand: "Peugeot 408", car_plate: "И765ЛЬ53",
+                registration_place: "г. Иркутск, ул. Мира, д. 42"
             },
             {
                 fio: "Жуков Евгений Сергеевич", phone: "+7 (911) 234-56-78",
                 birth_date: "1980-06-25", birth_place: "г. Ярославль",
                 passport_series: "7601 223344", passport_issued_by: "УМВД по Ярославской области",
                 passport_issued_at: "2010-07-19", passport_department_code: "760-335",
-                car_brand: "Opel Astra", car_plate: "Я654ОР76"
+                car_brand: "Opel Astra", car_plate: "Я654ОР76",
+                registration_place: "г. Ярославль, ул. Ленина, д. 27"
             }
-        ];        
+        ];
+        
+        // Добавляем поле registration_place ко всем элементам
+        // for (let i = 0; i < mockDataArray.length; i++) {
+        //     const cities = ["г. Москва", "г. Санкт-Петербург", "г. Екатеринбург", "г. Новосибирск", "г. Казань", "г. Нижний Новгород", "г. Самара", "г. Уфа", "г. Красноярск", "г. Пермь"];
+        //     const streets = ["ул. Ленина", "ул. Гагарина", "ул. Пушкина", "ул. Мира", "ул. Советская", "ул. Чехова", "ул. Карла Маркса", "ул. Дзержинского", "ул. Суворова", "ул. Лермонтова"];
+        //     const building = Math.floor(Math.random() * 100) + 1;
+        
+        //     const randomCity = cities[Math.floor(Math.random() * cities.length)];
+        //     const randomStreet = streets[Math.floor(Math.random() * streets.length)];
+        
+        //     mockDataArray[i].registration_place = `${randomCity}, ${randomStreet}, д. ${building}`;
+        // }      
 
         // Выбираем случайный вариант из массива
         const randomIndex = Math.floor(Math.random() * mockDataArray.length);
