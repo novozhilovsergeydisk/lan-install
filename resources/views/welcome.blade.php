@@ -853,13 +853,21 @@
                                             </div>
                                         </div>
 
-                                        <div class="col-12">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Должность</label> 
                                             <select name="positions" id="positions" class="form-select mb-4" required data-field-name="Должность">
                                                 <option value="">Выберите должность</option>    
                                                 @foreach ($positions as $position)
                                                     <option value="{{ $position->id }}">{{ $position->name }}</option>
                                                 @endforeach 
                                             </select>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Место регистрации</label>
+                                                <input type="text" name="registration_place" class="form-control" required data-field-name="Место регистрации">
+                                            </div>
                                         </div>
 
                                         <div class="col-md-6">
@@ -982,7 +990,7 @@
                                                     </thead>
                                                     <tbody>
                                                     @foreach($employees as $employee)
-                                                        <tr>
+                                                        <tr class="small">
                                                             <td>{{ $employee->fio }}</td>
                                                             <td>{{ $employee->phone }}</td>
                                                             <td>{{ $employee->birth_date }}</td>
