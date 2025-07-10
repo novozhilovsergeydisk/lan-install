@@ -1003,10 +1003,10 @@
 
                                                 <table id="employeesTable" class="table table-hover users-table mb-0">
                                                     <thead>
-                                                        <tr>
+                                                        <tr class="smaller">
                                                             <th>Имя</th>
                                                             <th>Телефон</th>
-                                                            <th>Дата/место рождения</th>
+                                                            <th>Дата / место рождения</th>
                                                             <th>Паспорт</th>
                                                             <th>Должность</th>
                                                             <th>Дата выдачи</th>
