@@ -66,6 +66,7 @@ class HomeController extends Controller
             DB::table('request_comments')->insert([
                 'request_id' => $validated['request_id'],
                 'comment_id' => $commentId,
+                'user_id'    => $request->user()->id,
                 'created_at' => now()
             ]);
 
@@ -150,6 +151,7 @@ class HomeController extends Controller
             DB::table('request_comments')->insert([
                 'request_id' => $validated['request_id'],
                 'comment_id' => $commentId,
+                'user_id'    => $request->user()->id,
                 'created_at' => now()
             ]);
 
@@ -545,8 +547,8 @@ class HomeController extends Controller
 
                 // Вставляем связь с заявкой
                 $result = DB::insert(
-                    'INSERT INTO request_comments (request_id, comment_id, created_at) VALUES (?, ?, ?)',
-                    [$requestId, $commentId, $createdAt]
+                    'INSERT INTO request_comments (request_id, comment_id, user_id, created_at) VALUES (?, ?, ?, ?)',
+                    [$requestId, $commentId, $request->user()->id, $createdAt]
                 );
 
                 if (!$result) {
@@ -868,6 +870,7 @@ class HomeController extends Controller
                 DB::table('request_comments')->insert([
                     'request_id' => $id,
                     'comment_id' => $commentId,
+                    'user_id'    => $request->user()->id,
                     'created_at' => now()
                 ]);
 
@@ -1267,6 +1270,7 @@ class HomeController extends Controller
                     DB::table('request_comments')->insert([
                         'request_id' => $requestId,
                         'comment_id' => $newCommentId,
+                        'user_id'    => $request->user()->id,
                         'created_at' => now()->toDateTimeString()
                     ]);
 
