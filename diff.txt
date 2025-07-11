@@ -1,272 +1,332 @@
-diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index 26ca0cc..bcf37e5 100644
---- a/app/Http/Controllers/HomeController.php
-+++ b/app/Http/Controllers/HomeController.php
-@@ -1061,6 +1061,7 @@ public function storeRequest(Request $request)
-             $validationData = [
-                 'client_name' => $input['client_name'] ?? null,
-                 'client_phone' => $input['client_phone'] ?? null,
-+                'client_organization' => $input['client_organization'] ?? null,
-                 'request_type_id' => $input['request_type_id'] ?? null,
-                 'status_id' => $input['status_id'] ?? null,
-                 'comment' => $input['comment'] ?? null,
-@@ -1094,6 +1095,7 @@ public function storeRequest(Request $request)
-             $rules = [
-                 'client_name' => 'nullable|string|max:255',
-                 'client_phone' => 'nullable|string|max:20',
-+                'client_organization' => 'nullable|string|max:255',
-                 'request_type_id' => 'required|exists:request_types,id',
-                 'status_id' => 'required|exists:request_statuses,id',
-                 'comment' => 'nullable|string',
-@@ -1128,18 +1130,21 @@ public function storeRequest(Request $request)
-             // 1. Подготовка данных клиента
-             $fio = trim($validated['client_name'] ?? '');
-             $phone = trim($validated['client_phone'] ?? '');
-+            $organization = trim($validated['client_organization'] ?? '');
+diff --git a/public/js/handler.js b/public/js/handler.js
+index 4a4a20a..4ea801a 100644
+--- a/public/js/handler.js
++++ b/public/js/handler.js
+@@ -1576,7 +1576,7 @@ function handleTransferRequest(button) {
+             
+             const result = await response.json();
  
-             // 2. Валидация данных клиента
-             $clientData = [
-                 'fio' => $fio,
-                 'phone' => $phone,
--                'email' => '' // Пустая строка, так как поле не может быть NULL
-+                'email' => '', // Пустая строка, так как поле не может быть NULL
-+                'organization' => $organization
-             ];
+-            console.log(result);
++            // console.log(result);
+             
+             // Проверяем дату выполнения из ответа сервера
+             if (result.execution_date) {
+@@ -1587,16 +1587,16 @@ function handleTransferRequest(button) {
+                 serverDate.setHours(0, 0, 0, 0);
+                 currentDate.setHours(0, 0, 0, 0);
+                 
+-                console.log('Дата выполнения от сервера:', serverDate);
+-                console.log('Текущая дата:', currentDate);
++                // console.log('Дата выполнения от сервера:', serverDate);
++                // console.log('Текущая дата:', currentDate);
+                 
+                 if (serverDate < currentDate) {
+-                    console.log('Внимание: Дата выполнения заявки уже прошла!');
++                    showAlert('Внимание: Дата выполнения заявки уже прошла!', 'error');
+                 } else if (serverDate.getTime() === currentDate.getTime()) {
+-                    console.log('Заявка запланирована на сегодня');
++                    showAlert('Заявка запланирована на сегодня', 'info');
+                 } else {
+                     // скрыть заявку, если она запланирована на будущее
+-                    console.log('Заявка запланирована на будущее');
++                    showAlert('Заявка запланирована на будущее', 'info');
+                     const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+                     if (row) {
+                         row.style.display = 'none';
+@@ -1654,7 +1654,7 @@ function handleTransferRequest(button) {
+                 throw new Error(result.message || 'Ошибка при переносе заявки');
+             }
+         } catch (error) {
+-            console.error('Ошибка при переносе заявки:', error);
++            // console.error('Ошибка при переносе заявки:', error);
+             showAlert(error.message || 'Произошла ошибка при переносе заявки', 'error');
+         }
+     });
+@@ -1840,7 +1840,8 @@ function initRequestButtons() {
+     });
+ }
  
-             $clientRules = [
-                 'fio' => 'string|max:255',
-                 'phone' => 'string|max:50',
--                'email' => 'string|max:255'
-+                'email' => 'string|max:255',
-+                'organization' => 'string|max:255'
-             ];
+-console.log('DOM загружен, инициализация обработчиков...');
++// console.log('DOM загружен, инициализация обработчиков...');
++
+ document.addEventListener('DOMContentLoaded', function () {
+     console.log('DOM полностью загружен');
+     initializePage();
+@@ -1908,12 +1909,12 @@ document.addEventListener('DOMContentLoaded', function () {
  
-             $clientValidator = Validator::make($clientData, $clientRules);
-@@ -1171,7 +1176,8 @@ public function storeRequest(Request $request)
-                         ->update([
-                             'fio' => $clientData['fio'],
-                             'phone' => $clientData['phone'],
--                            'email' => $clientData['email']
-+                            'email' => $clientData['email'],
-+                         'organization' => $clientData['organization']
-                         ]);
-                     $clientId = $client->id;
-                     \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
-@@ -1180,7 +1186,8 @@ public function storeRequest(Request $request)
-                     $clientId = DB::table('clients')->insertGetId([
-                         'fio' => $clientData['fio'],
-                         'phone' => $clientData['phone'],
--                        'email' => $clientData['email']
-+                        'email' => $clientData['email'],
-+                         'organization' => $clientData['organization']
-                     ]);
-                     \Log::info('Создан новый клиент:', ['id' => $clientId]);
+ 
+     setupBrigadeAttachment();
+-    console.log('Вызов handlerCreateBrigade...');
++    // console.log('Вызов handlerCreateBrigade...');
+     handlerCreateBrigade();
+-    console.log('handlerCreateBrigade вызван');
++    // console.log('handlerCreateBrigade вызван');
+     hanlerAddToBrigade();
+     handlerAddEmployee();
+-    initUserSelection();
++    // initUserSelection();
+ 
+     // // Устанавливаем текущую дату + 1 день в формате YYYY-MM-DD
+     // const today = new Date();
+@@ -1935,7 +1936,7 @@ document.addEventListener('DOMContentLoaded', function () {
+     const dateInput = document.getElementById('executionDate');
+     if (dateInput) {
+         dateInput.value = localDate;
+-        console.log('Установлена локальная дата:', localDate);
++        // console.log('Установлена локальная дата:', localDate);
+     }
+ });
+ 
+@@ -2142,7 +2143,7 @@ autoFillEmployeeForm();
+ 
+ function initUserSelection() {
+ 
+-    console.log('Инициализация обработчика выбора пользователя');
++    // console.log('Инициализация обработчика выбора пользователя');
+ 
+     return;
+ 
+@@ -2173,9 +2174,9 @@ function initUserSelection() {
+ }
+ 
+ function handlerAddEmployee() {
+-    console.log('Инициализация обработчика формы сотрудника');
++    // console.log('Инициализация обработчика формы сотрудника');
+     const form = document.querySelector('form#employeeForm');
+-    console.log('Найдена форма:', form);
++    // console.log('Найдена форма:', form);
+ 
+     if (!form) {
+         console.error('Форма сотрудника не найдена');
+@@ -2198,9 +2199,9 @@ function handlerAddEmployee() {
+      * @param {HTMLFormElement} form - Элемент формы
+      */
+     function initEmployeeForm(form) {
+-        console.log('Инициализация обработчика отправки формы');
++        // console.log('Инициализация обработчика отправки формы');
+         form.addEventListener('submit', function(e) {
+-            console.log('Событие отправки формы перехвачено');
++            // console.log('Событие отправки формы перехвачено');
+             handleEmployeeFormSubmit.call(this, e);
+         });
+     }
+@@ -2231,17 +2232,17 @@ function handlerAddEmployee() {
+     }
+ 
+     async function handleEmployeeFormSubmit(e) {
+-        console.log('Начало обработки отправки формы');
++        // console.log('Начало обработки отправки формы');
+         e.preventDefault();
+ 
+         const form = this;
+         const formData = new FormData(form);
+         const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');
+-        console.log('Найдена кнопка сохранения:', submitBtn);
++        // console.log('Найдена кнопка сохранения:', submitBtn);
+         const messagesContainer = document.getElementById('formMessages');
+         
+-        console.log('Найдены элементы:', { form, submitBtn, messagesContainer });
+-        console.log('Данные формы:', Object.fromEntries(formData.entries()));
++        // console.log('Найдены элементы:', { form, submitBtn, messagesContainer });
++        // console.log('Данные формы:', Object.fromEntries(formData.entries()));
+ 
+         // Очищаем предыдущие сообщения
+         if (messagesContainer) {
+@@ -2251,29 +2252,29 @@ function handlerAddEmployee() {
+         }
+ 
+         // Валидируем форму на клиенте
+-        console.log('Проверка валидации формы...');
++        // console.log('Проверка валидации формы...');
+         const { isValid, errors } = window.formValidator.validate(form);
+-        console.log('Результат валидации:', { isValid, errors });
++        // console.log('Результат валидации:', { isValid, errors });
+         
+         if (!isValid) {
+-            console.log('Ошибки валидации, отмена отправки');
++            // console.log('Ошибки валидации, отмена отправки');
+             window.formValidator.displayErrors(errors, messagesContainer);
+             return;
+         }
+         
+-        console.log('Форма прошла валидацию, подготовка к отправке...');
++        // console.log('Форма прошла валидацию, подготовка к отправке...');
+ 
+         try {
+             // Сохраняем оригинальный текст кнопки
+             const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+             
+             // Показываем индикатор загрузки
+-            console.log('Показ индикатора загрузки...');
++            // console.log('Показ индикатора загрузки...');
+             if (submitBtn) {
+                 submitBtn.disabled = true;
+                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Регистрация...';
+             } else {
+-                console.warn('Кнопка отправки не найдена, невозможно показать индикатор загрузки');
++                // console.warn('Кнопка отправки не найдена, невозможно показать индикатор загрузки');
+             }
+ 
+             try {
+@@ -2291,7 +2292,7 @@ function handlerAddEmployee() {
+                     }
+                 });
+                 
+-                console.log('Отправляемые данные:', formDataObj);
++                // console.log('Отправляемые данные:', formDataObj);
+                 
+                 // Отправляем форму на сервер
+                 const response = await fetch(form.action, {
+@@ -2306,12 +2307,12 @@ function handlerAddEmployee() {
+                 });
+ 
+                 const data = await response.json();
+-                console.log('Ответ сервера:', { status: response.status, data });
++                // console.log('Ответ сервера:', { status: response.status, data });
+                 
+                 if (!response.ok) {
+                     // Если это ошибка валидации (422), обрабатываем её отдельно
+                     if (response.status === 422) {
+-                        console.log('Ошибки валидации с сервера (422):', data);
++                        // console.log('Ошибки валидации с сервера (422):', data);
+                         
+                         // Собираем все ошибки в один массив
+                         const allErrors = [];
+@@ -2358,7 +2359,7 @@ function handlerAddEmployee() {
                  }
+ 
+                 // Успешное завершение
+-                console.log('Сотрудник успешно создан', data);
++                // console.log('Сотрудник успешно создан', data);
+                 showAlert('Сотрудник успешно создан', 'success', messagesContainer);
+                 form.reset();
+                 
+@@ -2521,7 +2522,7 @@ function handlerAddEmployee() {
+     const saveBtn = document.getElementById('saveBtn');
+     if (saveBtn) {
+         saveBtn.addEventListener('click', function() {
+-            console.log('Save button clicked');
++            // console.log('Save button clicked');
+             const form = document.querySelector('form#employeeForm');
+             if (form) {
+                 const submitEvent = new Event('submit', {
+@@ -2595,17 +2596,17 @@ function hanlerAddToBrigade() {
+ }
+ 
+ function handlerCreateBrigade() {
+-    console.log('Инициализация handlerCreateBrigade...');
++    // console.log('Инициализация handlerCreateBrigade...');    
+     const createBtn = document.getElementById('createBrigadeBtn');
+ 
+-    console.log('Найдена кнопка createBrigadeBtn:', !!createBtn);
++    // console.log('Найдена кнопка createBrigadeBtn:', !!createBtn);
+ 
+     if (createBtn) {
+         createBtn.addEventListener('click', async function (e) {
+-            console.log('Кнопка нажата!');
++            // console.log('Кнопка нажата!');
+             e.preventDefault();
+-            console.clear();
+-            console.log('Начало обработки клика...');
++            // console.clear();
++            // console.log('Начало обработки клика...');
+ 
+             // Получаем данные формы
+             const form = document.getElementById('brigadeForm');
+@@ -2916,7 +2917,7 @@ function handlerCreateBrigade() {
+             */
+             const createBrigade = async () => {
+                 try {
+-                    console.log('Отправка запроса на создание бригады...');
++                    // console.log('Отправка запроса на создание бригады...');
+ 
+                     // Парсим данные о членах бригады из JSON
+                     const membersData = JSON.parse(formJson.formData.brigade_members_data || '[]');
+@@ -2930,7 +2931,7 @@ function handlerCreateBrigade() {
+                             .map(member => member.employee_id)
+                     };
+ 
+-                    console.log('Данные для отправки:', requestData);
++                    // console.log('Данные для отправки:', requestData);
+ 
+                     const response = await fetch('/brigades', {
+                         method: 'POST',
+@@ -3055,10 +3056,10 @@ function setupBrigadeAttachment() {
+                             const selectedOption = select.options[select.selectedIndex];
+                             const brigade_id = selectedOption.getAttribute('data-brigade-id');
+ 
+-                            console.log(`ID выбранной заявки: ${requestId}`);
+-                            console.log(`ID выбранного бригадира: ${leaderId}`);
+-                            console.log(`ID бригады: ${brigade_id}`);
+-                            console.log(`Название бригады: ${brigadeName}`);
++                            // console.log(`ID выбранной заявки: ${requestId}`);
++                            // console.log(`ID выбранного бригадира: ${leaderId}`);
++                            // console.log(`ID бригады: ${brigade_id}`);
++                            // console.log(`Название бригады: ${brigadeName}`);
+ 
+                             try {
+                                 // console.log('1. Получаем данные о бригаде...');
+@@ -3087,7 +3088,7 @@ function setupBrigadeAttachment() {
+                                 });
+ 
+                                 const updateData = await updateResponse.json().catch(() => ({}));
+-                                console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
++                                // console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
+ 
+                                 if (!updateResponse.ok) {
+                                     const errorMessage = updateData.message ||
+@@ -3155,7 +3156,7 @@ function setupBrigadeAttachment() {
+                     // Моковый обработчик
+                     button.addEventListener('click', function () {
+                         console.log('Кнопка нажата для заявки', requestId);
+-                        console.log('Выбран бригадир с ID:', brigadeSelect.value);
++                        // console.log('Выбран бригадир с ID:', brigadeSelect.value);
+                     });
+ 
+                     // Вставляем кнопку после select
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index c8f0113..d06cb4c 100644
+index d06cb4c..dab2c6f 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -1321,7 +1321,6 @@ function stringToColor(str) {
-                         let html = '<div class="list-group list-group-flush">';
- 
-                         comments.forEach(comment => {
--                            console.log(comment);
-                             const date = new Date(comment.created_at);
-                             const formattedDate = date.toLocaleString('ru-RU', {
-                                 day: '2-digit',
-@@ -1549,6 +1548,10 @@ class="text-danger">*</span></label>
-                                         class="text-danger">*</span></label>
-                                 <input type="tel" class="form-control" id="clientPhone" name="client_phone">
+@@ -396,7 +396,7 @@ class="btn btn-sm btn-outline-primary p-1 comment-btn"
+                                                 @endif
+                                                 <button data-request-id="{{ $request->id }}" type="button"
+                                                         class="btn btn-sm btn-outline-success add-photo-btn"
+-                                                        onclick="console.log('Добавить фотоотчет', {{ $request->id }})">
++                                                        onclick="// console.log('Добавить фотоотчет', {{ $request->id }})">
+                                                     <i class="bi bi-camera me-1"></i>Фотоотчет
+                                                 </button>
+                                             </div>
+@@ -1631,14 +1631,18 @@ class="text-danger">*</span></label>
                              </div>
-+                            <div class="col-md-6">
-+                                <label for="clientOrganization" class="form-label">Организация</label>
-+                                <input type="text" class="form-control" id="clientOrganization" name="client_organization">
-+                            </div>
                          </div>
                      </div>
- 
-@@ -1573,7 +1576,6 @@ class="text-danger">*</span></label>
-                     </div>
- 
-                     <div class="mb-3">
--                        <!-- <h6>Планирование</h6> -->
-                         <div class="row g-3">
-                             <div class="col-md-6">
-                                 <label for="executionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
-@@ -1632,9 +1634,7 @@ class="text-danger">*</span></label>
++
++                    <div class="mb-3">
++                        <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button>
++                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
++                        <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать
++                            заявку
++                        </button>
++                    </div>
                  </form>
              </div>
              <div class="modal-footer">
--                <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Заполнить
--                    тестовыми данными
+-                <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button>
+-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+-                <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать
+-                    заявку
 -                </button>
-+                <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button>
-                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                 <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать
-                     заявку
-@@ -1668,59 +1668,85 @@ class="text-danger">*</span></label>
-         "Официально подтверждено начало обработки заявки. Осталось лишь согласовать ряд вопросов с нашими сотрудниками."
-     ];
++                
+             </div>
+         </div>
+     </div>
+@@ -1745,7 +1749,7 @@ class="text-danger">*</span></label>
+     {name: "Алина Иванова", phone: "+7 (999) 111-11-50", comment: newComments[9], organization: newOrganizations[9]}
+ ];
  
--    const mockData = [
--        {name: "Иван Иванов", phone: "+7 (999) 111-11-01", comment: newComments[0]},
--        {name: "Мария Петрова", phone: "+7 (999) 111-11-02", comment: newComments[1]},
--        {name: "Алексей Смирнов", phone: "+7 (999) 111-11-03", comment: newComments[2]},
--        {name: "Елена Кузнецова", phone: "+7 (999) 111-11-04", comment: newComments[3]},
--        {name: "Дмитрий Соколов", phone: "+7 (999) 111-11-05", comment: newComments[4]},
--        {name: "Ольга Морозова", phone: "+7 (999) 111-11-06", comment: newComments[5]},
--        {name: "Николай Васильев", phone: "+7 (999) 111-11-07", comment: newComments[6]},
--        {name: "Татьяна Орлова", phone: "+7 (999) 111-11-08", comment: newComments[7]},
--        {name: "Сергей Павлов", phone: "+7 (999) 111-11-09", comment: newComments[8]},
--        {name: "Анна Федорова", phone: "+7 (999) 111-11-10", comment: newComments[9]},
--        {name: "Владимир Беляев", phone: "+7 (999) 111-11-11", comment: newComments[10]},
--        {name: "Екатерина Никитина", phone: "+7 (999) 111-11-12", comment: newComments[11]},
--        {name: "Андрей Сидоров", phone: "+7 (999) 111-11-13", comment: newComments[12]},
--        {name: "Ирина Григорьева", phone: "+7 (999) 111-11-14", comment: newComments[13]},
--        {name: "Павел Егоров", phone: "+7 (999) 111-11-15", comment: newComments[14]},
--        {name: "Людмила Киселева", phone: "+7 (999) 111-11-16", comment: newComments[15]},
--        {name: "Михаил Козлов", phone: "+7 (999) 111-11-17", comment: newComments[16]},
--        {name: "Светлана Михайлова", phone: "+7 (999) 111-11-18", comment: newComments[17]},
--        {name: "Виктор Фролов", phone: "+7 (999) 111-11-19", comment: newComments[18]},
--        {name: "Оксана Дмитриева", phone: "+7 (999) 111-11-20", comment: newComments[19]},
--        {name: "Роман Кузьмин", phone: "+7 (999) 111-11-21", comment: newComments[0]},
--        {name: "Наталья Алексеева", phone: "+7 (999) 111-11-22", comment: newComments[1]},
--        {name: "Константин Власов", phone: "+7 (999) 111-11-23", comment: newComments[2]},
--        {name: "Алёна Николаева", phone: "+7 (999) 111-11-24", comment: newComments[3]},
--        {name: "Игорь Тимофеев", phone: "+7 (999) 111-11-25", comment: newComments[4]},
--        {name: "Галина Павлова", phone: "+7 (999) 111-11-26", comment: newComments[5]},
--        {name: "Денис Мельников", phone: "+7 (999) 111-11-27", comment: newComments[6]},
--        {name: "Алла Сергеева", phone: "+7 (999) 111-11-28", comment: newComments[7]},
--        {name: "Василий Лебедев", phone: "+7 (999) 111-11-29", comment: newComments[8]},
--        {name: "Евгения Тихонова", phone: "+7 (999) 111-11-30", comment: newComments[9]},
--        {name: "Олег Зайцев", phone: "+7 (999) 111-11-31", comment: newComments[10]},
--        {name: "Нина Орехова", phone: "+7 (999) 111-11-32", comment: newComments[11]},
--        {name: "Вячеслав Соколов", phone: "+7 (999) 111-11-33", comment: newComments[12]},
--        {name: "Лариса Денисова", phone: "+7 (999) 111-11-34", comment: newComments[13]},
--        {name: "Артур Крылов", phone: "+7 (999) 111-11-35", comment: newComments[14]},
--        {name: "Ирина Соловьева", phone: "+7 (999) 111-11-36", comment: newComments[15]},
--        {name: "Дмитрий Климов", phone: "+7 (999) 111-11-37", comment: newComments[16]},
--        {name: "Марина Белова", phone: "+7 (999) 111-11-38", comment: newComments[17]},
--        {name: "Владислав Орлов", phone: "+7 (999) 111-11-39", comment: newComments[18]},
--        {name: "Софья Федотова", phone: "+7 (999) 111-11-40", comment: newComments[19]},
--        {name: "Егор Панфилов", phone: "+7 (999) 111-11-41", comment: newComments[0]},
--        {name: "Олеся Захарова", phone: "+7 (999) 111-11-42", comment: newComments[1]},
--        {name: "Максим Ширяев", phone: "+7 (999) 111-11-43", comment: newComments[2]},
--        {name: "Вероника Борисова", phone: "+7 (999) 111-11-44", comment: newComments[3]},
--        {name: "Артём Дмитриев", phone: "+7 (999) 111-11-45", comment: newComments[4]},
--        {name: "Людмила Соколова", phone: "+7 (999) 111-11-46", comment: newComments[5]},
--        {name: "Никита Романов", phone: "+7 (999) 111-11-47", comment: newComments[6]},
--        {name: "Елена Крылова", phone: "+7 (999) 111-11-48", comment: newComments[7]},
--        {name: "Павел Гусев", phone: "+7 (999) 111-11-49", comment: newComments[8]},
--        {name: "Алина Иванова", phone: "+7 (999) 111-11-50", comment: newComments[9]},
-+    const newOrganizations = [
-+        "ООО Альфа",
-+        "ООО Бета",
-+        "ООО Гамма",
-+        "ООО Дельта",
-+        "ООО Эпсилон",
-+        "ООО Зета",
-+        "ООО Эта",
-+        "ООО Тета",
-+        "ООО Йота",
-+        "ООО Каппа",
-+        "ООО Лямбда",
-+        "ООО Мю",
-+        "ООО Ню",
-+        "ООО Кси",
-+        "ООО Омикрон",
-+        "ООО Пи",
-+        "ООО Ро",
-+        "ООО Сигма",
-+        "ООО Тау",
-+        "ООО Фи"
-     ];
+-console.log(mockData); // Выведет полный массив данных
++// console.log(mockData); // Выведет полный массив данных
  
-+    const mockData = [
-+    // Предыдущий набор данных...
-+    {name: "Иван Иванов", phone: "+7 (999) 111-11-01", comment: newComments[0], organization: newOrganizations[0]},
-+    {name: "Мария Петрова", phone: "+7 (999) 111-11-02", comment: newComments[1], organization: newOrganizations[1]},
-+    {name: "Алексей Смирнов", phone: "+7 (999) 111-11-03", comment: newComments[2], organization: newOrganizations[2]},
-+    {name: "Елена Кузнецова", phone: "+7 (999) 111-11-04", comment: newComments[3], organization: newOrganizations[3]},
-+    {name: "Дмитрий Соколов", phone: "+7 (999) 111-11-05", comment: newComments[4], organization: newOrganizations[4]},
-+    {name: "Ольга Морозова", phone: "+7 (999) 111-11-06", comment: newComments[5], organization: newOrganizations[5]},
-+    {name: "Николай Васильев", phone: "+7 (999) 111-11-07", comment: newComments[6], organization: newOrganizations[6]},
-+    {name: "Татьяна Орлова", phone: "+7 (999) 111-11-08", comment: newComments[7], organization: newOrganizations[7]},
-+    {name: "Сергей Павлов", phone: "+7 (999) 111-11-09", comment: newComments[8], organization: newOrganizations[8]},
-+    {name: "Анна Федорова", phone: "+7 (999) 111-11-10", comment: newComments[9], organization: newOrganizations[9]},
-+    {name: "Владимир Беляев", phone: "+7 (999) 111-11-11", comment: newComments[10], organization: newOrganizations[10]},
-+    {name: "Екатерина Никитина", phone: "+7 (999) 111-11-12", comment: newComments[11], organization: newOrganizations[11]},
-+    {name: "Андрей Сидоров", phone: "+7 (999) 111-11-13", comment: newComments[12], organization: newOrganizations[12]},
-+    {name: "Ирина Григорьева", phone: "+7 (999) 111-11-14", comment: newComments[13], organization: newOrganizations[13]},
-+    {name: "Павел Егоров", phone: "+7 (999) 111-11-15", comment: newComments[14], organization: newOrganizations[14]},
-+    {name: "Людмила Киселева", phone: "+7 (999) 111-11-16", comment: newComments[15], organization: newOrganizations[15]},
-+    {name: "Михаил Козлов", phone: "+7 (999) 111-11-17", comment: newComments[16], organization: newOrganizations[16]},
-+    {name: "Светлана Михайлова", phone: "+7 (999) 111-11-18", comment: newComments[17], organization: newOrganizations[17]},
-+    {name: "Виктор Фролов", phone: "+7 (999) 111-11-19", comment: newComments[18], organization: newOrganizations[18]},
-+    {name: "Оксана Дмитриева", phone: "+7 (999) 111-11-20", comment: newComments[19], organization: newOrganizations[19]},
-+    {name: "Роман Кузьмичёв", phone: "+7 (999) 111-11-21", comment: newComments[0], organization: newOrganizations[0]},
-+    {name: "Наталья Алексеева", phone: "+7 (999) 111-11-22", comment: newComments[1], organization: newOrganizations[1]},
-+    {name: "Константин Власов", phone: "+7 (999) 111-11-23", comment: newComments[2], organization: newOrganizations[2]},
-+    {name: "Алёна Николаева", phone: "+7 (999) 111-11-24", comment: newComments[3], organization: newOrganizations[3]},
-+    {name: "Игорь Тимофеев", phone: "+7 (999) 111-11-25", comment: newComments[4], organization: newOrganizations[4]},
-+    {name: "Галина Павлова", phone: "+7 (999) 111-11-26", comment: newComments[5], organization: newOrganizations[5]},
-+    {name: "Денис Мельников", phone: "+7 (999) 111-11-27", comment: newComments[6], organization: newOrganizations[6]},
-+    {name: "Алла Сергеева", phone: "+7 (999) 111-11-28", comment: newComments[7], organization: newOrganizations[7]},
-+    {name: "Василий Лебедев", phone: "+7 (999) 111-11-29", comment: newComments[8], organization: newOrganizations[8]},
-+    {name: "Евгения Тихонова", phone: "+7 (999) 111-11-30", comment: newComments[9], organization: newOrganizations[9]},
-+    {name: "Олег Зайцев", phone: "+7 (999) 111-11-31", comment: newComments[10], organization: newOrganizations[10]},
-+    {name: "Нина Орехова", phone: "+7 (999) 111-11-32", comment: newComments[11], organization: newOrganizations[11]},
-+    {name: "Вячеслав Соколов", phone: "+7 (999) 111-11-33", comment: newComments[12], organization: newOrganizations[12]},
-+    {name: "Лариса Денисова", phone: "+7 (999) 111-11-34", comment: newComments[13], organization: newOrganizations[13]},
-+    {name: "Артур Крылов", phone: "+7 (999) 111-11-35", comment: newComments[14], organization: newOrganizations[14]},
-+    {name: "Ирина Соловьева", phone: "+7 (999) 111-11-36", comment: newComments[15], organization: newOrganizations[15]},
-+    {name: "Дмитрий Климов", phone: "+7 (999) 111-11-37", comment: newComments[16], organization: newOrganizations[16]},
-+    {name: "Марина Белова", phone: "+7 (999) 111-11-38", comment: newComments[17], organization: newOrganizations[17]},
-+    {name: "Владислав Орлов", phone: "+7 (999) 111-11-39", comment: newComments[18], organization: newOrganizations[18]},
-+    {name: "Софья Федотова", phone: "+7 (999) 111-11-40", comment: newComments[19], organization: newOrganizations[19]},
-+    {name: "Егор Панфилов", phone: "+7 (999) 111-11-41", comment: newComments[0], organization: newOrganizations[0]},
-+    {name: "Олеся Захарова", phone: "+7 (999) 111-11-42", comment: newComments[1], organization: newOrganizations[1]},
-+    {name: "Максим Ширяев", phone: "+7 (999) 111-11-43", comment: newComments[2], organization: newOrganizations[2]},
-+    {name: "Вероника Борисова", phone: "+7 (999) 111-11-44", comment: newComments[3], organization: newOrganizations[3]},
-+    {name: "Артём Дмитриев", phone: "+7 (999) 111-11-45", comment: newComments[4], organization: newOrganizations[4]},
-+    {name: "Людмила Соколова", phone: "+7 (999) 111-11-46", comment: newComments[5], organization: newOrganizations[5]},
-+    {name: "Никита Романов", phone: "+7 (999) 111-11-47", comment: newComments[6], organization: newOrganizations[6]},
-+    {name: "Елена Крылова", phone: "+7 (999) 111-11-48", comment: newComments[7], organization: newOrganizations[7]},
-+    {name: "Павел Гусев", phone: "+7 (999) 111-11-49", comment: newComments[8], organization: newOrganizations[8]},
-+    {name: "Алина Иванова", phone: "+7 (999) 111-11-50", comment: newComments[9], organization: newOrganizations[9]}
-+];
-+
-+console.log(mockData); // Выведет полный массив данных
-+
      // Если нужно ровно 50, можно циклом дополнить:
      while (mockData.length < 50) {
-         const i = mockData.length % comments.length;
-@@ -1737,6 +1763,7 @@ class="text-danger">*</span></label>
- 
-         document.getElementById('clientName').value = data.name;
-         document.getElementById('clientPhone').value = data.phone;
-+        document.getElementById('clientOrganization').value = data.organization || '';
-         document.getElementById('comment').value = data.comment;
-     });
- </script>
-@@ -2020,14 +2047,16 @@ function validateForm(form) {
-                         brigade_id: data.brigade_id || null,
-                         operator_id: data.operator_id || null
-                     },
--                    addresses: []
-+                    addresses: [],
-+                    client_organization: data.client_organization || ''
-                 };
- 
--                // Добавляем данные клиента, только если они заполнены
--                if (data.client_name || data.client_phone) {
-+                // Добавляем данные клиента, только если заполнено хотя бы одно из полей
-+                if (data.client_name || data.client_phone || data.client_organization) {
-                     requestData.client = {
-                         fio: data.client_name || '',
--                        phone: data.client_phone || ''
-+                        phone: data.client_phone || '',
-+                        organization: data.client_organization || ''
-                     };
-                 }
- 

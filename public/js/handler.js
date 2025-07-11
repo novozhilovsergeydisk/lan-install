@@ -1576,7 +1576,7 @@ function handleTransferRequest(button) {
             
             const result = await response.json();
 
-            console.log(result);
+            // console.log(result);
             
             // Проверяем дату выполнения из ответа сервера
             if (result.execution_date) {
@@ -1587,16 +1587,16 @@ function handleTransferRequest(button) {
                 serverDate.setHours(0, 0, 0, 0);
                 currentDate.setHours(0, 0, 0, 0);
                 
-                console.log('Дата выполнения от сервера:', serverDate);
-                console.log('Текущая дата:', currentDate);
+                // console.log('Дата выполнения от сервера:', serverDate);
+                // console.log('Текущая дата:', currentDate);
                 
                 if (serverDate < currentDate) {
-                    console.log('Внимание: Дата выполнения заявки уже прошла!');
+                    showAlert('Внимание: Дата выполнения заявки уже прошла!', 'error');
                 } else if (serverDate.getTime() === currentDate.getTime()) {
-                    console.log('Заявка запланирована на сегодня');
+                    showAlert('Заявка запланирована на сегодня', 'info');
                 } else {
                     // скрыть заявку, если она запланирована на будущее
-                    console.log('Заявка запланирована на будущее');
+                    showAlert('Заявка запланирована на будущее', 'info');
                     const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
                     if (row) {
                         row.style.display = 'none';
@@ -1654,7 +1654,7 @@ function handleTransferRequest(button) {
                 throw new Error(result.message || 'Ошибка при переносе заявки');
             }
         } catch (error) {
-            console.error('Ошибка при переносе заявки:', error);
+            // console.error('Ошибка при переносе заявки:', error);
             showAlert(error.message || 'Произошла ошибка при переносе заявки', 'error');
         }
     });
@@ -1840,7 +1840,8 @@ function initRequestButtons() {
     });
 }
 
-console.log('DOM загружен, инициализация обработчиков...');
+// console.log('DOM загружен, инициализация обработчиков...');
+
 document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM полностью загружен');
     initializePage();
@@ -1908,12 +1909,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     setupBrigadeAttachment();
-    console.log('Вызов handlerCreateBrigade...');
+    // console.log('Вызов handlerCreateBrigade...');
     handlerCreateBrigade();
-    console.log('handlerCreateBrigade вызван');
+    // console.log('handlerCreateBrigade вызван');
     hanlerAddToBrigade();
     handlerAddEmployee();
-    initUserSelection();
+    // initUserSelection();
 
     // // Устанавливаем текущую дату + 1 день в формате YYYY-MM-DD
     // const today = new Date();
@@ -1935,7 +1936,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const dateInput = document.getElementById('executionDate');
     if (dateInput) {
         dateInput.value = localDate;
-        console.log('Установлена локальная дата:', localDate);
+        // console.log('Установлена локальная дата:', localDate);
     }
 });
 
@@ -2142,7 +2143,7 @@ autoFillEmployeeForm();
 
 function initUserSelection() {
 
-    console.log('Инициализация обработчика выбора пользователя');
+    // console.log('Инициализация обработчика выбора пользователя');
 
     return;
 
@@ -2173,9 +2174,9 @@ function initUserSelection() {
 }
 
 function handlerAddEmployee() {
-    console.log('Инициализация обработчика формы сотрудника');
+    // console.log('Инициализация обработчика формы сотрудника');
     const form = document.querySelector('form#employeeForm');
-    console.log('Найдена форма:', form);
+    // console.log('Найдена форма:', form);
 
     if (!form) {
         console.error('Форма сотрудника не найдена');
@@ -2198,9 +2199,9 @@ function handlerAddEmployee() {
      * @param {HTMLFormElement} form - Элемент формы
      */
     function initEmployeeForm(form) {
-        console.log('Инициализация обработчика отправки формы');
+        // console.log('Инициализация обработчика отправки формы');
         form.addEventListener('submit', function(e) {
-            console.log('Событие отправки формы перехвачено');
+            // console.log('Событие отправки формы перехвачено');
             handleEmployeeFormSubmit.call(this, e);
         });
     }
@@ -2231,17 +2232,17 @@ function handlerAddEmployee() {
     }
 
     async function handleEmployeeFormSubmit(e) {
-        console.log('Начало обработки отправки формы');
+        // console.log('Начало обработки отправки формы');
         e.preventDefault();
 
         const form = this;
         const formData = new FormData(form);
         const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');
-        console.log('Найдена кнопка сохранения:', submitBtn);
+        // console.log('Найдена кнопка сохранения:', submitBtn);
         const messagesContainer = document.getElementById('formMessages');
         
-        console.log('Найдены элементы:', { form, submitBtn, messagesContainer });
-        console.log('Данные формы:', Object.fromEntries(formData.entries()));
+        // console.log('Найдены элементы:', { form, submitBtn, messagesContainer });
+        // console.log('Данные формы:', Object.fromEntries(formData.entries()));
 
         // Очищаем предыдущие сообщения
         if (messagesContainer) {
@@ -2251,29 +2252,29 @@ function handlerAddEmployee() {
         }
 
         // Валидируем форму на клиенте
-        console.log('Проверка валидации формы...');
+        // console.log('Проверка валидации формы...');
         const { isValid, errors } = window.formValidator.validate(form);
-        console.log('Результат валидации:', { isValid, errors });
+        // console.log('Результат валидации:', { isValid, errors });
         
         if (!isValid) {
-            console.log('Ошибки валидации, отмена отправки');
+            // console.log('Ошибки валидации, отмена отправки');
             window.formValidator.displayErrors(errors, messagesContainer);
             return;
         }
         
-        console.log('Форма прошла валидацию, подготовка к отправке...');
+        // console.log('Форма прошла валидацию, подготовка к отправке...');
 
         try {
             // Сохраняем оригинальный текст кнопки
             const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
             
             // Показываем индикатор загрузки
-            console.log('Показ индикатора загрузки...');
+            // console.log('Показ индикатора загрузки...');
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Регистрация...';
             } else {
-                console.warn('Кнопка отправки не найдена, невозможно показать индикатор загрузки');
+                // console.warn('Кнопка отправки не найдена, невозможно показать индикатор загрузки');
             }
 
             try {
@@ -2291,7 +2292,7 @@ function handlerAddEmployee() {
                     }
                 });
                 
-                console.log('Отправляемые данные:', formDataObj);
+                // console.log('Отправляемые данные:', formDataObj);
                 
                 // Отправляем форму на сервер
                 const response = await fetch(form.action, {
@@ -2306,12 +2307,12 @@ function handlerAddEmployee() {
                 });
 
                 const data = await response.json();
-                console.log('Ответ сервера:', { status: response.status, data });
+                // console.log('Ответ сервера:', { status: response.status, data });
                 
                 if (!response.ok) {
                     // Если это ошибка валидации (422), обрабатываем её отдельно
                     if (response.status === 422) {
-                        console.log('Ошибки валидации с сервера (422):', data);
+                        // console.log('Ошибки валидации с сервера (422):', data);
                         
                         // Собираем все ошибки в один массив
                         const allErrors = [];
@@ -2358,7 +2359,7 @@ function handlerAddEmployee() {
                 }
 
                 // Успешное завершение
-                console.log('Сотрудник успешно создан', data);
+                // console.log('Сотрудник успешно создан', data);
                 showAlert('Сотрудник успешно создан', 'success', messagesContainer);
                 form.reset();
                 
@@ -2521,7 +2522,7 @@ function handlerAddEmployee() {
     const saveBtn = document.getElementById('saveBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', function() {
-            console.log('Save button clicked');
+            // console.log('Save button clicked');
             const form = document.querySelector('form#employeeForm');
             if (form) {
                 const submitEvent = new Event('submit', {
@@ -2595,17 +2596,17 @@ function hanlerAddToBrigade() {
 }
 
 function handlerCreateBrigade() {
-    console.log('Инициализация handlerCreateBrigade...');
+    // console.log('Инициализация handlerCreateBrigade...');    
     const createBtn = document.getElementById('createBrigadeBtn');
 
-    console.log('Найдена кнопка createBrigadeBtn:', !!createBtn);
+    // console.log('Найдена кнопка createBrigadeBtn:', !!createBtn);
 
     if (createBtn) {
         createBtn.addEventListener('click', async function (e) {
-            console.log('Кнопка нажата!');
+            // console.log('Кнопка нажата!');
             e.preventDefault();
-            console.clear();
-            console.log('Начало обработки клика...');
+            // console.clear();
+            // console.log('Начало обработки клика...');
 
             // Получаем данные формы
             const form = document.getElementById('brigadeForm');
@@ -2916,7 +2917,7 @@ function handlerCreateBrigade() {
             */
             const createBrigade = async () => {
                 try {
-                    console.log('Отправка запроса на создание бригады...');
+                    // console.log('Отправка запроса на создание бригады...');
 
                     // Парсим данные о членах бригады из JSON
                     const membersData = JSON.parse(formJson.formData.brigade_members_data || '[]');
@@ -2930,7 +2931,7 @@ function handlerCreateBrigade() {
                             .map(member => member.employee_id)
                     };
 
-                    console.log('Данные для отправки:', requestData);
+                    // console.log('Данные для отправки:', requestData);
 
                     const response = await fetch('/brigades', {
                         method: 'POST',
@@ -3055,10 +3056,10 @@ function setupBrigadeAttachment() {
                             const selectedOption = select.options[select.selectedIndex];
                             const brigade_id = selectedOption.getAttribute('data-brigade-id');
 
-                            console.log(`ID выбранной заявки: ${requestId}`);
-                            console.log(`ID выбранного бригадира: ${leaderId}`);
-                            console.log(`ID бригады: ${brigade_id}`);
-                            console.log(`Название бригады: ${brigadeName}`);
+                            // console.log(`ID выбранной заявки: ${requestId}`);
+                            // console.log(`ID выбранного бригадира: ${leaderId}`);
+                            // console.log(`ID бригады: ${brigade_id}`);
+                            // console.log(`Название бригады: ${brigadeName}`);
 
                             try {
                                 // console.log('1. Получаем данные о бригаде...');
@@ -3087,7 +3088,7 @@ function setupBrigadeAttachment() {
                                 });
 
                                 const updateData = await updateResponse.json().catch(() => ({}));
-                                console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
+                                // console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
 
                                 if (!updateResponse.ok) {
                                     const errorMessage = updateData.message ||
@@ -3155,7 +3156,7 @@ function setupBrigadeAttachment() {
                     // Моковый обработчик
                     button.addEventListener('click', function () {
                         console.log('Кнопка нажата для заявки', requestId);
-                        console.log('Выбран бригадир с ID:', brigadeSelect.value);
+                        // console.log('Выбран бригадир с ID:', brigadeSelect.value);
                     });
 
                     // Вставляем кнопку после select

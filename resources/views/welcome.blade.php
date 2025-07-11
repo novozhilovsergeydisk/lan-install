@@ -396,7 +396,7 @@
                                                 @endif
                                                 <button data-request-id="{{ $request->id }}" type="button"
                                                         class="btn btn-sm btn-outline-success add-photo-btn"
-                                                        onclick="console.log('Добавить фотоотчет', {{ $request->id }})">
+                                                        onclick="// console.log('Добавить фотоотчет', {{ $request->id }})">
                                                     <i class="bi bi-camera me-1"></i>Фотоотчет
                                                 </button>
                                             </div>
@@ -1631,14 +1631,18 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать
+                            заявку
+                        </button>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать
-                    заявку
-                </button>
+                
             </div>
         </div>
     </div>
@@ -1745,7 +1749,7 @@
     {name: "Алина Иванова", phone: "+7 (999) 111-11-50", comment: newComments[9], organization: newOrganizations[9]}
 ];
 
-console.log(mockData); // Выведет полный массив данных
+// console.log(mockData); // Выведет полный массив данных
 
     // Если нужно ровно 50, можно циклом дополнить:
     while (mockData.length < 50) {
