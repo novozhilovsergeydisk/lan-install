@@ -1061,6 +1061,7 @@ class HomeController extends Controller
             $validationData = [
                 'client_name' => $input['client_name'] ?? null,
                 'client_phone' => $input['client_phone'] ?? null,
+                'client_organization' => $input['client_organization'] ?? null,
                 'request_type_id' => $input['request_type_id'] ?? null,
                 'status_id' => $input['status_id'] ?? null,
                 'comment' => $input['comment'] ?? null,
@@ -1094,6 +1095,7 @@ class HomeController extends Controller
             $rules = [
                 'client_name' => 'nullable|string|max:255',
                 'client_phone' => 'nullable|string|max:20',
+                'client_organization' => 'nullable|string|max:255',
                 'request_type_id' => 'required|exists:request_types,id',
                 'status_id' => 'required|exists:request_statuses,id',
                 'comment' => 'nullable|string',
@@ -1128,18 +1130,21 @@ class HomeController extends Controller
             // 1. Подготовка данных клиента
             $fio = trim($validated['client_name'] ?? '');
             $phone = trim($validated['client_phone'] ?? '');
+            $organization = trim($validated['client_organization'] ?? '');
 
             // 2. Валидация данных клиента
             $clientData = [
                 'fio' => $fio,
                 'phone' => $phone,
-                'email' => '' // Пустая строка, так как поле не может быть NULL
+                'email' => '', // Пустая строка, так как поле не может быть NULL
+                'organization' => $organization
             ];
 
             $clientRules = [
                 'fio' => 'string|max:255',
                 'phone' => 'string|max:50',
-                'email' => 'string|max:255'
+                'email' => 'string|max:255',
+                'organization' => 'string|max:255'
             ];
 
             $clientValidator = Validator::make($clientData, $clientRules);
@@ -1171,7 +1176,8 @@ class HomeController extends Controller
                         ->update([
                             'fio' => $clientData['fio'],
                             'phone' => $clientData['phone'],
-                            'email' => $clientData['email']
+                            'email' => $clientData['email'],
+                         'organization' => $clientData['organization']
                         ]);
                     $clientId = $client->id;
                     \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
@@ -1180,7 +1186,8 @@ class HomeController extends Controller
                     $clientId = DB::table('clients')->insertGetId([
                         'fio' => $clientData['fio'],
                         'phone' => $clientData['phone'],
-                        'email' => $clientData['email']
+                        'email' => $clientData['email'],
+                         'organization' => $clientData['organization']
                     ]);
                     \Log::info('Создан новый клиент:', ['id' => $clientId]);
                 }

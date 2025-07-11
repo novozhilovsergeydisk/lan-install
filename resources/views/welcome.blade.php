@@ -1321,7 +1321,6 @@
                         let html = '<div class="list-group list-group-flush">';
 
                         comments.forEach(comment => {
-                            console.log(comment);
                             const date = new Date(comment.created_at);
                             const formattedDate = date.toLocaleString('ru-RU', {
                                 day: '2-digit',
@@ -1549,6 +1548,10 @@
                                         class="text-danger">*</span></label>
                                 <input type="tel" class="form-control" id="clientPhone" name="client_phone">
                             </div>
+                            <div class="col-md-6">
+                                <label for="clientOrganization" class="form-label">Организация</label>
+                                <input type="text" class="form-control" id="clientOrganization" name="client_organization">
+                            </div>
                         </div>
                     </div>
 
@@ -1573,7 +1576,6 @@
                     </div>
 
                     <div class="mb-3">
-                        <!-- <h6>Планирование</h6> -->
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="executionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
@@ -1632,9 +1634,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Заполнить
-                    тестовыми данными
-                </button>
+                <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать
                     заявку
@@ -1668,58 +1668,84 @@
         "Официально подтверждено начало обработки заявки. Осталось лишь согласовать ряд вопросов с нашими сотрудниками."
     ];
 
-    const mockData = [
-        {name: "Иван Иванов", phone: "+7 (999) 111-11-01", comment: newComments[0]},
-        {name: "Мария Петрова", phone: "+7 (999) 111-11-02", comment: newComments[1]},
-        {name: "Алексей Смирнов", phone: "+7 (999) 111-11-03", comment: newComments[2]},
-        {name: "Елена Кузнецова", phone: "+7 (999) 111-11-04", comment: newComments[3]},
-        {name: "Дмитрий Соколов", phone: "+7 (999) 111-11-05", comment: newComments[4]},
-        {name: "Ольга Морозова", phone: "+7 (999) 111-11-06", comment: newComments[5]},
-        {name: "Николай Васильев", phone: "+7 (999) 111-11-07", comment: newComments[6]},
-        {name: "Татьяна Орлова", phone: "+7 (999) 111-11-08", comment: newComments[7]},
-        {name: "Сергей Павлов", phone: "+7 (999) 111-11-09", comment: newComments[8]},
-        {name: "Анна Федорова", phone: "+7 (999) 111-11-10", comment: newComments[9]},
-        {name: "Владимир Беляев", phone: "+7 (999) 111-11-11", comment: newComments[10]},
-        {name: "Екатерина Никитина", phone: "+7 (999) 111-11-12", comment: newComments[11]},
-        {name: "Андрей Сидоров", phone: "+7 (999) 111-11-13", comment: newComments[12]},
-        {name: "Ирина Григорьева", phone: "+7 (999) 111-11-14", comment: newComments[13]},
-        {name: "Павел Егоров", phone: "+7 (999) 111-11-15", comment: newComments[14]},
-        {name: "Людмила Киселева", phone: "+7 (999) 111-11-16", comment: newComments[15]},
-        {name: "Михаил Козлов", phone: "+7 (999) 111-11-17", comment: newComments[16]},
-        {name: "Светлана Михайлова", phone: "+7 (999) 111-11-18", comment: newComments[17]},
-        {name: "Виктор Фролов", phone: "+7 (999) 111-11-19", comment: newComments[18]},
-        {name: "Оксана Дмитриева", phone: "+7 (999) 111-11-20", comment: newComments[19]},
-        {name: "Роман Кузьмин", phone: "+7 (999) 111-11-21", comment: newComments[0]},
-        {name: "Наталья Алексеева", phone: "+7 (999) 111-11-22", comment: newComments[1]},
-        {name: "Константин Власов", phone: "+7 (999) 111-11-23", comment: newComments[2]},
-        {name: "Алёна Николаева", phone: "+7 (999) 111-11-24", comment: newComments[3]},
-        {name: "Игорь Тимофеев", phone: "+7 (999) 111-11-25", comment: newComments[4]},
-        {name: "Галина Павлова", phone: "+7 (999) 111-11-26", comment: newComments[5]},
-        {name: "Денис Мельников", phone: "+7 (999) 111-11-27", comment: newComments[6]},
-        {name: "Алла Сергеева", phone: "+7 (999) 111-11-28", comment: newComments[7]},
-        {name: "Василий Лебедев", phone: "+7 (999) 111-11-29", comment: newComments[8]},
-        {name: "Евгения Тихонова", phone: "+7 (999) 111-11-30", comment: newComments[9]},
-        {name: "Олег Зайцев", phone: "+7 (999) 111-11-31", comment: newComments[10]},
-        {name: "Нина Орехова", phone: "+7 (999) 111-11-32", comment: newComments[11]},
-        {name: "Вячеслав Соколов", phone: "+7 (999) 111-11-33", comment: newComments[12]},
-        {name: "Лариса Денисова", phone: "+7 (999) 111-11-34", comment: newComments[13]},
-        {name: "Артур Крылов", phone: "+7 (999) 111-11-35", comment: newComments[14]},
-        {name: "Ирина Соловьева", phone: "+7 (999) 111-11-36", comment: newComments[15]},
-        {name: "Дмитрий Климов", phone: "+7 (999) 111-11-37", comment: newComments[16]},
-        {name: "Марина Белова", phone: "+7 (999) 111-11-38", comment: newComments[17]},
-        {name: "Владислав Орлов", phone: "+7 (999) 111-11-39", comment: newComments[18]},
-        {name: "Софья Федотова", phone: "+7 (999) 111-11-40", comment: newComments[19]},
-        {name: "Егор Панфилов", phone: "+7 (999) 111-11-41", comment: newComments[0]},
-        {name: "Олеся Захарова", phone: "+7 (999) 111-11-42", comment: newComments[1]},
-        {name: "Максим Ширяев", phone: "+7 (999) 111-11-43", comment: newComments[2]},
-        {name: "Вероника Борисова", phone: "+7 (999) 111-11-44", comment: newComments[3]},
-        {name: "Артём Дмитриев", phone: "+7 (999) 111-11-45", comment: newComments[4]},
-        {name: "Людмила Соколова", phone: "+7 (999) 111-11-46", comment: newComments[5]},
-        {name: "Никита Романов", phone: "+7 (999) 111-11-47", comment: newComments[6]},
-        {name: "Елена Крылова", phone: "+7 (999) 111-11-48", comment: newComments[7]},
-        {name: "Павел Гусев", phone: "+7 (999) 111-11-49", comment: newComments[8]},
-        {name: "Алина Иванова", phone: "+7 (999) 111-11-50", comment: newComments[9]},
+    const newOrganizations = [
+        "ООО Альфа",
+        "ООО Бета",
+        "ООО Гамма",
+        "ООО Дельта",
+        "ООО Эпсилон",
+        "ООО Зета",
+        "ООО Эта",
+        "ООО Тета",
+        "ООО Йота",
+        "ООО Каппа",
+        "ООО Лямбда",
+        "ООО Мю",
+        "ООО Ню",
+        "ООО Кси",
+        "ООО Омикрон",
+        "ООО Пи",
+        "ООО Ро",
+        "ООО Сигма",
+        "ООО Тау",
+        "ООО Фи"
     ];
+
+    const mockData = [
+    // Предыдущий набор данных...
+    {name: "Иван Иванов", phone: "+7 (999) 111-11-01", comment: newComments[0], organization: newOrganizations[0]},
+    {name: "Мария Петрова", phone: "+7 (999) 111-11-02", comment: newComments[1], organization: newOrganizations[1]},
+    {name: "Алексей Смирнов", phone: "+7 (999) 111-11-03", comment: newComments[2], organization: newOrganizations[2]},
+    {name: "Елена Кузнецова", phone: "+7 (999) 111-11-04", comment: newComments[3], organization: newOrganizations[3]},
+    {name: "Дмитрий Соколов", phone: "+7 (999) 111-11-05", comment: newComments[4], organization: newOrganizations[4]},
+    {name: "Ольга Морозова", phone: "+7 (999) 111-11-06", comment: newComments[5], organization: newOrganizations[5]},
+    {name: "Николай Васильев", phone: "+7 (999) 111-11-07", comment: newComments[6], organization: newOrganizations[6]},
+    {name: "Татьяна Орлова", phone: "+7 (999) 111-11-08", comment: newComments[7], organization: newOrganizations[7]},
+    {name: "Сергей Павлов", phone: "+7 (999) 111-11-09", comment: newComments[8], organization: newOrganizations[8]},
+    {name: "Анна Федорова", phone: "+7 (999) 111-11-10", comment: newComments[9], organization: newOrganizations[9]},
+    {name: "Владимир Беляев", phone: "+7 (999) 111-11-11", comment: newComments[10], organization: newOrganizations[10]},
+    {name: "Екатерина Никитина", phone: "+7 (999) 111-11-12", comment: newComments[11], organization: newOrganizations[11]},
+    {name: "Андрей Сидоров", phone: "+7 (999) 111-11-13", comment: newComments[12], organization: newOrganizations[12]},
+    {name: "Ирина Григорьева", phone: "+7 (999) 111-11-14", comment: newComments[13], organization: newOrganizations[13]},
+    {name: "Павел Егоров", phone: "+7 (999) 111-11-15", comment: newComments[14], organization: newOrganizations[14]},
+    {name: "Людмила Киселева", phone: "+7 (999) 111-11-16", comment: newComments[15], organization: newOrganizations[15]},
+    {name: "Михаил Козлов", phone: "+7 (999) 111-11-17", comment: newComments[16], organization: newOrganizations[16]},
+    {name: "Светлана Михайлова", phone: "+7 (999) 111-11-18", comment: newComments[17], organization: newOrganizations[17]},
+    {name: "Виктор Фролов", phone: "+7 (999) 111-11-19", comment: newComments[18], organization: newOrganizations[18]},
+    {name: "Оксана Дмитриева", phone: "+7 (999) 111-11-20", comment: newComments[19], organization: newOrganizations[19]},
+    {name: "Роман Кузьмичёв", phone: "+7 (999) 111-11-21", comment: newComments[0], organization: newOrganizations[0]},
+    {name: "Наталья Алексеева", phone: "+7 (999) 111-11-22", comment: newComments[1], organization: newOrganizations[1]},
+    {name: "Константин Власов", phone: "+7 (999) 111-11-23", comment: newComments[2], organization: newOrganizations[2]},
+    {name: "Алёна Николаева", phone: "+7 (999) 111-11-24", comment: newComments[3], organization: newOrganizations[3]},
+    {name: "Игорь Тимофеев", phone: "+7 (999) 111-11-25", comment: newComments[4], organization: newOrganizations[4]},
+    {name: "Галина Павлова", phone: "+7 (999) 111-11-26", comment: newComments[5], organization: newOrganizations[5]},
+    {name: "Денис Мельников", phone: "+7 (999) 111-11-27", comment: newComments[6], organization: newOrganizations[6]},
+    {name: "Алла Сергеева", phone: "+7 (999) 111-11-28", comment: newComments[7], organization: newOrganizations[7]},
+    {name: "Василий Лебедев", phone: "+7 (999) 111-11-29", comment: newComments[8], organization: newOrganizations[8]},
+    {name: "Евгения Тихонова", phone: "+7 (999) 111-11-30", comment: newComments[9], organization: newOrganizations[9]},
+    {name: "Олег Зайцев", phone: "+7 (999) 111-11-31", comment: newComments[10], organization: newOrganizations[10]},
+    {name: "Нина Орехова", phone: "+7 (999) 111-11-32", comment: newComments[11], organization: newOrganizations[11]},
+    {name: "Вячеслав Соколов", phone: "+7 (999) 111-11-33", comment: newComments[12], organization: newOrganizations[12]},
+    {name: "Лариса Денисова", phone: "+7 (999) 111-11-34", comment: newComments[13], organization: newOrganizations[13]},
+    {name: "Артур Крылов", phone: "+7 (999) 111-11-35", comment: newComments[14], organization: newOrganizations[14]},
+    {name: "Ирина Соловьева", phone: "+7 (999) 111-11-36", comment: newComments[15], organization: newOrganizations[15]},
+    {name: "Дмитрий Климов", phone: "+7 (999) 111-11-37", comment: newComments[16], organization: newOrganizations[16]},
+    {name: "Марина Белова", phone: "+7 (999) 111-11-38", comment: newComments[17], organization: newOrganizations[17]},
+    {name: "Владислав Орлов", phone: "+7 (999) 111-11-39", comment: newComments[18], organization: newOrganizations[18]},
+    {name: "Софья Федотова", phone: "+7 (999) 111-11-40", comment: newComments[19], organization: newOrganizations[19]},
+    {name: "Егор Панфилов", phone: "+7 (999) 111-11-41", comment: newComments[0], organization: newOrganizations[0]},
+    {name: "Олеся Захарова", phone: "+7 (999) 111-11-42", comment: newComments[1], organization: newOrganizations[1]},
+    {name: "Максим Ширяев", phone: "+7 (999) 111-11-43", comment: newComments[2], organization: newOrganizations[2]},
+    {name: "Вероника Борисова", phone: "+7 (999) 111-11-44", comment: newComments[3], organization: newOrganizations[3]},
+    {name: "Артём Дмитриев", phone: "+7 (999) 111-11-45", comment: newComments[4], organization: newOrganizations[4]},
+    {name: "Людмила Соколова", phone: "+7 (999) 111-11-46", comment: newComments[5], organization: newOrganizations[5]},
+    {name: "Никита Романов", phone: "+7 (999) 111-11-47", comment: newComments[6], organization: newOrganizations[6]},
+    {name: "Елена Крылова", phone: "+7 (999) 111-11-48", comment: newComments[7], organization: newOrganizations[7]},
+    {name: "Павел Гусев", phone: "+7 (999) 111-11-49", comment: newComments[8], organization: newOrganizations[8]},
+    {name: "Алина Иванова", phone: "+7 (999) 111-11-50", comment: newComments[9], organization: newOrganizations[9]}
+];
+
+console.log(mockData); // Выведет полный массив данных
 
     // Если нужно ровно 50, можно циклом дополнить:
     while (mockData.length < 50) {
@@ -1737,6 +1763,7 @@
 
         document.getElementById('clientName').value = data.name;
         document.getElementById('clientPhone').value = data.phone;
+        document.getElementById('clientOrganization').value = data.organization || '';
         document.getElementById('comment').value = data.comment;
     });
 </script>
@@ -2020,14 +2047,16 @@
                         brigade_id: data.brigade_id || null,
                         operator_id: data.operator_id || null
                     },
-                    addresses: []
+                    addresses: [],
+                    client_organization: data.client_organization || ''
                 };
 
-                // Добавляем данные клиента, только если они заполнены
-                if (data.client_name || data.client_phone) {
+                // Добавляем данные клиента, только если заполнено хотя бы одно из полей
+                if (data.client_name || data.client_phone || data.client_organization) {
                     requestData.client = {
                         fio: data.client_name || '',
-                        phone: data.client_phone || ''
+                        phone: data.client_phone || '',
+                        organization: data.client_organization || ''
                     };
                 }
 
