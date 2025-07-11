@@ -821,10 +821,11 @@ class HomeController extends Controller
                 c.id,
                 c.comment,
                 c.created_at,
-                'Система' as author_name,
-                c.created_at as formatted_date
+                COALESCE(u.name, 'Система') AS author_name,
+                c.created_at AS formatted_date
             FROM request_comments rc
             JOIN comments c ON rc.comment_id = c.id
+            LEFT JOIN users u ON rc.user_id = u.id
             WHERE rc.request_id = ?
             ORDER BY c.created_at DESC
         ", [$requestId]);

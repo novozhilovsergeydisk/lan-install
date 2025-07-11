@@ -1310,9 +1310,18 @@
                             return;
                         }
 
+                        function stringToColor(str) {
+                            let hash = 0;
+                            for (let i = 0; i < str.length; i++) {
+                                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                            }
+                            // Смещаем оттенок к зелёной гамме: 120–180°
+                            return `hsl(${120 + (hash % 60)},65%,40%)`;
+                        }
                         let html = '<div class="list-group list-group-flush">';
 
                         comments.forEach(comment => {
+                            console.log(comment);
                             const date = new Date(comment.created_at);
                             const formattedDate = date.toLocaleString('ru-RU', {
                                 day: '2-digit',
@@ -1321,11 +1330,13 @@
                                 hour: '2-digit',
                                 minute: '2-digit'
                             });
+                            const color = comment.author_name === 'Система' ? '#6c757d' : stringToColor(comment.author_name);
 
                             html += `
                                     <div class="list-group-item">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="me-3">
+                                                <h6 class="fw-semibold mb-1" style="color:${color}">${comment.author_name}</h6>
                                                 <p class="mb-1">${comment.comment}</p>
                                                 <small class="text-muted">${formattedDate}</small>
                                             </div>
