@@ -160,7 +160,7 @@
 
 /* Table container styles */
 .table-container {
-    height: 30rem;
+    /* height: 30rem; */
     overflow-y: auto;
 }
 
