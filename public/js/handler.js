@@ -2362,7 +2362,15 @@ function handlerAddEmployee() {
                 // console.log('Сотрудник успешно создан', data);
                 showAlert('Сотрудник успешно создан', 'success', messagesContainer);
                 form.reset();
+
+                console.log('Сотрудник успешно создан', data);
+                console.log('Функция отображения сотрудника', window.displayEmployeeInfo);
                 
+                // Отображаем информацию о созданном сотруднике
+                if (data && window.displayEmployeeInfo) {
+                    window.displayEmployeeInfo(data);
+                }
+
                 // Обновляем таблицу сотрудников, если она есть на странице
                 const employeesTable = document.querySelector('.employees-table');
                 if (employeesTable && window.DataTable) {

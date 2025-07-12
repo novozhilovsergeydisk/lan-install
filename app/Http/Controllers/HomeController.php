@@ -1036,6 +1036,15 @@ class HomeController extends Controller
      */
     public function storeRequest(Request $request)
     {
+
+        // $response = [
+        //     'success' => true,
+        //     'message' => 'Тестирование',
+        //     'data' => []
+        // ];
+        
+        // return response()->json($response);
+
         // Включаем логирование SQL-запросов
         \DB::enableQueryLog();
         DB::beginTransaction();
@@ -1161,11 +1170,39 @@ class HomeController extends Controller
             $client = null;
             $clientId = null;
 
-            if (!empty($clientData['phone'])) {
-                $client = DB::table('clients')
-                    ->where('phone', $clientData['phone'])
-                    ->first();
+            // Поиск клиента по телефону, ФИО или организации
+            $query = DB::table('clients');
+            $foundClient = false;
+
+            if (!empty($clientData['fio'])) {
+                if ($foundClient) {
+                    $query->orWhere('fio', $clientData['fio']);
+                } else {
+                    $query->where('fio', $clientData['fio']);
+                    $foundClient = true;
+                }
+            } elseif (!empty($clientData['phone'])) {
+                $query->where('phone', $clientData['phone']);
+                $foundClient = true;
+            } elseif (!empty($clientData['organization'])) {
+                if ($foundClient) {
+                    $query->orWhere('organization', $clientData['organization']);
+                } else {
+                    $query->where('organization', $clientData['organization']);
+                    $foundClient = true;
+                }
             }
+            
+            // Выполняем запрос только если хотя бы одно поле заполнено
+            $client = $foundClient ? $query->first() : null;
+
+            $response = [
+                'success' => true,
+                'message' => 'Тестирование',
+                'data' => [$client]
+            ];
+            
+            return response()->json($response);
 
             // 4. Создание или обновление клиента
             try {
@@ -1180,6 +1217,7 @@ class HomeController extends Controller
                          'organization' => $clientData['organization']
                         ]);
                     $clientId = $client->id;
+                    $clientState = 'updated';
                     \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
                 } else {
                     // Создаем нового клиента (даже если все поля пустые)
@@ -1189,6 +1227,7 @@ class HomeController extends Controller
                         'email' => $clientData['email'],
                          'organization' => $clientData['organization']
                     ]);
+                    $clientState = 'created';
                     \Log::info('Создан новый клиент:', ['id' => $clientId]);
                 }
             } catch (\Exception $e) {
@@ -1359,7 +1398,8 @@ class HomeController extends Controller
                         'id' => $clientId,
                         'name' => $fio,
                         'phone' => $phone,
-                        'is_new' => !$isExistingClient
+                        'is_new' => !$isExistingClient,
+                        'state' => $clientState
                     ] : null,
                     'address' => [
                         'id' => $address->id,

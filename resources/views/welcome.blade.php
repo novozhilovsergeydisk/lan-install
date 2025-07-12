@@ -876,8 +876,8 @@
 
                                                         <div class="col-md-6">
                                                             <label class="form-label">Должность</label> 
-                                                            <select name="positions" id="positions" class="form-select mb-4" required data-field-name="Должность">
-                                                                <option value="">Выберите должность</option>    
+                                                            <select name="position_id" id="position_id" class="form-select mb-4" required data-field-name="Должность">
+                                                                <!-- <option value="">Выберите должность</option>     -->
                                                                 @foreach ($positions as $position)
                                                                     <option value="{{ $position->id }}">{{ $position->name }}</option>
                                                                 @endforeach 
@@ -942,6 +942,9 @@
                                                                 <input type="text" name="car_plate" class="form-control">
                                                             </div>
                                                         </div>
+                                                    </div>
+
+                                                    <div id="employeeInfo" style="border: 0px solid red; padding: 10px;">
                                                     </div>
 
                                                     <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>

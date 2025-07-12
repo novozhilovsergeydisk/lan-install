@@ -22,12 +22,13 @@ class EmployeeUserController extends Controller
             
             // Поля сотрудника (обязательные на фронтенде)
             'fio' => 'required|string|max:255',
-            'positions' => 'required|exists:positions,id',
+            'position_id' => 'required|exists:positions,id',
             
             // Необязательные поля
             'phone' => 'nullable|string|max:50',
             'birth_date' => 'nullable|date',
             'birth_place' => 'nullable|string|max:255',
+            'registration_place' => 'nullable|string|max:255',
             'passport_series' => 'nullable|string|max:20',
             'passport_issued_by' => 'nullable|string|max:255',
             'passport_issued_at' => 'nullable|date',
@@ -45,8 +46,8 @@ class EmployeeUserController extends Controller
             'password_confirmation.required_with' => 'Подтверждение пароля обязательно',
             'password_confirmation.same' => 'Пароли не совпадают',
             'fio.required' => 'Поле "ФИО" обязательно для заполнения',
-            'positions.required' => 'Поле "Должность" обязательно для выбора',
-            'positions.exists' => 'Выбранная должность недействительна',
+            'position_id.required' => 'Поле "Должность" обязательно для выбора',
+            'position_id.exists' => 'Выбранная должность недействительна',
         ]);
 
         DB::beginTransaction();
@@ -61,16 +62,18 @@ class EmployeeUserController extends Controller
                 'remember_token' => Str::random(10),
             ]);
 
-            // Вставка сотрудника с user_id
+            // Вставка сотрудника с user_id и position_id
             DB::insert("
-                INSERT INTO employees (fio, phone, birth_date, birth_place, user_id)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO employees (fio, phone, birth_date, birth_place, user_id, position_id, registration_place)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             ", [
                 $request->fio,
                 $request->phone,
                 $request->birth_date,
                 $request->birth_place,
-                $user->id
+                $user->id,
+                $request->position_id,
+                $request->registration_place
             ]);
 
             $employeeId = DB::getPdo()->lastInsertId();
@@ -104,10 +107,51 @@ class EmployeeUserController extends Controller
             DB::commit();
             
             if ($request->wantsJson()) {
+                // Получаем полные данные о сотруднике
+                $employee = DB::table('employees')
+                    ->select(
+                        'employees.id', 
+                        'employees.fio', 
+                        'employees.phone', 
+                        'employees.birth_date', 
+                        'employees.birth_place',
+                        'employees.registration_place',
+                        'positions.name as position'
+                    )
+                    ->leftJoin('positions', 'employees.position_id', '=', 'positions.id')
+                    ->where('employees.id', $employeeId)
+                    ->first();
+                
+                // Получаем паспортные данные
+                $passport = DB::table('passports')
+                    ->where('employee_id', $employeeId)
+                    ->first();
+                
+                // Получаем данные об автомобиле
+                $car = DB::table('cars')
+                    ->where('employee_id', $employeeId)
+                    ->first();
+                
                 return response()->json([
                     'message' => 'Сотрудник успешно создан',
                     'employee_id' => $employeeId,
-                    'user_id' => $user->id
+                    'user_id' => $user->id,
+                    'fio' => $employee->fio,
+                    'phone' => $employee->phone,
+                    'birth_date' => $employee->birth_date,
+                    'birth_place' => $employee->birth_place,
+                    'registration_place' => $employee->registration_place,
+                    'position' => $employee->position,
+                    'passport' => $passport ? [
+                        'series_number' => $passport->series_number,
+                        'issued_by' => $passport->issued_by,
+                        'issued_at' => $passport->issued_at,
+                        'department_code' => $passport->department_code
+                    ] : null,
+                    'car' => $car ? [
+                        'brand' => $car->brand,
+                        'license_plate' => $car->license_plate
+                    ] : null
                 ], 201);
             }
             
