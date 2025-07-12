@@ -1,386 +1,323 @@
-diff --git a/app/Http/Controllers/EmployeeUserController.php b/app/Http/Controllers/EmployeeUserController.php
-index 0199448..0b8c4fd 100644
---- a/app/Http/Controllers/EmployeeUserController.php
-+++ b/app/Http/Controllers/EmployeeUserController.php
-@@ -22,12 +22,13 @@ public function store(Request $request)
-             
-             // Поля сотрудника (обязательные на фронтенде)
-             'fio' => 'required|string|max:255',
--            'positions' => 'required|exists:positions,id',
-+            'position_id' => 'required|exists:positions,id',
-             
-             // Необязательные поля
-             'phone' => 'nullable|string|max:50',
-             'birth_date' => 'nullable|date',
-             'birth_place' => 'nullable|string|max:255',
-+            'registration_place' => 'nullable|string|max:255',
-             'passport_series' => 'nullable|string|max:20',
-             'passport_issued_by' => 'nullable|string|max:255',
-             'passport_issued_at' => 'nullable|date',
-@@ -45,8 +46,8 @@ public function store(Request $request)
-             'password_confirmation.required_with' => 'Подтверждение пароля обязательно',
-             'password_confirmation.same' => 'Пароли не совпадают',
-             'fio.required' => 'Поле "ФИО" обязательно для заполнения',
--            'positions.required' => 'Поле "Должность" обязательно для выбора',
--            'positions.exists' => 'Выбранная должность недействительна',
-+            'position_id.required' => 'Поле "Должность" обязательно для выбора',
-+            'position_id.exists' => 'Выбранная должность недействительна',
-         ]);
- 
-         DB::beginTransaction();
-@@ -61,16 +62,18 @@ public function store(Request $request)
-                 'remember_token' => Str::random(10),
-             ]);
- 
--            // Вставка сотрудника с user_id
-+            // Вставка сотрудника с user_id и position_id
-             DB::insert("
--                INSERT INTO employees (fio, phone, birth_date, birth_place, user_id)
--                VALUES (?, ?, ?, ?, ?)
-+                INSERT INTO employees (fio, phone, birth_date, birth_place, user_id, position_id, registration_place)
-+                VALUES (?, ?, ?, ?, ?, ?, ?)
-             ", [
-                 $request->fio,
-                 $request->phone,
-                 $request->birth_date,
-                 $request->birth_place,
--                $user->id
-+                $user->id,
-+                $request->position_id,
-+                $request->registration_place
-             ]);
- 
-             $employeeId = DB::getPdo()->lastInsertId();
-@@ -104,10 +107,51 @@ public function store(Request $request)
-             DB::commit();
-             
-             if ($request->wantsJson()) {
-+                // Получаем полные данные о сотруднике
-+                $employee = DB::table('employees')
-+                    ->select(
-+                        'employees.id', 
-+                        'employees.fio', 
-+                        'employees.phone', 
-+                        'employees.birth_date', 
-+                        'employees.birth_place',
-+                        'employees.registration_place',
-+                        'positions.name as position'
-+                    )
-+                    ->leftJoin('positions', 'employees.position_id', '=', 'positions.id')
-+                    ->where('employees.id', $employeeId)
-+                    ->first();
-+                
-+                // Получаем паспортные данные
-+                $passport = DB::table('passports')
-+                    ->where('employee_id', $employeeId)
-+                    ->first();
-+                
-+                // Получаем данные об автомобиле
-+                $car = DB::table('cars')
-+                    ->where('employee_id', $employeeId)
-+                    ->first();
-+                
-                 return response()->json([
-                     'message' => 'Сотрудник успешно создан',
-                     'employee_id' => $employeeId,
--                    'user_id' => $user->id
-+                    'user_id' => $user->id,
-+                    'fio' => $employee->fio,
-+                    'phone' => $employee->phone,
-+                    'birth_date' => $employee->birth_date,
-+                    'birth_place' => $employee->birth_place,
-+                    'registration_place' => $employee->registration_place,
-+                    'position' => $employee->position,
-+                    'passport' => $passport ? [
-+                        'series_number' => $passport->series_number,
-+                        'issued_by' => $passport->issued_by,
-+                        'issued_at' => $passport->issued_at,
-+                        'department_code' => $passport->department_code
-+                    ] : null,
-+                    'car' => $car ? [
-+                        'brand' => $car->brand,
-+                        'license_plate' => $car->license_plate
-+                    ] : null
-                 ], 201);
-             }
-             
 diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index bcf37e5..819b119 100644
+index 819b119..923fa98 100644
 --- a/app/Http/Controllers/HomeController.php
 +++ b/app/Http/Controllers/HomeController.php
-@@ -1036,6 +1036,15 @@ public function getCommentsCount($requestId)
-      */
-     public function storeRequest(Request $request)
-     {
-+
-+        // $response = [
-+        //     'success' => true,
-+        //     'message' => 'Тестирование',
-+        //     'data' => []
-+        // ];
-+        
-+        // return response()->json($response);
-+
-         // Включаем логирование SQL-запросов
-         \DB::enableQueryLog();
-         DB::beginTransaction();
-@@ -1161,11 +1170,39 @@ public function storeRequest(Request $request)
-             $client = null;
-             $clientId = null;
+@@ -1058,12 +1058,25 @@ public function storeRequest(Request $request)
+             // Получаем данные из запроса
+             $input = $request->all();
  
--            if (!empty($clientData['phone'])) {
--                $client = DB::table('clients')
--                    ->where('phone', $clientData['phone'])
--                    ->first();
-+            // Поиск клиента по телефону, ФИО или организации
-+            $query = DB::table('clients');
-+            $foundClient = false;
-+
-+            if (!empty($clientData['fio'])) {
-+                if ($foundClient) {
-+                    $query->orWhere('fio', $clientData['fio']);
+-            $isImployeeExists = DB::table('employees')
+-                ->where('user_id', $input['operator_id'])
+-                ->exists();
+-
+-            if (!$isImployeeExists) {
+-                throw new \Exception('Сотрудник не найден, нужно создать нового сотрудника');
++            // Если operator_id не указан, используем ID текущего пользователя или null
++            $operatorId = $input['operator_id'] ?? auth()->id();
++            $input['operator_id'] = $operatorId; // Обновляем значение в массиве входных данных
++            
++            // Проверяем наличие сотрудника только если указан operator_id
++            $employeeId = null;
++            if ($operatorId) {
++                $employee = DB::table('employees')
++                    ->where('user_id', $operatorId)
++                    ->first();
++                    
++                if ($employee) {
++                    $employeeId = $employee->id;
++                    \Log::info('Найден сотрудник с ID: ' . $employeeId . ' для пользователя: ' . $operatorId);
 +                } else {
-+                    $query->where('fio', $clientData['fio']);
-+                    $foundClient = true;
++                    \Log::info('Сотрудник не найден для пользователя с ID: ' . $operatorId . ', но продолжаем создание заявки');
 +                }
-+            } elseif (!empty($clientData['phone'])) {
-+                $query->where('phone', $clientData['phone']);
-+                $foundClient = true;
-+            } elseif (!empty($clientData['organization'])) {
-+                if ($foundClient) {
-+                    $query->orWhere('organization', $clientData['organization']);
-+                } else {
-+                    $query->where('organization', $clientData['organization']);
-+                    $foundClient = true;
-+                }
++            } else {
++                \Log::info('Оператор не указан, создаем заявку без привязки к сотруднику');
              }
+ 
+             // Формируем массив для валидации
+@@ -1081,24 +1094,13 @@ public function storeRequest(Request $request)
+                 'address_id' => $input['address_id'] ?? null
+             ];
+ 
+-            // Преобразуем user_id в employee_id если нужно
+-            if (isset($validationData['operator_id'])) {
+-                $employee = \DB::table('employees')
+-                    ->where('user_id', $validationData['operator_id'])
+-                    ->first();
+-
+-                if ($employee) {
+-                    $validationData['operator_id'] = $employee->id;
+-                    \Log::info('Преобразовали operator_id:', [
+-                        'user_id' => $input['operator_id'],
+-                        'employee_id' => $employee->id
+-                    ]);
+-                } else {
+-                    \Log::warning('Не найден сотрудник с user_id:', [
+-                        'user_id' => $validationData['operator_id']
+-                    ]);
+-                }
+-            }
++            // Используем ранее найденный employeeId или null
++            $validationData['operator_id'] = $employeeId;
 +            
-+            // Выполняем запрос только если хотя бы одно поле заполнено
-+            $client = $foundClient ? $query->first() : null;
-+
-+            $response = [
-+                'success' => true,
-+                'message' => 'Тестирование',
-+                'data' => [$client]
-+            ];
-+            
-+            return response()->json($response);
++            \Log::info('Используем для заявки operator_id:', [
++                'user_id' => $input['operator_id'],
++                'employee_id' => $employeeId
++            ]);
+ 
+             // Правила валидации
+             $rules = [
+@@ -1111,7 +1113,7 @@ public function storeRequest(Request $request)
+                 'execution_date' => 'required|date',
+                 'execution_time' => 'nullable|date_format:H:i',
+                 'brigade_id' => 'nullable|exists:brigades,id',
+-                'operator_id' => 'required',
++                'operator_id' => 'nullable', // Изменено с required на nullable
+                 'address_id' => 'required|exists:addresses,id'
+             ];
+ 
+@@ -1196,13 +1198,13 @@ public function storeRequest(Request $request)
+             // Выполняем запрос только если хотя бы одно поле заполнено
+             $client = $foundClient ? $query->first() : null;
+ 
+-            $response = [
+-                'success' => true,
+-                'message' => 'Тестирование',
+-                'data' => [$client]
+-            ];
++            // $response = [
++            //     'success' => true,
++            //     'message' => 'Тестирование',
++            //     'data' => [$client]
++            // ];
+             
+-            return response()->json($response);
++            // return response()->json($response);
  
              // 4. Создание или обновление клиента
              try {
-@@ -1180,6 +1217,7 @@ public function storeRequest(Request $request)
-                          'organization' => $clientData['organization']
-                         ]);
-                     $clientId = $client->id;
-+                    $clientState = 'updated';
-                     \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
-                 } else {
-                     // Создаем нового клиента (даже если все поля пустые)
-@@ -1189,6 +1227,7 @@ public function storeRequest(Request $request)
-                         'email' => $clientData['email'],
-                          'organization' => $clientData['organization']
-                     ]);
-+                    $clientState = 'created';
-                     \Log::info('Создан новый клиент:', ['id' => $clientId]);
-                 }
-             } catch (\Exception $e) {
-@@ -1359,7 +1398,8 @@ public function storeRequest(Request $request)
-                         'id' => $clientId,
-                         'name' => $fio,
-                         'phone' => $phone,
--                        'is_new' => !$isExistingClient
-+                        'is_new' => !$isExistingClient,
-+                        'state' => $clientState
-                     ] : null,
-                     'address' => [
-                         'id' => $address->id,
 diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index 8c6f298..b930c1c 100644
+index b930c1c..d7d5131 100644
 --- a/public/js/form-handlers.js
 +++ b/public/js/form-handlers.js
-@@ -2,6 +2,78 @@
- 
- import { showAlert, postData } from './utils.js';
- 
-+/**
-+ * Отображает информацию о сотруднике в блоке employeeInfo
-+ * @param {Object} employeeData - данные о сотруднике
-+ */
-+function displayEmployeeInfo(employeeData) {
-+    const employeeInfoBlock = document.getElementById('employeeInfo');
-+    if (!employeeInfoBlock || !employeeData) return;
-+    
-+    console.log('Получены данные сотрудника:', employeeData);
-+    
-+    // Форматирование даты рождения, если она есть
-+    const birthDate = employeeData.birth_date ? new Date(employeeData.birth_date).toLocaleDateString('ru-RU') : 'Не указана';
-+    
-+    // Форматирование даты выдачи паспорта, если она есть
-+    const passportIssuedAt = employeeData.passport && employeeData.passport.issued_at 
-+        ? new Date(employeeData.passport.issued_at).toLocaleDateString('ru-RU') 
-+        : 'Не указана';
-+    
-+    // Подготовка блока с паспортными данными, если они есть
-+    let passportHtml = '';
-+    if (employeeData.passport) {
-+        passportHtml = `
-+            <div class="card mb-3">
-+                <div class="card-header bg-secondary text-white">Паспортные данные</div>
-+                <div class="card-body">
-+                    <p><strong>Серия и номер:</strong> ${employeeData.passport.series_number || 'Не указаны'}</p>
-+                    <p><strong>Кем выдан:</strong> ${employeeData.passport.issued_by || 'Не указано'}</p>
-+                    <p><strong>Дата выдачи:</strong> ${passportIssuedAt}</p>
-+                    <p><strong>Код подразделения:</strong> ${employeeData.passport.department_code || 'Не указан'}</p>
-+                </div>
-+            </div>
-+        `;
-+    }
-+    
-+    // Подготовка блока с данными об автомобиле, если они есть
-+    let carHtml = '';
-+    if (employeeData.car) {
-+        carHtml = `
-+            <div class="card mb-3">
-+                <div class="card-header bg-secondary text-white">Данные об автомобиле</div>
-+                <div class="card-body">
-+                    <p><strong>Марка:</strong> ${employeeData.car.brand || 'Не указана'}</p>
-+                    <p><strong>Госномер:</strong> ${employeeData.car.license_plate || 'Не указан'}</p>
-+                </div>
-+            </div>
-+        `;
-+    }
-+    
-+    // Создаем HTML для отображения основной информации
-+    const mainInfoHtml = `
-+        <div class="card mb-3">
-+            <div class="card-header bg-primary text-white">Информация о сотруднике #${employeeData.employee_id || employeeData.id || ''}</div>
-+            <div class="card-body">
-+                <p><strong>ФИО:</strong> ${employeeData.fio || 'Не указано'}</p>
-+                <p><strong>Телефон:</strong> ${employeeData.phone || 'Не указан'}</p>
-+                <p><strong>Дата рождения:</strong> ${birthDate}</p>
-+                <p><strong>Место рождения:</strong> ${employeeData.birth_place || 'Не указано'}</p>
-+                <p><strong>Место регистрации:</strong> ${employeeData.registration_place || 'Не указано'}</p>
-+                <p><strong>Должность:</strong> ${employeeData.position || 'Не указана'}</p>
-+            </div>
-+        </div>
-+    `;
-+    
-+    // Собираем все блоки вместе
-+    const html = mainInfoHtml + passportHtml + carHtml;
-+    
-+    
-+    // Вставляем HTML в блок
-+    employeeInfoBlock.innerHTML = html;
-+    employeeInfoBlock.style.display = 'block';
-+}
-+
- /**
-  * Обрабатывает отправку формы новой заявки
+@@ -8,6 +8,7 @@ import { showAlert, postData } from './utils.js';
   */
-@@ -50,7 +122,8 @@ async function submitRequestForm() {
-         execution_time: data.execution_time || null,
-         brigade_id: data.brigade_id || null,
-         operator_id: data.operator_id || null,
--        address_id: addressId
-+        address_id: addressId,
-+        organization: data.client_organization || null,
-     };
- 
-     // Логируем данные перед отправкой
-@@ -62,6 +135,12 @@ async function submitRequestForm() {
-         const result = await postData('/api/requests', requestData);
-         if (result.success) {
-             showAlert('Заявка успешно создана!', 'success');
-+            
-+            // Отображаем информацию о сотруднике, если она есть в ответе
-+            if (result.data && result.data.employee) {
-+                displayEmployeeInfo(result.data.employee);
-+            }
-+            
-             const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
-             modal.hide();
-             
-@@ -71,10 +150,11 @@ async function submitRequestForm() {
-             // Dispatch event to notify other components about the new request
-             const event = new CustomEvent('requestCreated', { detail: result.data });
-             document.dispatchEvent(event);
--            
-+   
-             // If there's a refreshRequestsTable function, call it
-             if (typeof window.refreshRequestsTable === 'function') {
--                window.refreshRequestsTable();
-+                // showAlert('window.refreshRequestsTable()', 'info');
-+                // window.refreshRequestsTable();
-             } else {
-                 // Fallback to page reload if the function doesn't exist
-                 window.location.reload();
-@@ -94,5 +174,9 @@ async function submitRequestForm() {
-     }
- }
- 
--// Делаем функцию доступной глобально
-+// Делаем функции доступными глобально
- window.submitRequestForm = submitRequestForm;
-+window.displayEmployeeInfo = displayEmployeeInfo;
+ function displayEmployeeInfo(employeeData) {
+     const employeeInfoBlock = document.getElementById('employeeInfo');
 +
-+// Экспортируем функции для использования в других модулях
-+export { submitRequestForm, displayEmployeeInfo };
+     if (!employeeInfoBlock || !employeeData) return;
+     
+     console.log('Получены данные сотрудника:', employeeData);
+@@ -22,6 +23,7 @@ function displayEmployeeInfo(employeeData) {
+     
+     // Подготовка блока с паспортными данными, если они есть
+     let passportHtml = '';
++    
+     if (employeeData.passport) {
+         passportHtml = `
+             <div class="card mb-3">
+@@ -53,7 +55,7 @@ function displayEmployeeInfo(employeeData) {
+     // Создаем HTML для отображения основной информации
+     const mainInfoHtml = `
+         <div class="card mb-3">
+-            <div class="card-header bg-primary text-white">Информация о сотруднике #${employeeData.employee_id || employeeData.id || ''}</div>
++            <div class="card-header bg-primary text-white">Информация о сотруднике ID: ${employeeData.employee_id || employeeData.id || ''}</div>
+             <div class="card-body">
+                 <p><strong>ФИО:</strong> ${employeeData.fio || 'Не указано'}</p>
+                 <p><strong>Телефон:</strong> ${employeeData.phone || 'Не указан'}</p>
+@@ -64,9 +66,14 @@ function displayEmployeeInfo(employeeData) {
+             </div>
+         </div>
+     `;
++
++    const btnUpdate = `
++        <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3
++        ">Изменить</button>
++    `;
+     
+     // Собираем все блоки вместе
+-    const html = mainInfoHtml + passportHtml + carHtml;
++    const html = mainInfoHtml + passportHtml + carHtml + btnUpdate;
+     
+     
+     // Вставляем HTML в блок
+@@ -82,6 +89,7 @@ async function submitRequestForm() {
+     const submitBtn = document.getElementById('submitRequest');
+ 
+     if (!form.checkValidity()) {
++
+         form.classList.add('was-validated');
+         return;
+     }
 diff --git a/public/js/handler.js b/public/js/handler.js
-index 4ea801a..58cf208 100644
+index 58cf208..70a055d 100644
 --- a/public/js/handler.js
 +++ b/public/js/handler.js
-@@ -2362,7 +2362,15 @@ function handlerAddEmployee() {
-                 // console.log('Сотрудник успешно создан', data);
-                 showAlert('Сотрудник успешно создан', 'success', messagesContainer);
-                 form.reset();
+@@ -2235,6 +2235,11 @@ function handlerAddEmployee() {
+         // console.log('Начало обработки отправки формы');
+         e.preventDefault();
+ 
++        const employeeInfoBlock = document.getElementById('employeeInfo');
++        employeeInfoBlock.innerHTML = '';
 +
-+                console.log('Сотрудник успешно создан', data);
-+                console.log('Функция отображения сотрудника', window.displayEmployeeInfo);
-                 
-+                // Отображаем информацию о созданном сотруднике
-+                if (data && window.displayEmployeeInfo) {
-+                    window.displayEmployeeInfo(data);
-+                }
++        console.log('Начало обработки отправки формы');
 +
-                 // Обновляем таблицу сотрудников, если она есть на странице
-                 const employeesTable = document.querySelector('.employees-table');
-                 if (employeesTable && window.DataTable) {
-diff --git a/public/js/utils.js b/public/js/utils.js
-index a4cbba1..6b7c235 100644
---- a/public/js/utils.js
-+++ b/public/js/utils.js
-@@ -90,6 +90,9 @@ async function postData(url, body) {
-             // Обработка других HTTP ошибок
-             throw new Error(responseData.message || `Ошибка сервера: ${response.status}`);
-         }
-+
-+        console.log('responseData', responseData);
-+
-         return responseData;
-     } catch (error) {
-         console.error('Ошибка отправки:', error);
+         const form = this;
+         const formData = new FormData(form);
+         const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index c8815e9..6215309 100644
+index 6215309..f9d2340 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -876,8 +876,8 @@ function loadCities(selectElement) {
+@@ -529,6 +529,7 @@ class="btn btn-sm btn-outline-success add-photo-btn"
+                                 <!-- Адрес -->
+                                 <div>
+                                     <h6>Добавить адрес</h6>
++
+                                     <form id="addressForm" class="row g-2 align-items-end" method="POST"
+                                           action="{{ route('address.add') }}">
+                                         @csrf
+@@ -553,14 +554,9 @@ class="btn btn-sm btn-outline-success add-photo-btn"
+                                                 <option value="">Выберите город</option>
+                                             </select>
+                                         </div>
+-                                        <div class="col-auto">
+-                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес
+-                                            </button>
+-                                        </div>
+-                                        <div class="mt-3">
+-                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Тестовое
+-                                                заполнение
+-                                            </button>
++                                        <div class="col-auto d-flex gap-2 mt-4">
++                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес</button>
++                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Автозаполнение</button>
+                                         </div>
+                                     </form>
  
+@@ -847,19 +843,6 @@ function loadCities(selectElement) {
+                                                     
+                                                     <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
+                                                     
+-                                                    <!-- Toast уведомление о выборе пользователя -->
+-                                                    <!-- <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+-                                                        <div id="userSelectedToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+-                                                            <div class="toast-header">
+-                                                                <strong class="me-auto">Успешно</strong>
+-                                                                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Закрыть"></button>
+-                                                            </div>
+-                                                            <div class="toast-body">
+-                                                                Пользователь выбран. Теперь можно заполнить форму сотрудника.
+-                                                            </div>
+-                                                        </div>
+-                                                    </div> -->
+-
+                                                     <div class="row g-3 mt-3">
                                                          <div class="col-md-6">
-                                                             <label class="form-label">Должность</label> 
--                                                            <select name="positions" id="positions" class="form-select mb-4" required data-field-name="Должность">
--                                                                <option value="">Выберите должность</option>    
-+                                                            <select name="position_id" id="position_id" class="form-select mb-4" required data-field-name="Должность">
-+                                                                <!-- <option value="">Выберите должность</option>     -->
-                                                                 @foreach ($positions as $position)
-                                                                     <option value="{{ $position->id }}">{{ $position->name }}</option>
-                                                                 @endforeach 
-@@ -944,6 +944,9 @@ function loadCities(selectElement) {
+                                                             <div class="mb-4">
+@@ -944,17 +927,20 @@ function loadCities(selectElement) {
                                                          </div>
                                                      </div>
  
+-                                                    <div id="employeeInfo" style="border: 0px solid red; padding: 10px;">
++                                                    <div class="d-flex gap-2 mt-3 mb-3">
++                                                        <button id="autoFillBtn" type="button" class="btn btn-outline-secondary" 
++                                                            data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
++                                                            Автозаполнение
++                                                        </button>
++
++                                                        <button id="saveBtn" type="submit" class="btn btn-primary flex-grow-1">Сохранить</button>
+                                                     </div>
+ 
+-                                                    <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
 +                                                    <div id="employeeInfo" style="border: 0px solid red; padding: 10px;">
 +                                                    </div>
-+
-                                                     <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
  
-                                                     <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
+-                                                    <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
++                                                    <!-- <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button> -->
+ 
+-                                                    <button id="autoFillBtn" type="button" class="btn btn-outline-secondary mb-3 mt-3" 
+-                                                        data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
+-                                                        Автозаполнение
+-                                                    </button>
+                                                 </form>
+                                             </div>  
+                                         </div>
+@@ -1009,12 +995,9 @@ function loadCities(selectElement) {
+                                                         <tr class="smaller">
+                                                             <th>Имя</th>
+                                                             <th>Телефон</th>
+-                                                            <th>Дата / место рождения</th>
+-                                                            <th>Паспорт</th>
+                                                             <th>Должность</th>
+-                                                            <th>Дата выдачи</th>
+-                                                            <th>Кем выдан</th>
+-                                                            <th>Код подразделения</th>
++                                                            <th>Дата / место рождения</th>
++                                                            <th>Паспорт / дата выдачи</th>
+                                                             <th>Марка машины</th>
+                                                             <th>Госномер</th>
+                                                         </tr>
+@@ -1024,12 +1007,16 @@ function loadCities(selectElement) {
+                                                         <tr class="small">
+                                                             <td>{{ $employee->fio }}</td>
+                                                             <td>{{ $employee->phone }}</td>
+-                                                            <td>{{ $employee->birth_date }}</td>
+-                                                            <td>{{ $employee->series_number }}</td>
+                                                             <td>{{ $employee->position }}</td>
+-                                                            <td>{{ $employee->passport_issued_at }}</td>
+-                                                            <td>{{ $employee->passport_issued_by }}</td>
+-                                                            <td>{{ $employee->department_code }}</td>
++                                                            <td>{{ $employee->birth_date }}</td>
++                                                            <td>
++                                                                <div>
++                                                                    {{ $employee->series_number }} <br> 
++                                                                    {{ $employee->passport_issued_at }} <br> 
++                                                                    {{ $employee->passport_issued_by }} <br> 
++                                                                    {{ $employee->department_code }}
++                                                                </div>
++                                                            </td>
+                                                             <td>{{ $employee->car_brand }}</td>
+                                                             <td>{{ $employee->car_plate }}</td>
+                                                         </tr>
+@@ -1592,14 +1579,13 @@ class="text-danger">*</span></label>
+                         </div>
+                     </div>
+ 
+-                    <div class="mb-3 hide-me">
++                    <!-- <div class="mb-3 hide-me">
+                         <h6>Назначение</h6>
+                         <div class="row g-3">
+                             <div class="col-md-6">
+                                 <label for="brigade" class="form-label">Бригада</label>
+                                 <select class="form-select" id="brigade" name="brigade_id">
+                                     <option value="" selected>Не выбрано</option>
+-                                    <!-- Will be populated by JavaScript -->
+                                 </select>
+                             </div>
+                             <div class="col-md-6">
+@@ -1607,11 +1593,10 @@ class="text-danger">*</span></label>
+                                         class="text-danger">*</span></label>
+                                 <select class="form-select" id="operator" name="operator_id" required>
+                                     <option value="" disabled selected>Выберите оператора</option>
+-                                    <!-- Will be populated by JavaScript -->
+                                 </select>
+                             </div>
+                         </div>
+-                    </div>
++                    </div> -->
+ 
+                     <div class="mb-3">
+                         <h6>Адрес</h6>
+@@ -1897,6 +1882,12 @@ class="text-danger">*</span></label>
+                 const response = await fetch('/api/operators');
+                 let operators = await response.json();
+                 const select = document.getElementById('operator');
++                
++                // Проверяем, существует ли элемент select
++                if (!select) {
++                    console.log('Элемент #operator не найден, пропускаем загрузку операторов');
++                    return; // Выходим из функции, если элемент не найден
++                }
+ 
+                 // Очищаем список и добавляем текущего пользователя первым
+                 select.innerHTML = `

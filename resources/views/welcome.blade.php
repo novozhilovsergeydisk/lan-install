@@ -529,6 +529,7 @@
                                 <!-- Адрес -->
                                 <div>
                                     <h6>Добавить адрес</h6>
+
                                     <form id="addressForm" class="row g-2 align-items-end" method="POST"
                                           action="{{ route('address.add') }}">
                                         @csrf
@@ -553,14 +554,9 @@
                                                 <option value="">Выберите город</option>
                                             </select>
                                         </div>
-                                        <div class="col-auto">
-                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес
-                                            </button>
-                                        </div>
-                                        <div class="mt-3">
-                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Тестовое
-                                                заполнение
-                                            </button>
+                                        <div class="col-auto d-flex gap-2 mt-4">
+                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес</button>
+                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Автозаполнение</button>
                                         </div>
                                     </form>
 
@@ -847,19 +843,6 @@
                                                     
                                                     <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
                                                     
-                                                    <!-- Toast уведомление о выборе пользователя -->
-                                                    <!-- <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-                                                        <div id="userSelectedToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                                                            <div class="toast-header">
-                                                                <strong class="me-auto">Успешно</strong>
-                                                                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Закрыть"></button>
-                                                            </div>
-                                                            <div class="toast-body">
-                                                                Пользователь выбран. Теперь можно заполнить форму сотрудника.
-                                                            </div>
-                                                        </div>
-                                                    </div> -->
-
                                                     <div class="row g-3 mt-3">
                                                         <div class="col-md-6">
                                                             <div class="mb-4">
@@ -944,17 +927,20 @@
                                                         </div>
                                                     </div>
 
+                                                    <div class="d-flex gap-2 mt-3 mb-3">
+                                                        <button id="autoFillBtn" type="button" class="btn btn-outline-secondary" 
+                                                            data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
+                                                            Автозаполнение
+                                                        </button>
+
+                                                        <button id="saveBtn" type="submit" class="btn btn-primary flex-grow-1">Сохранить</button>
+                                                    </div>
+
                                                     <div id="employeeInfo" style="border: 0px solid red; padding: 10px;">
                                                     </div>
 
-                                                    <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
+                                                    <!-- <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button> -->
 
-                                                    <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
-
-                                                    <button id="autoFillBtn" type="button" class="btn btn-outline-secondary mb-3 mt-3" 
-                                                        data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
-                                                        Автозаполнение
-                                                    </button>
                                                 </form>
                                             </div>  
                                         </div>
@@ -1009,12 +995,9 @@
                                                         <tr class="smaller">
                                                             <th>Имя</th>
                                                             <th>Телефон</th>
-                                                            <th>Дата / место рождения</th>
-                                                            <th>Паспорт</th>
                                                             <th>Должность</th>
-                                                            <th>Дата выдачи</th>
-                                                            <th>Кем выдан</th>
-                                                            <th>Код подразделения</th>
+                                                            <th>Дата / место рождения</th>
+                                                            <th>Паспорт / дата выдачи</th>
                                                             <th>Марка машины</th>
                                                             <th>Госномер</th>
                                                         </tr>
@@ -1024,12 +1007,16 @@
                                                         <tr class="small">
                                                             <td>{{ $employee->fio }}</td>
                                                             <td>{{ $employee->phone }}</td>
-                                                            <td>{{ $employee->birth_date }}</td>
-                                                            <td>{{ $employee->series_number }}</td>
                                                             <td>{{ $employee->position }}</td>
-                                                            <td>{{ $employee->passport_issued_at }}</td>
-                                                            <td>{{ $employee->passport_issued_by }}</td>
-                                                            <td>{{ $employee->department_code }}</td>
+                                                            <td>{{ $employee->birth_date }}</td>
+                                                            <td>
+                                                                <div>
+                                                                    {{ $employee->series_number }} <br> 
+                                                                    {{ $employee->passport_issued_at }} <br> 
+                                                                    {{ $employee->passport_issued_by }} <br> 
+                                                                    {{ $employee->department_code }}
+                                                                </div>
+                                                            </td>
                                                             <td>{{ $employee->car_brand }}</td>
                                                             <td>{{ $employee->car_plate }}</td>
                                                         </tr>
@@ -1592,14 +1579,13 @@
                         </div>
                     </div>
 
-                    <div class="mb-3 hide-me">
+                    <!-- <div class="mb-3 hide-me">
                         <h6>Назначение</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="brigade" class="form-label">Бригада</label>
                                 <select class="form-select" id="brigade" name="brigade_id">
                                     <option value="" selected>Не выбрано</option>
-                                    <!-- Will be populated by JavaScript -->
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -1607,11 +1593,10 @@
                                         class="text-danger">*</span></label>
                                 <select class="form-select" id="operator" name="operator_id" required>
                                     <option value="" disabled selected>Выберите оператора</option>
-                                    <!-- Will be populated by JavaScript -->
                                 </select>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
 
                     <div class="mb-3">
                         <h6>Адрес</h6>
@@ -1897,6 +1882,12 @@
                 const response = await fetch('/api/operators');
                 let operators = await response.json();
                 const select = document.getElementById('operator');
+                
+                // Проверяем, существует ли элемент select
+                if (!select) {
+                    console.log('Элемент #operator не найден, пропускаем загрузку операторов');
+                    return; // Выходим из функции, если элемент не найден
+                }
 
                 // Очищаем список и добавляем текущего пользователя первым
                 select.innerHTML = `

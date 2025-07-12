@@ -1058,12 +1058,25 @@ class HomeController extends Controller
             // Получаем данные из запроса
             $input = $request->all();
 
-            $isImployeeExists = DB::table('employees')
-                ->where('user_id', $input['operator_id'])
-                ->exists();
-
-            if (!$isImployeeExists) {
-                throw new \Exception('Сотрудник не найден, нужно создать нового сотрудника');
+            // Если operator_id не указан, используем ID текущего пользователя или null
+            $operatorId = $input['operator_id'] ?? auth()->id();
+            $input['operator_id'] = $operatorId; // Обновляем значение в массиве входных данных
+            
+            // Проверяем наличие сотрудника только если указан operator_id
+            $employeeId = null;
+            if ($operatorId) {
+                $employee = DB::table('employees')
+                    ->where('user_id', $operatorId)
+                    ->first();
+                    
+                if ($employee) {
+                    $employeeId = $employee->id;
+                    \Log::info('Найден сотрудник с ID: ' . $employeeId . ' для пользователя: ' . $operatorId);
+                } else {
+                    \Log::info('Сотрудник не найден для пользователя с ID: ' . $operatorId . ', но продолжаем создание заявки');
+                }
+            } else {
+                \Log::info('Оператор не указан, создаем заявку без привязки к сотруднику');
             }
 
             // Формируем массив для валидации
@@ -1081,24 +1094,13 @@ class HomeController extends Controller
                 'address_id' => $input['address_id'] ?? null
             ];
 
-            // Преобразуем user_id в employee_id если нужно
-            if (isset($validationData['operator_id'])) {
-                $employee = \DB::table('employees')
-                    ->where('user_id', $validationData['operator_id'])
-                    ->first();
-
-                if ($employee) {
-                    $validationData['operator_id'] = $employee->id;
-                    \Log::info('Преобразовали operator_id:', [
-                        'user_id' => $input['operator_id'],
-                        'employee_id' => $employee->id
-                    ]);
-                } else {
-                    \Log::warning('Не найден сотрудник с user_id:', [
-                        'user_id' => $validationData['operator_id']
-                    ]);
-                }
-            }
+            // Используем ранее найденный employeeId или null
+            $validationData['operator_id'] = $employeeId;
+            
+            \Log::info('Используем для заявки operator_id:', [
+                'user_id' => $input['operator_id'],
+                'employee_id' => $employeeId
+            ]);
 
             // Правила валидации
             $rules = [
@@ -1111,7 +1113,7 @@ class HomeController extends Controller
                 'execution_date' => 'required|date',
                 'execution_time' => 'nullable|date_format:H:i',
                 'brigade_id' => 'nullable|exists:brigades,id',
-                'operator_id' => 'required',
+                'operator_id' => 'nullable', // Изменено с required на nullable
                 'address_id' => 'required|exists:addresses,id'
             ];
 
@@ -1196,13 +1198,13 @@ class HomeController extends Controller
             // Выполняем запрос только если хотя бы одно поле заполнено
             $client = $foundClient ? $query->first() : null;
 
-            $response = [
-                'success' => true,
-                'message' => 'Тестирование',
-                'data' => [$client]
-            ];
+            // $response = [
+            //     'success' => true,
+            //     'message' => 'Тестирование',
+            //     'data' => [$client]
+            // ];
             
-            return response()->json($response);
+            // return response()->json($response);
 
             // 4. Создание или обновление клиента
             try {

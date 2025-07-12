@@ -2235,6 +2235,11 @@ function handlerAddEmployee() {
         // console.log('Начало обработки отправки формы');
         e.preventDefault();
 
+        const employeeInfoBlock = document.getElementById('employeeInfo');
+        employeeInfoBlock.innerHTML = '';
+
+        console.log('Начало обработки отправки формы');
+
         const form = this;
         const formData = new FormData(form);
         const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');

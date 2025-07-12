@@ -8,6 +8,7 @@ import { showAlert, postData } from './utils.js';
  */
 function displayEmployeeInfo(employeeData) {
     const employeeInfoBlock = document.getElementById('employeeInfo');
+
     if (!employeeInfoBlock || !employeeData) return;
     
     console.log('Получены данные сотрудника:', employeeData);
@@ -22,6 +23,7 @@ function displayEmployeeInfo(employeeData) {
     
     // Подготовка блока с паспортными данными, если они есть
     let passportHtml = '';
+    
     if (employeeData.passport) {
         passportHtml = `
             <div class="card mb-3">
@@ -53,7 +55,7 @@ function displayEmployeeInfo(employeeData) {
     // Создаем HTML для отображения основной информации
     const mainInfoHtml = `
         <div class="card mb-3">
-            <div class="card-header bg-primary text-white">Информация о сотруднике #${employeeData.employee_id || employeeData.id || ''}</div>
+            <div class="card-header bg-primary text-white">Информация о сотруднике ID: ${employeeData.employee_id || employeeData.id || ''}</div>
             <div class="card-body">
                 <p><strong>ФИО:</strong> ${employeeData.fio || 'Не указано'}</p>
                 <p><strong>Телефон:</strong> ${employeeData.phone || 'Не указан'}</p>
@@ -64,9 +66,14 @@ function displayEmployeeInfo(employeeData) {
             </div>
         </div>
     `;
+
+    const btnUpdate = `
+        <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3
+        ">Изменить</button>
+    `;
     
     // Собираем все блоки вместе
-    const html = mainInfoHtml + passportHtml + carHtml;
+    const html = mainInfoHtml + passportHtml + carHtml + btnUpdate;
     
     
     // Вставляем HTML в блок
@@ -82,6 +89,7 @@ async function submitRequestForm() {
     const submitBtn = document.getElementById('submitRequest');
 
     if (!form.checkValidity()) {
+
         form.classList.add('was-validated');
         return;
     }
