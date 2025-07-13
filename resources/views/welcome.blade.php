@@ -1774,7 +1774,8 @@
         document.getElementById('clientName').value = data.name;
         document.getElementById('clientPhone').value = data.phone;
         document.getElementById('clientOrganization').value = data.organization || '';
-        handleCommentEdit(data.comment);
+        // Заполняем поле комментария напрямую
+        document.getElementById('comment').value = data.comment;
     });
 </script>
 

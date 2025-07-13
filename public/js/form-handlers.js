@@ -525,6 +525,7 @@ window.submitRequestForm = submitRequestForm;
 window.displayEmployeeInfo = displayEmployeeInfo;
 window.updateRowNumbers = updateRowNumbers;
 window.addRequestToTable = addRequestToTable;
+window.handleCommentEdit = handleCommentEdit;
 
 /**
  * Функция для обработки редактирования комментария
