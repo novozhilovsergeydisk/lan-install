@@ -1,323 +1,110 @@
-diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index 819b119..923fa98 100644
---- a/app/Http/Controllers/HomeController.php
-+++ b/app/Http/Controllers/HomeController.php
-@@ -1058,12 +1058,25 @@ public function storeRequest(Request $request)
-             // Получаем данные из запроса
-             $input = $request->all();
- 
--            $isImployeeExists = DB::table('employees')
--                ->where('user_id', $input['operator_id'])
--                ->exists();
--
--            if (!$isImployeeExists) {
--                throw new \Exception('Сотрудник не найден, нужно создать нового сотрудника');
-+            // Если operator_id не указан, используем ID текущего пользователя или null
-+            $operatorId = $input['operator_id'] ?? auth()->id();
-+            $input['operator_id'] = $operatorId; // Обновляем значение в массиве входных данных
-+            
-+            // Проверяем наличие сотрудника только если указан operator_id
-+            $employeeId = null;
-+            if ($operatorId) {
-+                $employee = DB::table('employees')
-+                    ->where('user_id', $operatorId)
-+                    ->first();
-+                    
-+                if ($employee) {
-+                    $employeeId = $employee->id;
-+                    \Log::info('Найден сотрудник с ID: ' . $employeeId . ' для пользователя: ' . $operatorId);
-+                } else {
-+                    \Log::info('Сотрудник не найден для пользователя с ID: ' . $operatorId . ', но продолжаем создание заявки');
-+                }
-+            } else {
-+                \Log::info('Оператор не указан, создаем заявку без привязки к сотруднику');
-             }
- 
-             // Формируем массив для валидации
-@@ -1081,24 +1094,13 @@ public function storeRequest(Request $request)
-                 'address_id' => $input['address_id'] ?? null
-             ];
- 
--            // Преобразуем user_id в employee_id если нужно
--            if (isset($validationData['operator_id'])) {
--                $employee = \DB::table('employees')
--                    ->where('user_id', $validationData['operator_id'])
--                    ->first();
--
--                if ($employee) {
--                    $validationData['operator_id'] = $employee->id;
--                    \Log::info('Преобразовали operator_id:', [
--                        'user_id' => $input['operator_id'],
--                        'employee_id' => $employee->id
--                    ]);
--                } else {
--                    \Log::warning('Не найден сотрудник с user_id:', [
--                        'user_id' => $validationData['operator_id']
--                    ]);
--                }
--            }
-+            // Используем ранее найденный employeeId или null
-+            $validationData['operator_id'] = $employeeId;
-+            
-+            \Log::info('Используем для заявки operator_id:', [
-+                'user_id' => $input['operator_id'],
-+                'employee_id' => $employeeId
-+            ]);
- 
-             // Правила валидации
-             $rules = [
-@@ -1111,7 +1113,7 @@ public function storeRequest(Request $request)
-                 'execution_date' => 'required|date',
-                 'execution_time' => 'nullable|date_format:H:i',
-                 'brigade_id' => 'nullable|exists:brigades,id',
--                'operator_id' => 'required',
-+                'operator_id' => 'nullable', // Изменено с required на nullable
-                 'address_id' => 'required|exists:addresses,id'
-             ];
- 
-@@ -1196,13 +1198,13 @@ public function storeRequest(Request $request)
-             // Выполняем запрос только если хотя бы одно поле заполнено
-             $client = $foundClient ? $query->first() : null;
- 
--            $response = [
--                'success' => true,
--                'message' => 'Тестирование',
--                'data' => [$client]
--            ];
-+            // $response = [
-+            //     'success' => true,
-+            //     'message' => 'Тестирование',
-+            //     'data' => [$client]
-+            // ];
-             
--            return response()->json($response);
-+            // return response()->json($response);
- 
-             // 4. Создание или обновление клиента
-             try {
 diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index b930c1c..d7d5131 100644
+index dad87c3..107eb39 100644
 --- a/public/js/form-handlers.js
 +++ b/public/js/form-handlers.js
-@@ -8,6 +8,7 @@ import { showAlert, postData } from './utils.js';
-  */
- function displayEmployeeInfo(employeeData) {
-     const employeeInfoBlock = document.getElementById('employeeInfo');
-+
-     if (!employeeInfoBlock || !employeeData) return;
-     
-     console.log('Получены данные сотрудника:', employeeData);
-@@ -22,6 +23,7 @@ function displayEmployeeInfo(employeeData) {
-     
-     // Подготовка блока с паспортными данными, если они есть
-     let passportHtml = '';
-+    
-     if (employeeData.passport) {
-         passportHtml = `
-             <div class="card mb-3">
-@@ -53,7 +55,7 @@ function displayEmployeeInfo(employeeData) {
-     // Создаем HTML для отображения основной информации
-     const mainInfoHtml = `
-         <div class="card mb-3">
--            <div class="card-header bg-primary text-white">Информация о сотруднике #${employeeData.employee_id || employeeData.id || ''}</div>
-+            <div class="card-header bg-primary text-white">Информация о сотруднике ID: ${employeeData.employee_id || employeeData.id || ''}</div>
-             <div class="card-body">
-                 <p><strong>ФИО:</strong> ${employeeData.fio || 'Не указано'}</p>
-                 <p><strong>Телефон:</strong> ${employeeData.phone || 'Не указан'}</p>
-@@ -64,9 +66,14 @@ function displayEmployeeInfo(employeeData) {
-             </div>
-         </div>
-     `;
-+
-+    const btnUpdate = `
-+        <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3
-+        ">Изменить</button>
-+    `;
-     
-     // Собираем все блоки вместе
--    const html = mainInfoHtml + passportHtml + carHtml;
-+    const html = mainInfoHtml + passportHtml + carHtml + btnUpdate;
-     
-     
-     // Вставляем HTML в блок
-@@ -82,6 +89,7 @@ async function submitRequestForm() {
-     const submitBtn = document.getElementById('submitRequest');
+@@ -2,6 +2,35 @@
  
-     if (!form.checkValidity()) {
+ import { showAlert, postData } from './utils.js';
+ 
++// Глобальная переменная для хранения текущей даты
++const currentDateState = {
++    // Инициализируем текущей датой в формате DD.MM.YYYY
++    date: new Date().toLocaleDateString('ru-RU', {
++        day: '2-digit',
++        month: '2-digit',
++        year: 'numeric'
++    })
++};
 +
-         form.classList.add('was-validated');
-         return;
-     }
++// Структура для хранения выбранной в календаре даты
++// Экспортируемый объект состояния даты
++export const selectedDateState = {
++    // Инициализируем текущей датой в формате DD.MM.YYYY
++    date: new Date().toLocaleDateString('ru-RU', {
++        day: '2-digit',
++        month: '2-digit',
++        year: 'numeric'
++    }),
++    // Метод для обновления даты из календаря
++    updateDate(newDate) {
++        this.date = newDate;
++        // console.log('Дата в selectedDateState обновлена:', this.date);
++    }
++};
++
++// Добавляем объект в глобальную область видимости для обратной совместимости
++window.selectedDateState = selectedDateState;
++
+ /**
+  * Отображает информацию о сотруднике в блоке employeeInfo
+  * @param {Object} employeeData - данные о сотруднике
+@@ -147,9 +176,13 @@ async function submitRequestForm() {
+         if (result.success) {
+             showAlert('Заявка успешно создана!', 'success');
+ 
+-            // Обновляем таблицу заявок, новую заявку добавляем в начало
++            console.log('currentDateState.date:', currentDateState.date);
++            console.log('selectedDateState.date:', selectedDateState.date);
++
+             // Динамическое формирование строки заявки и добавление её в начало таблицы
+-            addRequestToTable(result);
++            if (currentDateState.date === selectedDateState.date) {
++                addRequestToTable(result);
++            }
+             
+             // Не перезагружаем страницу, чтобы не потерять динамически добавленную строку
+             
 diff --git a/public/js/handler.js b/public/js/handler.js
-index 58cf208..70a055d 100644
+index a9f72ab..3243985 100644
 --- a/public/js/handler.js
 +++ b/public/js/handler.js
-@@ -2235,6 +2235,11 @@ function handlerAddEmployee() {
-         // console.log('Начало обработки отправки формы');
-         e.preventDefault();
+@@ -47,6 +47,10 @@ function applyFilters() {
  
-+        const employeeInfoBlock = document.getElementById('employeeInfo');
-+        employeeInfoBlock.innerHTML = '';
+     // console.log('Применение фильтров:', activeFilters);
+ 
++    selectedDateState.updateDate(filterState.date);  
 +
-+        console.log('Начало обработки отправки формы');
++    // console.log('selectedDateState.date:', selectedDateState.date);   
 +
-         const form = this;
-         const formData = new FormData(form);
-         const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');
-diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index 6215309..f9d2340 100644
---- a/resources/views/welcome.blade.php
-+++ b/resources/views/welcome.blade.php
-@@ -529,6 +529,7 @@ class="btn btn-sm btn-outline-success add-photo-btn"
-                                 <!-- Адрес -->
-                                 <div>
-                                     <h6>Добавить адрес</h6>
-+
-                                     <form id="addressForm" class="row g-2 align-items-end" method="POST"
-                                           action="{{ route('address.add') }}">
-                                         @csrf
-@@ -553,14 +554,9 @@ class="btn btn-sm btn-outline-success add-photo-btn"
-                                                 <option value="">Выберите город</option>
-                                             </select>
-                                         </div>
--                                        <div class="col-auto">
--                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес
--                                            </button>
--                                        </div>
--                                        <div class="mt-3">
--                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Тестовое
--                                                заполнение
--                                            </button>
-+                                        <div class="col-auto d-flex gap-2 mt-4">
-+                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес</button>
-+                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Автозаполнение</button>
-                                         </div>
-                                     </form>
+     // Если выбрана дата, делаем запрос на сервер
+     if (filterState.date) {
+         // Конвертируем дату из DD.MM.YYYY в YYYY-MM-DD
+@@ -94,8 +98,9 @@ function applyFilters() {
+                     // Логируем первую заявку для отладки
+                     if (data.data && data.data.length > 0) {
+                         // Отладочные логи полей заявки отключены
++                        // console.info('На выбранную дату заявки есть!');
+                     } else {
+-                        console.info('На выбранную дату заявок нет');
++                        // console.info('На выбранную дату заявок нет!');
+                     }
  
-@@ -847,19 +843,6 @@ function loadCities(selectElement) {
-                                                     
-                                                     <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
-                                                     
--                                                    <!-- Toast уведомление о выборе пользователя -->
--                                                    <!-- <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
--                                                        <div id="userSelectedToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
--                                                            <div class="toast-header">
--                                                                <strong class="me-auto">Успешно</strong>
--                                                                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Закрыть"></button>
--                                                            </div>
--                                                            <div class="toast-body">
--                                                                Пользователь выбран. Теперь можно заполнить форму сотрудника.
--                                                            </div>
--                                                        </div>
--                                                    </div> -->
--
-                                                     <div class="row g-3 mt-3">
-                                                         <div class="col-md-6">
-                                                             <div class="mb-4">
-@@ -944,17 +927,20 @@ function loadCities(selectElement) {
-                                                         </div>
-                                                     </div>
- 
--                                                    <div id="employeeInfo" style="border: 0px solid red; padding: 10px;">
-+                                                    <div class="d-flex gap-2 mt-3 mb-3">
-+                                                        <button id="autoFillBtn" type="button" class="btn btn-outline-secondary" 
-+                                                            data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
-+                                                            Автозаполнение
-+                                                        </button>
-+
-+                                                        <button id="saveBtn" type="submit" class="btn btn-primary flex-grow-1">Сохранить</button>
-                                                     </div>
- 
--                                                    <button id="saveBtn" type="submit" class="btn btn-primary w-100 mt-3">Сохранить</button>
-+                                                    <div id="employeeInfo" style="border: 0px solid red; padding: 10px;">
-+                                                    </div>
- 
--                                                    <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button>
-+                                                    <!-- <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button> -->
- 
--                                                    <button id="autoFillBtn" type="button" class="btn btn-outline-secondary mb-3 mt-3" 
--                                                        data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
--                                                        Автозаполнение
--                                                    </button>
-                                                 </form>
-                                             </div>  
-                                         </div>
-@@ -1009,12 +995,9 @@ function loadCities(selectElement) {
-                                                         <tr class="smaller">
-                                                             <th>Имя</th>
-                                                             <th>Телефон</th>
--                                                            <th>Дата / место рождения</th>
--                                                            <th>Паспорт</th>
-                                                             <th>Должность</th>
--                                                            <th>Дата выдачи</th>
--                                                            <th>Кем выдан</th>
--                                                            <th>Код подразделения</th>
-+                                                            <th>Дата / место рождения</th>
-+                                                            <th>Паспорт / дата выдачи</th>
-                                                             <th>Марка машины</th>
-                                                             <th>Госномер</th>
-                                                         </tr>
-@@ -1024,12 +1007,16 @@ function loadCities(selectElement) {
-                                                         <tr class="small">
-                                                             <td>{{ $employee->fio }}</td>
-                                                             <td>{{ $employee->phone }}</td>
--                                                            <td>{{ $employee->birth_date }}</td>
--                                                            <td>{{ $employee->series_number }}</td>
-                                                             <td>{{ $employee->position }}</td>
--                                                            <td>{{ $employee->passport_issued_at }}</td>
--                                                            <td>{{ $employee->passport_issued_by }}</td>
--                                                            <td>{{ $employee->department_code }}</td>
-+                                                            <td>{{ $employee->birth_date }}</td>
-+                                                            <td>
-+                                                                <div>
-+                                                                    {{ $employee->series_number }} <br> 
-+                                                                    {{ $employee->passport_issued_at }} <br> 
-+                                                                    {{ $employee->passport_issued_by }} <br> 
-+                                                                    {{ $employee->department_code }}
-+                                                                </div>
-+                                                            </td>
-                                                             <td>{{ $employee->car_brand }}</td>
-                                                             <td>{{ $employee->car_plate }}</td>
-                                                         </tr>
-@@ -1592,14 +1579,13 @@ class="text-danger">*</span></label>
-                         </div>
-                     </div>
- 
--                    <div class="mb-3 hide-me">
-+                    <!-- <div class="mb-3 hide-me">
-                         <h6>Назначение</h6>
-                         <div class="row g-3">
-                             <div class="col-md-6">
-                                 <label for="brigade" class="form-label">Бригада</label>
-                                 <select class="form-select" id="brigade" name="brigade_id">
-                                     <option value="" selected>Не выбрано</option>
--                                    <!-- Will be populated by JavaScript -->
-                                 </select>
-                             </div>
-                             <div class="col-md-6">
-@@ -1607,11 +1593,10 @@ class="text-danger">*</span></label>
-                                         class="text-danger">*</span></label>
-                                 <select class="form-select" id="operator" name="operator_id" required>
-                                     <option value="" disabled selected>Выберите оператора</option>
--                                    <!-- Will be populated by JavaScript -->
-                                 </select>
-                             </div>
-                         </div>
--                    </div>
-+                    </div> -->
- 
-                     <div class="mb-3">
-                         <h6>Адрес</h6>
-@@ -1897,6 +1882,12 @@ class="text-danger">*</span></label>
-                 const response = await fetch('/api/operators');
-                 let operators = await response.json();
-                 const select = document.getElementById('operator');
+                     const tbody = document.querySelector('table.table-hover tbody');
+@@ -1139,9 +1144,26 @@ function initializePage() {
+                 language: 'ru',
+                 autoclose: true,
+                 todayHighlight: true
+-            }).on('changeDate', function (e) {
++            })
++            // Добавляем обработчик клика по дате в календаре
++            .on('click', '.day', function(e) {
++                console.log('Клик по дате в календаре:', $(this).text());
++            })
++            .on('changeDate', function (e) {
++                // console.log('Изменение даты в календаре:', e.format('dd.mm.yyyy'));
 +                
-+                // Проверяем, существует ли элемент select
-+                if (!select) {
-+                    console.log('Элемент #operator не найден, пропускаем загрузку операторов');
-+                    return; // Выходим из функции, если элемент не найден
+                 const selectedDate = e.format('dd.mm.yyyy');
+                 filterState.date = selectedDate;
++                
++                // Обновляем значение выбранной даты в selectedDateState используя метод updateDate
++                if (window.selectedDateState && typeof window.selectedDateState.updateDate === 'function') {
++                    window.selectedDateState.updateDate(selectedDate);
++                } else if (window.selectedDateState) {
++                    // Запасной вариант, если метод updateDate не доступен
++                    window.selectedDateState.date = selectedDate;
++                    console.log('Выбрана дата в календаре (handler.js):', window.selectedDateState.date);
 +                }
- 
-                 // Очищаем список и добавляем текущего пользователя первым
-                 select.innerHTML = `
++                
+                 // Логи выбора даты отключены
+                 applyFilters();
+             });

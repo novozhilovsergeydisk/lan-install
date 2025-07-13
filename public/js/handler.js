@@ -47,6 +47,10 @@ function applyFilters() {
 
     // console.log('Применение фильтров:', activeFilters);
 
+    selectedDateState.updateDate(filterState.date);  
+
+    // console.log('selectedDateState.date:', selectedDateState.date);   
+
     // Если выбрана дата, делаем запрос на сервер
     if (filterState.date) {
         // Конвертируем дату из DD.MM.YYYY в YYYY-MM-DD
@@ -94,8 +98,9 @@ function applyFilters() {
                     // Логируем первую заявку для отладки
                     if (data.data && data.data.length > 0) {
                         // Отладочные логи полей заявки отключены
+                        // console.info('На выбранную дату заявки есть!');
                     } else {
-                        console.info('На выбранную дату заявок нет');
+                        // console.info('На выбранную дату заявок нет!');
                     }
 
                     const tbody = document.querySelector('table.table-hover tbody');
@@ -1139,9 +1144,26 @@ function initializePage() {
                 language: 'ru',
                 autoclose: true,
                 todayHighlight: true
-            }).on('changeDate', function (e) {
+            })
+            // Добавляем обработчик клика по дате в календаре
+            .on('click', '.day', function(e) {
+                console.log('Клик по дате в календаре:', $(this).text());
+            })
+            .on('changeDate', function (e) {
+                // console.log('Изменение даты в календаре:', e.format('dd.mm.yyyy'));
+                
                 const selectedDate = e.format('dd.mm.yyyy');
                 filterState.date = selectedDate;
+                
+                // Обновляем значение выбранной даты в selectedDateState используя метод updateDate
+                if (window.selectedDateState && typeof window.selectedDateState.updateDate === 'function') {
+                    window.selectedDateState.updateDate(selectedDate);
+                } else if (window.selectedDateState) {
+                    // Запасной вариант, если метод updateDate не доступен
+                    window.selectedDateState.date = selectedDate;
+                    console.log('Выбрана дата в календаре (handler.js):', window.selectedDateState.date);
+                }
+                
                 // Логи выбора даты отключены
                 applyFilters();
             });

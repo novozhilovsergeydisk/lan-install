@@ -2,6 +2,35 @@
 
 import { showAlert, postData } from './utils.js';
 
+// Глобальная переменная для хранения текущей даты
+const currentDateState = {
+    // Инициализируем текущей датой в формате DD.MM.YYYY
+    date: new Date().toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    })
+};
+
+// Структура для хранения выбранной в календаре даты
+// Экспортируемый объект состояния даты
+export const selectedDateState = {
+    // Инициализируем текущей датой в формате DD.MM.YYYY
+    date: new Date().toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    }),
+    // Метод для обновления даты из календаря
+    updateDate(newDate) {
+        this.date = newDate;
+        // console.log('Дата в selectedDateState обновлена:', this.date);
+    }
+};
+
+// Добавляем объект в глобальную область видимости для обратной совместимости
+window.selectedDateState = selectedDateState;
+
 /**
  * Отображает информацию о сотруднике в блоке employeeInfo
  * @param {Object} employeeData - данные о сотруднике
@@ -147,9 +176,13 @@ async function submitRequestForm() {
         if (result.success) {
             showAlert('Заявка успешно создана!', 'success');
 
-            // Обновляем таблицу заявок, новую заявку добавляем в начало
+            console.log('currentDateState.date:', currentDateState.date);
+            console.log('selectedDateState.date:', selectedDateState.date);
+
             // Динамическое формирование строки заявки и добавление её в начало таблицы
-            addRequestToTable(result);
+            if (currentDateState.date === selectedDateState.date) {
+                addRequestToTable(result);
+            }
             
             // Не перезагружаем страницу, чтобы не потерять динамически добавленную строку
             
