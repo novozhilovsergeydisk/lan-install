@@ -45,7 +45,7 @@ function applyFilters() {
         date: filterState.date
     };
 
-    console.log('Применение фильтров:', activeFilters);
+    // console.log('Применение фильтров:', activeFilters);
 
     // Если выбрана дата, делаем запрос на сервер
     if (filterState.date) {
@@ -104,20 +104,17 @@ function applyFilters() {
                         return;
                     }
 
-                    // Очищаем существующие строки и скрываем сообщение о пустом списке
+                    // Очищаем существующие строки
                     tbody.innerHTML = '';
-                    const noRequestsRow = document.getElementById('no-requests-row');
-                    if (noRequestsRow) {
-                        noRequestsRow.classList.add('d-none');
-                    }
 
-                    // Добавляем новые строки с данными
+                    // Добавляем новые строки с данными или сообщение об их отсутствии
                     if (Array.isArray(data.data) && data.data.length > 0) {
-                        // Скрываем сообщение о пустом списке
+                        // Скрываем строку "Нет заявок для отображения", если она есть
                         const noRequestsRow = document.getElementById('no-requests-row');
                         if (noRequestsRow) {
                             noRequestsRow.classList.add('d-none');
                         }
+                        
                         data.data.forEach((request, index) => {
                             // Отладочная информация
                             // Логи заявок отключены
@@ -336,7 +333,7 @@ function applyFilters() {
                     if (countElement) {
                         countElement.textContent = data.count || 0;
                     }
-                    showAlert(`Загружено заявок: ${data.count}`, 'success');
+                    showAlert(`На выбранную дату заявок: ${data.count}`, 'success');
                 }
             })
             .catch(error => {
@@ -803,14 +800,14 @@ function validateBrigadeMembers() {
         submitButton.disabled = !isValid;
     }
 
-    console.log('Валидация бригады:', {
-        members,
-        totalMembers,
-        hasLeader,
-        isValid,
-        hiddenFieldValue: hiddenField.value,
-        formData: Array.from(new FormData(document.getElementById('brigadeForm')))
-    });
+    // console.log('Валидация бригады:', {
+    //     members,
+    //     totalMembers,
+    //     hasLeader,
+    //     isValid,
+    //     hiddenFieldValue: hiddenField.value,
+    //     formData: Array.from(new FormData(document.getElementById('brigadeForm')))
+    // });
 
     return isValid;
 }
@@ -2684,11 +2681,11 @@ function handlerCreateBrigade() {
             });
 
             // Логируем данные перед отправкой
-            console.log('Отправка данных бригады:', {
-                formData: Object.fromEntries(formData.entries()),
-                members,
-                leaderId
-            });
+            // console.log('Отправка данных бригады:', {
+            //     formData: Object.fromEntries(formData.entries()),
+            //     members,
+            //     leaderId
+            // });
 
             // Собираем все данные формы в объект
             const formValues = {};

@@ -554,6 +554,7 @@
                                                 <option value="">Выберите город</option>
                                             </select>
                                         </div>
+
                                         <div class="col-auto d-flex gap-2 mt-4">
                                             <button type="submit" class="btn btn-outline-primary">Добавить адрес</button>
                                             <button id="testFillBtn" type="button" class="btn btn-secondary">Автозаполнение</button>
@@ -1885,26 +1886,26 @@
                 
                 // Проверяем, существует ли элемент select
                 if (!select) {
-                    console.log('Элемент #operator не найден, пропускаем загрузку операторов');
+                    // console.log('Элемент #operator не найден, пропускаем загрузку операторов');
                     return; // Выходим из функции, если элемент не найден
                 }
 
                 // Очищаем список и добавляем текущего пользователя первым
-                select.innerHTML = `
-                    <option value="{{ auth()->id() }}" selected>{{ $user->name }}</option>
-                    <option value="" disabled>──────────</option>
-                `;
+                // select.innerHTML = `
+                //     <option value="{{ auth()->id() }}" selected>{{ $user->name }}</option>
+                //     <option value="" disabled>──────────</option>
+                // `;
 
                 // Добавляем остальных операторов
-                operators
-                    .filter(op => op.id != {{ auth()->id() }}) // Исключаем текущего пользователя, если он есть в списке
-                    .sort((a, b) => (a.fio || '').localeCompare(b.fio || ''))
-                    .forEach(operator => {
-                        const option = document.createElement('option');
-                        option.value = operator.id;
-                        option.textContent = operator.fio || `Оператор #${operator.id}`;
-                        select.appendChild(option);
-                    });
+                // operators
+                //     .filter(op => op.id != {{ auth()->id() }}) // Исключаем текущего пользователя, если он есть в списке
+                //     .sort((a, b) => (a.fio || '').localeCompare(b.fio || ''))
+                //     .forEach(operator => {
+                //         const option = document.createElement('option');
+                //         option.value = operator.id;
+                //         option.textContent = operator.fio || `Оператор #${operator.id}`;
+                //         select.appendChild(option);
+                //     });
 
                 // console.log('Операторы загружены, выбран:', select.options[select.selectedIndex]?.text);
             } catch (error) {
