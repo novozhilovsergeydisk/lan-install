@@ -25,11 +25,118 @@ export const selectedDateState = {
     updateDate(newDate) {
         this.date = newDate;
         // console.log('Дата в selectedDateState обновлена:', this.date);
+    } 
+};
+
+export const executionDateState = {
+    // Инициализируем текущей датой в формате DD.MM.YYYY
+    date: null,
+    // Метод для обновления даты из календаря
+    updateDate(newDate) {
+        this.date = newDate;
+        // console.log('Дата в selectedDateState обновлена:', this.date);
+    }
+};
+
+export const selectedRequestState = {
+    id: null,
+    number: null,
+    execution_date: null,
+    status_name: null,
+    status_color: null,
+    street: null,
+    houses: null,
+    district: null,
+    client_phone: null,
+    operator_name: null,
+    request_date: null,
+    brigade_id: null,
+    
+    updateRequest(newRequest) {
+        this.id = newRequest.id;
+        this.number = newRequest.number;
+        this.execution_date = newRequest.execution_date;
+        this.status_name = newRequest.status_name;
+        this.status_color = newRequest.status_color;
+        this.street = newRequest.street;
+        this.houses = newRequest.houses;
+        this.district = newRequest.district;
+        this.client_phone = newRequest.client_phone;
+        this.operator_name = newRequest.operator_name;
+        this.request_date = newRequest.request_date;
+        this.brigade_id = newRequest.brigade_id;
+    },
+
+    clearRequest() {
+        this.id = null;
+        this.number = null;
+        this.execution_date = null;
+        this.status_name = null;
+        this.status_color = null;
+        this.street = null;
+        this.houses = null;
+        this.district = null;
+        this.client_phone = null;
+        this.operator_name = null;
+        this.request_date = null;
+        this.brigade_id = null;
+    },
+
+    updateStatus(newStatus, newColor = null) {
+        this.status_name = newStatus;
+        if (newColor) {
+            this.status_color = newColor;
+        }
+    },
+
+    updateExecutionDate(newDate) {
+        this.execution_date = newDate;
+    },
+
+    updateAddress(newAddress) {
+        this.street = newAddress.street;
+        this.houses = newAddress.houses;
+        this.district = newAddress.district;
+    },
+
+    updateClientPhone(newPhone) {
+        this.client_phone = newPhone;
+    },
+
+    updateOperatorName(newName) {
+        this.operator_name = newName;
+    },
+
+    updateRequestDate(newDate) {
+        this.request_date = newDate;
+    },
+
+    updateBrigadeId(newId) {
+        this.brigade_id = newId;
+    },
+
+    // Обработчики событий
+    listeners: {
+        onStatusChange: [],
+        onDateChange: [],
+        onRequestChange: []
+    },
+    
+    // Методы для добавления слушателей
+    addStatusChangeListener(callback) {
+        this.listeners.onStatusChange.push(callback);
+    },
+    
+    // Методы для вызова слушателей
+    notifyStatusChange(oldStatus, newStatus) {
+        this.listeners.onStatusChange.forEach(callback => 
+            callback(oldStatus, newStatus, this));
     }
 };
 
 // Добавляем объект в глобальную область видимости для обратной совместимости
 window.selectedDateState = selectedDateState;
+window.executionDateState = executionDateState;
 
 /**
  * Отображает информацию о сотруднике в блоке employeeInfo

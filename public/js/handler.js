@@ -45,11 +45,8 @@ function applyFilters() {
         date: filterState.date
     };
 
-    // console.log('Применение фильтров:', activeFilters);
-
-    selectedDateState.updateDate(filterState.date);  
-
-    // console.log('selectedDateState.date:', selectedDateState.date);   
+    selectedDateState.updateDate(filterState.date); 
+    executionDateState.updateDate(filterState.date); 
 
     // Если выбрана дата, делаем запрос на сервер
     if (filterState.date) {
@@ -59,8 +56,6 @@ function applyFilters() {
 
         // Формируем URL с отформатированной датой
         const apiUrl = `/api/requests/date/${formattedDate}`;
-
-        // Логи запросов отключены
 
         fetch(apiUrl, {
             method: 'GET',
@@ -1145,12 +1140,8 @@ function initializePage() {
                 autoclose: true,
                 todayHighlight: true
             })
-            // Добавляем обработчик клика по дате в календаре
-            .on('click', '.day', function(e) {
-                console.log('Клик по дате в календаре:', $(this).text());
-            })
             .on('changeDate', function (e) {
-                // console.log('Изменение даты в календаре:', e.format('dd.mm.yyyy'));
+                console.log('Изменение даты в календаре:', e.format('dd.mm.yyyy'));
                 
                 const selectedDate = e.format('dd.mm.yyyy');
                 filterState.date = selectedDate;
