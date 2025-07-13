@@ -1,4 +1,5 @@
 BACKUPS/
+./diff.txt
 diff.txt
 git_log_colored.txt
 backup_db_remote
