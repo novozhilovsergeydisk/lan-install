@@ -9,6 +9,9 @@ import { showAlert, fetchData, postData } from './utils.js';
  */
 async function loadComments(requestId) {
     const container = document.getElementById('commentsContainer');
+
+    return;
+
     if (!container) return;
 
     container.innerHTML = `

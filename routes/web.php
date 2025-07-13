@@ -61,6 +61,11 @@ Route::get('/api/requests/{request}/comments', [HomeController::class, 'getComme
     ->middleware('auth')
     ->name('api.requests.comments');
 
+// Обновление комментария
+Route::put('/api/comments/{id}', [HomeController::class, 'updateComment'])
+    ->middleware('auth')
+    ->name('api.comments.update');
+
 // API Route for getting brigade data
 Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'getBrigadeData'])->name('brigade.data');
 

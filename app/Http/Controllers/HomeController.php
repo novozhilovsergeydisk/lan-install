@@ -1027,6 +1027,59 @@ class HomeController extends Controller
 
         return response()->json(['count' => $count]);
     }
+    
+    /**
+     * Обновление комментария
+     *
+     * @param int $id ID комментария
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateComment($id, Request $request)
+    {
+        // Логируем входные данные
+        \Log::info('Получен запрос на обновление комментария:', [
+            'id' => $id,
+            'content' => $request->input('content'),
+        ]);
+        
+        try {
+            // Проверяем, существует ли комментарий
+            $comment = DB::table('comments')->where('id', $id)->first();
+            
+            if (!$comment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Комментарий не найден'
+                ], 404);
+            }
+            
+            // Обновляем комментарий
+            DB::table('comments')
+                ->where('id', $id)
+                ->update([
+                    'comment' => $request->input('content')
+                ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Комментарий успешно обновлен',
+                'comment' => DB::table('comments')->where('id', $id)->first()
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при обновлении комментария:', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обновлении комментария: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
     /**
      * Store a new request

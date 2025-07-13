@@ -1,6 +1,6 @@
 // form-handlers.js
 
-import { showAlert, postData } from './utils.js';
+import { showAlert, postData, fetchData } from './utils.js';
 
 // Глобальная переменная для хранения текущей даты
 const currentDateState = {
@@ -98,7 +98,7 @@ export const selectedRequestState = {
         this.houses = newAddress.houses;
         this.district = newAddress.district;
     },
-
+    
     updateClientPhone(newPhone) {
         this.client_phone = newPhone;
     },
@@ -526,5 +526,138 @@ window.displayEmployeeInfo = displayEmployeeInfo;
 window.updateRowNumbers = updateRowNumbers;
 window.addRequestToTable = addRequestToTable;
 
+/**
+ * Функция для обработки редактирования комментария
+ * @param {HTMLElement} commentElement - Элемент комментария
+ * @param {number} commentId - ID комментария
+ * @param {number} commentNumber - Порядковый номер комментария
+ * @param {HTMLElement} editButton - Кнопка редактирования
+ * @returns {void}
+ */
+async function handleCommentEdit(commentElement, commentId, commentNumber, editButton) {
+    // Получаем текущий текст комментария
+    const commentText = commentElement.textContent;
+    
+    // Создаем поле для редактирования
+    const inputElement = document.createElement('textarea');
+    inputElement.className = 'form-control mb-2';
+    inputElement.style.width = '730px';
+    inputElement.style.minHeight = '60px';
+    inputElement.value = commentText;
+    
+    // Создаем кнопки Сохранить/Отмена
+    const saveButton = document.createElement('button');
+    saveButton.className = 'btn btn-sm btn-success me-2';
+    saveButton.textContent = 'Сохранить';
+    
+    const cancelButton = document.createElement('button');
+    cancelButton.className = 'btn btn-sm btn-secondary';
+    cancelButton.textContent = 'Отмена';
+    
+    // Создаем контейнер для поля ввода
+    const inputContainer = document.createElement('div');
+    inputContainer.className = 'mb-2';
+    inputContainer.style.width = '100%';
+    
+    // Создаем контейнер для кнопок
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'mb-2';
+    
+    // Создаем общий контейнер для редактирования
+    const editContainer = document.createElement('div');
+    editContainer.className = 'edit-comment-container';
+    editContainer.setAttribute('data-comment-number', commentNumber);
+    editContainer.setAttribute('data-comment-id', commentId);
+    editContainer.style.width = '730px';
+    
+    // Добавляем поле ввода в контейнер
+    inputContainer.appendChild(inputElement);
+    editContainer.appendChild(inputContainer);
+    
+    // Добавляем кнопки в контейнер
+    buttonContainer.appendChild(saveButton);
+    buttonContainer.appendChild(cancelButton);
+    editContainer.appendChild(buttonContainer);
+    
+    // Скрываем параграф и вставляем наш контейнер после него
+    commentElement.style.display = 'none';
+    commentElement.parentNode.insertBefore(editContainer, commentElement.nextSibling);
+    
+    // Скрываем кнопку редактирования
+    editButton.style.display = 'none';
+    
+    // Обработчик кнопки Сохранить
+    saveButton.addEventListener('click', async function() {
+        const newText = inputElement.value.trim();
+
+        console.log('newText', newText);
+
+        console.log('commentId', commentId);
+
+        if (newText) {
+            try {
+                // Показываем индикатор загрузки
+                saveButton.disabled = true;
+                saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+                
+                // Отправляем запрос на сервер
+                const url = `/api/comments/${commentId}`;
+                
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ content: newText }),
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Ошибка при сохранении комментария');
+                }
+                
+                const result = await response.json();
+                
+                // Показываем уведомление об успехе
+                showAlert('Комментарий успешно обновлен', 'success');
+                
+                // Обновляем текст комментария в DOM
+                commentElement.textContent = newText;
+                commentElement.style.display = '';
+                editButton.style.display = 'inline-block';
+                
+                // Удаляем контейнер редактирования
+                editContainer.remove();
+                
+            } catch (error) {
+                console.error('Ошибка при сохранении комментария:', error);
+                
+                // Показываем уведомление об ошибке
+                showAlert(`Ошибка: ${error.message}`, 'danger');
+                
+                // Возвращаем кнопку в исходное состояние
+                saveButton.disabled = false;
+                saveButton.textContent = 'Сохранить';
+            }
+        }
+    });
+    
+    // Обработчик кнопки Отмена
+    cancelButton.addEventListener('click', function() {
+        // Возвращаем обычный вид комментария
+        commentElement.style.display = '';
+        editButton.style.display = 'inline-block';
+        
+        // Удаляем контейнер редактирования
+        editContainer.remove();
+    });
+    
+    // Фокус на поле ввода
+    inputElement.focus();
+}
+
 // Экспортируем функции для использования в других модулях
-export { submitRequestForm, displayEmployeeInfo, updateRowNumbers, addRequestToTable };
+export { submitRequestForm, displayEmployeeInfo, updateRowNumbers, addRequestToTable, handleCommentEdit };

@@ -1,110 +1,346 @@
+diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
+index 923fa98..8a16eea 100644
+--- a/app/Http/Controllers/HomeController.php
++++ b/app/Http/Controllers/HomeController.php
+@@ -1027,6 +1027,59 @@ public function getCommentsCount($requestId)
+ 
+         return response()->json(['count' => $count]);
+     }
++    
++    /**
++     * Обновление комментария
++     *
++     * @param int $id ID комментария
++     * @param \Illuminate\Http\Request $request
++     * @return \Illuminate\Http\JsonResponse
++     */
++    public function updateComment($id, Request $request)
++    {
++        // Логируем входные данные
++        \Log::info('Получен запрос на обновление комментария:', [
++            'id' => $id,
++            'content' => $request->input('content'),
++        ]);
++        
++        try {
++            // Проверяем, существует ли комментарий
++            $comment = DB::table('comments')->where('id', $id)->first();
++            
++            if (!$comment) {
++                return response()->json([
++                    'success' => false,
++                    'message' => 'Комментарий не найден'
++                ], 404);
++            }
++            
++            // Обновляем комментарий
++            DB::table('comments')
++                ->where('id', $id)
++                ->update([
++                    'comment' => $request->input('content')
++                ]);
++            
++            return response()->json([
++                'success' => true,
++                'message' => 'Комментарий успешно обновлен',
++                'comment' => DB::table('comments')->where('id', $id)->first()
++            ]);
++            
++        } catch (\Exception $e) {
++            \Log::error('Ошибка при обновлении комментария:', [
++                'id' => $id,
++                'error' => $e->getMessage(),
++                'trace' => $e->getTraceAsString()
++            ]);
++            
++            return response()->json([
++                'success' => false,
++                'message' => 'Ошибка при обновлении комментария: ' . $e->getMessage()
++            ], 500);
++        }
++    }
+ 
+     /**
+      * Store a new request
+diff --git a/public/js/comments.js b/public/js/comments.js
+index 585ff6a..1653be8 100644
+--- a/public/js/comments.js
++++ b/public/js/comments.js
+@@ -9,6 +9,9 @@ import { showAlert, fetchData, postData } from './utils.js';
+  */
+ async function loadComments(requestId) {
+     const container = document.getElementById('commentsContainer');
++
++    return;
++
+     if (!container) return;
+ 
+     container.innerHTML = `
 diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index dad87c3..107eb39 100644
+index 48dd294..26b5c08 100644
 --- a/public/js/form-handlers.js
 +++ b/public/js/form-handlers.js
-@@ -2,6 +2,35 @@
+@@ -1,6 +1,6 @@
+ // form-handlers.js
  
- import { showAlert, postData } from './utils.js';
+-import { showAlert, postData } from './utils.js';
++import { showAlert, postData, fetchData } from './utils.js';
  
-+// Глобальная переменная для хранения текущей даты
-+const currentDateState = {
-+    // Инициализируем текущей датой в формате DD.MM.YYYY
-+    date: new Date().toLocaleDateString('ru-RU', {
-+        day: '2-digit',
-+        month: '2-digit',
-+        year: 'numeric'
-+    })
-+};
-+
-+// Структура для хранения выбранной в календаре даты
-+// Экспортируемый объект состояния даты
-+export const selectedDateState = {
-+    // Инициализируем текущей датой в формате DD.MM.YYYY
-+    date: new Date().toLocaleDateString('ru-RU', {
-+        day: '2-digit',
-+        month: '2-digit',
-+        year: 'numeric'
-+    }),
-+    // Метод для обновления даты из календаря
-+    updateDate(newDate) {
-+        this.date = newDate;
-+        // console.log('Дата в selectedDateState обновлена:', this.date);
-+    }
-+};
-+
-+// Добавляем объект в глобальную область видимости для обратной совместимости
-+window.selectedDateState = selectedDateState;
-+
- /**
-  * Отображает информацию о сотруднике в блоке employeeInfo
-  * @param {Object} employeeData - данные о сотруднике
-@@ -147,9 +176,13 @@ async function submitRequestForm() {
-         if (result.success) {
-             showAlert('Заявка успешно создана!', 'success');
+ // Глобальная переменная для хранения текущей даты
+ const currentDateState = {
+@@ -98,7 +98,7 @@ export const selectedRequestState = {
+         this.houses = newAddress.houses;
+         this.district = newAddress.district;
+     },
+-
++    
+     updateClientPhone(newPhone) {
+         this.client_phone = newPhone;
+     },
+@@ -526,5 +526,138 @@ window.displayEmployeeInfo = displayEmployeeInfo;
+ window.updateRowNumbers = updateRowNumbers;
+ window.addRequestToTable = addRequestToTable;
  
--            // Обновляем таблицу заявок, новую заявку добавляем в начало
-+            console.log('currentDateState.date:', currentDateState.date);
-+            console.log('selectedDateState.date:', selectedDateState.date);
++/**
++ * Функция для обработки редактирования комментария
++ * @param {HTMLElement} commentElement - Элемент комментария
++ * @param {number} commentId - ID комментария
++ * @param {number} commentNumber - Порядковый номер комментария
++ * @param {HTMLElement} editButton - Кнопка редактирования
++ * @returns {void}
++ */
++async function handleCommentEdit(commentElement, commentId, commentNumber, editButton) {
++    // Получаем текущий текст комментария
++    const commentText = commentElement.textContent;
++    
++    // Создаем поле для редактирования
++    const inputElement = document.createElement('textarea');
++    inputElement.className = 'form-control mb-2';
++    inputElement.style.width = '730px';
++    inputElement.style.minHeight = '60px';
++    inputElement.value = commentText;
++    
++    // Создаем кнопки Сохранить/Отмена
++    const saveButton = document.createElement('button');
++    saveButton.className = 'btn btn-sm btn-success me-2';
++    saveButton.textContent = 'Сохранить';
++    
++    const cancelButton = document.createElement('button');
++    cancelButton.className = 'btn btn-sm btn-secondary';
++    cancelButton.textContent = 'Отмена';
++    
++    // Создаем контейнер для поля ввода
++    const inputContainer = document.createElement('div');
++    inputContainer.className = 'mb-2';
++    inputContainer.style.width = '100%';
++    
++    // Создаем контейнер для кнопок
++    const buttonContainer = document.createElement('div');
++    buttonContainer.className = 'mb-2';
++    
++    // Создаем общий контейнер для редактирования
++    const editContainer = document.createElement('div');
++    editContainer.className = 'edit-comment-container';
++    editContainer.setAttribute('data-comment-number', commentNumber);
++    editContainer.setAttribute('data-comment-id', commentId);
++    editContainer.style.width = '730px';
++    
++    // Добавляем поле ввода в контейнер
++    inputContainer.appendChild(inputElement);
++    editContainer.appendChild(inputContainer);
++    
++    // Добавляем кнопки в контейнер
++    buttonContainer.appendChild(saveButton);
++    buttonContainer.appendChild(cancelButton);
++    editContainer.appendChild(buttonContainer);
++    
++    // Скрываем параграф и вставляем наш контейнер после него
++    commentElement.style.display = 'none';
++    commentElement.parentNode.insertBefore(editContainer, commentElement.nextSibling);
++    
++    // Скрываем кнопку редактирования
++    editButton.style.display = 'none';
++    
++    // Обработчик кнопки Сохранить
++    saveButton.addEventListener('click', async function() {
++        const newText = inputElement.value.trim();
 +
-             // Динамическое формирование строки заявки и добавление её в начало таблицы
--            addRequestToTable(result);
-+            if (currentDateState.date === selectedDateState.date) {
-+                addRequestToTable(result);
-+            }
-             
-             // Не перезагружаем страницу, чтобы не потерять динамически добавленную строку
-             
-diff --git a/public/js/handler.js b/public/js/handler.js
-index a9f72ab..3243985 100644
---- a/public/js/handler.js
-+++ b/public/js/handler.js
-@@ -47,6 +47,10 @@ function applyFilters() {
- 
-     // console.log('Применение фильтров:', activeFilters);
- 
-+    selectedDateState.updateDate(filterState.date);  
++        console.log('newText', newText);
 +
-+    // console.log('selectedDateState.date:', selectedDateState.date);   
++        console.log('commentId', commentId);
 +
-     // Если выбрана дата, делаем запрос на сервер
-     if (filterState.date) {
-         // Конвертируем дату из DD.MM.YYYY в YYYY-MM-DD
-@@ -94,8 +98,9 @@ function applyFilters() {
-                     // Логируем первую заявку для отладки
-                     if (data.data && data.data.length > 0) {
-                         // Отладочные логи полей заявки отключены
-+                        // console.info('На выбранную дату заявки есть!');
-                     } else {
--                        console.info('На выбранную дату заявок нет');
-+                        // console.info('На выбранную дату заявок нет!');
-                     }
- 
-                     const tbody = document.querySelector('table.table-hover tbody');
-@@ -1139,9 +1144,26 @@ function initializePage() {
-                 language: 'ru',
-                 autoclose: true,
-                 todayHighlight: true
--            }).on('changeDate', function (e) {
-+            })
-+            // Добавляем обработчик клика по дате в календаре
-+            .on('click', '.day', function(e) {
-+                console.log('Клик по дате в календаре:', $(this).text());
-+            })
-+            .on('changeDate', function (e) {
-+                // console.log('Изменение даты в календаре:', e.format('dd.mm.yyyy'));
++        if (newText) {
++            try {
++                // Показываем индикатор загрузки
++                saveButton.disabled = true;
++                saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
 +                
-                 const selectedDate = e.format('dd.mm.yyyy');
-                 filterState.date = selectedDate;
++                // Отправляем запрос на сервер
++                const url = `/api/comments/${commentId}`;
 +                
-+                // Обновляем значение выбранной даты в selectedDateState используя метод updateDate
-+                if (window.selectedDateState && typeof window.selectedDateState.updateDate === 'function') {
-+                    window.selectedDateState.updateDate(selectedDate);
-+                } else if (window.selectedDateState) {
-+                    // Запасной вариант, если метод updateDate не доступен
-+                    window.selectedDateState.date = selectedDate;
-+                    console.log('Выбрана дата в календаре (handler.js):', window.selectedDateState.date);
++                const response = await fetch(url, {
++                    method: 'PUT',
++                    headers: {
++                        'Content-Type': 'application/json',
++                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
++                        'Accept': 'application/json'
++                    },
++                    body: JSON.stringify({ content: newText }),
++                    credentials: 'same-origin'
++                });
++                
++                if (!response.ok) {
++                    const errorData = await response.json();
++                    throw new Error(errorData.message || 'Ошибка при сохранении комментария');
 +                }
 +                
-                 // Логи выбора даты отключены
-                 applyFilters();
-             });
++                const result = await response.json();
++                
++                // Показываем уведомление об успехе
++                showAlert('Комментарий успешно обновлен', 'success');
++                
++                // Обновляем текст комментария в DOM
++                commentElement.textContent = newText;
++                commentElement.style.display = '';
++                editButton.style.display = 'inline-block';
++                
++                // Удаляем контейнер редактирования
++                editContainer.remove();
++                
++            } catch (error) {
++                console.error('Ошибка при сохранении комментария:', error);
++                
++                // Показываем уведомление об ошибке
++                showAlert(`Ошибка: ${error.message}`, 'danger');
++                
++                // Возвращаем кнопку в исходное состояние
++                saveButton.disabled = false;
++                saveButton.textContent = 'Сохранить';
++            }
++        }
++    });
++    
++    // Обработчик кнопки Отмена
++    cancelButton.addEventListener('click', function() {
++        // Возвращаем обычный вид комментария
++        commentElement.style.display = '';
++        editButton.style.display = 'inline-block';
++        
++        // Удаляем контейнер редактирования
++        editContainer.remove();
++    });
++    
++    // Фокус на поле ввода
++    inputElement.focus();
++}
++
+ // Экспортируем функции для использования в других модулях
+-export { submitRequestForm, displayEmployeeInfo, updateRowNumbers, addRequestToTable };
++export { submitRequestForm, displayEmployeeInfo, updateRowNumbers, addRequestToTable, handleCommentEdit };
+\ No newline at end of file
+diff --git a/public/js/handler.js b/public/js/handler.js
+index ad8df42..8bf64be 100644
+--- a/public/js/handler.js
++++ b/public/js/handler.js
+@@ -1626,7 +1626,7 @@ function handleTransferRequest(button) {
+                         statusCell.textContent = 'перенесена';
+                     }
+ 
+-                    // Обновляем блок комментариев
++                    // Обновляем блок комментариев в модальном окне
+                     const commentsContainer = row.querySelector('.comment-preview').parentElement;
+                     if (commentsContainer) {
+                         const existingButton = commentsContainer.querySelector('.view-comments-btn');
+diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
+index 79f3a59..6dd20f5 100644
+--- a/resources/views/welcome.blade.php
++++ b/resources/views/welcome.blade.php
+@@ -1207,7 +1207,9 @@ function closeRequest(requestId) {
+     }
+ </script>
+ 
+-<script>
++<script type="module">
++    import { handleCommentEdit } from './js/form-handlers.js';
++    
+     // Обработка открытия модального окна комментариев
+     document.addEventListener('DOMContentLoaded', function () {
+         const commentsModal = document.getElementById('commentsModal');
+@@ -1310,8 +1312,9 @@ function stringToColor(str) {
+                             return `hsl(${120 + (hash % 60)},65%,40%)`;
+                         }
+                         let html = '<div class="list-group list-group-flush">';
++                        console.log('Количество комментариев:', comments.length);
+ 
+-                        comments.forEach(comment => {
++                        comments.forEach((comment, index) => {
+                             const date = new Date(comment.created_at);
+                             const formattedDate = date.toLocaleString('ru-RU', {
+                                 day: '2-digit',
+@@ -1327,8 +1330,9 @@ function stringToColor(str) {
+                                         <div class="d-flex justify-content-between align-items-start">
+                                             <div class="me-3">
+                                                 <h6 class="fw-semibold mb-1" style="color:${color}">${comment.author_name}</h6>
+-                                                <p class="mb-1">${comment.comment}</p>
++                                                <p class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}">${comment.comment}</p>
+                                                 <small class="text-muted">${formattedDate}</small>
++                                                ${index === comments.length - 1 ? `<button class="btn btn-sm btn-outline-primary ms-2 edit-comment-btn">Редактировать</button>` : ''}
+                                             </div>
+                                         </div>
+                                     </div>`;
+@@ -1336,6 +1340,21 @@ function stringToColor(str) {
+ 
+                         html += '</div>';
+                         container.innerHTML = html;
++                        
++                        // Добавляем обработчик для кнопки "Редактировать"
++                        const editButtons = container.querySelectorAll('.edit-comment-btn');
++                        editButtons.forEach(button => {
++                            button.addEventListener('click', function(e) {
++                                e.preventDefault();
++                                const commentElement = this.closest('.list-group-item').querySelector('p[data-comment-number]');
++                                const commentNumber = commentElement.getAttribute('data-comment-number');
++                                const commentId = commentElement.getAttribute('data-comment-id');
++                                
++                                // Вызываем функцию из модуля form-handlers.js
++                                handleCommentEdit(commentElement, commentId, commentNumber, this);
++                            });
++                        });
++                        
+                         resolve(comments);
+                     })
+                     .catch(error => {
+@@ -1462,7 +1481,7 @@ function updateCommentsBadge(requestId) {
+     <div class="modal-dialog modal-lg">
+         <div class="modal-content">
+             <div class="modal-header">
+-                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке #<span
++                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке - #<span
+                         id="commentsRequestId"></span></h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>
+@@ -1755,7 +1774,7 @@ class="text-danger">*</span></label>
+         document.getElementById('clientName').value = data.name;
+         document.getElementById('clientPhone').value = data.phone;
+         document.getElementById('clientOrganization').value = data.organization || '';
+-        document.getElementById('comment').value = data.comment;
++        handleCommentEdit(data.comment);
+     });
+ </script>
+ 
+diff --git a/routes/web.php b/routes/web.php
+index 6d0323d..4d1f14b 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -61,6 +61,11 @@
+     ->middleware('auth')
+     ->name('api.requests.comments');
+ 
++// Обновление комментария
++Route::put('/api/comments/{id}', [HomeController::class, 'updateComment'])
++    ->middleware('auth')
++    ->name('api.comments.update');
++
+ // API Route for getting brigade data
+ Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'getBrigadeData'])->name('brigade.data');
+ 

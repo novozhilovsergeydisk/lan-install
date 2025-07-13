@@ -1626,7 +1626,7 @@ function handleTransferRequest(button) {
                         statusCell.textContent = 'перенесена';
                     }
 
-                    // Обновляем блок комментариев
+                    // Обновляем блок комментариев в модальном окне
                     const commentsContainer = row.querySelector('.comment-preview').parentElement;
                     if (commentsContainer) {
                         const existingButton = commentsContainer.querySelector('.view-comments-btn');

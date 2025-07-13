@@ -1207,7 +1207,9 @@
     }
 </script>
 
-<script>
+<script type="module">
+    import { handleCommentEdit } from './js/form-handlers.js';
+    
     // Обработка открытия модального окна комментариев
     document.addEventListener('DOMContentLoaded', function () {
         const commentsModal = document.getElementById('commentsModal');
@@ -1310,8 +1312,9 @@
                             return `hsl(${120 + (hash % 60)},65%,40%)`;
                         }
                         let html = '<div class="list-group list-group-flush">';
+                        console.log('Количество комментариев:', comments.length);
 
-                        comments.forEach(comment => {
+                        comments.forEach((comment, index) => {
                             const date = new Date(comment.created_at);
                             const formattedDate = date.toLocaleString('ru-RU', {
                                 day: '2-digit',
@@ -1327,8 +1330,9 @@
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="me-3">
                                                 <h6 class="fw-semibold mb-1" style="color:${color}">${comment.author_name}</h6>
-                                                <p class="mb-1">${comment.comment}</p>
+                                                <p class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}">${comment.comment}</p>
                                                 <small class="text-muted">${formattedDate}</small>
+                                                ${index === comments.length - 1 ? `<button class="btn btn-sm btn-outline-primary ms-2 edit-comment-btn">Редактировать</button>` : ''}
                                             </div>
                                         </div>
                                     </div>`;
@@ -1336,6 +1340,21 @@
 
                         html += '</div>';
                         container.innerHTML = html;
+                        
+                        // Добавляем обработчик для кнопки "Редактировать"
+                        const editButtons = container.querySelectorAll('.edit-comment-btn');
+                        editButtons.forEach(button => {
+                            button.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                const commentElement = this.closest('.list-group-item').querySelector('p[data-comment-number]');
+                                const commentNumber = commentElement.getAttribute('data-comment-number');
+                                const commentId = commentElement.getAttribute('data-comment-id');
+                                
+                                // Вызываем функцию из модуля form-handlers.js
+                                handleCommentEdit(commentElement, commentId, commentNumber, this);
+                            });
+                        });
+                        
                         resolve(comments);
                     })
                     .catch(error => {
@@ -1462,7 +1481,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке #<span
+                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке - #<span
                         id="commentsRequestId"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -1755,7 +1774,7 @@
         document.getElementById('clientName').value = data.name;
         document.getElementById('clientPhone').value = data.phone;
         document.getElementById('clientOrganization').value = data.organization || '';
-        document.getElementById('comment').value = data.comment;
+        handleCommentEdit(data.comment);
     });
 </script>
 
