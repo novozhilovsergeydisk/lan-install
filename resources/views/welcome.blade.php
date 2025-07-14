@@ -976,7 +976,14 @@
                                                     <tbody>
                                                     @foreach($employees as $employee)
                                                         <tr class="small">
-                                                            <td>{{ $employee->fio }}</td>
+                                                            <td>
+                                                                <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn" 
+                                                                        data-employee-id="{{ $employee->id }}" 
+                                                                        data-employee-name="{{ $employee->fio }}">
+                                                                    <i class="bi bi-pencil-square"></i>
+                                                                </button>
+                                                                {{ $employee->fio }}
+                                                            </td>
                                                             <td>{{ $employee->phone }}</td>
                                                             <td>{{ $employee->position }}</td>
                                                             <td>{{ $employee->birth_date }}</td>
@@ -2196,6 +2203,28 @@
 </script>
 
 
+<!-- Модальное окно для редактирования сотрудника -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEmployeeModalLabel">Редактирование сотрудника</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Здесь будет форма редактирования сотрудника -->
+                <div id="editEmployeeContent">
+                    <p>Информация о сотруднике будет загружена сюда...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="saveEmployeeChanges">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal for Brigade Details -->
 <div class="modal fade" id="brigadeDetailsModal" tabindex="-1" aria-labelledby="brigadeDetailsModalLabel"
      aria-hidden="true">
@@ -2245,6 +2274,42 @@
         <div class="toast-body" id="autoFillToastBody"></div>
     </div>
 </div>
+
+<!-- Обработчик для кнопок редактирования сотрудников -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Инициализация модального окна
+        const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+        
+        // Обработчик кнопок редактирования
+        document.querySelectorAll('.edit-employee-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const employeeId = this.getAttribute('data-employee-id');
+                const employeeName = this.getAttribute('data-employee-name');
+                
+                // Вывод информации в консоль
+                console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId})`);
+                
+                // Обновление заголовка модального окна
+                document.getElementById('editEmployeeModalLabel').textContent = `Редактирование сотрудника: ${employeeName}`;
+                
+                // Здесь можно добавить загрузку данных сотрудника по ID
+                
+                // Открытие модального окна
+                editEmployeeModal.show();
+            });
+        });
+        
+        // Обработчик кнопки сохранения изменений
+        document.getElementById('saveEmployeeChanges').addEventListener('click', function() {
+            console.log('Сохранение изменений сотрудника');
+            // Здесь будет логика сохранения изменений
+            
+            // Закрытие модального окна после сохранения
+            editEmployeeModal.hide();
+        });
+    });
+</script>
 
 </body>
 
