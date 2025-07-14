@@ -234,7 +234,7 @@
                                         $rowNumber = $loop->iteration; 
                                         // Get the current loop iteration (1-based index)
                                     @endphp
-                                    <tr class="align-middle status-row"
+                                    <tr id="request-{{ $request->id }}" class="align-middle status-row"
                                         style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                         data-request-id="{{ $request->id }}">
                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
@@ -1194,7 +1194,7 @@
 
                 // Устанавливаем номер заявки в заголовок
                 const requestRow = button.closest('tr');
-                const requestNumber = requestRow.querySelector('td:nth-child(3) div:last-child').textContent.trim();
+                const requestNumber = requestRow.querySelector('td:nth-child(2) div:last-child').textContent.trim();
                 requestIdSpan.textContent = requestNumber;
                 commentRequestId.value = requestId;
 
@@ -2050,11 +2050,6 @@
             // Create row HTML
             row.innerHTML = `
                 <td>${request.id}</td>
-                <td class="text-center">
-                ${request.status_name !== 'выполнена' ? `
-                    <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
-                ` : ''}
-                </td>
                 <td>${formattedDate}</td>
                 <td>${request.number || 'Нет номера'}</td>
                 <td>${request.client_name || 'Не указан'}</td>

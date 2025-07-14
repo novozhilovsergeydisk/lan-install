@@ -433,9 +433,6 @@ function addRequestToTable(result) {
     // Формируем содержимое строки
     newRow.innerHTML = `
         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">1</td>
-        <td class="text-center" style="width: 1rem;">
-            <input type="checkbox" id="request-${requestData.id}" class="form-check-input request-checkbox" value="${requestData.id}" aria-label="Выбрать заявку">
-        </td>
         <td>        
             <div>${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate}</div>
             <div class="text-dark" style="font-size: 0.8rem;">${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>

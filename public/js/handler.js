@@ -1551,7 +1551,7 @@ async function handleAssignTeam(button) {
             })
         });
 
-        
+        const updateData = await updateResponse.json().catch(() => ({}));
         // console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
 
         if (!updateResponse.ok) {
