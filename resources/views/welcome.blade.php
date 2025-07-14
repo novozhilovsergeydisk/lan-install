@@ -7,6 +7,26 @@
     <title>Система управления заявками</title>
     <style>
         /* Стили для выпадающего списка адресов */
+        
+        /* Стиль для выделения бригадира */
+        .brigade-leader {
+            border: 2px solid #dc3545 !important;
+            position: relative;
+        }
+        
+        .brigade-leader::after {
+            content: 'Бригадир';
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%); /* центрирование по горизонтали */
+            font-size: 12px;
+            background-color: #dc3545;
+            color: white;
+            padding: 0 5px;
+            border-radius: 3px;
+            white-space: nowrap; /* предотвращаем перенос текста */
+        }
     </style>
     <!-- Bootstrap 5 CSS -->
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
@@ -436,18 +456,11 @@
                             <div class="mb-3">
                                 <label class="form-label">Название бригады</label>
                                 <input type="text" id="brigadeName" name="name" class="form-control"
-                                       value="Бригада технической интеграции видеосистем" required>
+                                       value="Бригада" required>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Бригадир</label>
-                                <select id="brigadeLeader" name="leader_id" class="form-select" required>
-                                    <option value="">-- Выберите бригадира --</option>
-                                    @foreach ($employees as $emp)
-                                        <option value="{{ $emp->id }}">{{ $emp->fio }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <!-- Бригадир выбирается кликом по участнику в списке -->
+                            <input type="hidden" id="brigadeLeader" name="leader_id" value="">
 
                             <div class="d-flex gap-3 mb-3" style="height: 450px;">
                                 <div class="d-flex flex-column" style="flex: 1.2;">
