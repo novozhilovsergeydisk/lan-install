@@ -285,9 +285,10 @@ async function submitRequestForm() {
 
             console.log('currentDateState.date:', currentDateState.date);
             console.log('selectedDateState.date:', selectedDateState.date);
+            console.log('result.data.execution_date:', result.data.execution_date);
 
             // Динамическое формирование строки заявки и добавление её в начало таблицы
-            if (currentDateState.date === selectedDateState.date) {
+            if (currentDateState.date === selectedDateState.date && result.data.execution_date === selectedDateState.date) {
                 addRequestToTable(result);
             }
             

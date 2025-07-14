@@ -2241,273 +2241,273 @@ function handlerAddEmployee() {
      */
     }
 
-    async function handleEmployeeFormSubmit(e) {
-        // console.log('Начало обработки отправки формы');
-        e.preventDefault();
+async function handleEmployeeFormSubmit(e) {
+    // console.log('Начало обработки отправки формы');
+    e.preventDefault();
 
-        const employeeInfoBlock = document.getElementById('employeeInfo');
-        employeeInfoBlock.innerHTML = '';
+    const employeeInfoBlock = document.getElementById('employeeInfo');
+    employeeInfoBlock.innerHTML = '';
 
-        console.log('Начало обработки отправки формы');
+    console.log('Начало обработки отправки формы');
 
-        const form = this;
-        const formData = new FormData(form);
-        const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');
-        // console.log('Найдена кнопка сохранения:', submitBtn);
-        const messagesContainer = document.getElementById('formMessages');
+    const form = this;
+    const formData = new FormData(form);
+    const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');
+    // console.log('Найдена кнопка сохранения:', submitBtn);
+    const messagesContainer = document.getElementById('formMessages');
+    
+    // console.log('Найдены элементы:', { form, submitBtn, messagesContainer });
+    // console.log('Данные формы:', Object.fromEntries(formData.entries()));
+
+    // Очищаем предыдущие сообщения
+    if (messagesContainer) {
+        messagesContainer.innerHTML = '';
+    } else {
+        console.warn('Контейнер для сообщений не найден');
+    }
+
+    // Валидируем форму на клиенте
+    // console.log('Проверка валидации формы...');
+    const { isValid, errors } = window.formValidator.validate(form);
+    // console.log('Результат валидации:', { isValid, errors });
+    
+    if (!isValid) {
+        // console.log('Ошибки валидации, отмена отправки');
+        window.formValidator.displayErrors(errors, messagesContainer);
+        return;
+    }
+    
+    // console.log('Форма прошла валидацию, подготовка к отправке...');
+
+    try {
+        // Сохраняем оригинальный текст кнопки
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
         
-        // console.log('Найдены элементы:', { form, submitBtn, messagesContainer });
-        // console.log('Данные формы:', Object.fromEntries(formData.entries()));
-
-        // Очищаем предыдущие сообщения
-        if (messagesContainer) {
-            messagesContainer.innerHTML = '';
+        // Показываем индикатор загрузки
+        // console.log('Показ индикатора загрузки...');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Регистрация...';
         } else {
-            console.warn('Контейнер для сообщений не найден');
+            // console.warn('Кнопка отправки не найдена, невозможно показать индикатор загрузки');
         }
-
-        // Валидируем форму на клиенте
-        // console.log('Проверка валидации формы...');
-        const { isValid, errors } = window.formValidator.validate(form);
-        // console.log('Результат валидации:', { isValid, errors });
-        
-        if (!isValid) {
-            // console.log('Ошибки валидации, отмена отправки');
-            window.formValidator.displayErrors(errors, messagesContainer);
-            return;
-        }
-        
-        // console.log('Форма прошла валидацию, подготовка к отправке...');
 
         try {
-            // Сохраняем оригинальный текст кнопки
-            const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
-            
-            // Показываем индикатор загрузки
-            // console.log('Показ индикатора загрузки...');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Регистрация...';
-            } else {
-                // console.warn('Кнопка отправки не найдена, невозможно показать индикатор загрузки');
-            }
-
-            try {
-                // Собираем данные формы в объект
-                const formDataObj = {};
-                new FormData(form).forEach((value, key) => {
-                    // Если поле уже существует и является массивом, добавляем к нему значение
-                    if (formDataObj[key] !== undefined) {
-                        if (!Array.isArray(formDataObj[key])) {
-                            formDataObj[key] = [formDataObj[key]];
-                        }
-                        formDataObj[key].push(value);
-                    } else {
-                        formDataObj[key] = value;
+            // Собираем данные формы в объект
+            const formDataObj = {};
+            new FormData(form).forEach((value, key) => {
+                // Если поле уже существует и является массивом, добавляем к нему значение
+                if (formDataObj[key] !== undefined) {
+                    if (!Array.isArray(formDataObj[key])) {
+                        formDataObj[key] = [formDataObj[key]];
                     }
-                });
-                
-                // console.log('Отправляемые данные:', formDataObj);
-                
-                // Отправляем форму на сервер
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify(formDataObj)
-                });
-
-                const data = await response.json();
-                // console.log('Ответ сервера:', { status: response.status, data });
-                
-                if (!response.ok) {
-                    // Если это ошибка валидации (422), обрабатываем её отдельно
-                    if (response.status === 422) {
-                        // console.log('Ошибки валидации с сервера (422):', data);
-                        
-                        // Собираем все ошибки в один массив
-                        const allErrors = [];
-                        
-                        if (data.errors) {
-                            // Laravel-style errors - преобразуем объект ошибок в массив сообщений
-                            Object.entries(data.errors).forEach(([field, messages]) => {
-                                if (Array.isArray(messages)) {
-                                    allErrors.push(...messages);
-                                } else if (typeof messages === 'string') {
-                                    allErrors.push(messages);
-                                }
-                                
-                                // Выделяем невалидные поля
-                                const input = form.querySelector(`[name="${field}"]`);
-                                if (input) {
-                                    input.classList.add('is-invalid');
-                                    const feedback = input.nextElementSibling || document.createElement('div');
-                                    if (!feedback.classList.contains('invalid-feedback')) {
-                                        feedback.className = 'invalid-feedback';
-                                        input.parentNode.insertBefore(feedback, input.nextSibling);
-                                    }
-                                    feedback.textContent = Array.isArray(messages) ? messages[0] : messages;
-                                }
-                            });
-                        } else if (data.message) {
-                            // Стандартное сообщение об ошибке
-                            allErrors.push(data.message);
-                        } else {
-                            allErrors.push('Пожалуйста, заполните все обязательные поля');
-                        }
-                        
-                        // Отображаем ошибки
-                        if (window.formValidator && window.formValidator.displayErrors) {
-                            window.formValidator.displayErrors(allErrors, messagesContainer);
-                        } else {
-                            showAlert(allErrors.join('\n'), 'danger', messagesContainer);
-                        }
-                        return;
-                    }
-                    
-                    // Для других ошибок бросаем исключение
-                    throw { response, data };
-                }
-
-                // Успешное завершение
-                // console.log('Сотрудник успешно создан', data);
-                showAlert('Сотрудник успешно создан', 'success', messagesContainer);
-                form.reset();
-
-                console.log('Сотрудник успешно создан', data);
-                console.log('Функция отображения сотрудника', window.displayEmployeeInfo);
-                
-                // Отображаем информацию о созданном сотруднике
-                if (data && window.displayEmployeeInfo) {
-                    window.displayEmployeeInfo(data);
-                }
-
-                // Обновляем таблицу сотрудников, если она есть на странице
-                const employeesTable = document.querySelector('.employees-table');
-                if (employeesTable && window.DataTable) {
-                    const table = window.DataTable(employeesTable);
-                    if (table && typeof table.ajax.reload === 'function') {
-                        table.ajax.reload();
-                    }
-                }
-
-            } catch (error) {
-                console.error('Ошибка при сохранении:', error);
-                let errorMessage = 'Произошла ошибка при сохранении. Пожалуйста, попробуйте еще раз.';
-                
-                if (error.response) {
-                    // Обработка HTTP ошибок
-                    console.error('Данные ответа об ошибке:', error.data);
-                    console.error('Статус ошибки:', error.response.status);
-                    
-                    // Пытаемся получить сообщение об ошибке из ответа
-                    if (error.data) {
-                        if (error.data.message) {
-                            errorMessage = error.data.message;
-                        } else if (error.data.errors) {
-                            // Обработка ошибок валидации Laravel
-                            const errors = Object.values(error.data.errors).flat();
-                            errorMessage = errors.join('\n');
-                        }
-                    }
-                    
-                    // Общие сообщения для стандартных кодов ошибок
-                    if (error.response.status === 401) {
-                        errorMessage = 'Требуется авторизация';
-                    } else if (error.response.status === 403) {
-                        errorMessage = 'Доступ запрещен';
-                    } else if (error.response.status === 404) {
-                        errorMessage = 'Ресурс не найден';
-                    } else if (error.response.status >= 500) {
-                        errorMessage = 'Ошибка на сервере. Пожалуйста, попробуйте позже.';
-                    }
-                } else if (error.request) {
-                    // Запрос был сделан, но ответ не получен
-                    console.error('Не удалось получить ответ от сервера');
-                    errorMessage = 'Не удалось соединиться с сервером. Пожалуйста, проверьте подключение к интернету и попробуйте снова.';
-                } else if (error instanceof Error) {
-                    // Ошибка JavaScript
-                    errorMessage = error.message;
-                    console.error('Ошибка JavaScript:', error.stack);
+                    formDataObj[key].push(value);
                 } else {
-                    // Неизвестная ошибка
-                    console.error('Неизвестная ошибка:', error);
-                    errorMessage = 'Произошла непредвиденная ошибка. Пожалуйста, сообщите об этом в службу поддержки.';
-                }
-                
-                showAlert(errorMessage, 'danger', messagesContainer);
-            } finally {
-                // Восстанавливаем кнопку
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText || 'Сохранить';
-                }
-            }
-        } catch (error) {
-            console.error('Неожиданная ошибка:', error);
-            showAlert('Произошла непредвиденная ошибка', 'danger', messagesContainer);
-        }
-    }
-
-    /**
-     * Валидирует форму
-     * @param {HTMLFormElement} form - Элемент формы
-     * @returns {boolean} - Возвращает true, если форма валидна
-     */
-    function validateForm(form) {
-        const requiredFields = form.querySelectorAll('[required]');
-        let isValid = true;
-
-        requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                field.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                field.classList.remove('is-invalid');
-            }
-        });
-
-        if (!isValid) {
-            showAlert('Пожалуйста, заполните все обязательные поля', 'warning');
-        }
-
-        return isValid;
-    }
-
-    /**
-     * Обрабатывает ошибки формы
-     * @param {HTMLFormElement} form - Элемент формы
-     * @param {Response} response - Ответ сервера
-     * @param {Object} data - Данные ответа
-     */
-    function handleFormErrors(form, response, data) {
-        // Обработка ошибок валидации
-        if (response.status === 422 && data.errors) {
-            // Очищаем предыдущие ошибки
-            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-            // Показываем ошибки валидации
-            Object.entries(data.errors).forEach(([field, messages]) => {
-                const input = form.querySelector(`[name="${field}"]`);
-                if (input) {
-                    input.classList.add('is-invalid');
-                    const feedback = input.nextElementSibling || document.createElement('div');
-                    if (!feedback.classList.contains('invalid-feedback')) {
-                        feedback.className = 'invalid-feedback';
-                        input.parentNode.insertBefore(feedback, input.nextSibling);
-                    }
-                    feedback.textContent = messages[0];
+                    formDataObj[key] = value;
                 }
             });
-            showAlert('Пожалуйста, исправьте ошибки в форме', 'danger');
-        } else {
-            throw new Error(data.message || 'Произошла ошибка при сохранении');
+            
+            // console.log('Отправляемые данные:', formDataObj);
+            
+            // Отправляем форму на сервер
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(formDataObj)
+            });
+
+            const data = await response.json();
+            // console.log('Ответ сервера:', { status: response.status, data });
+            
+            if (!response.ok) {
+                // Если это ошибка валидации (422), обрабатываем её отдельно
+                if (response.status === 422) {
+                    // console.log('Ошибки валидации с сервера (422):', data);
+                    
+                    // Собираем все ошибки в один массив
+                    const allErrors = [];
+                    
+                    if (data.errors) {
+                        // Laravel-style errors - преобразуем объект ошибок в массив сообщений
+                        Object.entries(data.errors).forEach(([field, messages]) => {
+                            if (Array.isArray(messages)) {
+                                allErrors.push(...messages);
+                            } else if (typeof messages === 'string') {
+                                allErrors.push(messages);
+                            }
+                            
+                            // Выделяем невалидные поля
+                            const input = form.querySelector(`[name="${field}"]`);
+                            if (input) {
+                                input.classList.add('is-invalid');
+                                const feedback = input.nextElementSibling || document.createElement('div');
+                                if (!feedback.classList.contains('invalid-feedback')) {
+                                    feedback.className = 'invalid-feedback';
+                                    input.parentNode.insertBefore(feedback, input.nextSibling);
+                                }
+                                feedback.textContent = Array.isArray(messages) ? messages[0] : messages;
+                            }
+                        });
+                    } else if (data.message) {
+                        // Стандартное сообщение об ошибке
+                        allErrors.push(data.message);
+                    } else {
+                        allErrors.push('Пожалуйста, заполните все обязательные поля');
+                    }
+                    
+                    // Отображаем ошибки
+                    if (window.formValidator && window.formValidator.displayErrors) {
+                        window.formValidator.displayErrors(allErrors, messagesContainer);
+                    } else {
+                        showAlert(allErrors.join('\n'), 'danger', messagesContainer);
+                    }
+                    return;
+                }
+                
+                // Для других ошибок бросаем исключение
+                throw { response, data };
+            }
+
+            // Успешное завершение
+            // console.log('Сотрудник успешно создан', data);
+            showAlert('Сотрудник успешно создан', 'success', messagesContainer);
+            form.reset();
+
+            console.log('Сотрудник успешно создан', data);
+            console.log('Функция отображения сотрудника', window.displayEmployeeInfo);
+            
+            // Отображаем информацию о созданном сотруднике
+            if (data && window.displayEmployeeInfo) {
+                window.displayEmployeeInfo(data);
+            }
+
+            // Обновляем таблицу сотрудников, если она есть на странице
+            const employeesTable = document.querySelector('.employees-table');
+            if (employeesTable && window.DataTable) {
+                const table = window.DataTable(employeesTable);
+                if (table && typeof table.ajax.reload === 'function') {
+                    table.ajax.reload();
+                }
+            }
+
+        } catch (error) {
+            console.error('Ошибка при сохранении:', error);
+            let errorMessage = 'Произошла ошибка при сохранении. Пожалуйста, попробуйте еще раз.';
+            
+            if (error.response) {
+                // Обработка HTTP ошибок
+                console.error('Данные ответа об ошибке:', error.data);
+                console.error('Статус ошибки:', error.response.status);
+                
+                // Пытаемся получить сообщение об ошибке из ответа
+                if (error.data) {
+                    if (error.data.message) {
+                        errorMessage = error.data.message;
+                    } else if (error.data.errors) {
+                        // Обработка ошибок валидации Laravel
+                        const errors = Object.values(error.data.errors).flat();
+                        errorMessage = errors.join('\n');
+                    }
+                }
+                
+                // Общие сообщения для стандартных кодов ошибок
+                if (error.response.status === 401) {
+                    errorMessage = 'Требуется авторизация';
+                } else if (error.response.status === 403) {
+                    errorMessage = 'Доступ запрещен';
+                } else if (error.response.status === 404) {
+                    errorMessage = 'Ресурс не найден';
+                } else if (error.response.status >= 500) {
+                    errorMessage = 'Ошибка на сервере. Пожалуйста, попробуйте позже.';
+                }
+            } else if (error.request) {
+                // Запрос был сделан, но ответ не получен
+                console.error('Не удалось получить ответ от сервера');
+                errorMessage = 'Не удалось соединиться с сервером. Пожалуйста, проверьте подключение к интернету и попробуйте снова.';
+            } else if (error instanceof Error) {
+                // Ошибка JavaScript
+                errorMessage = error.message;
+                console.error('Ошибка JavaScript:', error.stack);
+            } else {
+                // Неизвестная ошибка
+                console.error('Неизвестная ошибка:', error);
+                errorMessage = 'Произошла непредвиденная ошибка. Пожалуйста, сообщите об этом в службу поддержки.';
+            }
+            
+            showAlert(errorMessage, 'danger', messagesContainer);
+        } finally {
+            // Восстанавливаем кнопку
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText || 'Сохранить';
+            }
         }
+    } catch (error) {
+        console.error('Неожиданная ошибка:', error);
+        showAlert('Произошла непредвиденная ошибка', 'danger', messagesContainer);
     }
+}
+
+/**
+ * Валидирует форму
+ * @param {HTMLFormElement} form - Элемент формы
+ * @returns {boolean} - Возвращает true, если форма валидна
+ */
+function validateForm(form) {
+    const requiredFields = form.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+
+    if (!isValid) {
+        showAlert('Пожалуйста, заполните все обязательные поля', 'warning');
+    }
+
+    return isValid;
+}
+
+/**
+ * Обрабатывает ошибки формы
+ * @param {HTMLFormElement} form - Элемент формы
+ * @param {Response} response - Ответ сервера
+ * @param {Object} data - Данные ответа
+ */
+function handleFormErrors(form, response, data) {
+    // Обработка ошибок валидации
+    if (response.status === 422 && data.errors) {
+        // Очищаем предыдущие ошибки
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+        // Показываем ошибки валидации
+        Object.entries(data.errors).forEach(([field, messages]) => {
+            const input = form.querySelector(`[name="${field}"]`);
+            if (input) {
+                input.classList.add('is-invalid');
+                const feedback = input.nextElementSibling || document.createElement('div');
+                if (!feedback.classList.contains('invalid-feedback')) {
+                    feedback.className = 'invalid-feedback';
+                    input.parentNode.insertBefore(feedback, input.nextSibling);
+                }
+                feedback.textContent = messages[0];
+            }
+        });
+        showAlert('Пожалуйста, исправьте ошибки в форме', 'danger');
+    } else {
+        throw new Error(data.message || 'Произошла ошибка при сохранении');
+    }
+}
 
     /**
      * Обрабатывает успешное сохранение формы
