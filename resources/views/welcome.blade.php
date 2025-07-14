@@ -214,12 +214,11 @@
                                 </div>
                             @endif
 
-                            <table class="table table-hover align-middle mb-0"
-                                   style="min-width: 992px; margin-bottom: 0;">
+                            <table id="requestsTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>
                                     <th style="width: 1rem;"></th>
-                                    <th style="width: 1rem;"></th>
+                                    <!-- <th style="width: 1rem;"></th> -->
                                     <th style="width: 10rem;">Дата исполнения</th>
                                     <th style="width: 10rem;">Адрес/Телефон</th>
                                     <th style="width: 30rem;">Комментарий</th>
@@ -230,7 +229,6 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-
                                 @foreach ($requests as $index => $request)
                                     @php
                                         $rowNumber = $loop->iteration; 
@@ -241,13 +239,13 @@
                                         data-request-id="{{ $request->id }}">
                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
 
-                                        <td class="text-center" style="width: 1rem;">
+                                        <!-- <td class="text-center" style="width: 1rem;">
                                             @if($request->status_name !== 'выполнена')
                                                 <input type="checkbox" id="request-{{ $request->id }}"
                                                        class="form-check-input request-checkbox"
                                                        value="{{ $request->id }}" aria-label="Выбрать заявку">
                                             @endif
-                                        </td>
+                                        </td> -->
                                         <!-- Дата и номер заявки -->
                                         <td>
                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
@@ -963,34 +961,6 @@
                                     <div class="card-body p-0">
                                         <div class="table-responsive">
                                             <div class="table-container">
-                                                <!-- <table id="usersTable" class="table table-hover users-table mb-0">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>ID</th>
-                                                            <th>Имя</th>
-                                                            <th>Email</th>
-                                                            <th>Дата регистрации</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    @foreach(\App\Models\User::orderBy('created_at', 'desc')->get() as $user)
-                                                        <tr>
-                                                            <td>
-                                                            <button type="button" class="btn btn-sm btn-outline-primary select-user" 
-                                                                    data-user-id="{{ $user->id }}" 
-                                                                    data-bs-toggle="tooltip" 
-                                                                    title="Выбрать пользователя (ID: {{ $user->id }})">
-                                                                <i class="bi bi-person-plus"></i> {{ $user->id }}
-                                                            </button>
-                                                        </td>
-                                                        <td>{{ $user->name }}</td>
-                                                        <td>{{ $user->email }}</td>
-                                                        <td>{{ $user->created_at->format('d.m.Y H:i') }}</td>
-                                                    </tr>
-                                                    @endforeach
-                                                    </tbody>
-                                                </table> -->
-
                                                 <table id="employeesTable" class="table table-hover users-table mb-0">
                                                     <thead>
                                                         <tr class="smaller">

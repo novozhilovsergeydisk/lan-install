@@ -194,11 +194,7 @@ function applyFilters() {
                             
                             row.innerHTML = `
                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
-                            <td class="text-center" style="width: 1rem;">
-                                ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
-                                    <input type="checkbox" id="request-${request.id}" class="form-check-input request-checkbox" value="${request.id}" aria-label="Выбрать заявку">
-                                ` : ''}
-                            </td>
+                            
                             <td>        
                                 <div>${formattedDate}</div>
                                 <div class="text-dark" style="font-size: 0.8rem;">${requestNumber}</div>
@@ -1555,7 +1551,7 @@ async function handleAssignTeam(button) {
             })
         });
 
-        const updateData = await updateResponse.json().catch(() => ({}));
+        
         // console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
 
         if (!updateResponse.ok) {
