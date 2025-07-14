@@ -33,8 +33,19 @@ export const executionDateState = {
     date: null,
     // Метод для обновления даты из календаря
     updateDate(newDate) {
+        // Проверяем формат даты и преобразуем его при необходимости
+        if (newDate && typeof newDate === 'string') {
+            // Если дата в формате YYYY-MM-DD, преобразуем в DD.MM.YYYY
+            if (newDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const dateParts = newDate.split('-');
+                this.date = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
+                // console.log('Дата преобразована из YYYY-MM-DD в DD.MM.YYYY:', this.date);
+                return;
+            }
+        }
+        // Если формат другой или преобразование не требуется, сохраняем как есть
         this.date = newDate;
-        // console.log('Дата в selectedDateState обновлена:', this.date);
+        // console.log('Дата в executionDateState обновлена:', this.date);
     }
 };
 
@@ -283,12 +294,20 @@ async function submitRequestForm() {
         if (result.success) {
             showAlert('Заявка успешно создана!', 'success');
 
+            // Обновляем дату исполнения заявки (преобразование формата происходит в методе updateDate)
+            executionDateState.updateDate(result.data.request.execution_date);
+
             console.log('currentDateState.date:', currentDateState.date);
             console.log('selectedDateState.date:', selectedDateState.date);
-            console.log('result.data.execution_date:', result.data.execution_date);
+            console.log('executionDateState.date:', executionDateState.date);
+
+            
 
             // Динамическое формирование строки заявки и добавление её в начало таблицы
-            if (currentDateState.date === selectedDateState.date && result.data.execution_date === selectedDateState.date) {
+            if (currentDateState.date === selectedDateState.date && executionDateState.date === selectedDateState.date) {
+                addRequestToTable(result);
+            } else if (currentDateState.date !== selectedDateState.date && executionDateState.date === selectedDateState.date) {
+                console.log('Добавляем заявку в таблицу, если дата исполнения заявки совпадает с выбранной датой');
                 addRequestToTable(result);
             }
             
