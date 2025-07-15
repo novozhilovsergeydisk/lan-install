@@ -162,11 +162,11 @@ function applyFilters() {
                             let brigadeMembers = 'Не назначена';
                             
                             // Дебаг - выводим структуру объекта request
-                            console.log('Request object:', request);
-                            console.log('Brigade members:', request.brigade_members);
-                            console.log('Brigade leader name:', request.brigade_leader_name);
-                            console.log('Brigade lead:', request.brigade_lead);
-                            console.log('Employee leader name:', request.employee_leader_name);
+                            // console.log('Request object:', request);
+                            // console.log('Brigade members:', request.brigade_members);
+                            // console.log('Brigade leader name:', request.brigade_leader_name);
+                            // console.log('Brigade lead:', request.brigade_lead);
+                            // console.log('Employee leader name:', request.employee_leader_name);
                             
                             if (request.brigade_members && request.brigade_members.length > 0) {
                                 // Функция для сокращения ФИО до фамилии и первой буквы имени
@@ -209,7 +209,7 @@ function applyFilters() {
                                 // Добавляем ссылку "подробнее..."
                                 brigadeMembers += `
                                 <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
-                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
+                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2; display: inline-block; margin-top: 10px;"
                                    onmouseover="this.style.textDecoration='underline'"
                                    onmouseout="this.style.textDecoration='none'"
                                    data-bs-toggle="modal"

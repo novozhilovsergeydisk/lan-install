@@ -344,7 +344,7 @@
                                                 @endphp
 
                                                 @if($brigadeMembers->isNotEmpty())
-                                                    <div class="mb-2" style="font-size: 0.75rem; line-height: 1.2;">
+                                                    <div class="" style="font-size: 0.75rem; line-height: 1.2;">
                                                         @php
                                                             $leaderName = $brigadeMembers->first()->employee_leader_name;
                                                         @endphp

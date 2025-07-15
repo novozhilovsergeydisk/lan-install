@@ -1,17 +1,43 @@
-diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index d475b92..8bede66 100644
---- a/public/js/form-handlers.js
-+++ b/public/js/form-handlers.js
-@@ -447,7 +447,11 @@ function addRequestToTable(result) {
-         </td>
-         <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
-             ${extractedComment ? `
--                <div class="comment-preview small text-dark" data-bs-toggle="tooltip" data-bs-original-title="${extractedComment}">
-+                <div class="comment-preview small text-dark" 
-+                    data-bs-toggle="tooltip" 
-+                    style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;" 
-+                    data-bs-original-title="${extractedComment}">
-+                    <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
-                     ${extractedComment}
-                 </div>
-             ` : ''}
+diff --git a/public/js/handler.js b/public/js/handler.js
+index 22979a7..ca9d8ef 100644
+--- a/public/js/handler.js
++++ b/public/js/handler.js
+@@ -162,11 +162,11 @@ function applyFilters() {
+                             let brigadeMembers = 'Не назначена';
+                             
+                             // Дебаг - выводим структуру объекта request
+-                            console.log('Request object:', request);
+-                            console.log('Brigade members:', request.brigade_members);
+-                            console.log('Brigade leader name:', request.brigade_leader_name);
+-                            console.log('Brigade lead:', request.brigade_lead);
+-                            console.log('Employee leader name:', request.employee_leader_name);
++                            // console.log('Request object:', request);
++                            // console.log('Brigade members:', request.brigade_members);
++                            // console.log('Brigade leader name:', request.brigade_leader_name);
++                            // console.log('Brigade lead:', request.brigade_lead);
++                            // console.log('Employee leader name:', request.employee_leader_name);
+                             
+                             if (request.brigade_members && request.brigade_members.length > 0) {
+                                 // Функция для сокращения ФИО до фамилии и первой буквы имени
+@@ -209,7 +209,7 @@ function applyFilters() {
+                                 // Добавляем ссылку "подробнее..."
+                                 brigadeMembers += `
+                                 <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
+-                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
++                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2; display: inline-block; margin-top: 10px;"
+                                    onmouseover="this.style.textDecoration='underline'"
+                                    onmouseout="this.style.textDecoration='none'"
+                                    data-bs-toggle="modal"
+diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
+index 24e2c31..f6ad2be 100644
+--- a/resources/views/welcome.blade.php
++++ b/resources/views/welcome.blade.php
+@@ -344,7 +344,7 @@ class="brigade-lead-text">{{ $request->request_date ? \Carbon\Carbon::parse($req
+                                                 @endphp
+ 
+                                                 @if($brigadeMembers->isNotEmpty())
+-                                                    <div class="mb-2" style="font-size: 0.75rem; line-height: 1.2;">
++                                                    <div class="" style="font-size: 0.75rem; line-height: 1.2;">
+                                                         @php
+                                                             $leaderName = $brigadeMembers->first()->employee_leader_name;
+                                                         @endphp
