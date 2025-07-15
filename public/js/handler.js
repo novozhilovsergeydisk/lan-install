@@ -237,7 +237,10 @@ function applyFilters() {
                                     // const displayText = commentText.length > 50 ? commentText.substring(0, 50) + '...' : commentText;
 
                                     return `
-                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="${escapedComment}">
+                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip" 
+                                            style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
+                                            title="${escapedComment}">
+                                            <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
                                             ${displayText}
                                         </div>`;
                                 })()}
