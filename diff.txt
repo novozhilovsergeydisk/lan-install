@@ -1,33 +1,17 @@
-diff --git a/public/js/handler.js b/public/js/handler.js
-index 403f9a0..c6c2f77 100644
---- a/public/js/handler.js
-+++ b/public/js/handler.js
-@@ -237,7 +237,10 @@ function applyFilters() {
-                                     // const displayText = commentText.length > 50 ? commentText.substring(0, 50) + '...' : commentText;
- 
-                                     return `
--                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip" title="${escapedComment}">
-+                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip" 
-+                                            style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
-+                                            title="${escapedComment}">
-+                                            <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
-                                             ${displayText}
-                                         </div>`;
-                                 })()}
-diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index a0b6b30..a07dbf2 100644
---- a/resources/views/welcome.blade.php
-+++ b/resources/views/welcome.blade.php
-@@ -299,8 +299,10 @@ class="@if(isset($request->status_name) && $request->status_name !== 'выпол
-                                                     $author = $firstComment->author_name;
-                                                     $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
-                                                 @endphp
--                                                <div class="comment-preview small text-dark"
--                                                     data-bs-toggle="tooltip" title="{{ $commentText }}">
-+                                                <div class="comment-preview small text-dark" 
-+                                                    style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
-+                                                    data-bs-toggle="tooltip" title="{{ $commentText }}">
-+                                                    <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
-                                                     @if(count($comments_by_request[$request->id]) > 1)
-                                                         {{ Str::limit($commentText, 300, '...') }}
-                                                     @else
+diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
+index d475b92..8bede66 100644
+--- a/public/js/form-handlers.js
++++ b/public/js/form-handlers.js
+@@ -447,7 +447,11 @@ function addRequestToTable(result) {
+         </td>
+         <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
+             ${extractedComment ? `
+-                <div class="comment-preview small text-dark" data-bs-toggle="tooltip" data-bs-original-title="${extractedComment}">
++                <div class="comment-preview small text-dark" 
++                    data-bs-toggle="tooltip" 
++                    style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;" 
++                    data-bs-original-title="${extractedComment}">
++                    <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
+                     ${extractedComment}
+                 </div>
+             ` : ''}

@@ -447,7 +447,11 @@ function addRequestToTable(result) {
         </td>
         <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
             ${extractedComment ? `
-                <div class="comment-preview small text-dark" data-bs-toggle="tooltip" data-bs-original-title="${extractedComment}">
+                <div class="comment-preview small text-dark" 
+                    data-bs-toggle="tooltip" 
+                    style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;" 
+                    data-bs-original-title="${extractedComment}">
+                    <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
                     ${extractedComment}
                 </div>
             ` : ''}
