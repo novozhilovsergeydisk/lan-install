@@ -735,6 +735,7 @@ class HomeController extends Controller
             // Получаем ID бригад для загрузки членов
             $brigadeIds = array_filter(array_column($requestByDate, 'brigade_id'));
             $brigadeMembers = [];
+            $brigadeLeaders = [];
 
             if (!empty($brigadeIds)) {
                 // Получаем всех членов бригад для загруженных заявок
@@ -743,14 +744,25 @@ class HomeController extends Controller
                         bm.brigade_id,
                         e.fio as member_name,
                         e.phone as member_phone,
-                        e.position_id
+                        e.position_id,
+                        b.leader_id,
+                        el.fio as employee_leader_name
                     FROM brigade_members bm
+                    JOIN brigades b ON bm.brigade_id = b.id
                     JOIN employees e ON bm.employee_id = e.id
+                    LEFT JOIN employees el ON b.leader_id = el.id
                     WHERE bm.brigade_id IN (' . implode(',', $brigadeIds) . ')
                 ');
 
-                // Группируем членов по ID бригады
+                // Группируем членов по ID бригады и сохраняем информацию о бригадире
+                $brigadeLeaders = [];
+                
                 foreach ($members as $member) {
+                    // Сохраняем информацию о бригадире
+                    if (!isset($brigadeLeaders[$member->brigade_id]) && $member->employee_leader_name) {
+                        $brigadeLeaders[$member->brigade_id] = $member->employee_leader_name;
+                    }
+                    
                     $brigadeMembers[$member->brigade_id][] = [
                         'name' => $member->member_name,
                         'phone' => $member->member_phone,
@@ -789,10 +801,11 @@ class HomeController extends Controller
                 }
             }
 
-            // Добавляем членов бригады и комментарии к каждой заявке
-            $result = array_map(function ($request) use ($brigadeMembers, $commentsByRequest) {
+            // Добавляем членов бригады, информацию о бригадире и комментарии к каждой заявке
+            $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest) {
                 $brigadeId = $request->brigade_id;
                 $request->brigade_members = $brigadeMembers[$brigadeId] ?? [];
+                $request->brigade_leader_name = $brigadeLeaders[$brigadeId] ?? null;
                 $request->comments = $commentsByRequest[$request->id] ?? [];
                 $request->comments_count = count($request->comments);
                 return $request;

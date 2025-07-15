@@ -160,11 +160,53 @@ function applyFilters() {
 
                             // Создаем строку с составом бригады
                             let brigadeMembers = 'Не назначена';
+                            
+                            // Дебаг - выводим структуру объекта request
+                            console.log('Request object:', request);
+                            console.log('Brigade members:', request.brigade_members);
+                            console.log('Brigade leader name:', request.brigade_leader_name);
+                            console.log('Brigade lead:', request.brigade_lead);
+                            console.log('Employee leader name:', request.employee_leader_name);
+                            
                             if (request.brigade_members && request.brigade_members.length > 0) {
-                                brigadeMembers = request.brigade_members
-                                    .map(member => `<div>${member.name || member}</div>`)
+                                // Функция для сокращения ФИО до фамилии и первой буквы имени
+                                const shortenName = (fullName) => {
+                                    if (!fullName) return '';
+                                    
+                                    const parts = fullName.split(' ');
+                                    if (parts.length < 2) return fullName;
+                                    
+                                    const lastName = parts[0];
+                                    const firstName = parts[1];
+                                    
+                                    return `${lastName} ${firstName.charAt(0)}.`;
+                                };
+                                
+                                // Находим бригадира (первый элемент с полем employee_leader_name)
+                                let leaderHtml = '';
+                                let membersHtml = '';
+                                
+                                // Проверяем, есть ли у нас данные о бригадире
+                                if (request.brigade_leader_name) {
+                                    // Выводим бригадира отдельно и выделенным
+                                    leaderHtml = `<div><strong>${shortenName(request.brigade_leader_name)}</strong></div>`;
+                                } else if (request.brigade_lead) {
+                                    // Запасной вариант, если поле brigade_leader_name отсутствует
+                                    leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong></div>`;
+                                }
+                                
+                                // Формируем список обычных сотрудников
+                                membersHtml = request.brigade_members
+                                    .map(member => {
+                                        const memberName = member.name || member;
+                                        return `<div>${shortenName(memberName)}</div>`;
+                                    })
                                     .join('');
+                                
+                                // Объединяем бригадира и сотрудников
+                                brigadeMembers = leaderHtml + membersHtml;
 
+                                // Добавляем ссылку "подробнее..."
                                 brigadeMembers += `
                                 <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
                                    style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
