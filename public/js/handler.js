@@ -1397,85 +1397,69 @@ function initializePage() {
     }
 }
 
+// Функция для отображения модального окна
+function showModal(modalId) {
+    const modalElement = document.getElementById(modalId);
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        console.error(`Модальное окно с ID ${modalId} не найдено`);
+    }
+}
+
+// Загрузка списка бригад в выпадающий список
+async function loadTeamsToSelect() {
+    try {
+        // Запрашиваем актуальный список бригад с сервера
+        const response = await fetch('/api/brigades/current-day');
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Ошибка при загрузке списка бригад');
+        }
+
+        console.log('Данные бригад успешно загружены', result);
+
+        // Обновляем выпадающий список в модальном окне
+        const selectElement = document.getElementById('assign-team-select');
+        if (selectElement) {
+            // Очищаем список, оставляя только первый элемент
+            selectElement.innerHTML = '<option value="" selected>Выберите бригаду</option>';
+
+            // Добавляем новые опции
+            if (result.data && Array.isArray(result.data)) {
+                result.data.forEach(brigade => {
+                    const option = document.createElement('option');
+                    option.value = brigade.leader_id;
+                    option.textContent = `[Номер бригады: ${brigade.brigade_id}] [Бригадир: ${brigade.leader_name}]`;
+                    option.setAttribute('data-brigade-id', brigade.brigade_id);
+                    selectElement.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке бригад:', error.message);
+        showAlert(`Ошибка при загрузке бригад: ${error.message}`, 'danger');
+    }
+}
+
 // Обработчик кнопки 'Назначить бригаду'
 async function handleAssignTeam(button) {
     console.log('handleAssignTeam');
 
-    
-
+    // Сохраняем ID заявки в data-атрибуте модального окна
     const requestId = button.dataset.requestId;
-    // console.log('Назначение бригады для заявки:', requestId);
+    console.log(requestId);
     
-    const select = document.getElementById('brigade-leader-select');
-    // const checkedCheckbox = document.querySelector('input[type="checkbox"].request-checkbox:checked');
-
-    if (!select.value) {
-        showAlert('Бригада не выбрана!');
-        return;
-    }
-
-    const leaderId = select.value;
-
-    const brigadeName = select.options[select.selectedIndex].text;
-    const selectedOption = select.options[select.selectedIndex];
-    const brigade_id = selectedOption.getAttribute('data-brigade-id');
-
-    console.log(`ID выбранной заявки: ${requestId}`);
-    console.log(`ID выбранного бригадира: ${leaderId}`);
-    console.log(`ID бригады: ${brigade_id}`);
-    console.log(`Название бригады: ${brigadeName}`);
-
-    try {
-        // console.log('1. Получаем данные о бригаде...');
-        /*const brigadeResponse = await fetch(`/api/requests/brigade/by-leader/${leaderId}`);
-        const brigadeData = await brigadeResponse.json();
-        if (!brigadeResponse.ok) {
-            throw new Error(brigadeData.message || `Ошибка ${brigadeResponse.status} при получении данных о бригаде`);
-        }
-
-        if (!brigadeData.data || !brigadeData.data.brigade_id) {
-            throw new Error('Не удалось получить ID бригады из ответа сервера');
-        }*/
-
-        // Отправляем запрос на обновление заявки
-        const updateResponse = await fetch('/api/requests/update-brigade', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                brigade_id: brigade_id,
-                request_id: requestId
-            })
-        });
-
-        const updateData = await updateResponse.json().catch(() => ({}));
-        // console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
-
-        if (!updateResponse.ok) {
-            const errorMessage = updateData.message ||
-                updateData.error ||
-                (updateData.error_details ? JSON.stringify(updateData.error_details) : 'Неизвестная ошибка');
-            throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
-        }
-
-        // console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
-
-        // 3. Обновляем страницу для отображения изменений
-        window.location.reload();
-
-    } catch (error) {
-        console.error('Ошибка при прикреплении бригады:', error.message);
-        if (typeof utils !== 'undefined' && typeof utils.alert === 'function') {
-            utils.alert(`Ошибка: ${error.message}`);
-        } else {
-            showAlert(`Ошибка: ${error.message}`, 'danger');
-        }
-    }
+    const assignTeamModal = document.getElementById('assign-team-modal');
+    assignTeamModal.dataset.requestId = requestId;
     
-    // showAlert(`Функционал 'Назначить бригаду' для заявки ${requestId} будет реализован позже`, 'info');
+    // Отображаем модальное окно
+    showModal('assign-team-modal');
+    
+    // Загружаем список бригад
+    await loadTeamsToSelect();
 }
 
 // Обработчик кнопки 'Перенести заявку'
@@ -1818,12 +1802,90 @@ function initRequestButtons() {
     });
 }
 
-// console.log('DOM загружен, инициализация обработчиков...');
-
+// Инициализация страницы при загрузке DOM
 document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM полностью загружен');
     initializePage();
+    
+    // Обработчик для кнопки "Назначить" в модальном окне назначения бригады
+    const confirmAssignTeamBtn = document.getElementById('confirm-assign-team-btn');
+    if (confirmAssignTeamBtn) {
+        confirmAssignTeamBtn.addEventListener('click', async function() { 
+            const modal = document.getElementById('assign-team-modal');
+            const requestId = modal.dataset.requestId;
+            const selectElement = document.getElementById('assign-team-select');
+            const selectedTeamId = selectElement.value;
+            
+            if (!selectedTeamId) {
+                showAlert('Бригада не выбрана!', 'warning');
+                return;
+            }
+            
+            const selectedTeamName = selectElement.options[selectElement.selectedIndex].text;
+            const leaderId = selectedTeamId; // ID бригадира
+            
+            // Получаем ID бригады из атрибута data-brigade-id выбранной опции
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const brigade_id = selectedOption.getAttribute('data-brigade-id');
+            
+            if (!brigade_id) {
+                console.error('Не найден ID бригады в выбранной опции');
+                showAlert('Ошибка: Не найден ID бригады', 'danger');
+                return;
+            }
 
+            const brigadeName = selectedTeamName;
+
+            console.log(`ID выбранной заявки: ${requestId}`);
+            console.log(`ID выбранного бригадира: ${leaderId}`);
+            console.log(`ID бригады: ${brigade_id}`);
+            console.log(`Название бригады: ${brigadeName}`);
+
+            try {
+                // Отправляем запрос на обновление заявки
+                const updateResponse = await fetch('/api/requests/update-brigade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        brigade_id: brigade_id,
+                        request_id: requestId
+                    })
+                });
+
+                const updateData = await updateResponse.json().catch(() => ({}));
+                // console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
+
+                if (!updateResponse.ok) {
+                    const errorMessage = updateData.message ||
+                        updateData.error ||
+                        (updateData.error_details ? JSON.stringify(updateData.error_details) : 'Неизвестная ошибка');
+                    throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
+                }
+
+                // console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
+
+                // 3. Обновляем страницу для отображения изменений
+                window.location.reload();
+
+            } catch (error) {
+                console.error('Ошибка при прикреплении бригады:', error.message);
+                if (typeof utils !== 'undefined' && typeof utils.alert === 'function') {
+                    utils.alert(`Ошибка: ${error.message}`);
+                } else {
+                    showAlert(`Ошибка: ${error.message}`, 'danger');
+                }
+            }
+            
+            // Закрываем модальное окно
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            bsModal.hide();
+        });
+    }
+    
     // Инициализация кнопок заявок
     initRequestButtons();
 

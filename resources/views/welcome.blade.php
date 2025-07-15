@@ -194,20 +194,6 @@
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->
                             </div>
 
-                            <!-- Контейнер для выбора бригады -->
-                            <div id="brigade-leader-filter" class="ms-3 d-none_">
-                                <select id="brigade-leader-select" class="form-select form-select-sm"
-                                        style="width: 250px; margin-top: -12px;">
-                                    <option value="" selected disabled>Выберите бригаду...</option>
-                                    @foreach ($brigadesCurrentDay as $brigade)
-                                        <option value="{{ $brigade->employee_id }}"
-                                                data-brigade-id="{{ $brigade->brigade_id }}">[Номер
-                                            бригады: {{ $brigade->brigade_id }} ] [Бригадир: {{ $brigade->leader_name }}
-                                            ]
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
                         </div>
 
                         <!-- Calendar Container (initially hidden) -->
@@ -2325,6 +2311,31 @@
         });
     });
 </script>
+
+<!-- Модальное окно для назначения бригады -->
+<div class="modal fade" id="assign-team-modal" tabindex="-1" aria-labelledby="assignTeamModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignTeamModalLabel">Назначение бригады</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Выберите бригаду для назначения на заявку:</p>
+                <div class="mb-3">
+                    <select class="form-select" id="assign-team-select">
+                        <option value="" selected>Выберите бригаду</option>
+                        <!-- Опции будут загружены динамически -->
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirm-assign-team-btn">Назначить</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 
