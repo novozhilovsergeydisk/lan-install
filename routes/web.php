@@ -107,6 +107,11 @@ Route::get('/api/brigade-leaders', [RequestTeamFilterController::class, 'getBrig
     ->name('api.brigade-leaders')
     ->middleware('auth');
 
+// Получение информации о бригадах за текущий день
+Route::post('/api/brigades/info-current-day', [RequestTeamFilterController::class, 'brigadesInfoCurrentDay'])
+    ->name('api.brigades.info-current-day')
+    ->middleware('auth');
+
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {
     // Get addresses for select

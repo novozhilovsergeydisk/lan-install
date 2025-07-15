@@ -491,8 +491,12 @@
                                 </div>
                             </div>
 
+                            <div class="mt-4"> 
+                            <!-- Здесь будет отображаться информация о бригадах за выбранный дату -->
+                            </div> 
+
                             <div class="mt-4">
-                                <button type="button" id="createBrigadeBtn" class="btn btn-primary">Создать бригаду
+                                <button type="button" id="createBrigadeBtn" data-info-handler="handlerCreateBrigade()[handler.js]" class="btn btn-primary">Создать бригаду
                                 </button>
                             </div>
                         </form>

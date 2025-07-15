@@ -408,7 +408,6 @@ class HomeController extends Controller
             'on_hold' => 'on_hold',
         ];
 
-        // Передаём всё в шаблон
         // Собираем все переменные для передачи в представление
         $viewData = [
             'user' => $user,

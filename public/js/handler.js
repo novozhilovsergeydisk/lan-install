@@ -2843,19 +2843,6 @@ function handlerCreateBrigade() {
                 showAlert('В бригаде должен быть хотя бы 1 участник', 'warning');
                 return;
             }
-
-            // Проверяем, что бригадир есть в списке участников
-            const leaderInMembers = formJson.members.some(member =>
-                member.employee_id === formValues.leader_id
-            );
-
-            // Если бригадира нет в списке участников, добавляем его
-            // if (!leaderInMembers && formValues.leader_id) {
-            //     formJson.members.push({
-            //         employee_id: formValues.leader_id,
-            //         is_leader: true
-            //     });
-            // }
             
             // Проверяем, что выбран бригадир
             const brigadierSelected = document.querySelector('#brigadeMembers .brigade-leader');
@@ -3094,6 +3081,182 @@ function handlerCreateBrigade() {
                             console.warn('Функция updateBrigadesList не найдена, выполняется перезагрузка страницы');
                             setTimeout(() => window.location.reload(), 1000);
                         }
+
+                        // Здесь будет запрос на обновление списка бригад
+
+                        try {
+                            const brigadeInfoResponse = await fetch('/api/brigades/info-current-day', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                },
+                                body: JSON.stringify({
+                                    date: document.querySelector('#datepicker').value
+                                })
+                            });
+
+                            const brigadeInfoData = await brigadeInfoResponse.json();
+                            console.log('Информация о бригадах:', brigadeInfoData);
+                            
+                            // Отображаем информацию о бригадах на странице
+                            displayBrigadeInfo(brigadeInfoData);
+                        } catch (error) {
+                            console.error('Ошибка при получении информации о бригадах:', error);
+                        }
+                        
+                        /**
+                         * Функция для отображения информации о бригадах
+                         * @param {Object} data - данные о бригадах
+                         */
+                        function displayBrigadeInfo(data) {
+                            const brigadeInfoContainer = document.querySelector('.mt-4:has(> .brigade-info-container)');
+                            
+                            // Если контейнер не найден, используем запасной вариант
+                            const fallbackContainer = document.querySelector('.mt-4:has(> [data-info-handler="handlerCreateBrigade()[handler.js]"])').previousElementSibling;
+                            
+                            const container = brigadeInfoContainer || fallbackContainer;
+                            
+                            if (!container) {
+                                console.error('Не найден контейнер для отображения информации о бригадах');
+                                return;
+                            }
+                            
+                            // Очищаем контейнер
+                            container.innerHTML = '<h5>Информация о бригадах на текущий день</h5>';
+                            
+                            // Создаем контейнер для информации о бригадах
+                            const brigadeInfoDiv = document.createElement('div');
+                            brigadeInfoDiv.className = 'brigade-info-container mt-3';
+                            
+                            if (data.success && data.$brigadesInfoCurrentDay && data.$brigadesInfoCurrentDay.length > 0) {
+                                // Создаем карточки для каждой бригады
+                                data.$brigadesInfoCurrentDay.forEach(brigade => {
+                                    // Парсим JSON-строки в объекты
+                                    let leaderInfoObj = {};
+                                    let membersArray = [];
+                                    
+                                    try {
+                                        if (typeof brigade.leader_info === 'string') {
+                                            leaderInfoObj = JSON.parse(brigade.leader_info);
+                                        } else if (typeof brigade.leader_info === 'object') {
+                                            leaderInfoObj = brigade.leader_info;
+                                        }
+                                    } catch (e) {
+                                        console.error('Ошибка при парсинге данных бригадира:', e);
+                                    }
+                                    
+                                    try {
+                                        if (typeof brigade.members === 'string' && brigade.members) {
+                                            membersArray = JSON.parse(brigade.members);
+                                        } else if (Array.isArray(brigade.members)) {
+                                            membersArray = brigade.members;
+                                        }
+                                    } catch (e) {
+                                        console.error('Ошибка при парсинге данных участников:', e);
+                                    }
+                                    
+                                    const brigadeCard = document.createElement('div');
+                                    brigadeCard.className = 'card mb-3';
+                                    
+                                    const cardHeader = document.createElement('div');
+                                    cardHeader.className = 'card-header d-flex justify-content-between align-items-center';
+                                    cardHeader.innerHTML = `
+                                        <h5 class="mb-0">${brigade.brigade_name || 'Бригада без названия'}</h5>
+                                        <span class="badge bg-primary">${(brigade.member_count || 0) + 1} участников</span>
+                                    `;
+                                    
+                                    const cardBody = document.createElement('div');
+                                    cardBody.className = 'card-body';
+                                    
+                                    // Информация о бригадире
+                                    const leaderInfo = document.createElement('div');
+                                    leaderInfo.className = 'mb-3';
+                                    if (leaderInfoObj && Object.keys(leaderInfoObj).length > 0) {
+                                        leaderInfo.innerHTML = `
+                                            <h6>Бригадир:</h6>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <i class="bi bi-person-circle fs-2"></i>
+                                                </div>
+                                                <div>
+                                                    <div><strong>${leaderInfoObj.fio || 'Не указано'}</strong></div>
+                                                    <div>Телефон: ${leaderInfoObj.phone || 'Не указан'}</div>
+                                                    <div>Должность: ${leaderInfoObj.position || 'Не указана'}</div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    } else {
+                                        leaderInfo.innerHTML = '<div class="alert alert-warning">Информация о бригадире отсутствует</div>';
+                                    }
+                                    
+                                    // Список участников бригады
+                                    const membersList = document.createElement('div');
+                                    membersList.innerHTML = '<h6>Состав бригады:</h6>';
+                                    
+                                    if (membersArray && membersArray.length > 0) {
+                                        const membersTable = document.createElement('table');
+                                        membersTable.className = 'table table-sm table-striped';
+                                        // Проверяем, добавлен ли уже стиль для заголовков таблицы
+                                        if (!document.getElementById('brigade-table-dark-theme-style')) {
+                                            const style = document.createElement('style');
+                                            style.id = 'brigade-table-dark-theme-style';
+                                            style.textContent = `
+                                                @media (prefers-color-scheme: dark) {
+                                                    .brigade-info-container th,
+                                                    .brigade-info-container td {
+                                                        color: #ffffff !important;
+                                                    }
+                                                    .brigade-info-container .table-striped > tbody > tr:nth-of-type(odd) > * {
+                                                        color: #f0f0f0 !important;
+                                                    }
+                                                }
+                                            `;
+                                            document.head.appendChild(style);
+                                        }
+                                        
+                                        membersTable.innerHTML = `
+                                            <thead>
+                                                <tr>
+                                                    <th>ФИО</th>
+                                                    <th>Телефон</th>
+                                                    <th>Роль</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${membersArray.map(member => `
+                                                    <tr>
+                                                        <td>${member.fio || 'Не указано'}</td>
+                                                        <td>${member.phone || 'Не указан'}</td>
+                                                        <td>${member.is_leader ? '<span class="badge bg-success">Бригадир</span>' : 'Участник'}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        `;
+                                        membersList.appendChild(membersTable);
+                                    } else {
+                                        membersList.innerHTML += '<div class="alert alert-info">Бригадир сам является участником бригады</div>';
+                                    }
+                                    
+                                    // Добавляем информацию в карточку
+                                    cardBody.appendChild(leaderInfo);
+                                    cardBody.appendChild(membersList);
+                                    
+                                    // Собираем карточку
+                                    brigadeCard.appendChild(cardHeader);
+                                    brigadeCard.appendChild(cardBody);
+                                    
+                                    // Добавляем карточку в контейнер
+                                    brigadeInfoDiv.appendChild(brigadeCard);
+                                });
+                            } else {
+                                brigadeInfoDiv.innerHTML = '<div class="alert alert-info">На текущий день бригады не найдены</div>';
+                            }
+                            
+                            // Добавляем контейнер на страницу
+                            container.appendChild(brigadeInfoDiv);
+                        }
+                        
 
                     } else {
                         throw new Error(data.message || 'Неизвестная ошибка сервера');

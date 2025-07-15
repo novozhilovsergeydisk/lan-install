@@ -46,6 +46,55 @@ class RequestTeamFilterController extends Controller
         ]);
     }
 
+    public function brigadesInfoCurrentDay()
+    {
+        $today = now()->toDateString();
+
+        $sql = "SELECT
+            b.id AS brigade_id,
+            b.name AS brigade_name,
+            b.formation_date,
+            jsonb_build_object(
+                'id', leader.id,
+                'fio', leader.fio,
+                'phone', leader.phone,
+                'position', p.name
+            ) AS leader_info,
+            (
+                SELECT jsonb_agg(
+                    jsonb_build_object(
+                        'id', e.id,
+                        'fio', e.fio,
+                        'phone', e.phone,
+                        'is_leader', CASE WHEN e.id = b.leader_id THEN true ELSE false END
+                    )
+                )
+                FROM brigade_members bm
+                JOIN employees e ON bm.employee_id = e.id
+                WHERE bm.brigade_id = b.id
+            ) AS members,
+            (SELECT COUNT(*) FROM brigade_members WHERE brigade_id = b.id) AS member_count
+            FROM 
+                brigades b
+            JOIN 
+                employees leader ON b.leader_id = leader.id
+            LEFT JOIN 
+                positions p ON leader.position_id = p.id
+            WHERE
+                b.formation_date = '{$today}'
+            ORDER BY 
+                b.name;";
+
+        $brigadesInfoCurrentDay = DB::select($sql);
+
+        return response()->json([
+            'success' => true,
+            '$today' => $today,
+            '$sql' => $sql,
+            '$brigadesInfoCurrentDay' => $brigadesInfoCurrentDay
+        ]);
+    }
+
     /**
      * Получить список бригад за текущий день
      */
