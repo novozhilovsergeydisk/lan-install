@@ -3219,17 +3219,17 @@ function handlerCreateBrigade() {
                                                     border: 1px solid #000000 !important;
                                                 }
                                                 .brigade-info-container .table thead th {
-                                                    background-color:rgb(28, 25, 25) !important;
+                                                    background-color:rgb(95, 80, 80) !important;
                                                     color:rgb(246, 234, 234) !important;
                                                     border-bottom: 2px solid #000000 !important;
                                                     font-weight: bold !important;
                                                 }
                                                 .brigade-info-container .table-striped > tbody > tr:nth-of-type(odd) > * {
-                                                    background-color:rgb(66, 64, 64) !important;
+                                                    background-color:rgb(118, 112, 112) !important;
                                                     color:rgb(222, 205, 205) !important;
                                                 }
                                                 .brigade-info-container .table-striped > tbody > tr:nth-of-type(even) > * {
-                                                    background-color:rgb(77, 75, 75) !important;
+                                                    background-color:rgb(140, 134, 134) !important;
                                                     color:rgb(245, 232, 232) !important;
                                                 }
                                                 .brigade-info-container .table td, .brigade-info-container .table th {
