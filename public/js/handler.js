@@ -3202,6 +3202,7 @@ function handlerCreateBrigade() {
                                             const style = document.createElement('style');
                                             style.id = 'brigade-table-dark-theme-style';
                                             style.textContent = `
+                                                /* Стили для темной темы */
                                                 @media (prefers-color-scheme: dark) {
                                                     .brigade-info-container th,
                                                     .brigade-info-container td {
@@ -3210,6 +3211,30 @@ function handlerCreateBrigade() {
                                                     .brigade-info-container .table-striped > tbody > tr:nth-of-type(odd) > * {
                                                         color: #f0f0f0 !important;
                                                     }
+                                                }
+                                                
+                                                /* Стили для светлой темы */
+                                                .brigade-info-container .table {
+                                                    color: #000000 !important;
+                                                    border: 1px solid #000000 !important;
+                                                }
+                                                .brigade-info-container .table thead th {
+                                                    background-color: #e0e0e0 !important;
+                                                    color: #000000 !important;
+                                                    border-bottom: 2px solid #000000 !important;
+                                                    font-weight: bold !important;
+                                                }
+                                                .brigade-info-container .table-striped > tbody > tr:nth-of-type(odd) > * {
+                                                    background-color: #f0f0f0 !important;
+                                                    color: #000000 !important;
+                                                }
+                                                .brigade-info-container .table-striped > tbody > tr:nth-of-type(even) > * {
+                                                    background-color: #ffffff !important;
+                                                    color: #000000 !important;
+                                                }
+                                                .brigade-info-container .table td, .brigade-info-container .table th {
+                                                    padding: 0.5rem !important;
+                                                    border: 1px solid #000000 !important;
                                                 }
                                             `;
                                             document.head.appendChild(style);
