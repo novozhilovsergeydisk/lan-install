@@ -305,10 +305,16 @@ class HomeController extends Controller
                 e.phone as employee_phone,
                 e.group_role as employee_group_role,
                 e.sip as employee_sip,
-                e.position_id as employee_position_id
+                e.position_id as employee_position_id,
+                el.fio as employee_leader_name,
+                el.phone as employee_leader_phone,
+                el.group_role as employee_leader_group_role,
+                el.sip as employee_leader_sip,
+                el.position_id as employee_leader_position_id
             FROM brigade_members bm
             JOIN brigades b ON bm.brigade_id = b.id
-            LEFT JOIN employees e ON bm.employee_id = e.id'
+            LEFT JOIN employees e ON bm.employee_id = e.id
+            LEFT JOIN employees el ON b.leader_id = el.id'
         );
 
         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);

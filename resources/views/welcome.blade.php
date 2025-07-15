@@ -1,3 +1,17 @@
+@php
+    // Функция для сокращения ФИО до фамилии и первой буквы имени
+    function shortenName($fullName) {
+        if (empty($fullName)) return '';
+        
+        $parts = explode(' ', $fullName);
+        if (count($parts) < 2) return $fullName;
+        
+        $lastName = $parts[0];
+        $firstName = $parts[1];
+        
+        return $lastName . ' ' . mb_substr($firstName, 0, 1) . '.';
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="ru">
 
@@ -229,7 +243,7 @@
                                     <th style="width: 10rem;">Адрес/Телефон</th>
                                     <th style="width: 30rem;">Комментарий</th>
                                     <th style="width: 15rem;">Оператор / Дата создания</th>
-                                    <th style="width: 15rem;">Бригада</th>
+                                    <th style="width: 10rem;">Бригада</th>
                                     <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
                                     <th style="width: 3rem;"></th>
                                 </tr>
@@ -306,8 +320,8 @@
                                                             style="position: relative; z-index: 1;">
                                                         <i class="bi bi-chat-left-text me-1"></i>Все комментарии
                                                         <span class="badge bg-primary rounded-pill ms-1">
-                                                                        {{ count($comments_by_request[$request->id]) }}
-                                                                    </span>
+                                                            {{ count($comments_by_request[$request->id]) }}
+                                                        </span>
                                                     </button>
                                                 </div>
                                             @endif
@@ -328,17 +342,18 @@
                                                     $brigadeMembers = collect($brigadeMembersWithDetails)
                                                         ->where('brigade_id', $request->brigade_id);
                                                 @endphp
-                                                @php
-                                                    $brigadeMembers = collect($brigadeMembersWithDetails)
-                                                        ->where('brigade_id', $request->brigade_id);
-                                                @endphp
 
                                                 @if($brigadeMembers->isNotEmpty())
                                                     <div class="mb-2" style="font-size: 0.75rem; line-height: 1.2;">
+                                                        @php
+                                                            $leaderName = $brigadeMembers->first()->employee_leader_name;
+                                                        @endphp
+                                                        @if($leaderName)
+                                                            <div><strong>{{ shortenName($leaderName) }}</strong></div>
+                                                        @endif
+                                                        
                                                         @foreach($brigadeMembers as $member)
-                                                            <div>
-                                                                {{ $member->employee_name }}
-                                                            </div>
+                                                            <div>{{ shortenName($member->employee_name) }}</div>
                                                         @endforeach
                                                     </div>
                                                 @endif
@@ -1576,25 +1591,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- <div class="mb-3 hide-me">
-                        <h6>Назначение</h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="brigade" class="form-label">Бригада</label>
-                                <select class="form-select" id="brigade" name="brigade_id">
-                                    <option value="" selected>Не выбрано</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="operator" class="form-label">Оператор <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-select" id="operator" name="operator_id" required>
-                                    <option value="" disabled selected>Выберите оператора</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div> -->
 
                     <div class="mb-3">
                         <h6>Адрес</h6>
