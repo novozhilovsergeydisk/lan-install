@@ -267,13 +267,13 @@
                                         </td> -->
                                         <!-- Дата и номер заявки -->
                                         <td>
-                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_organization }}</div>
                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
                                             <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
                                         </td>
 
                                         <!-- Клиент -->
                                         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_organization }}</div>
                                             @if(!empty($request->street))
                                                 <small class="text-dark text-truncate d-block"
                                                        data-bs-toggle="tooltip"
