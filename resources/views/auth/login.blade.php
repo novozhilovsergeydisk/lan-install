@@ -67,9 +67,9 @@
                     <i class="bi bi-box-arrow-in-right me-1"></i> Войти
                 </button>
 
-                <p class="mb-0">
+                <!-- <p class="mb-0">
                     Нет аккаунта? <a href="{{ route('register') }}">Зарегистрируйтесь</a>
-                </p>
+                </p> -->
             </form>
         </div>
     </div>
