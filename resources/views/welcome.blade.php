@@ -284,10 +284,11 @@
                                                 <small class="text-dark text-truncate d-block">Адрес не
                                                     указан</small>
                                             @endif
+                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_fio }}</div>
                                             <small
                                                 class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
                                                 {{ $request->client_phone ?? 'Нет телефона' }}
-                                            </small>
+                                            </small>                              
                                         </td>
 
                                         <!-- Комментарий -->
