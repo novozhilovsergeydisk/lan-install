@@ -1,94 +1,28 @@
-diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index 9ea6346..7d27984 100644
---- a/app/Http/Controllers/HomeController.php
-+++ b/app/Http/Controllers/HomeController.php
-@@ -377,6 +377,7 @@ public function index()
-                 r.*,
-                 c.fio AS client_fio,
-                 c.phone AS client_phone,
-+                c.organization AS client_organization,
-                 rs.name AS status_name,
-                 rs.color AS status_color,
-                 b.name AS brigade_name,
 diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index 2d04c34..f6caf7c 100644
+index f6caf7c..7f10488 100644
 --- a/public/js/form-handlers.js
 +++ b/public/js/form-handlers.js
-@@ -270,6 +270,7 @@ async function submitRequestForm() {
-         _token: data._token,
-         client_name: data.client_name || '',
-         client_phone: data.client_phone || '',
-+        client_organization: data.client_organization || '',
-         request_type_id: data.request_type_id,
-         status_id: data.status_id,
-         comment: data.comment || '',
-@@ -278,7 +279,6 @@ async function submitRequestForm() {
-         brigade_id: data.brigade_id || null,
-         operator_id: data.operator_id || null,
-         address_id: addressId,
--        organization: data.client_organization || null,
-     };
- 
-     // Логируем данные перед отправкой
-diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index 132077f..3a30c3f 100644
---- a/resources/views/welcome.blade.php
-+++ b/resources/views/welcome.blade.php
-@@ -238,11 +238,10 @@ class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
-                                 <thead class="bg-dark">
-                                 <tr>
-                                     <th style="width: 1rem;"></th>
--                                    <!-- <th style="width: 1rem;"></th> -->
-                                     <th style="width: 10rem;">Дата исполнения</th>
-                                     <th style="width: 10rem;">Адрес/Телефон</th>
-                                     <th style="width: 30rem;">Комментарий</th>
--                                    <th style="width: 15rem;">Оператор / Дата создания</th>
-+                                    <th style="width: 12rem;">Оператор / Дата создания</th>
-                                     <th style="width: 20rem;">Бригада</th>
-                                     <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
-                                     <th style="width: 3rem;"></th>
-@@ -259,21 +258,22 @@ class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
-                                         data-request-id="{{ $request->id }}">
-                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
- 
--                                        <!-- <td class="text-center" style="width: 1rem;">
--                                            @if($request->status_name !== 'выполнена')
--                                                <input type="checkbox" id="request-{{ $request->id }}"
--                                                       class="form-check-input request-checkbox"
--                                                       value="{{ $request->id }}" aria-label="Выбрать заявку">
--                                            @endif
--                                        </td> -->
-                                         <!-- Дата и номер заявки -->
-                                         <td>
-+                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_organization }}</div>
-                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
--                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
-                                         </td>
- 
-                                         <!-- Клиент -->
-                                         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-+                                            @if(!empty($request->client_organization))
-+                                                <small class="text-dark text-truncate d-block"
-+                                                       data-bs-toggle="tooltip"
-+                                                       title="{{ $request->client_organization }}">
-+                                                    {{ $request->client_organization }}
-+                                                </small>
-+                                            @endif
-+                                        
-                                             @if(!empty($request->street))
-                                                 <small class="text-dark text-truncate d-block"
-                                                        data-bs-toggle="tooltip"
-@@ -284,6 +284,13 @@ class="form-check-input request-checkbox"
-                                                 <small class="text-dark text-truncate d-block">Адрес не
-                                                     указан</small>
-                                             @endif
-+                                            @if(!empty($request->client_fio))
-+                                                <small class="text-dark text-truncate d-block"
-+                                                       data-bs-toggle="tooltip"
-+                                                       title="{{ $request->client_fio }}">
-+                                                    {{ $request->client_fio }}
-+                                                </small>
-+                                            @endif
-                                             <small
-                                                 class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
-                                                 {{ $request->client_phone ?? 'Нет телефона' }}
+@@ -469,10 +469,6 @@ function addRequestToTable(result) {
+                 </div>
+             ` : ''}
+         </td>
+-        <td>
+-            <span class="brigade-lead-text">${requestData.operator_name || 'Не указан'}</span><br>
+-            <span class="brigade-lead-text">${requestData.request_date ? new Date(requestData.request_date).toLocaleDateString('ru-RU') : formattedDate}</span>
+-        </td>
+         <td>
+             <div style="font-size: 0.75rem; line-height: 1.2;">
+                 Не назначена
+@@ -498,11 +494,7 @@ function addRequestToTable(result) {
+                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                     Закрыть заявку
+                 </button>
+-                // <button type="button" class="btn btn-sm btn-outline-primary p-1 comment-btn" 
+-                //         data-bs-toggle="modal" data-bs-target="#commentsModal" 
+-                //         data-request-id="${requestData.id}">
+-                //     <i class="bi bi-chat-left-text me-1"></i>Комментарий
+-                // </button>
++
+                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
+                     <i class="bi bi-camera me-1"></i>Фотоотчет
+                 </button>

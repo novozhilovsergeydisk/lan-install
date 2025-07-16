@@ -470,10 +470,6 @@ function addRequestToTable(result) {
             ` : ''}
         </td>
         <td>
-            <span class="brigade-lead-text">${requestData.operator_name || 'Не указан'}</span><br>
-            <span class="brigade-lead-text">${requestData.request_date ? new Date(requestData.request_date).toLocaleDateString('ru-RU') : formattedDate}</span>
-        </td>
-        <td>
             <div style="font-size: 0.75rem; line-height: 1.2;">
                 Не назначена
             </div>
@@ -498,11 +494,7 @@ function addRequestToTable(result) {
                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                     Закрыть заявку
                 </button>
-                // <button type="button" class="btn btn-sm btn-outline-primary p-1 comment-btn" 
-                //         data-bs-toggle="modal" data-bs-target="#commentsModal" 
-                //         data-request-id="${requestData.id}">
-                //     <i class="bi bi-chat-left-text me-1"></i>Комментарий
-                // </button>
+
                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
                     <i class="bi bi-camera me-1"></i>Фотоотчет
                 </button>
