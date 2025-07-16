@@ -258,22 +258,22 @@
                                         data-request-id="{{ $request->id }}">
                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
 
+                                        <!-- <td class="text-center" style="width: 1rem;">
+                                            @if($request->status_name !== 'выполнена')
+                                                <input type="checkbox" id="request-{{ $request->id }}"
+                                                       class="form-check-input request-checkbox"
+                                                       value="{{ $request->id }}" aria-label="Выбрать заявку">
+                                            @endif
+                                        </td> -->
                                         <!-- Дата и номер заявки -->
                                         <td>
                                             <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_organization }}</div>
                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
+                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
                                         </td>
 
                                         <!-- Клиент -->
                                         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-                                            @if(!empty($request->client_organization))
-                                                <small class="text-dark text-truncate d-block"
-                                                       data-bs-toggle="tooltip"
-                                                       title="{{ $request->client_organization }}">
-                                                    {{ $request->client_organization }}
-                                                </small>
-                                            @endif
-                                        
                                             @if(!empty($request->street))
                                                 <small class="text-dark text-truncate d-block"
                                                        data-bs-toggle="tooltip"
@@ -283,13 +283,6 @@
                                             @else
                                                 <small class="text-dark text-truncate d-block">Адрес не
                                                     указан</small>
-                                            @endif
-                                            @if(!empty($request->client_fio))
-                                                <small class="text-dark text-truncate d-block"
-                                                       data-bs-toggle="tooltip"
-                                                       title="{{ $request->client_fio }}">
-                                                    {{ $request->client_fio }}
-                                                </small>
                                             @endif
                                             <small
                                                 class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
