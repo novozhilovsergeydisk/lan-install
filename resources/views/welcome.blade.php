@@ -241,7 +241,7 @@
                                     <th style="width: 10rem;">Дата исполнения</th>
                                     <th style="width: 10rem;">Адрес/Телефон</th>
                                     <th style="width: 30rem;">Комментарий</th>
-                                    <th style="width: 12rem;">Оператор / Дата создания</th>
+                                    <!-- <th style="width: 12rem;">Оператор / Дата создания</th> -->
                                     <th style="width: 20rem;">Бригада</th>
                                     <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
                                     <th style="width: 3rem;"></th>
@@ -329,12 +329,12 @@
                                         </td>
 
                                         <!-- Дата выполнения -->
-                                        <td>
+                                        <!-- <td>
                                             <span
                                                 class="brigade-lead-text">{{ $request->operator_name ?? 'Не указан' }}</span><br>
                                             <span
                                                 class="brigade-lead-text">{{ $request->request_date ? \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') : 'Не указана' }}</span>
-                                        </td>
+                                        </td> -->
 
                                         <!-- Состав бригады -->
                                         <td>
@@ -495,15 +495,14 @@
                                 </div>
                             </div>
 
-                            <div id="brigadeInfo" class="mt-4"> 
-                                Lorem ipsum dolor sit amet consectetur adipisicing elit. Adipisci ex quod at assumenda consequatur aliquam omnis esse quis dolorum, ipsum, vitae, corrupti nisi magni tempore autem? Voluptas quidem incidunt doloribus?
-                            <!-- Здесь будет отображаться информация о бригадах за выбранный дату -->
-                            </div> 
-
                             <div class="mt-4">
                                 <button type="button" id="createBrigadeBtn" data-info-handler="handlerCreateBrigade()[handler.js]" class="btn btn-primary">Создать бригаду
                                 </button>
                             </div>
+
+                            <div id="brigadeInfo" class="mt-4"> 
+                            <!-- Здесь будет отображаться информация о бригадах за выбранный дату -->
+                            </div> 
                         </form>
 
                     </div>
