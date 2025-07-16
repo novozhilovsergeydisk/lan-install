@@ -406,14 +406,14 @@
                                                             class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                                         Закрыть заявку
                                                     </button>
-                                                    <button type="button"
+                                                    <!-- <button type="button"
                                                             id="btn-comment"
                                                             class="btn btn-sm btn-outline-primary p-1 comment-btn"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#commentsModal"
                                                             data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-chat-left-text me-1"></i>Комментарий
-                                                    </button>
+                                                    </button> -->
                                                 @endif
                                                 <button data-request-id="{{ $request->id }}" type="button"
                                                         class="btn btn-sm btn-outline-success add-photo-btn"

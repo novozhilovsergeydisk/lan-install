@@ -1,37 +1,70 @@
 diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index 8bede66..ab3f0ec 100644
+index ab3f0ec..2d04c34 100644
 --- a/public/js/form-handlers.js
 +++ b/public/js/form-handlers.js
-@@ -454,6 +454,19 @@ function addRequestToTable(result) {
-                     <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
-                     ${extractedComment}
-                 </div>
-+                <div class="mt-1">
-+                    <button type="button"
-+                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
-+                            data-bs-toggle="modal"
-+                            data-bs-target="#commentsModal"
-+                            data-request-id="${requestData.id}"
-+                            style="position: relative; z-index: 1;">
-+                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
-+                        <span class="badge bg-primary rounded-pill ms-1">
-+                            1
-+                        </span>
-+                    </button>
-+                </div>
-             ` : ''}
-         </td>
-         <td>
+@@ -498,11 +498,11 @@ function addRequestToTable(result) {
+                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                     Закрыть заявку
+                 </button>
+-                <button type="button" class="btn btn-sm btn-outline-primary p-1 comment-btn" 
+-                        data-bs-toggle="modal" data-bs-target="#commentsModal" 
+-                        data-request-id="${requestData.id}">
+-                    <i class="bi bi-chat-left-text me-1"></i>Комментарий
+-                </button>
++                // <button type="button" class="btn btn-sm btn-outline-primary p-1 comment-btn" 
++                //         data-bs-toggle="modal" data-bs-target="#commentsModal" 
++                //         data-request-id="${requestData.id}">
++                //     <i class="bi bi-chat-left-text me-1"></i>Комментарий
++                // </button>
+                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
+                     <i class="bi bi-camera me-1"></i>Фотоотчет
+                 </button>
+diff --git a/public/js/handler.js b/public/js/handler.js
+index 624b917..8136937 100644
+--- a/public/js/handler.js
++++ b/public/js/handler.js
+@@ -340,9 +340,6 @@ function applyFilters() {
+                                             Закрыть заявку
+                                         </button>
+                                     ` : ''}
+-                                    <button type="button" class="btn btn-sm btn-outline-primary p-1 comment-btn" data-bs-toggle="modal" data-bs-target="#commentsModal" data-request-id="${request.id}">
+-                                        <i class="bi bi-chat-left-text me-1"></i>Комментарий
+-                                    </button>
+                                     <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
+                                         <i class="bi bi-camera me-1"></i>Фотоотчет
+                                     </button>
+@@ -1756,12 +1753,7 @@ function handleCancelRequest(button) {
+                     const buttonsContainer = row.querySelector('.btn-group');
+                     if (buttonsContainer) {
+                         buttonsContainer.innerHTML = `
+-                            <button type="button" class="btn btn-sm btn-outline-primary comment-btn" 
+-                                    data-bs-toggle="modal" 
+-                                    data-bs-target="#commentsModal" 
+-                                    data-request-id="${requestId}">
+-                                <i class="bi bi-chat-left-text me-1"></i>Комментарий
+-                            </button>
++                        
+                         `;
+                     }
+                 }
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index c9b1915..2eab400 100644
+index 2eab400..19a957a 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -310,7 +310,7 @@ class="@if(isset($request->status_name) && $request->status_name !== 'выпол
-                                                     @endif
-                                                 </div>
-                                             @endif
--                                            @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 1)
-+                                            @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) >= 1)
-                                                 <div class="mt-1">
-                                                     <button type="button"
-                                                             class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+@@ -406,14 +406,14 @@ class="btn btn-sm btn-outline-danger cancel-request-btn p-1"
+                                                             class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                                                         Закрыть заявку
+                                                     </button>
+-                                                    <button type="button"
++                                                    <!-- <button type="button"
+                                                             id="btn-comment"
+                                                             class="btn btn-sm btn-outline-primary p-1 comment-btn"
+                                                             data-bs-toggle="modal"
+                                                             data-bs-target="#commentsModal"
+                                                             data-request-id="{{ $request->id }}">
+                                                         <i class="bi bi-chat-left-text me-1"></i>Комментарий
+-                                                    </button>
++                                                    </button> -->
+                                                 @endif
+                                                 <button data-request-id="{{ $request->id }}" type="button"
+                                                         class="btn btn-sm btn-outline-success add-photo-btn"
