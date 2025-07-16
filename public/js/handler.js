@@ -3196,46 +3196,13 @@ function handlerCreateBrigade() {
                                     
                                     if (membersArray && membersArray.length > 0) {
                                         const membersTable = document.createElement('table');
-                                        membersTable.className = 'table table-sm table-striped';
+                                        membersTable.className = 'table table-hover users-table mb-0';
                                         // Проверяем, добавлен ли уже стиль для заголовков таблицы
                                         if (!document.getElementById('brigade-table-dark-theme-style')) {
                                             const style = document.createElement('style');
                                             style.id = 'brigade-table-dark-theme-style';
-                                            style.textContent = `
-                                                /* Стили для темной темы */
-                                                @media (prefers-color-scheme: dark) {
-                                                    .brigade-info-container th,
-                                                    .brigade-info-container td {
-                                                        color: #ffffff !important;
-                                                    }
-                                                    .brigade-info-container .table-striped > tbody > tr:nth-of-type(odd) > * {
-                                                        color: #f0f0f0 !important;
-                                                    }
-                                                }
-                                                
-                                                /* Стили для светлой темы */
-                                                .brigade-info-container .table {
-                                                    color: #000000 !important;
-                                                    border: 1px solid #000000 !important;
-                                                }
-                                                .brigade-info-container .table thead th {
-                                                    background-color:rgb(95, 80, 80) !important;
-                                                    color:rgb(246, 234, 234) !important;
-                                                    border-bottom: 2px solid #000000 !important;
-                                                    font-weight: bold !important;
-                                                }
-                                                .brigade-info-container .table-striped > tbody > tr:nth-of-type(odd) > * {
-                                                    background-color:rgb(118, 112, 112) !important;
-                                                    color:rgb(222, 205, 205) !important;
-                                                }
-                                                .brigade-info-container .table-striped > tbody > tr:nth-of-type(even) > * {
-                                                    background-color:rgb(140, 134, 134) !important;
-                                                    color:rgb(245, 232, 232) !important;
-                                                }
-                                                .brigade-info-container .table td, .brigade-info-container .table th {
-                                                    padding: 0.5rem !important;
-                                                    border: 1px solid #000000 !important;
-                                                }
+                                            style.textContent_ = `
+      
                                             `;
                                             document.head.appendChild(style);
                                         }
