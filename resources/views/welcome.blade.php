@@ -243,7 +243,7 @@
                                     <th style="width: 10rem;">Адрес/Телефон</th>
                                     <th style="width: 30rem;">Комментарий</th>
                                     <th style="width: 15rem;">Оператор / Дата создания</th>
-                                    <th style="width: 10rem;">Бригада</th>
+                                    <th style="width: 20rem;">Бригада</th>
                                     <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
                                     <th style="width: 3rem;"></th>
                                 </tr>
@@ -347,14 +347,17 @@
                                                     <div class="" style="font-size: 0.75rem; line-height: 1.2;">
                                                         @php
                                                             $leaderName = $brigadeMembers->first()->employee_leader_name;
+                                                            $brigadeName = $brigadeMembers->first()->brigade_name;
                                                         @endphp
+
                                                         @if($leaderName)
-                                                            <div><strong>{{ shortenName($leaderName) }}</strong></div>
+                                                            <div class="mb-1"><i>{{ $brigadeName }}</i></div>
+                                                            <div><strong>{{ shortenName($leaderName) }}</strong>
+                                                            @foreach($brigadeMembers as $member)
+                                                                , {{ shortenName($member->employee_name) }}
+                                                            @endforeach
+                                                            </div>
                                                         @endif
-                                                        
-                                                        @foreach($brigadeMembers as $member)
-                                                            <div>{{ shortenName($member->employee_name) }}</div>
-                                                        @endforeach
                                                     </div>
                                                 @endif
 

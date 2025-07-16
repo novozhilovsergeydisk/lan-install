@@ -189,7 +189,10 @@ function applyFilters() {
                                 // Проверяем, есть ли у нас данные о бригадире
                                 if (request.brigade_leader_name) {
                                     // Выводим бригадира отдельно и выделенным
-                                    leaderHtml = `<div><strong>${shortenName(request.brigade_leader_name)}</strong></div>`;
+                                    leaderHtml = `
+                                        <div class="mb-1"><i>${request.brigade_name}</i></div>
+                                        <div><strong>${shortenName(request.brigade_leader_name)}</strong></div>
+                                    `;
                                 } else if (request.brigade_lead) {
                                     // Запасной вариант, если поле brigade_leader_name отсутствует
                                     leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong></div>`;
@@ -199,7 +202,10 @@ function applyFilters() {
                                 membersHtml = request.brigade_members
                                     .map(member => {
                                         const memberName = member.name || member;
-                                        return `<div>${shortenName(memberName)}</div>`;
+                                        return 
+                                        `
+                                            <div>${shortenName(memberName)}</div>                                        
+                                        `;
                                     })
                                     .join('');
                                 

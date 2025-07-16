@@ -317,6 +317,8 @@ class HomeController extends Controller
             LEFT JOIN employees el ON b.leader_id = el.id'
         );
 
+        // dd($brigadeMembersWithDetails);`
+
         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
 
         // Выводим содержимое для отладки
