@@ -454,6 +454,19 @@ function addRequestToTable(result) {
                     <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
                     ${extractedComment}
                 </div>
+                <div class="mt-1">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                            data-bs-toggle="modal"
+                            data-bs-target="#commentsModal"
+                            data-request-id="${requestData.id}"
+                            style="position: relative; z-index: 1;">
+                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                        <span class="badge bg-primary rounded-pill ms-1">
+                            1
+                        </span>
+                    </button>
+                </div>
             ` : ''}
         </td>
         <td>

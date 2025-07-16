@@ -1,43 +1,37 @@
-diff --git a/public/js/handler.js b/public/js/handler.js
-index 22979a7..ca9d8ef 100644
---- a/public/js/handler.js
-+++ b/public/js/handler.js
-@@ -162,11 +162,11 @@ function applyFilters() {
-                             let brigadeMembers = 'Не назначена';
-                             
-                             // Дебаг - выводим структуру объекта request
--                            console.log('Request object:', request);
--                            console.log('Brigade members:', request.brigade_members);
--                            console.log('Brigade leader name:', request.brigade_leader_name);
--                            console.log('Brigade lead:', request.brigade_lead);
--                            console.log('Employee leader name:', request.employee_leader_name);
-+                            // console.log('Request object:', request);
-+                            // console.log('Brigade members:', request.brigade_members);
-+                            // console.log('Brigade leader name:', request.brigade_leader_name);
-+                            // console.log('Brigade lead:', request.brigade_lead);
-+                            // console.log('Employee leader name:', request.employee_leader_name);
-                             
-                             if (request.brigade_members && request.brigade_members.length > 0) {
-                                 // Функция для сокращения ФИО до фамилии и первой буквы имени
-@@ -209,7 +209,7 @@ function applyFilters() {
-                                 // Добавляем ссылку "подробнее..."
-                                 brigadeMembers += `
-                                 <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
--                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
-+                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2; display: inline-block; margin-top: 10px;"
-                                    onmouseover="this.style.textDecoration='underline'"
-                                    onmouseout="this.style.textDecoration='none'"
-                                    data-bs-toggle="modal"
+diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
+index 8bede66..ab3f0ec 100644
+--- a/public/js/form-handlers.js
++++ b/public/js/form-handlers.js
+@@ -454,6 +454,19 @@ function addRequestToTable(result) {
+                     <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
+                     ${extractedComment}
+                 </div>
++                <div class="mt-1">
++                    <button type="button"
++                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
++                            data-bs-toggle="modal"
++                            data-bs-target="#commentsModal"
++                            data-request-id="${requestData.id}"
++                            style="position: relative; z-index: 1;">
++                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
++                        <span class="badge bg-primary rounded-pill ms-1">
++                            1
++                        </span>
++                    </button>
++                </div>
+             ` : ''}
+         </td>
+         <td>
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index 24e2c31..f6ad2be 100644
+index c9b1915..2eab400 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -344,7 +344,7 @@ class="brigade-lead-text">{{ $request->request_date ? \Carbon\Carbon::parse($req
-                                                 @endphp
- 
-                                                 @if($brigadeMembers->isNotEmpty())
--                                                    <div class="mb-2" style="font-size: 0.75rem; line-height: 1.2;">
-+                                                    <div class="" style="font-size: 0.75rem; line-height: 1.2;">
-                                                         @php
-                                                             $leaderName = $brigadeMembers->first()->employee_leader_name;
-                                                         @endphp
+@@ -310,7 +310,7 @@ class="@if(isset($request->status_name) && $request->status_name !== 'выпол
+                                                     @endif
+                                                 </div>
+                                             @endif
+-                                            @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 1)
++                                            @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) >= 1)
+                                                 <div class="mt-1">
+                                                     <button type="button"
+                                                             class="btn btn-sm btn-outline-secondary view-comments-btn p-1"

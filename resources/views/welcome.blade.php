@@ -310,7 +310,7 @@
                                                     @endif
                                                 </div>
                                             @endif
-                                            @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 1)
+                                            @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) >= 1)
                                                 <div class="mt-1">
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
