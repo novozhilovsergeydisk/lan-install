@@ -238,11 +238,10 @@
                                 <thead class="bg-dark">
                                 <tr>
                                     <th style="width: 1rem;"></th>
-                                    <!-- <th style="width: 1rem;"></th> -->
                                     <th style="width: 10rem;">Дата исполнения</th>
                                     <th style="width: 10rem;">Адрес/Телефон</th>
                                     <th style="width: 30rem;">Комментарий</th>
-                                    <th style="width: 15rem;">Оператор / Дата создания</th>
+                                    <th style="width: 12rem;">Оператор / Дата создания</th>
                                     <th style="width: 20rem;">Бригада</th>
                                     <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
                                     <th style="width: 3rem;"></th>
@@ -259,21 +258,22 @@
                                         data-request-id="{{ $request->id }}">
                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
 
-                                        <!-- <td class="text-center" style="width: 1rem;">
-                                            @if($request->status_name !== 'выполнена')
-                                                <input type="checkbox" id="request-{{ $request->id }}"
-                                                       class="form-check-input request-checkbox"
-                                                       value="{{ $request->id }}" aria-label="Выбрать заявку">
-                                            @endif
-                                        </td> -->
                                         <!-- Дата и номер заявки -->
                                         <td>
+                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_organization }}</div>
                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
-                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
                                         </td>
 
                                         <!-- Клиент -->
                                         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                            @if(!empty($request->client_organization))
+                                                <small class="text-dark text-truncate d-block"
+                                                       data-bs-toggle="tooltip"
+                                                       title="{{ $request->client_organization }}">
+                                                    {{ $request->client_organization }}
+                                                </small>
+                                            @endif
+                                        
                                             @if(!empty($request->street))
                                                 <small class="text-dark text-truncate d-block"
                                                        data-bs-toggle="tooltip"
@@ -283,6 +283,13 @@
                                             @else
                                                 <small class="text-dark text-truncate d-block">Адрес не
                                                     указан</small>
+                                            @endif
+                                            @if(!empty($request->client_fio))
+                                                <small class="text-dark text-truncate d-block"
+                                                       data-bs-toggle="tooltip"
+                                                       title="{{ $request->client_fio }}">
+                                                    {{ $request->client_fio }}
+                                                </small>
                                             @endif
                                             <small
                                                 class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">

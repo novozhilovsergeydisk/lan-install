@@ -377,6 +377,7 @@ class HomeController extends Controller
                 r.*,
                 c.fio AS client_fio,
                 c.phone AS client_phone,
+                c.organization AS client_organization,
                 rs.name AS status_name,
                 rs.color AS status_color,
                 b.name AS brigade_name,

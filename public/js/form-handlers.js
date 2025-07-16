@@ -270,6 +270,7 @@ async function submitRequestForm() {
         _token: data._token,
         client_name: data.client_name || '',
         client_phone: data.client_phone || '',
+        client_organization: data.client_organization || '',
         request_type_id: data.request_type_id,
         status_id: data.status_id,
         comment: data.comment || '',
@@ -278,7 +279,6 @@ async function submitRequestForm() {
         brigade_id: data.brigade_id || null,
         operator_id: data.operator_id || null,
         address_id: addressId,
-        organization: data.client_organization || null,
     };
 
     // Логируем данные перед отправкой

@@ -1,77 +1,94 @@
 diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index 45412ce..9ea6346 100644
+index 9ea6346..7d27984 100644
 --- a/app/Http/Controllers/HomeController.php
 +++ b/app/Http/Controllers/HomeController.php
-@@ -317,6 +317,8 @@ public function index()
-             LEFT JOIN employees el ON b.leader_id = el.id'
-         );
+@@ -377,6 +377,7 @@ public function index()
+                 r.*,
+                 c.fio AS client_fio,
+                 c.phone AS client_phone,
++                c.organization AS client_organization,
+                 rs.name AS status_name,
+                 rs.color AS status_color,
+                 b.name AS brigade_name,
+diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
+index 2d04c34..f6caf7c 100644
+--- a/public/js/form-handlers.js
++++ b/public/js/form-handlers.js
+@@ -270,6 +270,7 @@ async function submitRequestForm() {
+         _token: data._token,
+         client_name: data.client_name || '',
+         client_phone: data.client_phone || '',
++        client_organization: data.client_organization || '',
+         request_type_id: data.request_type_id,
+         status_id: data.status_id,
+         comment: data.comment || '',
+@@ -278,7 +279,6 @@ async function submitRequestForm() {
+         brigade_id: data.brigade_id || null,
+         operator_id: data.operator_id || null,
+         address_id: addressId,
+-        organization: data.client_organization || null,
+     };
  
-+        // dd($brigadeMembersWithDetails);`
-+
-         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
- 
-         // Выводим содержимое для отладки
-diff --git a/public/js/handler.js b/public/js/handler.js
-index 8136937..b5905da 100644
---- a/public/js/handler.js
-+++ b/public/js/handler.js
-@@ -189,7 +189,10 @@ function applyFilters() {
-                                 // Проверяем, есть ли у нас данные о бригадире
-                                 if (request.brigade_leader_name) {
-                                     // Выводим бригадира отдельно и выделенным
--                                    leaderHtml = `<div><strong>${shortenName(request.brigade_leader_name)}</strong></div>`;
-+                                    leaderHtml = `
-+                                        <div class="mb-1"><i>${request.brigade_name}</i></div>
-+                                        <div><strong>${shortenName(request.brigade_leader_name)}</strong></div>
-+                                    `;
-                                 } else if (request.brigade_lead) {
-                                     // Запасной вариант, если поле brigade_leader_name отсутствует
-                                     leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong></div>`;
-@@ -199,7 +202,10 @@ function applyFilters() {
-                                 membersHtml = request.brigade_members
-                                     .map(member => {
-                                         const memberName = member.name || member;
--                                        return `<div>${shortenName(memberName)}</div>`;
-+                                        return 
-+                                        `
-+                                            <div>${shortenName(memberName)}</div>                                        
-+                                        `;
-                                     })
-                                     .join('');
-                                 
+     // Логируем данные перед отправкой
 diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index 19a957a..8c3459c 100644
+index 132077f..3a30c3f 100644
 --- a/resources/views/welcome.blade.php
 +++ b/resources/views/welcome.blade.php
-@@ -243,7 +243,7 @@ class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
+@@ -238,11 +238,10 @@ class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
+                                 <thead class="bg-dark">
+                                 <tr>
+                                     <th style="width: 1rem;"></th>
+-                                    <!-- <th style="width: 1rem;"></th> -->
+                                     <th style="width: 10rem;">Дата исполнения</th>
                                      <th style="width: 10rem;">Адрес/Телефон</th>
                                      <th style="width: 30rem;">Комментарий</th>
-                                     <th style="width: 15rem;">Оператор / Дата создания</th>
--                                    <th style="width: 10rem;">Бригада</th>
-+                                    <th style="width: 20rem;">Бригада</th>
+-                                    <th style="width: 15rem;">Оператор / Дата создания</th>
++                                    <th style="width: 12rem;">Оператор / Дата создания</th>
+                                     <th style="width: 20rem;">Бригада</th>
                                      <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
                                      <th style="width: 3rem;"></th>
-                                 </tr>
-@@ -347,14 +347,17 @@ class="brigade-lead-text">{{ $request->request_date ? \Carbon\Carbon::parse($req
-                                                     <div class="" style="font-size: 0.75rem; line-height: 1.2;">
-                                                         @php
-                                                             $leaderName = $brigadeMembers->first()->employee_leader_name;
-+                                                            $brigadeName = $brigadeMembers->first()->brigade_name;
-                                                         @endphp
-+
-                                                         @if($leaderName)
--                                                            <div><strong>{{ shortenName($leaderName) }}</strong></div>
-+                                                            <div class="mb-1"><i>{{ $brigadeName }}</i></div>
-+                                                            <div><strong>{{ shortenName($leaderName) }}</strong>
-+                                                            @foreach($brigadeMembers as $member)
-+                                                                , {{ shortenName($member->employee_name) }}
-+                                                            @endforeach
-+                                                            </div>
-                                                         @endif
--                                                        
--                                                        @foreach($brigadeMembers as $member)
--                                                            <div>{{ shortenName($member->employee_name) }}</div>
--                                                        @endforeach
-                                                     </div>
-                                                 @endif
+@@ -259,21 +258,22 @@ class="d-flex align-items-center rounded-3 bg-gray-200 dark:bg-gray-700">
+                                         data-request-id="{{ $request->id }}">
+                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
  
+-                                        <!-- <td class="text-center" style="width: 1rem;">
+-                                            @if($request->status_name !== 'выполнена')
+-                                                <input type="checkbox" id="request-{{ $request->id }}"
+-                                                       class="form-check-input request-checkbox"
+-                                                       value="{{ $request->id }}" aria-label="Выбрать заявку">
+-                                            @endif
+-                                        </td> -->
+                                         <!-- Дата и номер заявки -->
+                                         <td>
++                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_organization }}</div>
+                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
+-                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
+                                         </td>
+ 
+                                         <!-- Клиент -->
+                                         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
++                                            @if(!empty($request->client_organization))
++                                                <small class="text-dark text-truncate d-block"
++                                                       data-bs-toggle="tooltip"
++                                                       title="{{ $request->client_organization }}">
++                                                    {{ $request->client_organization }}
++                                                </small>
++                                            @endif
++                                        
+                                             @if(!empty($request->street))
+                                                 <small class="text-dark text-truncate d-block"
+                                                        data-bs-toggle="tooltip"
+@@ -284,6 +284,13 @@ class="form-check-input request-checkbox"
+                                                 <small class="text-dark text-truncate d-block">Адрес не
+                                                     указан</small>
+                                             @endif
++                                            @if(!empty($request->client_fio))
++                                                <small class="text-dark text-truncate d-block"
++                                                       data-bs-toggle="tooltip"
++                                                       title="{{ $request->client_fio }}">
++                                                    {{ $request->client_fio }}
++                                                </small>
++                                            @endif
+                                             <small
+                                                 class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
+                                                 {{ $request->client_phone ?? 'Нет телефона' }}
