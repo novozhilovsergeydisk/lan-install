@@ -451,11 +451,6 @@ function applyFilters() {
                             </td>
 
                             <td>
-                                <span class="brigade-lead-text">${request.operator_name || 'Не указан'}</span><br>
-                                <span class="brigade-lead-text">${formattedDate}</span>
-                            </td>
-
-                            <td>
                                 <div style="font-size: 0.75rem; line-height: 1.2;">
                                     ${brigadeMembers}
                                 </div>
