@@ -495,6 +495,7 @@
                             </div>
 
                             <div id="brigadeInfo" class="mt-4"> 
+                                Lorem ipsum dolor sit amet consectetur adipisicing elit. Adipisci ex quod at assumenda consequatur aliquam omnis esse quis dolorum, ipsum, vitae, corrupti nisi magni tempore autem? Voluptas quidem incidunt doloribus?
                             <!-- Здесь будет отображаться информация о бригадах за выбранный дату -->
                             </div> 
 
