@@ -1,44 +1,102 @@
+diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
+index 7d27984..948ba8c 100644
+--- a/app/Http/Controllers/HomeController.php
++++ b/app/Http/Controllers/HomeController.php
+@@ -655,12 +655,43 @@ public function getRequestsByDate($date)
+             //     ], 200);
+             // }
+ 
++            $sql_requestsByDate = "
++                SELECT
++                    r.*,
++                    c.fio AS client_fio,
++                    c.phone AS client_phone,
++                    c.organization AS client_organization,
++                    rs.name AS status_name,
++                    rs.color AS status_color,
++                    b.name AS brigade_name,
++                    b.id AS brigade_id,
++                    e.fio AS brigade_lead,
++                    op.fio AS operator_name,
++                    CONCAT(addr.street, ', д. ', addr.houses) as address,
++                    addr.street,
++                    addr.houses,
++                    addr.district,
++                    addr.city_id,
++                    (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count
++                FROM requests r
++                LEFT JOIN clients c ON r.client_id = c.id
++                LEFT JOIN request_statuses rs ON r.status_id = rs.id
++                LEFT JOIN brigades b ON r.brigade_id = b.id
++                LEFT JOIN employees e ON b.leader_id = e.id
++                LEFT JOIN employees op ON r.operator_id = op.id
++                LEFT JOIN request_addresses ra ON r.id = ra.request_id
++                LEFT JOIN addresses addr ON ra.address_id = addr.id
++                WHERE DATE(r.execution_date) = '" . $requestDate . "'
++                ORDER BY r.id DESC
++            ";
++
+             // Получаем заявки с основной информацией
+             $requestByDate = DB::select("
+                 SELECT
+                     r.*,
+                     c.fio AS client_fio,
+                     c.phone AS client_phone,
++                    c.organization AS client_organization,
+                     rs.name AS status_name,
+                     rs.color AS status_color,
+                     b.name AS brigade_name,
+diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
+index 7f10488..891f2d8 100644
+--- a/public/js/form-handlers.js
++++ b/public/js/form-handlers.js
+@@ -370,6 +370,7 @@ function addRequestToTable(result) {
+     
+     const requestData = result.data.request;
+     const clientData = result.data.client || {};
++    const clientOrganization = clientData.organization || '';
+     const addressData = result.data.address || {};
+     const commentData = result.data.comment || {};
+     
+@@ -438,6 +439,7 @@ function addRequestToTable(result) {
+             <div class="text-dark" style="font-size: 0.8rem;">${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>
+         </td>
+         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
++            <div class="text-dark"style="font-size: 0.8rem;">${clientOrganization}</div>
+             <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
+                 ${addressText}
+             </small>
 diff --git a/public/js/handler.js b/public/js/handler.js
-index 6656873..803f813 100644
+index 803f813..d54e94c 100644
 --- a/public/js/handler.js
 +++ b/public/js/handler.js
-@@ -305,6 +305,8 @@ function applyFilters() {
-                             // console.log('Brigade leader name:', request.brigade_leader_name);
+@@ -306,7 +306,7 @@ function applyFilters() {
                              // console.log('Brigade lead:', request.brigade_lead);
                              // console.log('Employee leader name:', request.employee_leader_name);
-+
-+                            console.log(request.brigade_members);
+ 
+-                            console.log(request.brigade_members);
++                            // console.log(request.brigade_members);
                              
                              if (request.brigade_members && request.brigade_members.length > 0) {
                                  // Функция для сокращения ФИО до фамилии и первой буквы имени
-@@ -329,26 +331,23 @@ function applyFilters() {
-                                     // Выводим бригадира отдельно и выделенным
-                                     leaderHtml = `
-                                         <div class="mb-1"><i>${request.brigade_name}</i></div>
--                                        <div><strong>${shortenName(request.brigade_leader_name)}</strong></div>
-+                                        <div><strong>${shortenName(request.brigade_leader_name)}</strong>
-                                     `;
-                                 } else if (request.brigade_lead) {
-                                     // Запасной вариант, если поле brigade_leader_name отсутствует
--                                    leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong></div>`;
-+                                    leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong>`;
-                                 }
-                                 
-                                 // Формируем список обычных сотрудников
-                                 membersHtml = request.brigade_members
-                                     .map(member => {
-                                         const memberName = member.name || member;
--                                        return 
--                                        `
--                                            <div>${shortenName(memberName)}</div>                                        
--                                        `;
-+                                        return `, ${shortenName(memberName)}`;
-                                     })
-                                     .join('');
-                                 
-                                 // Объединяем бригадира и сотрудников
--                                brigadeMembers = leaderHtml + membersHtml;
-+                                brigadeMembers = leaderHtml + membersHtml + '</div>';
+@@ -376,6 +376,8 @@ function applyFilters() {
  
-                                 // Добавляем ссылку "подробнее..."
-                                 brigadeMembers += `
+                             // Добавляем счетчик для нумерации строк (начинаем с 1)
+                             const rowNumber = index + 1;
++
++                            console.log({ request });
+                             
+                             row.innerHTML = `
+                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
+@@ -386,9 +388,11 @@ function applyFilters() {
+                             </td>
+ 
+                             <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
++                                <div class="text-dark"style="font-size: 0.8rem;">${request.client_organization}</div>
+                                 <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
+                                     ${request.address || address}
+                                 </small>
++                                <div class="text-dark"style="font-size: 0.8rem;">${request.client_fio}</div>
+                                 <small class="text-success_ fw-bold_ text-truncate d-block">
+                                     ${request.phone || request.client_phone || ''}
+                                 </small>

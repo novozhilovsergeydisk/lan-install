@@ -370,6 +370,7 @@ function addRequestToTable(result) {
     
     const requestData = result.data.request;
     const clientData = result.data.client || {};
+    const clientOrganization = clientData.organization || '';
     const addressData = result.data.address || {};
     const commentData = result.data.comment || {};
     
@@ -438,6 +439,7 @@ function addRequestToTable(result) {
             <div class="text-dark" style="font-size: 0.8rem;">${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>
         </td>
         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+            <div class="text-dark"style="font-size: 0.8rem;">${clientOrganization}</div>
             <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
                 ${addressText}
             </small>

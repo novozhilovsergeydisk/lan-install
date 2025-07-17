@@ -306,7 +306,7 @@ function applyFilters() {
                             // console.log('Brigade lead:', request.brigade_lead);
                             // console.log('Employee leader name:', request.employee_leader_name);
 
-                            console.log(request.brigade_members);
+                            // console.log(request.brigade_members);
                             
                             if (request.brigade_members && request.brigade_members.length > 0) {
                                 // Функция для сокращения ФИО до фамилии и первой буквы имени
@@ -376,6 +376,8 @@ function applyFilters() {
 
                             // Добавляем счетчик для нумерации строк (начинаем с 1)
                             const rowNumber = index + 1;
+
+                            console.log({ request });
                             
                             row.innerHTML = `
                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
@@ -386,9 +388,11 @@ function applyFilters() {
                             </td>
 
                             <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                <div class="text-dark"style="font-size: 0.8rem;">${request.client_organization}</div>
                                 <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
                                     ${request.address || address}
                                 </small>
+                                <div class="text-dark"style="font-size: 0.8rem;">${request.client_fio}</div>
                                 <small class="text-success_ fw-bold_ text-truncate d-block">
                                     ${request.phone || request.client_phone || ''}
                                 </small>
