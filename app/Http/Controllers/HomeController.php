@@ -1441,6 +1441,7 @@ class HomeController extends Controller
                     r.*,
                     c.fio AS client_fio,
                     c.phone AS client_phone,
+                    c.organization AS client_organization,
                     rs.name AS status_name,
                     rs.color AS status_color,
                     b.name AS brigade_name,
@@ -1449,7 +1450,9 @@ class HomeController extends Controller
                     addr.street,
                     addr.houses,
                     addr.district,
-                    addr.city_id
+                    addr.city_id,
+                    ct.name AS city_name,
+                    ct.postal_code AS city_postal_code
                 FROM requests r
                 LEFT JOIN clients c ON r.client_id = c.id
                 LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1458,8 +1461,14 @@ class HomeController extends Controller
                 LEFT JOIN employees op ON r.operator_id = op.id
                 LEFT JOIN request_addresses ra ON r.id = ra.request_id
                 LEFT JOIN addresses addr ON ra.address_id = addr.id
+                LEFT JOIN cities ct ON addr.city_id = ct.id
                 WHERE r.id = ' . $requestId . '
             ');
+
+            // Преобразуем результат запроса в объект, если это массив
+            if (is_array($requestById) && !empty($requestById)) {
+                $requestById = (object)$requestById[0];
+            }
 
             // Формируем ответ
             $response = [
@@ -1478,14 +1487,17 @@ class HomeController extends Controller
                     ],
                     'client' => $clientId ? [
                         'id' => $clientId,
-                        'name' => $fio,
+                        'fio' => $fio,
                         'phone' => $phone,
+                        'organization' => $organization,
                         'is_new' => !$isExistingClient,
                         'state' => $clientState
                     ] : null,
                     'address' => [
                         'id' => $address->id,
                         'city_id' => $address->city_id,
+                        'city_name' => isset($requestById->city_name) ? $requestById->city_name : null,
+                        'city_postal_code' => isset($requestById->city_postal_code) ? $requestById->city_postal_code : null,
                         'street' => $address->street,
                         'house' => $address->houses,
                         'district' => $address->district,

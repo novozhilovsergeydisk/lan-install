@@ -278,16 +278,15 @@
                                                 <small class="text-dark text-truncate d-block"
                                                        data-bs-toggle="tooltip"
                                                        title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
-                                                       {{ $request->city_name }}, ул. {{ $request->street }}, д. {{ $request->houses }}
+                                                       <strong>{{ $request->city_name }}</strong>, ул. {{ $request->street }}, д. {{ $request->houses }}
                                                 </small>
                                             @else
-                                                <small class="text-dark text-truncate d-block">Адрес не
-                                                    указан</small>
+                                                <small class="text-dark text-truncate d-block">Адрес не указан</small>
                                             @endif
-                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_fio }}</div>
-                                            <small
+                                            <div class="text-dark" style="font-size: 0.8rem;"><i>{{ $request->client_fio }}</i></div>
+                                            <small style="font-size: 0.8rem;"
                                                 class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
-                                                {{ $request->client_phone ?? 'Нет телефона' }}
+                                                    <i>{{ $request->client_phone ?? 'Нет телефона' }}</i>
                                             </small>                              
                                         </td>
 

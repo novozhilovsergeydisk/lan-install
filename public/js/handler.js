@@ -391,11 +391,11 @@ function applyFilters() {
                             <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
                                 <div class="text-dark"style="font-size: 0.8rem;">${request.client_organization}</div>
                                 <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
-                                    ${request.city_name}, ул. ${request.address || address}
+                                    <strong>${request.city_name}</strong>, ул. ${request.address || address}
                                 </small>
-                                <div class="text-dark"style="font-size: 0.8rem;">${request.client_fio}</div>
+                                <div class="text-dark"style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>
                                 <small class="text-success_ fw-bold_ text-truncate d-block">
-                                    ${request.phone || request.client_phone || ''}
+                                    <i>${request.phone || request.client_phone || ''}</i>
                                 </small>
                             </td>
 

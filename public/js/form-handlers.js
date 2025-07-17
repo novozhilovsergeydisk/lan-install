@@ -442,10 +442,11 @@ function addRequestToTable(result) {
         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
             <div class="text-dark"style="font-size: 0.8rem;">${clientOrganization}</div>
             <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
-            ${addressData.city_name ? addressData.city_name + ', ' : ''}${addressText}
+            <strong>${addressData.city_name}</strong>, ул. ${addressText}
             </small>
+            <div class="text-dark"style="font-size: 0.8rem;"><i>${clientData.fio || requestData.client_fio}</i></div>
             <small class="text-truncate d-block">
-                ${clientData.phone || requestData.client_phone || 'Нет телефона'}
+                <i>${clientData.phone || requestData.client_phone || 'Нет телефона'}</i>
             </small>
         </td>
         <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
