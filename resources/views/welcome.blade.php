@@ -278,7 +278,7 @@
                                                 <small class="text-dark text-truncate d-block"
                                                        data-bs-toggle="tooltip"
                                                        title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
-                                                       <strong>{{ $request->city_name }}</strong>, ул. {{ $request->street }}, д. {{ $request->houses }}
+                                                       @if($request->city_name && $request->city_name !== 'Москва')<strong>{{ $request->city_name }}</strong>, @endif ул. {{ $request->street }}, д. {{ $request->houses }}
                                                 </small>
                                             @else
                                                 <small class="text-dark text-truncate d-block">Адрес не указан</small>
