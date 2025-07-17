@@ -305,6 +305,8 @@ function applyFilters() {
                             // console.log('Brigade leader name:', request.brigade_leader_name);
                             // console.log('Brigade lead:', request.brigade_lead);
                             // console.log('Employee leader name:', request.employee_leader_name);
+
+                            console.log(request.brigade_members);
                             
                             if (request.brigade_members && request.brigade_members.length > 0) {
                                 // Функция для сокращения ФИО до фамилии и первой буквы имени
@@ -329,26 +331,23 @@ function applyFilters() {
                                     // Выводим бригадира отдельно и выделенным
                                     leaderHtml = `
                                         <div class="mb-1"><i>${request.brigade_name}</i></div>
-                                        <div><strong>${shortenName(request.brigade_leader_name)}</strong></div>
+                                        <div><strong>${shortenName(request.brigade_leader_name)}</strong>
                                     `;
                                 } else if (request.brigade_lead) {
                                     // Запасной вариант, если поле brigade_leader_name отсутствует
-                                    leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong></div>`;
+                                    leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong>`;
                                 }
                                 
                                 // Формируем список обычных сотрудников
                                 membersHtml = request.brigade_members
                                     .map(member => {
                                         const memberName = member.name || member;
-                                        return 
-                                        `
-                                            <div>${shortenName(memberName)}</div>                                        
-                                        `;
+                                        return `, ${shortenName(memberName)}`;
                                     })
                                     .join('');
                                 
                                 // Объединяем бригадира и сотрудников
-                                brigadeMembers = leaderHtml + membersHtml;
+                                brigadeMembers = leaderHtml + membersHtml + '</div>';
 
                                 // Добавляем ссылку "подробнее..."
                                 brigadeMembers += `

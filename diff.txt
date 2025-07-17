@@ -1,28 +1,44 @@
-diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index f6caf7c..7f10488 100644
---- a/public/js/form-handlers.js
-+++ b/public/js/form-handlers.js
-@@ -469,10 +469,6 @@ function addRequestToTable(result) {
-                 </div>
-             ` : ''}
-         </td>
--        <td>
--            <span class="brigade-lead-text">${requestData.operator_name || 'Не указан'}</span><br>
--            <span class="brigade-lead-text">${requestData.request_date ? new Date(requestData.request_date).toLocaleDateString('ru-RU') : formattedDate}</span>
--        </td>
-         <td>
-             <div style="font-size: 0.75rem; line-height: 1.2;">
-                 Не назначена
-@@ -498,11 +494,7 @@ function addRequestToTable(result) {
-                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                     Закрыть заявку
-                 </button>
--                // <button type="button" class="btn btn-sm btn-outline-primary p-1 comment-btn" 
--                //         data-bs-toggle="modal" data-bs-target="#commentsModal" 
--                //         data-request-id="${requestData.id}">
--                //     <i class="bi bi-chat-left-text me-1"></i>Комментарий
--                // </button>
+diff --git a/public/js/handler.js b/public/js/handler.js
+index 6656873..803f813 100644
+--- a/public/js/handler.js
++++ b/public/js/handler.js
+@@ -305,6 +305,8 @@ function applyFilters() {
+                             // console.log('Brigade leader name:', request.brigade_leader_name);
+                             // console.log('Brigade lead:', request.brigade_lead);
+                             // console.log('Employee leader name:', request.employee_leader_name);
 +
-                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
-                     <i class="bi bi-camera me-1"></i>Фотоотчет
-                 </button>
++                            console.log(request.brigade_members);
+                             
+                             if (request.brigade_members && request.brigade_members.length > 0) {
+                                 // Функция для сокращения ФИО до фамилии и первой буквы имени
+@@ -329,26 +331,23 @@ function applyFilters() {
+                                     // Выводим бригадира отдельно и выделенным
+                                     leaderHtml = `
+                                         <div class="mb-1"><i>${request.brigade_name}</i></div>
+-                                        <div><strong>${shortenName(request.brigade_leader_name)}</strong></div>
++                                        <div><strong>${shortenName(request.brigade_leader_name)}</strong>
+                                     `;
+                                 } else if (request.brigade_lead) {
+                                     // Запасной вариант, если поле brigade_leader_name отсутствует
+-                                    leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong></div>`;
++                                    leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong>`;
+                                 }
+                                 
+                                 // Формируем список обычных сотрудников
+                                 membersHtml = request.brigade_members
+                                     .map(member => {
+                                         const memberName = member.name || member;
+-                                        return 
+-                                        `
+-                                            <div>${shortenName(memberName)}</div>                                        
+-                                        `;
++                                        return `, ${shortenName(memberName)}`;
+                                     })
+                                     .join('');
+                                 
+                                 // Объединяем бригадира и сотрудников
+-                                brigadeMembers = leaderHtml + membersHtml;
++                                brigadeMembers = leaderHtml + membersHtml + '</div>';
+ 
+                                 // Добавляем ссылку "подробнее..."
+                                 brigadeMembers += `
