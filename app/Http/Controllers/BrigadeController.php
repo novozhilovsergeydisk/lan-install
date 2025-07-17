@@ -31,6 +31,7 @@ class BrigadeController extends Controller
                     'employees.phone as leader_phone',
                     'positions.name as leader_position'
                 )
+                ->where('brigades.is_deleted', false)
                 ->orderBy('brigades.name')
                 ->get();
                 

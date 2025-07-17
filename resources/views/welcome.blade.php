@@ -239,7 +239,7 @@
                                 <tr>
                                     <th style="width: 1rem;"></th>
                                     <th style="width: 10rem;">Дата исполнения</th>
-                                    <th style="width: 10rem;">Адрес/Телефон</th>
+                                    <th style="width: 15rem;">Адрес/Телефон</th>
                                     <th style="width: 30rem;">Комментарий</th>
                                     <!-- <th style="width: 12rem;">Оператор / Дата создания</th> -->
                                     <th style="width: 20rem;">Бригада</th>
@@ -278,7 +278,7 @@
                                                 <small class="text-dark text-truncate d-block"
                                                        data-bs-toggle="tooltip"
                                                        title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
-                                                    ул. {{ $request->street }}, д. {{ $request->houses }}
+                                                       {{ $request->city_name }}, ул. {{ $request->street }}, д. {{ $request->houses }}
                                                 </small>
                                             @else
                                                 <small class="text-dark text-truncate d-block">Адрес не

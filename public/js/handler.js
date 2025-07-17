@@ -387,10 +387,11 @@ function applyFilters() {
                                 <div class="text-dark" style="font-size: 0.8rem;">${requestNumber}</div>
                             </td>
 
+                            <!-- Клиент -->
                             <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
                                 <div class="text-dark"style="font-size: 0.8rem;">${request.client_organization}</div>
                                 <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
-                                    ${request.address || address}
+                                    ${request.city_name}, ул. ${request.address || address}
                                 </small>
                                 <div class="text-dark"style="font-size: 0.8rem;">${request.client_fio}</div>
                                 <small class="text-success_ fw-bold_ text-truncate d-block">
