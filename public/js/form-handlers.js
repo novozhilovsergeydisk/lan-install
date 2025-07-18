@@ -601,6 +601,48 @@ export function initFormHandlers() {
     if (submitBtn) {
         submitBtn.addEventListener('click', submitRequestForm);
     }
+    
+    // Инициализация поля даты исполнения
+    initExecutionDateField();
+    
+    // Добавляем обработчик события для модального окна создания заявки
+    const newRequestModal = document.getElementById('newRequestModal');
+    if (newRequestModal) {
+        newRequestModal.addEventListener('show.bs.modal', function() {
+            // При открытии модального окна обновляем минимальную дату
+            initExecutionDateField();
+        });
+    }
+}
+
+/**
+ * Инициализирует поле даты исполнения
+ * Устанавливает минимальную дату равной текущей
+ */
+function initExecutionDateField() {
+    const dateInput = document.getElementById('executionDate');
+    if (dateInput) {
+        // Получаем текущую дату в формате YYYY-MM-DD
+        // Используем локальное время пользователя для корректного определения текущей даты
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0'); // Месяцы начинаются с 0
+        const day = String(now.getDate()).padStart(2, '0');
+        const today = `${year}-${month}-${day}`;
+        
+        console.log('Текущая дата (локальное время):', today);
+        
+        // Устанавливаем минимальную дату
+        dateInput.min = today;
+        
+        // Если значение поля пустое или меньше текущей даты, устанавливаем текущую дату
+        if (!dateInput.value || dateInput.value < today) {
+            dateInput.value = today;
+            console.log('Установлена текущая дата:', today);
+        } else {
+            console.log('Сохранена существующая дата:', dateInput.value);
+        }
+    }
 }
 
 //************* Обработчики событий форм ************//
@@ -750,8 +792,36 @@ async function submitRequestForm() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
             modal.hide();
             
+            // Сохраняем текущую дату перед сбросом формы
+            const currentDate = document.getElementById('executionDate').value;
+            
             // Reset the form
             form.reset();
+            
+            // Восстанавливаем дату после сброса формы
+            const dateInput = document.getElementById('executionDate');
+            if (dateInput) {
+                // Получаем текущую дату в формате YYYY-MM-DD
+                // Используем локальное время пользователя
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const today = `${year}-${month}-${day}`;
+                
+                // Проверяем, что сохраненная дата не раньше текущей
+                if (currentDate >= today) {
+                    dateInput.value = currentDate;
+                    console.log('Восстановлена сохраненная дата:', currentDate);
+                } else {
+                    // Если дата раньше текущей, устанавливаем текущую дату
+                    dateInput.value = today;
+                    console.log('Установлена текущая дата:', today, 'т.к. сохраненная дата была раньше:', currentDate);
+                }
+                
+                // Обновляем атрибут min для предотвращения выбора прошедших дат
+                dateInput.min = today;
+            }
             
             // Dispatch event to notify other components about the new request
             const event = new CustomEvent('requestCreated', { detail: result.data });

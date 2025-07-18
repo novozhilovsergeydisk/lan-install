@@ -1366,6 +1366,7 @@
                                 <label for="executionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" id="executionDate" name="execution_date"
                                        required>
+                                <!-- min устанавливается динамически через JavaScript -->
                             </div>
                             <div class="col-md-6">
                                 <label for="executionTime" class="form-label">Время выполнения</label>
