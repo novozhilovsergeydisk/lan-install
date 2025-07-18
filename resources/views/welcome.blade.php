@@ -60,65 +60,7 @@
     <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">
 
     <style>
-        .custom-select-wrapper {
-            position: relative;
-            width: 100%;
-        }
-
-        .custom-select-input {
-            width: 100%;
-            padding: 8px 12px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            cursor: text;
-        }
-
-        .custom-select-options {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            margin-top: 4px;
-            background: white;
-            z-index: 1000;
-            display: none;
-        }
-
-        .custom-select-options li {
-            padding: 8px 12px;
-            cursor: pointer;
-        }
-
-        .custom-select-options li:hover {
-            background-color: #f0f0f0;
-        }
         
-        /* Стили для темной темы */
-        body.dark-mode .custom-select-input {
-            background-color: #333;
-            color: #fff;
-            border-color: #555;
-        }
-        
-        body.dark-mode .custom-select-options {
-            background-color: #333;
-            border-color: #555;
-            color: #fff;
-        }
-        
-        body.dark-mode .custom-select-options li {
-            color: #fff;
-        }
-        
-        body.dark-mode .custom-select-options li:hover {
-            background-color: #444;
-        }
     </style>
 
     <!-- Проверка загрузки Bootstrap -->
@@ -1301,6 +1243,9 @@
 <!-- Form Validation -->
 <script src="{{ asset('js/form-validator.js') }}"></script>
 
+<!-- Form Handlers -->
+<script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
+
 <!-- Event Handlers -->
 <script type="module" src="{{ asset('js/handler.js') }}"></script>
 
@@ -1457,7 +1402,7 @@
                     <div class="mb-3">
                         <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                        <button type="button" class="btn btn-primary" id="submitRequest" onclick="submitRequestForm()">Создать заявку</button>
+                        <button type="button" class="btn btn-primary" id="submitRequest">Создать заявку</button>
                     </div>
                 </form>
             </div>
@@ -1590,6 +1535,10 @@
         document.getElementById('clientOrganization').value = data.organization || '';
         // Заполняем поле комментария напрямую
         document.getElementById('comment').value = data.comment;
+
+        if (document.getElementById('comment').value.length > 3) {
+            document.getElementById('comment').classList.remove('is-invalid');
+        }
     });
 </script>
 
@@ -2075,9 +2024,7 @@
 <!-- Bootstrap JS уже подключен через CDN выше -->
 
 <script src="{{ asset('js/brigades.js') }}"></script>
-<script type="module" src="{{ asset('js/handler.js') }}"></script>
 <script src="{{ asset('js/calendar.js') }}"></script>
-<script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
 <script src="{{ asset('js/brigade-sort.js') }}"></script>
 <link rel="stylesheet" href="{{ asset('css/brigade-sort.css') }}">
 
@@ -2386,7 +2333,7 @@
             // Функция для попыток инициализации с повторными попытками
             function tryInitCustomSelect(attempts = 0) {
                 if (typeof window.initCustomSelect === 'function') {
-                    console.log('Инициализация кастомного селекта после обновления списка адресов');
+                    // console.log('Инициализация кастомного селекта после обновления списка адресов');
                     window.initCustomSelect("addressSelect", "Выберите адрес из списка");
                 } else {
                     console.log(`Попытка ${attempts + 1}: Функция initCustomSelect не найдена, повторная попытка через 500мс`);

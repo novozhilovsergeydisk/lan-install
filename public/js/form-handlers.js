@@ -2,6 +2,8 @@
 
 import { showAlert, postData, fetchData } from './utils.js';
 
+// Экспортируемые функции
+
 // Глобальная переменная для хранения текущей даты
 const currentDateState = {
     // Инициализируем текущей датой в формате DD.MM.YYYY
@@ -158,7 +160,7 @@ function displayEmployeeInfo(employeeData) {
 
     if (!employeeInfoBlock || !employeeData) return;
     
-    console.log('Получены данные сотрудника:', employeeData);
+    // console.log('Получены данные сотрудника:', employeeData);
     
     // Форматирование даты рождения, если она есть
     const birthDate = employeeData.birth_date ? new Date(employeeData.birth_date).toLocaleDateString('ru-RU') : 'Не указана';
@@ -229,168 +231,6 @@ function displayEmployeeInfo(employeeData) {
 }
 
 /**
- * Обрабатывает отправку формы новой заявки
- */
-async function submitRequestForm() {
-    const form = document.getElementById('newRequestForm');
-    const submitBtn = document.getElementById('submitRequest');
-
-    if (!form.checkValidity()) {
-        form.classList.add('was-validated');
-        
-        // Проверяем поле комментария отдельно
-        const commentField = document.getElementById('comment');
-        if (commentField && commentField.validity && !commentField.validity.valid) {
-            // Если поле комментария невалидно, добавляем класс is-invalid
-            commentField.classList.add('is-invalid');
-            
-            // Показываем сообщение об ошибке
-            // Закомментировано, так как есть подсказка под полем ввода и подсветка рамки
-            // if (commentField.value.length < 3) {
-            //     showAlert('Пожалуйста, введите комментарий (от 3 до 1000 символов)', 'danger');
-            // }
-        }
-        
-        return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Создание...`;
-
-    const formData = new FormData(form);
-    const data = {};
-
-    formData.forEach((value, key) => {
-        if (data[key] !== undefined) {
-            if (!Array.isArray(data[key])) data[key] = [data[key]];
-            data[key].push(value);
-        } else {
-            data[key] = value;
-        }
-    });
-
-    const addressId = document.getElementById('addresses_id').value;
-
-    // Проверяем, выбран ли адрес из списка
-    if (!addressId) {
-        showAlert('Пожалуйста, выберите адрес из списка', 'danger');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Создать заявку';
-        
-        // Используем стандартную валидацию Bootstrap для оригинального селекта
-        const addressSelect = document.getElementById('addresses_id');
-        if (addressSelect) {
-            // Добавляем класс is-invalid к оригинальному селекту
-            addressSelect.classList.add('is-invalid');
-        }
-        
-        // Находим кастомный селект для addresses_id и применяем к нему валидацию с подсветкой
-        const customSelects = document.querySelectorAll('.custom-select-wrapper');
-        for (const wrapper of customSelects) {
-            // Проверяем, относится ли этот wrapper к нашему селекту addresses_id
-            const input = wrapper.querySelector('.custom-select-input');
-            if (input && input.placeholder === 'Выберите адрес из списка') {
-                // Если у wrapper есть метод validate, вызываем его с параметром true для подсветки
-                if (wrapper.validate && typeof wrapper.validate === 'function') {
-                    wrapper.validate(true);
-                } else {
-                    // Если метода нет, добавляем класс is-invalid напрямую
-                    input.classList.add('is-invalid');
-                }
-                break;
-            }
-        }
-        
-        return;
-    }
-
-    // Формируем данные для отправки
-    const requestData = {
-        _token: data._token,
-        client_name: data.client_name || '',
-        client_phone: data.client_phone || '',
-        client_organization: data.client_organization || '',
-        request_type_id: data.request_type_id,
-        status_id: data.status_id,
-        comment: data.comment || '',
-        execution_date: data.execution_date || null,
-        execution_time: data.execution_time || null,
-        brigade_id: data.brigade_id || null,
-        operator_id: data.operator_id || null,
-        address_id: addressId,
-    };
-
-    // Логируем данные перед отправкой
-    console.log('Отправляемые данные:', requestData);
-
-    // return;
-
-    try {
-        const result = await postData('/api/requests', requestData);
-
-        console.log('Ответ от сервера:', result);
-
-        if (result.success) {
-            showAlert('Заявка успешно создана!', 'success');
-
-            // Обновляем дату исполнения заявки (преобразование формата происходит в методе updateDate)
-            executionDateState.updateDate(result.data.request.execution_date);
-
-            console.log('currentDateState.date:', currentDateState.date);
-            console.log('selectedDateState.date:', selectedDateState.date);
-            console.log('executionDateState.date:', executionDateState.date);
-
-            
-
-            // Динамическое формирование строки заявки и добавление её в начало таблицы
-            if (currentDateState.date === selectedDateState.date && executionDateState.date === selectedDateState.date) {
-                addRequestToTable(result);
-            } else if (currentDateState.date !== selectedDateState.date && executionDateState.date === selectedDateState.date) {
-                console.log('Добавляем заявку в таблицу, если дата исполнения заявки совпадает с выбранной датой');
-                addRequestToTable(result);
-            }
-            
-            // Не перезагружаем страницу, чтобы не потерять динамически добавленную строку
-            
-            // Отображаем информацию о сотруднике, если она есть в ответе
-            if (result.data && result.data.employee) {
-                displayEmployeeInfo(result.data.employee);
-            }
-            
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
-            modal.hide();
-            
-            // Reset the form
-            form.reset();
-            
-            // Dispatch event to notify other components about the new request
-            const event = new CustomEvent('requestCreated', { detail: result.data });
-            document.dispatchEvent(event);
-   
-            // If there's a refreshRequestsTable function, call it
-            if (typeof window.refreshRequestsTable === 'function') {
-                // showAlert('window.refreshRequestsTable()', 'info');
-                // window.refreshRequestsTable();
-            } else {
-                // Fallback to page reload if the function doesn't exist
-                window.location.reload();
-            }
-        } else {
-            throw new Error(result.message || 'Ошибка при создании заявки');
-        }
-    } catch (error) {
-        // Не показываем сообщение об ошибке, если это ошибка "Сотрудник не найден"
-        // так как мы уже показали alert в функции postData
-        if (error.message !== 'EMPLOYEE_NOT_FOUND') {
-            showAlert(error.message || 'Произошла ошибка при создании заявки', 'danger');
-        }
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Создать заявку';
-    }
-}
-
-/**
  * Добавляет новую заявку в таблицу
  * @param {Object} result - результат ответа сервера
  */
@@ -446,7 +286,7 @@ function addRequestToTable(result) {
         return false;
     }
     
-    console.log('Таблица найдена:', requestsTable);
+    // console.log('Таблица найдена:', requestsTable);
     
     // Получаем текущую дату для отображения
     const currentDate = new Date();
@@ -562,7 +402,7 @@ function addRequestToTable(result) {
     // Обновляем нумерацию строк
     updateRowNumbers();
     
-    console.log('Строка успешно добавлена в таблицу');
+    // console.log('Строка успешно добавлена в таблицу');
     return true;
 }
 
@@ -570,7 +410,7 @@ function addRequestToTable(result) {
  * Обновляет нумерацию строк в таблице заявок
  */
 function updateRowNumbers() {
-    console.log('Обновление нумерации строк');
+    // console.log('Обновление нумерации строк');
     
     // Попробуем найти таблицу заявок с разными селекторами
     let rows = document.querySelectorAll('.table.table-hover.align-middle tbody tr');
@@ -579,7 +419,7 @@ function updateRowNumbers() {
         rows = document.querySelectorAll('#requestsTab table tbody tr');
     }
     
-    console.log('Найдено строк для обновления:', rows.length);
+    // console.log('Найдено строк для обновления:', rows.length);
     
     rows.forEach((row, index) => {
         const numberCell = row.querySelector('td:first-child');
@@ -679,9 +519,9 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
     saveButton.addEventListener('click', async function() {
         const newText = inputElement.value.trim();
 
-        console.log('newText', newText);
+        // console.log('newText', newText);
 
-        console.log('commentId', commentId);
+        // console.log('commentId', commentId);
 
         if (newText) {
             try {
@@ -746,6 +586,198 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
     
     // Фокус на поле ввода
     inputElement.focus();
+}
+
+//************* Назначение обработчиков событий ************//
+
+/**
+ * Инициализирует обработчики событий для форм
+ */
+export function initFormHandlers() {
+    // Находим кнопку отправки формы заявки
+    const submitBtn = document.getElementById('submitRequest');
+    
+    // Если кнопка найдена, добавляем обработчик события click
+    if (submitBtn) {
+        submitBtn.addEventListener('click', submitRequestForm);
+    }
+}
+
+//************* Обработчики событий форм ************//
+
+/**
+ * Обрабатывает отправку формы новой заявки
+ */
+async function submitRequestForm() {
+    const form = document.getElementById('newRequestForm');
+    const submitBtn = document.getElementById('submitRequest');
+
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        
+        // Проверяем поле комментария отдельно
+        const commentField = document.getElementById('comment');
+        if (commentField && commentField.validity && !commentField.validity.valid) {
+            // Если поле комментария невалидно, добавляем класс is-invalid
+            commentField.classList.add('is-invalid');
+
+            console.log('Форма создания новой заявки для поля комментария невалидна');
+            
+            // Показываем сообщение об ошибке
+            // Закомментировано, так как есть подсказка под полем ввода и подсветка рамки
+            // if (commentField.value.length < 3) {
+            //     showAlert('Пожалуйста, введите комментарий (от 3 до 1000 символов)', 'danger');
+            // }
+        } else {
+            commentField.classList.remove('is-invalid');
+            console.log('Форма создания новой заявки для поля комментария валидна');
+        }
+     
+        return;
+    }
+
+    const addressId = document.getElementById('addresses_id').value;
+
+    // Проверяем, выбран ли адрес из списка
+    if (!addressId) {
+        showAlert('Пожалуйста, выберите адрес из списка', 'danger');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Создать заявку';
+        
+        // Используем стандартную валидацию Bootstrap для оригинального селекта
+        const addressSelect = document.getElementById('addresses_id');
+        if (addressSelect) {
+            // Добавляем класс is-invalid к оригинальному селекту
+            addressSelect.classList.add('is-invalid');
+        }
+        
+        // Находим кастомный селект для addresses_id и применяем к нему валидацию с подсветкой
+        const customSelects = document.querySelectorAll('.custom-select-wrapper');
+        for (const wrapper of customSelects) {
+            // Проверяем, относится ли этот wrapper к нашему селекту addresses_id
+            const input = wrapper.querySelector('.custom-select-input');
+            if (input && input.placeholder === 'Выберите адрес из списка') {
+                // Если у wrapper есть метод validate, вызываем его с параметром true для подсветки
+                if (wrapper.validate && typeof wrapper.validate === 'function') {
+                    wrapper.validate(true);
+                } else {
+                    // Если метода нет, добавляем класс is-invalid напрямую
+                    input.classList.add('is-invalid');
+                }
+                break;
+            }
+        }
+        
+        return;
+    }
+
+    // Блокируем кнопку отправки и меняем её текст на индикатор загрузки
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Создание...`;
+
+    // Создаём объект FormData из формы для сбора всех полей
+    const formData = new FormData(form);
+    // Создаём пустой объект для хранения данных формы
+    const data = {};
+
+    // Обрабатываем все поля формы
+    formData.forEach((value, key) => {
+        // Если поле с таким именем уже существует
+        if (data[key] !== undefined) {
+            // Преобразуем значение в массив, если это ещё не массив
+            if (!Array.isArray(data[key])) data[key] = [data[key]];
+            // Добавляем новое значение в массив (для полей с множественным выбором)
+            data[key].push(value);
+        } else {
+            // Для нового поля просто сохраняем значение
+            data[key] = value;
+        }
+    });
+
+    // Формируем данные для отправки
+    const requestData = {
+        _token: data._token,
+        client_name: data.client_name || '',
+        client_phone: data.client_phone || '',
+        client_organization: data.client_organization || '',
+        request_type_id: data.request_type_id,
+        status_id: data.status_id,
+        comment: data.comment || '',
+        execution_date: data.execution_date || null,
+        execution_time: data.execution_time || null,
+        brigade_id: data.brigade_id || null,
+        operator_id: data.operator_id || null,
+        address_id: addressId,
+    };
+
+    // Логируем данные перед отправкой
+    console.log('Отправляемые данные:', requestData);
+
+    // return;
+
+    try {
+        const result = await postData('/api/requests', requestData);
+
+        console.log('Ответ от сервера:', result);
+
+        if (result.success) {
+            showAlert('Заявка успешно создана!', 'success');
+
+            // Обновляем дату исполнения заявки (преобразование формата происходит в методе updateDate)
+            executionDateState.updateDate(result.data.request.execution_date);
+
+            console.log('currentDateState.date:', currentDateState.date);
+            console.log('selectedDateState.date:', selectedDateState.date);
+            console.log('executionDateState.date:', executionDateState.date);
+
+            
+
+            // Динамическое формирование строки заявки и добавление её в начало таблицы
+            if (currentDateState.date === selectedDateState.date && executionDateState.date === selectedDateState.date) {
+                addRequestToTable(result);
+            } else if (currentDateState.date !== selectedDateState.date && executionDateState.date === selectedDateState.date) {
+                console.log('Добавляем заявку в таблицу, если дата исполнения заявки совпадает с выбранной датой');
+                addRequestToTable(result);
+            }
+            
+            // Не перезагружаем страницу, чтобы не потерять динамически добавленную строку
+            
+            // Отображаем информацию о сотруднике, если она есть в ответе
+            if (result.data && result.data.employee) {
+                displayEmployeeInfo(result.data.employee);
+            }
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
+            modal.hide();
+            
+            // Reset the form
+            form.reset();
+            
+            // Dispatch event to notify other components about the new request
+            const event = new CustomEvent('requestCreated', { detail: result.data });
+            document.dispatchEvent(event);
+   
+            // If there's a refreshRequestsTable function, call it
+            if (typeof window.refreshRequestsTable === 'function') {
+                // showAlert('window.refreshRequestsTable()', 'info');
+                // window.refreshRequestsTable();
+            } else {
+                // Fallback to page reload if the function doesn't exist
+                window.location.reload();
+            }
+        } else {
+            throw new Error(result.message || 'Ошибка при создании заявки');
+        }
+    } catch (error) {
+        // Не показываем сообщение об ошибке, если это ошибка "Сотрудник не найден"
+        // так как мы уже показали alert в функции postData
+        if (error.message !== 'EMPLOYEE_NOT_FOUND') {
+            showAlert(error.message || 'Произошла ошибка при создании заявки', 'danger');
+        }
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Создать заявку';
+    }
 }
 
 // Экспортируем функции для использования в других модулях

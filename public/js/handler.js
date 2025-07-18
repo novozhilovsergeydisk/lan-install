@@ -1,4 +1,5 @@
 import { showAlert } from './utils.js';
+import { initFormHandlers } from './form-handlers.js';
 
 /**
  * Функция для отображения информации о бригадах
@@ -7,26 +8,26 @@ import { showAlert } from './utils.js';
 function displayBrigadeInfo(data) {
     // Ищем контейнер для отображения информации о бригадах
     const brigadeInfoContainer = document.getElementById('brigadeInfo');
-    
+
     if (!brigadeInfoContainer) {
         console.error('Не найден контейнер для отображения информации о бригадах');
         return;
     }
-    
+
     // Очищаем контейнер
     brigadeInfoContainer.innerHTML = '<h5>Информация о бригадах на текущий день</h5>';
-    
+
     // Создаем контейнер для информации о бригадах
     const brigadeInfoDiv = document.createElement('div');
     brigadeInfoDiv.className = 'brigade-info-container mt-3';
-    
+
     if (data.success && data.$brigadesInfoCurrentDay && data.$brigadesInfoCurrentDay.length > 0) {
         // Создаем карточки для каждой бригады
         data.$brigadesInfoCurrentDay.forEach(brigade => {
             // Парсим JSON-строки в объекты
             let leaderInfoObj = {};
             let membersArray = [];
-            
+
             try {
                 if (typeof brigade.leader_info === 'string') {
                     leaderInfoObj = JSON.parse(brigade.leader_info);
@@ -36,7 +37,7 @@ function displayBrigadeInfo(data) {
             } catch (e) {
                 console.error('Ошибка при парсинге данных бригадира:', e);
             }
-            
+
             try {
                 if (typeof brigade.members === 'string' && brigade.members) {
                     membersArray = JSON.parse(brigade.members);
@@ -46,20 +47,20 @@ function displayBrigadeInfo(data) {
             } catch (e) {
                 console.error('Ошибка при парсинге данных участников:', e);
             }
-            
+
             const brigadeCard = document.createElement('div');
             brigadeCard.className = 'card mb-3';
-            
+
             const cardHeader = document.createElement('div');
             cardHeader.className = 'card-header d-flex justify-content-between align-items-center';
             cardHeader.innerHTML = `
                 <h5 class="mb-0">${brigade.brigade_name || 'Бригада без названия'}</h5>
                 <span class="badge bg-primary">${(brigade.member_count || 0) + 1} участников</span>
             `;
-            
+
             const cardBody = document.createElement('div');
             cardBody.className = 'card-body';
-            
+
             // Информация о бригадире
             const leaderInfo = document.createElement('div');
             leaderInfo.className = 'mb-3';
@@ -80,11 +81,11 @@ function displayBrigadeInfo(data) {
             } else {
                 leaderInfo.innerHTML = '<div class="alert alert-warning">Информация о бригадире отсутствует</div>';
             }
-            
+
             // Список участников бригады
             const membersList = document.createElement('div');
             membersList.innerHTML = '<h6>Состав бригады:</h6>';
-            
+
             if (membersArray && membersArray.length > 0) {
                 const membersTable = document.createElement('table');
                 membersTable.className = 'table table-hover users-table mb-0';
@@ -95,7 +96,7 @@ function displayBrigadeInfo(data) {
                     style.textContent = ``;
                     document.head.appendChild(style);
                 }
-                
+
                 membersTable.innerHTML = `
                     <thead>
                         <tr>
@@ -118,22 +119,22 @@ function displayBrigadeInfo(data) {
             } else {
                 membersList.innerHTML += '<div class="alert alert-info">Бригадир сам является участником бригады</div>';
             }
-            
+
             // Добавляем информацию в карточку
             cardBody.appendChild(leaderInfo);
             cardBody.appendChild(membersList);
-            
+
             // Собираем карточку
             brigadeCard.appendChild(cardHeader);
             brigadeCard.appendChild(cardBody);
-            
+
             // Добавляем карточку в контейнер
             brigadeInfoDiv.appendChild(brigadeCard);
         });
     } else {
         brigadeInfoDiv.innerHTML = '<div class="alert alert-info">На текущий день бригады не найдены</div>';
     }
-    
+
     // Добавляем контейнер на страницу
     brigadeInfoContainer.appendChild(brigadeInfoDiv);
 }
@@ -163,7 +164,7 @@ const filterState = {
 
 // Функция для обновления таблицы заявок
 window.refreshRequestsTable = function() {
-    console.log('Обновление таблицы заявок...');
+    // console.log('Обновление таблицы заявок...');
 
     // Если есть активная дата, используем её для фильтрации
     if (filterState.date) {
@@ -183,8 +184,8 @@ function applyFilters() {
         date: filterState.date
     };
 
-    selectedDateState.updateDate(filterState.date); 
-    executionDateState.updateDate(filterState.date); 
+    selectedDateState.updateDate(filterState.date);
+    executionDateState.updateDate(filterState.date);
 
     // Если выбрана дата, делаем запрос на сервер
     if (filterState.date) {
@@ -252,7 +253,7 @@ function applyFilters() {
                         if (noRequestsRow) {
                             noRequestsRow.classList.add('d-none');
                         }
-                        
+
                         data.data.forEach((request, index) => {
                             // Отладочная информация
                             // Логи заявок отключены
@@ -298,7 +299,7 @@ function applyFilters() {
 
                             // Создаем строку с составом бригады
                             let brigadeMembers = 'Не назначена';
-                            
+
                             // Дебаг - выводим структуру объекта request
                             // console.log('Request object:', request);
                             // console.log('Brigade members:', request.brigade_members);
@@ -307,25 +308,25 @@ function applyFilters() {
                             // console.log('Employee leader name:', request.employee_leader_name);
 
                             // console.log(request.brigade_members);
-                            
+
                             if (request.brigade_members && request.brigade_members.length > 0) {
                                 // Функция для сокращения ФИО до фамилии и первой буквы имени
                                 const shortenName = (fullName) => {
                                     if (!fullName) return '';
-                                    
+
                                     const parts = fullName.split(' ');
                                     if (parts.length < 2) return fullName;
-                                    
+
                                     const lastName = parts[0];
                                     const firstName = parts[1];
-                                    
+
                                     return `${lastName} ${firstName.charAt(0)}.`;
                                 };
-                                
+
                                 // Находим бригадира (первый элемент с полем employee_leader_name)
                                 let leaderHtml = '';
                                 let membersHtml = '';
-                                
+
                                 // Проверяем, есть ли у нас данные о бригадире
                                 if (request.brigade_leader_name) {
                                     // Выводим бригадира отдельно и выделенным
@@ -337,7 +338,7 @@ function applyFilters() {
                                     // Запасной вариант, если поле brigade_leader_name отсутствует
                                     leaderHtml = `<div><strong>${shortenName(request.brigade_lead)}</strong>`;
                                 }
-                                
+
                                 // Формируем список обычных сотрудников
                                 membersHtml = request.brigade_members
                                     .map(member => {
@@ -345,7 +346,7 @@ function applyFilters() {
                                         return `, ${shortenName(memberName)}`;
                                     })
                                     .join('');
-                                
+
                                 // Объединяем бригадира и сотрудников
                                 brigadeMembers = leaderHtml + membersHtml + '</div>';
 
@@ -377,12 +378,12 @@ function applyFilters() {
                             // Добавляем счетчик для нумерации строк (начинаем с 1)
                             const rowNumber = index + 1;
 
-                            console.log({ request });
-                            
+                            // console.log({ request });
+
                             row.innerHTML = `
                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
-                            
-                            <td>        
+
+                            <td>
                                 <div>${formattedDate}</div>
                                 <div class="text-dark" style="font-size: 0.8rem;">${requestNumber}</div>
                             </td>
@@ -427,7 +428,7 @@ function applyFilters() {
                                     // const displayText = commentText.length > 50 ? commentText.substring(0, 50) + '...' : commentText;
 
                                     return `
-                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip" 
+                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip"
                                             style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
                                             title="${escapedComment}">
                                             <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
@@ -478,7 +479,7 @@ function applyFilters() {
 
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
-                                    ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? ` 
+                                    ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
                                         <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                             Закрыть заявку
                                         </button>
@@ -537,12 +538,12 @@ function applyFilters() {
 function loadStatuses() {
     const tbody = document.getElementById('statusesList');
     if (!tbody) return;
-    
+
     fetch('/statuses')
         .then(response => response.json())
         .then(data => {
             tbody.innerHTML = '';
-            
+
             if (data.length === 0) {
                 tbody.innerHTML = `
                     <tr>
@@ -552,7 +553,7 @@ function loadStatuses() {
                     </tr>`;
                 return;
             }
-            
+
             data.forEach(status => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -570,17 +571,17 @@ function loadStatuses() {
                     </td>
                     <td>${status.requests_count || 0}</td>
                     <td class="text-end">
-                        <button class="btn btn-sm btn-outline-primary edit-status-btn me-1" 
-                                data-id="${status.id}" 
-                                data-name="${status.name}" 
+                        <button class="btn btn-sm btn-outline-primary edit-status-btn me-1"
+                                data-id="${status.id}"
+                                data-name="${status.name}"
                                 data-color="${status.color}">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        ${status.requests_count == 0 ? 
-                            `<button class="btn btn-sm btn-outline-danger delete-status-btn" 
+                        ${status.requests_count == 0 ?
+                            `<button class="btn btn-sm btn-outline-danger delete-status-btn"
                                     data-id="${status.id}">
                                 <i class="bi bi-trash"></i>
-                            </button>` : 
+                            </button>` :
                             `<button class="btn btn-sm btn-outline-secondary" disabled>
                                 <i class="bi bi-trash"></i>
                             </button>`
@@ -588,24 +589,24 @@ function loadStatuses() {
                     </td>`;
                 tbody.appendChild(row);
             });
-            
+
             // Добавляем обработчики для кнопок редактирования
             document.querySelectorAll('.edit-status-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
                     const name = this.getAttribute('data-name');
                     const color = this.getAttribute('data-color');
-                    
+
                     document.getElementById('statusId').value = id;
                     document.getElementById('statusName').value = name;
                     document.getElementById('statusColor').value = color;
-                    
+
                     const modal = new bootstrap.Modal(document.getElementById('addStatusModal'));
                     document.querySelector('#addStatusModal .modal-title').textContent = 'Редактировать статус';
                     modal.show();
                 });
             });
-            
+
             // Добавляем обработчики для кнопок удаления
             document.querySelectorAll('.delete-status-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -615,7 +616,7 @@ function loadStatuses() {
                     }
                 });
             });
-            
+
         })
         .catch(error => {
             console.error('Ошибка при загрузке статусов:', error);
@@ -630,15 +631,15 @@ function saveStatus() {
     const id = document.getElementById('statusId').value;
     const name = document.getElementById('statusName').value.trim();
     const color = document.getElementById('statusColor').value;
-    
+
     if (!name) {
         showAlert('Пожалуйста, укажите название статуса', 'error');
         return;
     }
-    
+
     const url = id ? `/statuses/${id}` : '/statuses';
     const method = id ? 'PUT' : 'POST';
-    
+
     fetch(url, {
         method: method,
         headers: {
@@ -653,7 +654,7 @@ function saveStatus() {
         if (data.success) {
             showAlert(`Статус успешно ${id ? 'обновлен' : 'добавлен'}`, 'success');
             loadStatuses();
-            
+
             // Закрываем модальное окно
             const modal = bootstrap.Modal.getInstance(document.getElementById('addStatusModal'));
             modal.hide();
@@ -852,7 +853,7 @@ function handleStatusFilterClick(statusId) {
     }
 
     // Здесь можно добавить логику фильтрации заявок по статусу
-    console.log('Выбран статус с ID:', statusId);
+    // console.log('Выбран статус с ID:', statusId);
 
     // Если нужно применить фильтр к таблице заявок, раскомментируйте следующую строку:
     // applyFilter('status', statusId === 'all' ? null : statusId);
@@ -892,15 +893,15 @@ function loadAddresses() {
 
                 selectElement.appendChild(option);
             });
-            
+
             // Инициализируем кастомный селект с поиском после загрузки адресов
             // Используем функцию с повторными попытками
             function tryInitAddressesSelect(attempts = 0) {
                 if (typeof window.initCustomSelect === 'function') {
-                    console.log('Инициализация кастомного селекта для выбора адреса в форме');
+                    // console.log('Инициализация кастомного селекта для выбора адреса в форме');
                     window.initCustomSelect("addresses_id", "Выберите адрес из списка");
                 } else {
-                    console.log(`Попытка ${attempts + 1}: Функция initCustomSelect не найдена для addresses_id, повторная попытка через 500мс`);
+                    // console.log(`Попытка ${attempts + 1}: Функция initCustomSelect не найдена для addresses_id, повторная попытка через 500мс`);
                     if (attempts < 5) { // Максимум 5 попыток
                         setTimeout(() => tryInitAddressesSelect(attempts + 1), 500);
                     } else {
@@ -908,7 +909,7 @@ function loadAddresses() {
                     }
                 }
             }
-            
+
             // Запускаем инициализацию с небольшой задержкой, чтобы DOM успел обновиться
             setTimeout(() => tryInitAddressesSelect(), 200);
         })
@@ -999,15 +1000,6 @@ function validateBrigadeMembers() {
     if (submitButton) {
         submitButton.disabled = !isValid;
     }
-
-    // console.log('Валидация бригады:', {
-    //     members,
-    //     totalMembers,
-    //     hasLeader,
-    //     isValid,
-    //     hiddenFieldValue: hiddenField.value,
-    //     formData: Array.from(new FormData(document.getElementById('brigadeForm')))
-    // });
 
     return isValid;
 }
@@ -1148,7 +1140,7 @@ function initializePage() {
                     } catch (error) {
                         console.error('Ошибка при обновлении списка сотрудников:', error);
                     }
-                    
+
                     // Загружаем информацию о бригадах
                     try {
                         const brigadeInfoResponse = await fetch('/api/brigades/info-current-day', {
@@ -1163,14 +1155,14 @@ function initializePage() {
                         });
 
                         const brigadeInfoData = await brigadeInfoResponse.json();
-                        console.log('Информация о бригадах:', brigadeInfoData);
-                        
+                        // console.log('Информация о бригадах:', brigadeInfoData);
+
                         // Очищаем контейнер для информации о бригадах
                         const brigadeInfoContainer = document.getElementById('brigadeInfo');
                         if (brigadeInfoContainer) {
                             brigadeInfoContainer.innerHTML = '';
                         }
-                        
+
                         // Отображаем информацию о бригадах на странице
                         displayBrigadeInfo(brigadeInfoData);
                     } catch (error) {
@@ -1267,10 +1259,10 @@ function initializePage() {
             })
             .on('changeDate', function (e) {
                 console.log('Изменение даты в календаре:', e.format('dd.mm.yyyy'));
-                
+
                 const selectedDate = e.format('dd.mm.yyyy');
                 filterState.date = selectedDate;
-                
+
                 // Обновляем значение выбранной даты в selectedDateState используя метод updateDate
                 if (window.selectedDateState && typeof window.selectedDateState.updateDate === 'function') {
                     window.selectedDateState.updateDate(selectedDate);
@@ -1279,7 +1271,7 @@ function initializePage() {
                     window.selectedDateState.date = selectedDate;
                     console.log('Выбрана дата в календаре (handler.js):', window.selectedDateState.date);
                 }
-                
+
                 // Логи выбора даты отключены
                 applyFilters();
             });
@@ -1484,7 +1476,7 @@ function initializePage() {
                 statusButtonsContainer.style.display = 'none !important';
             }
 
-            console.log('Классы контейнера:', statusButtonsContainer.className);
+            // console.log('Классы контейнера:', statusButtonsContainer.className);
 
             // Если нужно загружать заявки при включении чекбокса, раскомментируйте код ниже
             if (false) { // Замените на this.checked, когда нужно включить загрузку заявок
@@ -1499,7 +1491,7 @@ function initializePage() {
                     .then(data => {
                         if (data.success) {
                             // Успешно получены заявки — выводим в консоль
-                            console.log('Заявки по статусам:', data.requests);
+                            // console.log('Заявки по статусам:', data.requests);
 
                             // TODO: здесь можно вызвать функцию renderFilteredRequests(data.requests)
                             // чтобы отрисовать таблицу заявок на странице
@@ -1540,7 +1532,7 @@ function initializePage() {
         teamCheckbox.addEventListener('change', async function () {
             if (this.checked) {
                 try {
-                    console.log('Запрос списка бригад...');
+                    // console.log('Запрос списка бригад...');
                     const response = await fetch('/api/brigade-leaders', {
                         headers: {
                             'Accept': 'application/json',
@@ -1554,7 +1546,7 @@ function initializePage() {
 
                     const data = await response.json();
 
-                    console.log('Ответ сервера:', data.$leaders);
+                    // console.log('Ответ сервера:', data.$leaders);
 
                     if (data.success) {
                         if (data.$leaders && data.$leaders.length > 0) {
@@ -1599,7 +1591,7 @@ function initializePage() {
                     showAlert('Произошла ошибка при загрузке списка бригадиров', 'danger');
                 }
             } else {
-                console.log('Фильтр по бригадам отключен');
+                // console.log('Фильтр по бригадам отключен');
                 // Скрываем контейнер с выбором бригадира
                 brigadeLeaderFilter.classList.add('d-none');
                 // Очищаем выбранное значение
@@ -1617,7 +1609,7 @@ function initializePage() {
         brigadeLeaderSelect.addEventListener('change', function () {
             const selectedLeaderId = this.value;
             if (selectedLeaderId) {
-                console.log('Выбран бригадир с ID:', selectedLeaderId);
+                // console.log('Выбран бригадир с ID:', selectedLeaderId);
                 // Здесь можно добавить логику фильтрации заявок по выбранному бригадиру
                 // Например, отправить запрос на сервер или отфильтровать существующие данные
                 // applyFilters();
@@ -1648,7 +1640,7 @@ async function loadTeamsToSelect() {
             throw new Error(result.message || 'Ошибка при загрузке списка бригад');
         }
 
-        console.log('Данные бригад успешно загружены', result);
+        // console.log('Данные бригад успешно загружены', result);
 
         // Обновляем выпадающий список в модальном окне
         const selectElement = document.getElementById('assign-team-select');
@@ -1675,18 +1667,18 @@ async function loadTeamsToSelect() {
 
 // Обработчик кнопки 'Назначить бригаду'
 async function handleAssignTeam(button) {
-    console.log('handleAssignTeam');
+    // console.log('handleAssignTeam');
 
     // Сохраняем ID заявки в data-атрибуте модального окна
     const requestId = button.dataset.requestId;
-    console.log(requestId);
-    
+    // console.log(requestId);
+
     const assignTeamModal = document.getElementById('assign-team-modal');
     assignTeamModal.dataset.requestId = requestId;
-    
+
     // Отображаем модальное окно
     showModal('assign-team-modal');
-    
+
     // Загружаем список бригад
     await loadTeamsToSelect();
 }
@@ -1694,8 +1686,8 @@ async function handleAssignTeam(button) {
 // Обработчик кнопки 'Перенести заявку'
 function handleTransferRequest(button) {
     const requestId = button.dataset.requestId;
-    console.log('Перенос заявки:', requestId);
-    
+    // console.log('Перенос заявки:', requestId);
+
     // Создаем модальное окно для выбора даты переноса
     const modalHtml = `
         <div class="modal fade" id="transferRequestModal" tabindex="-1" aria-labelledby="transferRequestModalLabel" aria-hidden="true">
@@ -1725,70 +1717,70 @@ function handleTransferRequest(button) {
 
     // Добавляем модальное окно в DOM
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
+
     // Инициализируем модальное окно
     const modalElement = document.getElementById('transferRequestModal');
     const modal = new bootstrap.Modal(modalElement);
-    
+
     // Устанавливаем минимальную дату - гарантированно завтрашний день
     const dateInput = modalElement.querySelector('#transferDate');
-    
+
     // Получаем текущую дату в локальном формате
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth();
     const day = today.getDate();
-    
+
     // Создаем дату на завтра (без времени, только дата)
     const tomorrow = new Date(year, month, day + 1);
-    
+
     // Форматируем дату в формате YYYY-MM-DD для инпута типа date
     const tomorrowFormatted = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
-    
-    console.log('Текущая дата:', today.toISOString().split('T')[0]);
-    console.log('Завтрашняя дата:', tomorrowFormatted);
-    
+
+    // console.log('Текущая дата:', today.toISOString().split('T')[0]);
+    // console.log('Завтрашняя дата:', tomorrowFormatted);
+
     // Устанавливаем минимальную дату
     dateInput.min = tomorrowFormatted;
-    
+
     // Устанавливаем завтрашнюю дату как значение по умолчанию
     dateInput.value = tomorrowFormatted;
-    
+
     // Добавляем обработчик изменения даты, чтобы проверить, что выбранная дата не раньше завтрашней
     dateInput.addEventListener('change', function() {
         const selectedDate = new Date(this.value);
         const minDate = new Date(tomorrowFormatted);
-        
+
         // Если выбранная дата раньше минимальной, сбрасываем на минимальную
         if (selectedDate < minDate) {
             this.value = tomorrowFormatted;
             showAlert('Дата переноса не может быть раньше завтрашнего дня', 'warning');
         }
     });
-    
+
     // Обработчик подтверждения переноса
     modalElement.querySelector('#confirmTransfer').addEventListener('click', async () => {
         const selectedDate = dateInput.value;
         const reason = document.getElementById('transferReason').value.trim();
-        
+
         if (!selectedDate) {
             showAlert('Пожалуйста, выберите дату для переноса', 'info');
             return;
         }
-        
+
         if (!reason) {
             showAlert('Пожалуйста, укажите причину переноса', 'info');
             return;
         }
-        
+
         try {
             // Выводим в консоль отправляемые данные для отладки
-            console.log('Отправка запроса на перенос заявки:', {
-                request_id: requestId,
-                new_date: selectedDate,
-                reason: reason
-            });
-            
+            // console.log('Отправка запроса на перенос заявки:', {
+            //     request_id: requestId,
+            //     new_date: selectedDate,
+            //     reason: reason
+            // });
+
             const response = await fetch('/api/requests/transfer', {
                 method: 'POST',
                 headers: {
@@ -1801,26 +1793,26 @@ function handleTransferRequest(button) {
                     reason: reason
                 })
             });
-            
+
             const result = await response.json();
-            
+
             // Выводим ответ сервера в консоль
-            console.log('Ответ сервера при переносе заявки:', result);
+            // console.log('Ответ сервера при переносе заявки:', result);
 
             // console.log(result);
-            
+
             // Проверяем дату выполнения из ответа сервера
             if (result.execution_date) {
                 const serverDate = new Date(result.execution_date);
                 const currentDate = new Date();
-                
+
                 // Сбрасываем время для корректного сравнения только дат
                 serverDate.setHours(0, 0, 0, 0);
                 currentDate.setHours(0, 0, 0, 0);
-                
+
                 // console.log('Дата выполнения от сервера:', serverDate);
                 // console.log('Текущая дата:', currentDate);
-                
+
                 if (serverDate < currentDate) {
                     showAlert('Внимание: Дата выполнения заявки уже прошла!', 'error');
                 } else if (serverDate.getTime() === currentDate.getTime()) {
@@ -1834,7 +1826,7 @@ function handleTransferRequest(button) {
                     }
                 }
             }
-            
+
             if (response.ok) {
                 showAlert('Заявка успешно перенесена', 'success');
                 // Обновляем цвет строки без перезагрузки
@@ -1852,23 +1844,23 @@ function handleTransferRequest(button) {
                     if (commentsContainer) {
                         const existingButton = commentsContainer.querySelector('.view-comments-btn');
                         const commentsCount = result.comments_count || 1; // Используем переданное количество или 1 по умолчанию
-                        
+
                         if (!existingButton) {
                             // Создаем новую кнопку, если её нет
                             const buttonHtml = `
                                 <div class="mt-1">
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#commentsModal" 
-                                            data-request-id="${requestId}" 
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#commentsModal"
+                                            data-request-id="${requestId}"
                                             style="position: relative; z-index: 1;">
                                         <i class="bi bi-chat-left-text me-1"></i>Все комментарии
                                         <span class="badge bg-primary rounded-pill ms-1">${commentsCount}</span>
                                     </button>
                                 </div>`;
                             commentsContainer.insertAdjacentHTML('beforeend', buttonHtml);
-                            
+
                             // Инициализируем tooltip для новой кнопки
                             const tooltipTriggerList = [].slice.call(commentsContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
                             tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -1889,12 +1881,12 @@ function handleTransferRequest(button) {
             showAlert(error.message || 'Произошла ошибка при переносе заявки', 'error');
         }
     });
-    
+
     // Обработчик закрытия модального окна
     modalElement.addEventListener('hidden.bs.modal', () => {
         modalElement.remove();
     });
-    
+
     // Показываем модальное окно
     modal.show();
 }
@@ -1903,8 +1895,8 @@ function handleTransferRequest(button) {
 
 function handleCancelRequest(button) {
     const requestId = button.dataset.requestId;
-    console.log('Отмена заявки:', requestId);
-    
+    // console.log('Отмена заявки:', requestId);
+
     // Создаем модальное окно для подтверждения отмены
     const modalHtml = `
         <div class="modal fade" id="cancelRequestModal" tabindex="-1" aria-labelledby="cancelRequestModalLabel" aria-hidden="true">
@@ -1931,23 +1923,23 @@ function handleCancelRequest(button) {
 
     // Добавляем модальное окно в DOM
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
+
     // Инициализируем модальное окно
     const modalElement = document.getElementById('cancelRequestModal');
     const modal = new bootstrap.Modal(modalElement);
-    
+
     // Обработчик подтверждения отмены
     modalElement.querySelector('#confirmCancel').addEventListener('click', async () => {
         const reason = document.getElementById('cancelReason').value.trim();
-        
+
         if (!reason) {
             showAlert('Пожалуйста, укажите причину отмены', 'info');
             return;
         }
-        
+
         try {
-            console.log('Отправка запроса на отмену заявки:', { requestId, reason });
-            
+            // console.log('Отправка запроса на отмену заявки:', { requestId, reason });
+
             // Отправка запроса на отмену заявки
             const response = await fetch('/requests/cancel', {
                 method: 'POST',
@@ -1962,13 +1954,13 @@ function handleCancelRequest(button) {
                     reason: reason
                 })
             });
-            
+
             const result = await response.json();
-            
+
             if (response.ok) {
                 showAlert('Заявка успешно отменена', 'success');
-                console.log('Заявка отменена:', result);
-                
+                // console.log('Заявка отменена:', result);
+
                 // Обновляем интерфейс
                 const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
                 if (row) {
@@ -1978,19 +1970,19 @@ function handleCancelRequest(button) {
                     if (statusCell) {
                         statusCell.textContent = 'отменена';
                     }
-                    
+
                     // Обновляем кнопки
                     const buttonsContainer = row.querySelector('.btn-group');
                     if (buttonsContainer) {
                         buttonsContainer.innerHTML = `
-                        
+
                         `;
                     }
                 }
 
                 // Находим строку заявки
                 const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
-                
+
                 if (requestRow) {
                     // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
                     const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
@@ -1999,14 +1991,14 @@ function handleCancelRequest(button) {
                         buttonsToHide.forEach(button => {
                             button.style.display = 'none';
                         });
-                        
+
                         // Добавляем текст "Заявка отменена"
                         const statusText = document.createElement('div');
                         statusText.className = 'text-muted small';
                         statusText.textContent = 'Заявка отменена';
                         firstActionBlock.appendChild(statusText);
                     }
-                    
+
                     // Скрываем кнопки во втором блоке, кроме кнопки Фотоотчет
                     const secondActionBlock = requestRow.querySelectorAll('td.text-nowrap .d-flex.flex-column.gap-1')[1];
                     if (secondActionBlock) {
@@ -2016,16 +2008,16 @@ function handleCancelRequest(button) {
                         });
                     }
                 }
-                
+
                 // Обновляем счетчик заявок, если он есть
                 updateRequestsCount();
-                
+
             } else {
                 throw new Error(result.message || 'Ошибка при отмене заявки');
             }
-            
+
         } catch (error) {
-            console.error('Ошибка при отмене заявки:', error);
+            // console.error('Ошибка при отмене заявки:', error);
             showAlert(error.message || 'Произошла ошибка при отмене заявки', 'error');
         } finally {
             // Закрываем модальное окно
@@ -2034,12 +2026,12 @@ function handleCancelRequest(button) {
             modalElement.remove();
         }
     });
-    
+
     // Обработчик закрытия модального окна
     modalElement.addEventListener('hidden.bs.modal', () => {
         modalElement.remove();
     });
-    
+
     // Показываем модальное окно
     modal.show();
 }
@@ -2069,64 +2061,64 @@ function initRequestButtons() {
 // Глобальная функция для инициализации кастомного выпадающего списка
 // Явно добавляем в глобальный объект window
 window.initCustomSelect = function(selectId, placeholder = "Выберите из списка") {
-    console.log(`Инициализация кастомного выпадающего списка для ${selectId}...`);
-    
+    // console.log(`Инициализация кастомного выпадающего списка для ${selectId}...`);
+
     const originalSelect = document.getElementById(selectId);
-    console.log('Оригинальный select:', originalSelect);
-    
+    // console.log('Оригинальный select:', originalSelect);
+
     if (!originalSelect) {
         console.error(`Не найден элемент с id ${selectId}`);
         return;
     }
-    
+
     // Проверяем, не был ли уже инициализирован кастомный селект
     if (originalSelect.getAttribute('data-custom-initialized') === 'true') {
         // Удаляем старый кастомный селект, если он существует
         const oldWrapper = document.getElementById(`custom-select-wrapper-${selectId}`);
         if (oldWrapper) {
-            console.log(`Удаляем старый кастомный селект для ${selectId}`);
+            // console.log(`Удаляем старый кастомный селект для ${selectId}`);
             oldWrapper.remove();
         }
     }
-    
+
     const wrapper = document.createElement("div");
     wrapper.className = "custom-select-wrapper";
     wrapper.id = `custom-select-wrapper-${selectId}`;
-    console.log('Создан wrapper:', wrapper);
-  
+    // console.log('Создан wrapper:', wrapper);
+
     const input = document.createElement("input");
     input.type = "text";
     input.className = "custom-select-input";
     input.placeholder = placeholder;
     input.readOnly = false; // Разрешаем редактировать для поиска
-    
+
     // Надежное отключение автозаполнения браузера
     input.setAttribute('autocomplete', 'new-password'); // Самый надежный способ
     input.setAttribute('autocorrect', 'off');
     input.setAttribute('autocapitalize', 'off');
     input.setAttribute('spellcheck', 'false');
-    
+
     // Проверяем, что атрибуты установлены
-    console.log('Создан input с атрибутами:', {
-        autocomplete: input.getAttribute('autocomplete'),
-        autocorrect: input.getAttribute('autocorrect'),
-        autocapitalize: input.getAttribute('autocapitalize'),
-        spellcheck: input.getAttribute('spellcheck')
-    });
-    
-    console.log('Создан input:', input);
-  
+    // console.log('Создан input с атрибутами:', {
+    //     autocomplete: input.getAttribute('autocomplete'),
+    //     autocorrect: input.getAttribute('autocorrect'),
+    //     autocapitalize: input.getAttribute('autocapitalize'),
+    //     spellcheck: input.getAttribute('spellcheck')
+    // });
+
+    // console.log('Создан input:', input);
+
     const optionsList = document.createElement("ul");
     optionsList.className = "custom-select-options";
-    console.log('Создан optionsList:', optionsList);
-  
+    // console.log('Создан optionsList:', optionsList);
+
     // Скрыть оригинальный select
     originalSelect.style.display = "none";
     originalSelect.setAttribute('data-custom-initialized', 'true');
     originalSelect.parentNode.insertBefore(wrapper, originalSelect);
     wrapper.appendChild(input);
     wrapper.appendChild(optionsList);
-    
+
     // Находим элемент invalid-feedback и добавляем его в кастомный селект
     let feedbackElement = null;
     const selectParent = originalSelect.parentElement;
@@ -2138,24 +2130,24 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
             wrapper.appendChild(feedbackElement);
         }
     }
-    
-    console.log('Элементы добавлены в DOM');
-  
+
+    // console.log('Элементы добавлены в DOM');
+
     // Собрать все опции
     const options = Array.from(originalSelect.querySelectorAll("option")).filter(
       option => option.value !== ""
     );
-    console.log('Найдено опций:', options.length);
-  
+    // console.log('Найдено опций:', options.length);
+
     // Заполнить список
     function populateList(filter = "") {
-      console.log('Заполнение списка с фильтром:', filter);
+      // console.log('Заполнение списка с фильтром:', filter);
       optionsList.innerHTML = "";
       const filtered = options.filter(option =>
         option.textContent.toLowerCase().includes(filter.toLowerCase())
       );
-      console.log('Отфильтровано опций:', filtered.length);
-  
+      // console.log('Отфильтровано опций:', filtered.length);
+
       if (filtered.length === 0) {
         const li = document.createElement("li");
         li.textContent = "Ничего не найдено";
@@ -2168,19 +2160,19 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
           li.textContent = option.textContent;
           li.dataset.value = option.value;
           li.addEventListener("click", () => {
-            console.log('Выбран элемент:', option.textContent, option.value);
+            // console.log('Выбран элемент:', option.textContent, option.value);
             input.value = option.textContent;
             originalSelect.value = option.value;
             originalSelect.dispatchEvent(new Event("change"));
             optionsList.style.display = "none";
-            
+
             // Сбрасываем валидацию при выборе адреса
             input.classList.remove('is-invalid');
             originalSelect.classList.remove('is-invalid');
             if (feedbackElement && feedbackElement.parentNode === wrapper) {
               feedbackElement.style.display = 'none';
             }
-            
+
             // Проверяем валидность при выборе элемента
             validateInput(false);
           });
@@ -2188,38 +2180,38 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
         });
       }
     }
-    
+
     // Открытие/закрытие
     input.addEventListener("click", (e) => {
-      console.log('Клик по полю ввода');
+      // console.log('Клик по полю ввода');
       if (optionsList.style.display === "block") {
-        console.log('Закрываем список');
+        // console.log('Закрываем список');
         optionsList.style.display = "none";
       } else {
-        console.log('Открываем список');
+        // console.log('Открываем список');
         populateList(input.value);
         optionsList.style.display = "block";
       }
       e.stopPropagation(); // Предотвращаем всплытие события
     });
-  
+
     // Фильтрация при вводе
     input.addEventListener("input", () => {
-      console.log('Ввод текста:', input.value);
+      // console.log('Ввод текста:', input.value);
       populateList(input.value);
       optionsList.style.display = "block";
-      
+
       // Проверяем, соответствует ли введенный текст какому-либо из вариантов
       validateInput(false);
     });
-    
+
     // Переменная feedbackElement уже определена выше
-    
+
     // Функция проверки введенного значения
     function validateInput(applyStyle = false) {
       // Проверяем, выбрано ли значение из списка
       const isValid = originalSelect.value !== "" && originalSelect.selectedIndex > 0;
-      
+
       if (applyStyle) {
         if (isValid) {
           // Если выбрано значение из списка, убираем красную подсветку
@@ -2237,36 +2229,36 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
           }
         }
       }
-      
+
       return isValid;
     }
-  
+
     // Закрытие при клике вне
     document.addEventListener("click", function (e) {
       if (!wrapper.contains(e.target)) {
-        console.log('Клик вне кастомного селекта, закрываем');
+        // console.log('Клик вне кастомного селекта, закрываем');
         optionsList.style.display = "none";
-        
+
         // Проверяем валидность при клике вне селекта
         validateInput(false);
       }
     });
-  
+
     // Обновление поля при изменении оригинального select
     originalSelect.addEventListener("change", () => {
-      console.log('Изменение оригинального select');
+      // console.log('Изменение оригинального select');
       const selected = originalSelect.options[originalSelect.selectedIndex];
       input.value = selected ? selected.text : "";
-      console.log('Установлено значение:', input.value);
-      
+      // console.log('Установлено значение:', input.value);
+
       // Проверяем валидность при изменении оригинального select
       validateInput(false);
     });
-  
+
     // Инициализация
-    console.log('Запуск первичного заполнения списка');
+    // console.log('Запуск первичного заполнения списка');
     populateList();
-    
+
     // Если в оригинальном селекте уже есть выбранное значение, отобразим его
     if (originalSelect.selectedIndex > 0) {
         const selected = originalSelect.options[originalSelect.selectedIndex];
@@ -2276,7 +2268,7 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
     wrapper.validate = function(applyStyle = true) {
       return validateInput(applyStyle);
     };
-    
+
     // Добавляем метод для сброса валидации (убираем красную подсветку)
     wrapper.resetValidation = function() {
       input.classList.remove('is-invalid');
@@ -2284,249 +2276,25 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
         feedbackElement.style.display = 'none';
       }
     };
-    
+
     return wrapper;
 }
 
 // Функция для инициализации всех селектов с поиском
 function initAllCustomSelects() {
-    console.log('Инициализация всех кастомных селектов');
-    
+    // console.log('Инициализация всех кастомных селектов');
+
     // Инициализируем селект с адресами в основном списке
     initCustomSelect("addressSelect", "Выберите адрес из списка");
-    
+
     // Инициализируем селект с адресами в форме создания заявки
     if (document.getElementById('addresses_id')) {
         initCustomSelect("addresses_id", "Выберите адрес из списка");
     }
-    
+
     // Здесь можно добавить инициализацию других селектов
     // Например: initCustomSelect("otherSelect", "Выберите значение");
 }
-
-// Инициализация страницы при загрузке DOM
-document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM полностью загружен');
-    initializePage();
-    
-    // Запускаем инициализацию кастомных селектов с задержкой
-    setTimeout(() => {
-        console.log('Запуск инициализации кастомных селектов с задержкой');
-        initAllCustomSelects();
-    }, 1000); // Даем время на загрузку данных
-    
-    // Добавляем обработчик события открытия модального окна с формой создания заявки
-    const newRequestModal = document.getElementById('newRequestModal');
-    if (newRequestModal) {
-        newRequestModal.addEventListener('shown.bs.modal', function() {
-            console.log('Модальное окно открыто, сбрасываем валидацию');
-            
-            // Сбрасываем валидацию оригинального селекта
-            const addressSelect = document.getElementById('addresses_id');
-            if (addressSelect) {
-                addressSelect.classList.remove('is-invalid');
-            }
-            
-            // Сбрасываем валидацию кастомного селекта
-            const customSelects = document.querySelectorAll('.custom-select-wrapper');
-            for (const wrapper of customSelects) {
-                const input = wrapper.querySelector('.custom-select-input');
-                if (input && input.placeholder === 'Выберите адрес из списка') {
-                    if (wrapper.resetValidation && typeof wrapper.resetValidation === 'function') {
-                        wrapper.resetValidation();
-                    } else {
-                        input.classList.remove('is-invalid');
-                    }
-                    break;
-                }
-            }
-            
-            // Сбрасываем валидацию поля комментария
-            const commentField = document.getElementById('comment');
-            if (commentField) {
-                commentField.classList.remove('is-invalid');
-            }
-            
-            // Сбрасываем класс was-validated у формы
-            const form = document.getElementById('newRequestForm');
-            if (form) {
-                form.classList.remove('was-validated');
-            }
-        });
-    }
-    
-    // Обработчик для кнопки "Назначить" в модальном окне назначения бригады
-    const confirmAssignTeamBtn = document.getElementById('confirm-assign-team-btn');
-    if (confirmAssignTeamBtn) {
-        confirmAssignTeamBtn.addEventListener('click', async function() { 
-            const modal = document.getElementById('assign-team-modal');
-            const requestId = modal.dataset.requestId;
-            const selectElement = document.getElementById('assign-team-select');
-            const selectedTeamId = selectElement.value;
-            
-            if (!selectedTeamId) {
-                showAlert('Бригада не выбрана!', 'warning');
-                return;
-            }
-            
-            const selectedTeamName = selectElement.options[selectElement.selectedIndex].text;
-            const leaderId = selectedTeamId; // ID бригадира
-            
-            // Получаем ID бригады из атрибута data-brigade-id выбранной опции
-            const selectedOption = selectElement.options[selectElement.selectedIndex];
-            const brigade_id = selectedOption.getAttribute('data-brigade-id');
-            
-            if (!brigade_id) {
-                console.error('Не найден ID бригады в выбранной опции');
-                showAlert('Ошибка: Не найден ID бригады', 'danger');
-                return;
-            }
-
-            const brigadeName = selectedTeamName;
-
-            console.log(`ID выбранной заявки: ${requestId}`);
-            console.log(`ID выбранного бригадира: ${leaderId}`);
-            console.log(`ID бригады: ${brigade_id}`);
-            console.log(`Название бригады: ${brigadeName}`);
-
-            try {
-                // Отправляем запрос на обновление заявки
-                const updateResponse = await fetch('/api/requests/update-brigade', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        brigade_id: brigade_id,
-                        request_id: requestId
-                    })
-                });
-
-                const updateData = await updateResponse.json().catch(() => ({}));
-                // console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
-
-                if (!updateResponse.ok) {
-                    const errorMessage = updateData.message ||
-                        updateData.error ||
-                        (updateData.error_details ? JSON.stringify(updateData.error_details) : 'Неизвестная ошибка');
-                    throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
-                }
-
-                // console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
-
-                // 3. Обновляем страницу для отображения изменений
-                window.location.reload();
-
-            } catch (error) {
-                console.error('Ошибка при прикреплении бригады:', error.message);
-                if (typeof utils !== 'undefined' && typeof utils.alert === 'function') {
-                    utils.alert(`Ошибка: ${error.message}`);
-                } else {
-                    showAlert(`Ошибка: ${error.message}`, 'danger');
-                }
-            }
-            
-            // Закрываем модальное окно
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            bsModal.hide();
-        });
-    }
-    
-    // Инициализация кнопок заявок
-    initRequestButtons();
-
-    // Добавляем обработчик для вкладки заявок
-    const requestsTab = document.getElementById('requests-tab');
-    if (requestsTab) {
-        requestsTab.addEventListener('click', async function () {
-            console.log('Вкладка "Заявки" была нажата');
-
-            // Обновить данные об адресах
-            loadAddresses();
-
-            try {
-                // Запрашиваем актуальный список бригад с сервера
-                const response = await fetch('/api/brigades/current-day');
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.message || 'Ошибка при загрузке списка бригад');
-                }
-
-                // Обновляем выпадающий список
-                const select = document.getElementById('brigade-leader-select');
-                if (select) {
-                    // Сохраняем текущее выбранное значение
-                    const selectedValue = select.value;
-
-                    // Очищаем список, оставляя только первый элемент
-                    select.innerHTML = '<option value="" selected disabled>Выберите бригаду...</option>';
-
-                    // Добавляем новые опции
-                    result.data.forEach(brigade => {
-                        const option = document.createElement('option');
-                        option.value = brigade.leader_id;
-                        option.textContent = brigade.leader_name;
-                        option.setAttribute('data-brigade-id', brigade.brigade_id);
-                        select.appendChild(option);
-                    });
-
-                    // Восстанавливаем выбранное значение, если оно есть в новом списке
-                    if (selectedValue && Array.from(select.options).some(opt => opt.value === selectedValue)) {
-                        select.value = selectedValue;
-                    }
-
-                    console.log('Список бригад обновлен');
-                }
-            } catch (error) {
-                console.error('Ошибка при обновлении списка бригад:', error);
-                showAlert('Не удалось обновить список бригад: ' + error.message);
-            }
-        });
-    }
-
-    // Перехватываем вызов applyFilters для обновления обработчиков после фильтрации
-    const originalApplyFilters = window.applyFilters;
-    window.applyFilters = function () {
-        return originalApplyFilters.apply(this, arguments).then(() => {
-            initRequestButtons();
-        });
-    };
-
-
-    setupBrigadeAttachment();
-    // console.log('Вызов handlerCreateBrigade...');
-    handlerCreateBrigade();
-    // console.log('handlerCreateBrigade вызван');
-    hanlerAddToBrigade();
-    handlerAddEmployee();
-    // initUserSelection();
-
-    // // Устанавливаем текущую дату + 1 день в формате YYYY-MM-DD
-    // const today = new Date();
-    // // Добавляем 1 день, чтобы компенсировать разницу в датах
-    // today.setDate(today.getDate() + 1);
-    // const dateStr = today.toISOString().split('T')[0];
-    // const dateInput = document.getElementById('executionDate');
-    // if (dateInput) {
-    //     dateInput.value = dateStr;
-    //     console.log('Установлена дата:', dateStr);
-    // }
-
-    // Получаем текущую дату с учетом локального времени
-    const now = new Date();
-    // Получаем смещение в минутах и конвертируем в миллисекунды
-    const timezoneOffset = now.getTimezoneOffset() * 60000;
-    // Вычитаем смещение, чтобы получить корректную локальную дату
-    const localDate = new Date(now - timezoneOffset).toISOString().split('T')[0];
-    const dateInput = document.getElementById('executionDate');
-    if (dateInput) {
-        dateInput.value = localDate;
-        // console.log('Установлена локальная дата:', localDate);
-    }
-});
 
 function autoFillEmployeeForm() {
     document.getElementById('autoFillBtn').addEventListener('click', function(e) {
@@ -2695,18 +2463,18 @@ function autoFillEmployeeForm() {
                 registration_place: "г. Ярославль, ул. Ленина, д. 27"
             }
         ];
-        
+
         // Добавляем поле registration_place ко всем элементам
         // for (let i = 0; i < mockDataArray.length; i++) {
         //     const cities = ["г. Москва", "г. Санкт-Петербург", "г. Екатеринбург", "г. Новосибирск", "г. Казань", "г. Нижний Новгород", "г. Самара", "г. Уфа", "г. Красноярск", "г. Пермь"];
         //     const streets = ["ул. Ленина", "ул. Гагарина", "ул. Пушкина", "ул. Мира", "ул. Советская", "ул. Чехова", "ул. Карла Маркса", "ул. Дзержинского", "ул. Суворова", "ул. Лермонтова"];
         //     const building = Math.floor(Math.random() * 100) + 1;
-        
+
         //     const randomCity = cities[Math.floor(Math.random() * cities.length)];
         //     const randomStreet = streets[Math.floor(Math.random() * streets.length)];
-        
+
         //     mockDataArray[i].registration_place = `${randomCity}, ${randomStreet}, д. ${building}`;
-        // }      
+        // }
 
         // Выбираем случайный вариант из массива
         const randomIndex = Math.floor(Math.random() * mockDataArray.length);
@@ -2771,7 +2539,7 @@ function handlerAddEmployee() {
         // Попробуем найти форму снова через 500мс на случай, если DOM ещё не загружен
         setTimeout(() => {
             const formRetry = document.querySelector('form#employeeForm');
-            console.log('Повторная попытка найти форму:', formRetry);
+            // console.log('Повторная попытка найти форму:', formRetry);
             if (formRetry) {
                 initEmployeeForm(formRetry);
             }
@@ -2826,14 +2594,14 @@ async function handleEmployeeFormSubmit(e) {
     const employeeInfoBlock = document.getElementById('employeeInfo');
     employeeInfoBlock.innerHTML = '';
 
-    console.log('Начало обработки отправки формы');
+    // console.log('Начало обработки отправки формы');
 
     const form = this;
     const formData = new FormData(form);
     const submitBtn = document.getElementById('saveBtn') || form.querySelector('button[type="submit"]');
     // console.log('Найдена кнопка сохранения:', submitBtn);
     const messagesContainer = document.getElementById('formMessages');
-    
+
     // console.log('Найдены элементы:', { form, submitBtn, messagesContainer });
     // console.log('Данные формы:', Object.fromEntries(formData.entries()));
 
@@ -2848,19 +2616,19 @@ async function handleEmployeeFormSubmit(e) {
     // console.log('Проверка валидации формы...');
     const { isValid, errors } = window.formValidator.validate(form);
     // console.log('Результат валидации:', { isValid, errors });
-    
+
     if (!isValid) {
         // console.log('Ошибки валидации, отмена отправки');
         window.formValidator.displayErrors(errors, messagesContainer);
         return;
     }
-    
+
     // console.log('Форма прошла валидацию, подготовка к отправке...');
 
     try {
         // Сохраняем оригинальный текст кнопки
         const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
-        
+
         // Показываем индикатор загрузки
         // console.log('Показ индикатора загрузки...');
         if (submitBtn) {
@@ -2884,9 +2652,9 @@ async function handleEmployeeFormSubmit(e) {
                     formDataObj[key] = value;
                 }
             });
-            
+
             // console.log('Отправляемые данные:', formDataObj);
-            
+
             // Отправляем форму на сервер
             const response = await fetch(form.action, {
                 method: 'POST',
@@ -2901,15 +2669,15 @@ async function handleEmployeeFormSubmit(e) {
 
             const data = await response.json();
             // console.log('Ответ сервера:', { status: response.status, data });
-            
+
             if (!response.ok) {
                 // Если это ошибка валидации (422), обрабатываем её отдельно
                 if (response.status === 422) {
                     // console.log('Ошибки валидации с сервера (422):', data);
-                    
+
                     // Собираем все ошибки в один массив
                     const allErrors = [];
-                    
+
                     if (data.errors) {
                         // Laravel-style errors - преобразуем объект ошибок в массив сообщений
                         Object.entries(data.errors).forEach(([field, messages]) => {
@@ -2918,7 +2686,7 @@ async function handleEmployeeFormSubmit(e) {
                             } else if (typeof messages === 'string') {
                                 allErrors.push(messages);
                             }
-                            
+
                             // Выделяем невалидные поля
                             const input = form.querySelector(`[name="${field}"]`);
                             if (input) {
@@ -2937,7 +2705,7 @@ async function handleEmployeeFormSubmit(e) {
                     } else {
                         allErrors.push('Пожалуйста, заполните все обязательные поля');
                     }
-                    
+
                     // Отображаем ошибки
                     if (window.formValidator && window.formValidator.displayErrors) {
                         window.formValidator.displayErrors(allErrors, messagesContainer);
@@ -2946,7 +2714,7 @@ async function handleEmployeeFormSubmit(e) {
                     }
                     return;
                 }
-                
+
                 // Для других ошибок бросаем исключение
                 throw { response, data };
             }
@@ -2956,9 +2724,9 @@ async function handleEmployeeFormSubmit(e) {
             showAlert('Сотрудник успешно создан', 'success', messagesContainer);
             form.reset();
 
-            console.log('Сотрудник успешно создан', data);
-            console.log('Функция отображения сотрудника', window.displayEmployeeInfo);
-            
+            // console.log('Сотрудник успешно создан', data);
+            // console.log('Функция отображения сотрудника', window.displayEmployeeInfo);
+
             // Отображаем информацию о созданном сотруднике
             if (data && window.displayEmployeeInfo) {
                 window.displayEmployeeInfo(data);
@@ -2976,12 +2744,12 @@ async function handleEmployeeFormSubmit(e) {
         } catch (error) {
             console.error('Ошибка при сохранении:', error);
             let errorMessage = 'Произошла ошибка при сохранении. Пожалуйста, попробуйте еще раз.';
-            
+
             if (error.response) {
                 // Обработка HTTP ошибок
                 console.error('Данные ответа об ошибке:', error.data);
                 console.error('Статус ошибки:', error.response.status);
-                
+
                 // Пытаемся получить сообщение об ошибке из ответа
                 if (error.data) {
                     if (error.data.message) {
@@ -2992,7 +2760,7 @@ async function handleEmployeeFormSubmit(e) {
                         errorMessage = errors.join('\n');
                     }
                 }
-                
+
                 // Общие сообщения для стандартных кодов ошибок
                 if (error.response.status === 401) {
                     errorMessage = 'Требуется авторизация';
@@ -3016,7 +2784,7 @@ async function handleEmployeeFormSubmit(e) {
                 console.error('Неизвестная ошибка:', error);
                 errorMessage = 'Произошла непредвиденная ошибка. Пожалуйста, сообщите об этом в службу поддержки.';
             }
-            
+
             showAlert(errorMessage, 'danger', messagesContainer);
         } finally {
             // Восстанавливаем кнопку
@@ -3142,7 +2910,7 @@ function hanlerAddToBrigade() {
         const brigadeMembers = document.getElementById('brigadeMembers');
         const selectedOptions = Array.from(select.selectedOptions);
 
-        console.log('selectedOptions', selectedOptions);
+        // console.log('selectedOptions', selectedOptions);
 
         // return;
 
@@ -3159,17 +2927,17 @@ function hanlerAddToBrigade() {
                 const memberDiv = document.createElement('div');
                 memberDiv.setAttribute('data-employee-id', option.value);
                 memberDiv.className = 'd-flex justify-content-between align-items-center p-2 mb-2 border rounded';
-                
+
                 // Добавляем обработчик клика для выбора бригадира
                 memberDiv.addEventListener('click', function() {
                     // Убираем класс у всех элементов
                     document.querySelectorAll('#brigadeMembers > div').forEach(div => {
                         div.classList.remove('brigade-leader');
                     });
-                    
+
                     // Добавляем класс текущему элементу
                     this.classList.add('brigade-leader');
-                    
+
                     // Обновляем значение в скрытом поле для бригадира
                     const leaderInput = document.getElementById('brigadeLeader');
                     if (leaderInput) {
@@ -3221,14 +2989,14 @@ function hanlerAddToBrigade() {
 
 // Обработчик создания бригады
 function handlerCreateBrigade() {
-    // console.log('Инициализация handlerCreateBrigade...');    
+    // console.log('Инициализация handlerCreateBrigade...');
     const createBtn = document.getElementById('createBrigadeBtn');
 
     if (createBtn) {
         createBtn.addEventListener('click', async function (e) {
             e.preventDefault();
             console.clear();
-            console.log('Начало обработки клика...');
+            // console.log('Начало обработки клика...');
 
             // Получаем данные формы
             const form = document.getElementById('brigadeForm');
@@ -3316,7 +3084,7 @@ function handlerCreateBrigade() {
             // Получаем данные о членах бригады
             const brigadeMembersData = JSON.parse(formValues.brigade_members_data || '[]');
 
-            console.log('brigadeMembersData', brigadeMembersData );
+            // console.log('brigadeMembersData', brigadeMembersData );
 
             // return;
 
@@ -3335,8 +3103,8 @@ function handlerCreateBrigade() {
             };
 
             // Выводим JSON в консоль
-            console.log('=== ДАННЫЕ ФОРМЫ В ФОРМАТЕ JSON ===');
-            console.log(JSON.stringify(formJson, null, 2));
+            // console.log('=== ДАННЫЕ ФОРМЫ В ФОРМАТЕ JSON ===');
+            // console.log(JSON.stringify(formJson, null, 2));
 
             // Проверяем обязательные поля
             if (!formValues.leader_id) {
@@ -3349,14 +3117,14 @@ function handlerCreateBrigade() {
                 showAlert('В бригаде должен быть хотя бы 1 участник', 'warning');
                 return;
             }
-            
+
             // Проверяем, что выбран бригадир
             const brigadierSelected = document.querySelector('#brigadeMembers .brigade-leader');
             if (!brigadierSelected) {
                 showAlert('Пожалуйста, выберите бригадира, кликнув по участнику в списке', 'warning');
                 return;
             }
-            
+
             showAlert('Данные формы успешно обработаны!', 'success');
 
             // Функция для загрузки списка бригад
@@ -3447,7 +3215,7 @@ function handlerCreateBrigade() {
                 try {
                     const brigadesList = document.getElementById('brigadesList');
                     if (!brigadesList) {
-                        console.log('Элемент с id="brigadesList" не найден');
+                        // console.log('Элемент с id="brigadesList" не найден');
                         return;
                     }
 
@@ -3578,7 +3346,7 @@ function handlerCreateBrigade() {
                         if (brigadeMembers) {
                             brigadeMembers.innerHTML = '';
                         }
-                        
+
                         // Снимаем атрибут disabled у сотрудников в списке слева
                         const employeesSelect = document.getElementById('employeesSelect');
                         if (employeesSelect) {
@@ -3612,15 +3380,15 @@ function handlerCreateBrigade() {
 
                             const brigadeInfoData = await brigadeInfoResponse.json();
                             console.log('Информация о бригадах:', brigadeInfoData);
-                            
+
                             // Отображаем информацию о бригадах на странице
                             displayBrigadeInfo(brigadeInfoData);
                         } catch (error) {
                             console.error('Ошибка при получении информации о бригадах:', error);
                         }
-                        
+
                         // Используем глобальную функцию displayBrigadeInfo
-                        
+
 
                     } else {
                         throw new Error(data.message || 'Неизвестная ошибка сервера');
@@ -3636,7 +3404,7 @@ function handlerCreateBrigade() {
             // Вызываем функцию создания бригады
             createBrigade();
 
-            console.log('Бригада успешно создана!');
+            // console.log('Бригада успешно создана!');
 
             // Для отправки формы раскомментируйте строку ниже
             // form.submit();
@@ -3787,7 +3555,7 @@ function setupBrigadeAttachment() {
 
                     // Моковый обработчик
                     button.addEventListener('click', function () {
-                        console.log('Кнопка нажата для заявки', requestId);
+                        // console.log('Кнопка нажата для заявки', requestId);
                         // console.log('Выбран бригадир с ID:', brigadeSelect.value);
                     });
 
@@ -3798,3 +3566,227 @@ function setupBrigadeAttachment() {
         }
     });
 }
+
+// Инициализация страницы при загрузке DOM
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM полностью загружен');
+    initializePage();
+    initFormHandlers();
+
+    // Запускаем инициализацию кастомных селектов с задержкой
+    setTimeout(() => {
+        initAllCustomSelects();
+    }, 1000); // Даем время на загрузку данных
+
+    // Добавляем обработчик события открытия модального окна с формой создания заявки
+    const newRequestModal = document.getElementById('newRequestModal');
+    if (newRequestModal) {
+        newRequestModal.addEventListener('shown.bs.modal', function() {
+            // console.log('Модальное окно открыто, сбрасываем валидацию');
+
+            // Сбрасываем валидацию оригинального селекта
+            const addressSelect = document.getElementById('addresses_id');
+            if (addressSelect) {
+                addressSelect.classList.remove('is-invalid');
+            }
+
+            // Сбрасываем валидацию кастомного селекта
+            const customSelects = document.querySelectorAll('.custom-select-wrapper');
+            for (const wrapper of customSelects) {
+                const input = wrapper.querySelector('.custom-select-input');
+                if (input && input.placeholder === 'Выберите адрес из списка') {
+                    if (wrapper.resetValidation && typeof wrapper.resetValidation === 'function') {
+                        wrapper.resetValidation();
+                    } else {
+                        input.classList.remove('is-invalid');
+                    }
+                    break;
+                }
+            }
+
+            // Сбрасываем валидацию поля комментария
+            const commentField = document.getElementById('comment');
+            if (commentField) {
+                commentField.classList.remove('is-invalid');
+            }
+
+            // Сбрасываем класс was-validated у формы
+            const form = document.getElementById('newRequestForm');
+            if (form) {
+                form.classList.remove('was-validated');
+            }
+        });
+    }
+
+    // Обработчик для кнопки "Назначить" в модальном окне назначения бригады
+    const confirmAssignTeamBtn = document.getElementById('confirm-assign-team-btn');
+    if (confirmAssignTeamBtn) {
+        confirmAssignTeamBtn.addEventListener('click', async function() {
+            const modal = document.getElementById('assign-team-modal');
+            const requestId = modal.dataset.requestId;
+            const selectElement = document.getElementById('assign-team-select');
+            const selectedTeamId = selectElement.value;
+
+            if (!selectedTeamId) {
+                showAlert('Бригада не выбрана!', 'warning');
+                return;
+            }
+
+            const selectedTeamName = selectElement.options[selectElement.selectedIndex].text;
+            const leaderId = selectedTeamId; // ID бригадира
+
+            // Получаем ID бригады из атрибута data-brigade-id выбранной опции
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const brigade_id = selectedOption.getAttribute('data-brigade-id');
+
+            if (!brigade_id) {
+                console.error('Не найден ID бригады в выбранной опции');
+                showAlert('Ошибка: Не найден ID бригады', 'danger');
+                return;
+            }
+
+            const brigadeName = selectedTeamName;
+
+            // console.log(`ID выбранной заявки: ${requestId}`);
+            // console.log(`ID выбранного бригадира: ${leaderId}`);
+            // console.log(`ID бригады: ${brigade_id}`);
+            // console.log(`Название бригады: ${brigadeName}`);
+
+            try {
+                // Отправляем запрос на обновление заявки
+                const updateResponse = await fetch('/api/requests/update-brigade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        brigade_id: brigade_id,
+                        request_id: requestId
+                    })
+                });
+
+                const updateData = await updateResponse.json().catch(() => ({}));
+                // console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
+
+                if (!updateResponse.ok) {
+                    const errorMessage = updateData.message ||
+                        updateData.error ||
+                        (updateData.error_details ? JSON.stringify(updateData.error_details) : 'Неизвестная ошибка');
+                    throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
+                }
+
+                // console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
+
+                // 3. Обновляем страницу для отображения изменений
+                window.location.reload();
+
+            } catch (error) {
+                console.error('Ошибка при прикреплении бригады:', error.message);
+                if (typeof utils !== 'undefined' && typeof utils.alert === 'function') {
+                    utils.alert(`Ошибка: ${error.message}`);
+                } else {
+                    showAlert(`Ошибка: ${error.message}`, 'danger');
+                }
+            }
+
+            // Закрываем модальное окно
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            bsModal.hide();
+        });
+    }
+
+    // Инициализация кнопок заявок
+    initRequestButtons();
+
+    // Добавляем обработчик для вкладки заявок
+    const requestsTab = document.getElementById('requests-tab');
+    if (requestsTab) {
+        requestsTab.addEventListener('click', async function () {
+            // console.log('Вкладка "Заявки" была нажата');
+
+            // Обновить данные об адресах
+            loadAddresses();
+
+            try {
+                // Запрашиваем актуальный список бригад с сервера
+                const response = await fetch('/api/brigades/current-day');
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Ошибка при загрузке списка бригад');
+                }
+
+                // Обновляем выпадающий список
+                const select = document.getElementById('brigade-leader-select');
+                if (select) {
+                    // Сохраняем текущее выбранное значение
+                    const selectedValue = select.value;
+
+                    // Очищаем список, оставляя только первый элемент
+                    select.innerHTML = '<option value="" selected disabled>Выберите бригаду...</option>';
+
+                    // Добавляем новые опции
+                    result.data.forEach(brigade => {
+                        const option = document.createElement('option');
+                        option.value = brigade.leader_id;
+                        option.textContent = brigade.leader_name;
+                        option.setAttribute('data-brigade-id', brigade.brigade_id);
+                        select.appendChild(option);
+                    });
+
+                    // Восстанавливаем выбранное значение, если оно есть в новом списке
+                    if (selectedValue && Array.from(select.options).some(opt => opt.value === selectedValue)) {
+                        select.value = selectedValue;
+                    }
+
+                    // console.log('Список бригад обновлен');
+                }
+            } catch (error) {
+                console.error('Ошибка при обновлении списка бригад:', error);
+                showAlert('Не удалось обновить список бригад: ' + error.message);
+            }
+        });
+    }
+
+    // Перехватываем вызов applyFilters для обновления обработчиков после фильтрации
+    const originalApplyFilters = window.applyFilters;
+    window.applyFilters = function () {
+        return originalApplyFilters.apply(this, arguments).then(() => {
+            initRequestButtons();
+        });
+    };
+
+
+    setupBrigadeAttachment();
+    // console.log('Вызов handlerCreateBrigade...');
+    handlerCreateBrigade();
+    // console.log('handlerCreateBrigade вызван');
+    hanlerAddToBrigade();
+    handlerAddEmployee();
+    // initUserSelection();
+
+    // // Устанавливаем текущую дату + 1 день в формате YYYY-MM-DD
+    // const today = new Date();
+    // // Добавляем 1 день, чтобы компенсировать разницу в датах
+    // today.setDate(today.getDate() + 1);
+    // const dateStr = today.toISOString().split('T')[0];
+    // const dateInput = document.getElementById('executionDate');
+    // if (dateInput) {
+    //     dateInput.value = dateStr;
+    //     console.log('Установлена дата:', dateStr);
+    // }
+
+    // Получаем текущую дату с учетом локального времени
+    const now = new Date();
+    // Получаем смещение в минутах и конвертируем в миллисекунды
+    const timezoneOffset = now.getTimezoneOffset() * 60000;
+    // Вычитаем смещение, чтобы получить корректную локальную дату
+    const localDate = new Date(now - timezoneOffset).toISOString().split('T')[0];
+    const dateInput = document.getElementById('executionDate');
+    if (dateInput) {
+        dateInput.value = localDate;
+        // console.log('Установлена локальная дата:', localDate);
+    }
+});
