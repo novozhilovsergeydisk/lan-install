@@ -892,6 +892,25 @@ function loadAddresses() {
 
                 selectElement.appendChild(option);
             });
+            
+            // Инициализируем кастомный селект с поиском после загрузки адресов
+            // Используем функцию с повторными попытками
+            function tryInitAddressesSelect(attempts = 0) {
+                if (typeof window.initCustomSelect === 'function') {
+                    console.log('Инициализация кастомного селекта для выбора адреса в форме');
+                    window.initCustomSelect("addresses_id", "Выберите адрес из списка");
+                } else {
+                    console.log(`Попытка ${attempts + 1}: Функция initCustomSelect не найдена для addresses_id, повторная попытка через 500мс`);
+                    if (attempts < 5) { // Максимум 5 попыток
+                        setTimeout(() => tryInitAddressesSelect(attempts + 1), 500);
+                    } else {
+                        console.error('Не удалось найти функцию initCustomSelect для addresses_id после 5 попыток');
+                    }
+                }
+            }
+            
+            // Запускаем инициализацию с небольшой задержкой, чтобы DOM успел обновиться
+            setTimeout(() => tryInitAddressesSelect(), 200);
         })
         .catch(error => {
             console.error('Ошибка при загрузке адресов:', error);
@@ -2047,10 +2066,294 @@ function initRequestButtons() {
     });
 }
 
+// Глобальная функция для инициализации кастомного выпадающего списка
+// Явно добавляем в глобальный объект window
+window.initCustomSelect = function(selectId, placeholder = "Выберите из списка") {
+    console.log(`Инициализация кастомного выпадающего списка для ${selectId}...`);
+    
+    const originalSelect = document.getElementById(selectId);
+    console.log('Оригинальный select:', originalSelect);
+    
+    if (!originalSelect) {
+        console.error(`Не найден элемент с id ${selectId}`);
+        return;
+    }
+    
+    // Проверяем, не был ли уже инициализирован кастомный селект
+    if (originalSelect.getAttribute('data-custom-initialized') === 'true') {
+        // Удаляем старый кастомный селект, если он существует
+        const oldWrapper = document.getElementById(`custom-select-wrapper-${selectId}`);
+        if (oldWrapper) {
+            console.log(`Удаляем старый кастомный селект для ${selectId}`);
+            oldWrapper.remove();
+        }
+    }
+    
+    const wrapper = document.createElement("div");
+    wrapper.className = "custom-select-wrapper";
+    wrapper.id = `custom-select-wrapper-${selectId}`;
+    console.log('Создан wrapper:', wrapper);
+  
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "custom-select-input";
+    input.placeholder = placeholder;
+    input.readOnly = false; // Разрешаем редактировать для поиска
+    
+    // Надежное отключение автозаполнения браузера
+    input.setAttribute('autocomplete', 'new-password'); // Самый надежный способ
+    input.setAttribute('autocorrect', 'off');
+    input.setAttribute('autocapitalize', 'off');
+    input.setAttribute('spellcheck', 'false');
+    
+    // Проверяем, что атрибуты установлены
+    console.log('Создан input с атрибутами:', {
+        autocomplete: input.getAttribute('autocomplete'),
+        autocorrect: input.getAttribute('autocorrect'),
+        autocapitalize: input.getAttribute('autocapitalize'),
+        spellcheck: input.getAttribute('spellcheck')
+    });
+    
+    console.log('Создан input:', input);
+  
+    const optionsList = document.createElement("ul");
+    optionsList.className = "custom-select-options";
+    console.log('Создан optionsList:', optionsList);
+  
+    // Скрыть оригинальный select
+    originalSelect.style.display = "none";
+    originalSelect.setAttribute('data-custom-initialized', 'true');
+    originalSelect.parentNode.insertBefore(wrapper, originalSelect);
+    wrapper.appendChild(input);
+    wrapper.appendChild(optionsList);
+    
+    // Находим элемент invalid-feedback и добавляем его в кастомный селект
+    let feedbackElement = null;
+    const selectParent = originalSelect.parentElement;
+    if (selectParent) {
+        const feedback = selectParent.querySelector('.invalid-feedback');
+        if (feedback) {
+            feedbackElement = feedback.cloneNode(true); // Клонируем элемент с сообщением об ошибке
+            feedbackElement.style.display = 'none'; // Скрываем по умолчанию
+            wrapper.appendChild(feedbackElement);
+        }
+    }
+    
+    console.log('Элементы добавлены в DOM');
+  
+    // Собрать все опции
+    const options = Array.from(originalSelect.querySelectorAll("option")).filter(
+      option => option.value !== ""
+    );
+    console.log('Найдено опций:', options.length);
+  
+    // Заполнить список
+    function populateList(filter = "") {
+      console.log('Заполнение списка с фильтром:', filter);
+      optionsList.innerHTML = "";
+      const filtered = options.filter(option =>
+        option.textContent.toLowerCase().includes(filter.toLowerCase())
+      );
+      console.log('Отфильтровано опций:', filtered.length);
+  
+      if (filtered.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "Ничего не найдено";
+        li.disabled = true;
+        li.style.color = "gray";
+        optionsList.appendChild(li);
+      } else {
+        filtered.forEach(option => {
+          const li = document.createElement("li");
+          li.textContent = option.textContent;
+          li.dataset.value = option.value;
+          li.addEventListener("click", () => {
+            console.log('Выбран элемент:', option.textContent, option.value);
+            input.value = option.textContent;
+            originalSelect.value = option.value;
+            originalSelect.dispatchEvent(new Event("change"));
+            optionsList.style.display = "none";
+            
+            // Сбрасываем валидацию при выборе адреса
+            input.classList.remove('is-invalid');
+            originalSelect.classList.remove('is-invalid');
+            if (feedbackElement && feedbackElement.parentNode === wrapper) {
+              feedbackElement.style.display = 'none';
+            }
+            
+            // Проверяем валидность при выборе элемента
+            validateInput(false);
+          });
+          optionsList.appendChild(li);
+        });
+      }
+    }
+    
+    // Открытие/закрытие
+    input.addEventListener("click", (e) => {
+      console.log('Клик по полю ввода');
+      if (optionsList.style.display === "block") {
+        console.log('Закрываем список');
+        optionsList.style.display = "none";
+      } else {
+        console.log('Открываем список');
+        populateList(input.value);
+        optionsList.style.display = "block";
+      }
+      e.stopPropagation(); // Предотвращаем всплытие события
+    });
+  
+    // Фильтрация при вводе
+    input.addEventListener("input", () => {
+      console.log('Ввод текста:', input.value);
+      populateList(input.value);
+      optionsList.style.display = "block";
+      
+      // Проверяем, соответствует ли введенный текст какому-либо из вариантов
+      validateInput(false);
+    });
+    
+    // Переменная feedbackElement уже определена выше
+    
+    // Функция проверки введенного значения
+    function validateInput(applyStyle = false) {
+      // Проверяем, выбрано ли значение из списка
+      const isValid = originalSelect.value !== "" && originalSelect.selectedIndex > 0;
+      
+      if (applyStyle) {
+        if (isValid) {
+          // Если выбрано значение из списка, убираем красную подсветку
+          input.classList.remove('is-invalid');
+          // Скрываем сообщение об ошибке, если оно есть
+          if (feedbackElement && feedbackElement.parentNode === wrapper) {
+            feedbackElement.style.display = 'none';
+          }
+        } else {
+          // Если не выбрано значение из списка, добавляем красную подсветку
+          input.classList.add('is-invalid');
+          // Показываем сообщение об ошибке, если оно есть
+          if (feedbackElement && feedbackElement.parentNode === wrapper) {
+            feedbackElement.style.display = 'block';
+          }
+        }
+      }
+      
+      return isValid;
+    }
+  
+    // Закрытие при клике вне
+    document.addEventListener("click", function (e) {
+      if (!wrapper.contains(e.target)) {
+        console.log('Клик вне кастомного селекта, закрываем');
+        optionsList.style.display = "none";
+        
+        // Проверяем валидность при клике вне селекта
+        validateInput(false);
+      }
+    });
+  
+    // Обновление поля при изменении оригинального select
+    originalSelect.addEventListener("change", () => {
+      console.log('Изменение оригинального select');
+      const selected = originalSelect.options[originalSelect.selectedIndex];
+      input.value = selected ? selected.text : "";
+      console.log('Установлено значение:', input.value);
+      
+      // Проверяем валидность при изменении оригинального select
+      validateInput(false);
+    });
+  
+    // Инициализация
+    console.log('Запуск первичного заполнения списка');
+    populateList();
+    
+    // Если в оригинальном селекте уже есть выбранное значение, отобразим его
+    if (originalSelect.selectedIndex > 0) {
+        const selected = originalSelect.options[originalSelect.selectedIndex];
+        input.value = selected ? selected.text : "";
+    }
+    // Добавляем метод для внешней валидации
+    wrapper.validate = function(applyStyle = true) {
+      return validateInput(applyStyle);
+    };
+    
+    // Добавляем метод для сброса валидации (убираем красную подсветку)
+    wrapper.resetValidation = function() {
+      input.classList.remove('is-invalid');
+      if (feedbackElement && feedbackElement.parentNode === wrapper) {
+        feedbackElement.style.display = 'none';
+      }
+    };
+    
+    return wrapper;
+}
+
+// Функция для инициализации всех селектов с поиском
+function initAllCustomSelects() {
+    console.log('Инициализация всех кастомных селектов');
+    
+    // Инициализируем селект с адресами в основном списке
+    initCustomSelect("addressSelect", "Выберите адрес из списка");
+    
+    // Инициализируем селект с адресами в форме создания заявки
+    if (document.getElementById('addresses_id')) {
+        initCustomSelect("addresses_id", "Выберите адрес из списка");
+    }
+    
+    // Здесь можно добавить инициализацию других селектов
+    // Например: initCustomSelect("otherSelect", "Выберите значение");
+}
+
 // Инициализация страницы при загрузке DOM
 document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM полностью загружен');
     initializePage();
+    
+    // Запускаем инициализацию кастомных селектов с задержкой
+    setTimeout(() => {
+        console.log('Запуск инициализации кастомных селектов с задержкой');
+        initAllCustomSelects();
+    }, 1000); // Даем время на загрузку данных
+    
+    // Добавляем обработчик события открытия модального окна с формой создания заявки
+    const newRequestModal = document.getElementById('newRequestModal');
+    if (newRequestModal) {
+        newRequestModal.addEventListener('shown.bs.modal', function() {
+            console.log('Модальное окно открыто, сбрасываем валидацию');
+            
+            // Сбрасываем валидацию оригинального селекта
+            const addressSelect = document.getElementById('addresses_id');
+            if (addressSelect) {
+                addressSelect.classList.remove('is-invalid');
+            }
+            
+            // Сбрасываем валидацию кастомного селекта
+            const customSelects = document.querySelectorAll('.custom-select-wrapper');
+            for (const wrapper of customSelects) {
+                const input = wrapper.querySelector('.custom-select-input');
+                if (input && input.placeholder === 'Выберите адрес из списка') {
+                    if (wrapper.resetValidation && typeof wrapper.resetValidation === 'function') {
+                        wrapper.resetValidation();
+                    } else {
+                        input.classList.remove('is-invalid');
+                    }
+                    break;
+                }
+            }
+            
+            // Сбрасываем валидацию поля комментария
+            const commentField = document.getElementById('comment');
+            if (commentField) {
+                commentField.classList.remove('is-invalid');
+            }
+            
+            // Сбрасываем класс was-validated у формы
+            const form = document.getElementById('newRequestForm');
+            if (form) {
+                form.classList.remove('was-validated');
+            }
+        });
+    }
     
     // Обработчик для кнопки "Назначить" в модальном окне назначения бригады
     const confirmAssignTeamBtn = document.getElementById('confirm-assign-team-btn');

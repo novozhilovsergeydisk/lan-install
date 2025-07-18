@@ -42,6 +42,9 @@
             white-space: nowrap; /* предотвращаем перенос текста */
         }
     </style>
+
+
+
     <!-- Bootstrap 5 CSS -->
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -55,6 +58,68 @@
     <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">
+
+    <style>
+        .custom-select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-input {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            cursor: text;
+        }
+
+        .custom-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 4px;
+            background: white;
+            z-index: 1000;
+            display: none;
+        }
+
+        .custom-select-options li {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .custom-select-options li:hover {
+            background-color: #f0f0f0;
+        }
+        
+        /* Стили для темной темы */
+        body.dark-mode .custom-select-input {
+            background-color: #333;
+            color: #fff;
+            border-color: #555;
+        }
+        
+        body.dark-mode .custom-select-options {
+            background-color: #333;
+            border-color: #555;
+            color: #fff;
+        }
+        
+        body.dark-mode .custom-select-options li {
+            color: #fff;
+        }
+        
+        body.dark-mode .custom-select-options li:hover {
+            background-color: #444;
+        }
+    </style>
 
     <!-- Проверка загрузки Bootstrap -->
     <script>
@@ -1371,6 +1436,9 @@
                                 <option value="" disabled selected>Выберите адрес</option>
                                 <!-- Will be populated by JavaScript -->
                             </select>
+                            <div class="invalid-feedback">
+                                Пожалуйста, выберите адрес из списка
+                            </div>
                         </div>
                     </div>
 
@@ -2311,6 +2379,25 @@
             
             // Добавляем обработчик события для выбора адреса
             const addressSelect = document.getElementById('addressSelect');
+            
+            // Инициализируем кастомный селект с поиском после обновления списка
+            // Функция для попыток инициализации с повторными попытками
+            function tryInitCustomSelect(attempts = 0) {
+                if (typeof window.initCustomSelect === 'function') {
+                    console.log('Инициализация кастомного селекта после обновления списка адресов');
+                    window.initCustomSelect("addressSelect", "Выберите адрес из списка");
+                } else {
+                    console.log(`Попытка ${attempts + 1}: Функция initCustomSelect не найдена, повторная попытка через 500мс`);
+                    if (attempts < 5) { // Максимум 5 попыток
+                        setTimeout(() => tryInitCustomSelect(attempts + 1), 500);
+                    } else {
+                        console.error('Не удалось найти функцию initCustomSelect после 5 попыток');
+                    }
+                }
+            }
+            
+            // Запускаем инициализацию с небольшой задержкой, чтобы DOM успел обновиться
+            setTimeout(() => tryInitCustomSelect(), 200);
             if (addressSelect) {
                 addressSelect.addEventListener('change', function() {
                     const selectedAddressId = this.value;

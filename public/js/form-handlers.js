@@ -236,8 +236,20 @@ async function submitRequestForm() {
     const submitBtn = document.getElementById('submitRequest');
 
     if (!form.checkValidity()) {
-
         form.classList.add('was-validated');
+        
+        // Проверяем поле комментария отдельно
+        const commentField = document.getElementById('comment');
+        if (commentField && commentField.validity && !commentField.validity.valid) {
+            // Если поле комментария невалидно, добавляем класс is-invalid
+            commentField.classList.add('is-invalid');
+            
+            // Показываем сообщение об ошибке
+            if (commentField.value.length < 3) {
+                showAlert('Пожалуйста, введите комментарий (от 3 до 1000 символов)', 'danger');
+            }
+        }
+        
         return;
     }
 
@@ -258,10 +270,36 @@ async function submitRequestForm() {
 
     const addressId = document.getElementById('addresses_id').value;
 
+    // Проверяем, выбран ли адрес из списка
     if (!addressId) {
         showAlert('Пожалуйста, выберите адрес из списка', 'danger');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Создать заявку';
+        
+        // Используем стандартную валидацию Bootstrap для оригинального селекта
+        const addressSelect = document.getElementById('addresses_id');
+        if (addressSelect) {
+            // Добавляем класс is-invalid к оригинальному селекту
+            addressSelect.classList.add('is-invalid');
+        }
+        
+        // Находим кастомный селект для addresses_id и применяем к нему валидацию с подсветкой
+        const customSelects = document.querySelectorAll('.custom-select-wrapper');
+        for (const wrapper of customSelects) {
+            // Проверяем, относится ли этот wrapper к нашему селекту addresses_id
+            const input = wrapper.querySelector('.custom-select-input');
+            if (input && input.placeholder === 'Выберите адрес из списка') {
+                // Если у wrapper есть метод validate, вызываем его с параметром true для подсветки
+                if (wrapper.validate && typeof wrapper.validate === 'function') {
+                    wrapper.validate(true);
+                } else {
+                    // Если метода нет, добавляем класс is-invalid напрямую
+                    input.classList.add('is-invalid');
+                }
+                break;
+            }
+        }
+        
         return;
     }
 
@@ -550,12 +588,31 @@ function updateRowNumbers() {
     });
 }
 
+// Добавляем обработчик события ввода для поля комментария
+function initCommentValidation() {
+    const commentField = document.getElementById('comment');
+    if (commentField) {
+        commentField.addEventListener('input', function() {
+            // Если пользователь начал вводить текст, убираем класс is-invalid
+            if (this.value.length >= 3) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+}
+
+// Вызываем функцию инициализации при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    initCommentValidation();
+});
+
 // Делаем функции доступными глобально
 window.submitRequestForm = submitRequestForm;
 window.displayEmployeeInfo = displayEmployeeInfo;
 window.updateRowNumbers = updateRowNumbers;
 window.addRequestToTable = addRequestToTable;
 window.handleCommentEdit = handleCommentEdit;
+window.initCommentValidation = initCommentValidation;
 
 /**
  * Функция для обработки редактирования комментария
