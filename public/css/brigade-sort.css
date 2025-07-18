@@ -1,0 +1,7 @@
+/* Стили для иконки сортировки "Бригады" */
+#brigadeSortIcon {
+    font-size: 0.8em;
+    margin-left: 0.3em;
+    transition: transform 0.2s ease;
+    display: inline-block;
+}

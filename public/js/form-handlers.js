@@ -245,9 +245,10 @@ async function submitRequestForm() {
             commentField.classList.add('is-invalid');
             
             // Показываем сообщение об ошибке
-            if (commentField.value.length < 3) {
-                showAlert('Пожалуйста, введите комментарий (от 3 до 1000 символов)', 'danger');
-            }
+            // Закомментировано, так как есть подсказка под полем ввода и подсветка рамки
+            // if (commentField.value.length < 3) {
+            //     showAlert('Пожалуйста, введите комментарий (от 3 до 1000 символов)', 'danger');
+            // }
         }
         
         return;

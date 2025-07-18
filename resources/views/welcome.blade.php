@@ -307,7 +307,7 @@
                                     <th style="width: 15rem;">Адрес/Телефон</th>
                                     <th style="width: 30rem;">Комментарий</th>
                                     <!-- <th style="width: 12rem;">Оператор / Дата создания</th> -->
-                                    <th style="width: 20rem;">Бригада</th>
+                                    <th id="brigadeHeader" style="width: 20rem;">Бригада <span id="brigadeSortIcon"></span></th>
                                     <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
                                     <th style="width: 3rem;"></th>
                                 </tr>
@@ -2078,6 +2078,8 @@
 <script type="module" src="{{ asset('js/handler.js') }}"></script>
 <script src="{{ asset('js/calendar.js') }}"></script>
 <script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
+<script src="{{ asset('js/brigade-sort.js') }}"></script>
+<link rel="stylesheet" href="{{ asset('css/brigade-sort.css') }}">
 
 <!-- Stack for pushed scripts -->
 @stack('scripts')
