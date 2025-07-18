@@ -2131,7 +2131,7 @@
                     </div>
                 </form>
                 <div class="mt-3">
-                    <button id="testFillBtn" type="button" class="btn btn-secondary" style="display: block;">Автозаполнение</button>
+                    <button id="testFillBtn" type="button" class="btn btn-secondary" style="display: none;">Автозаполнение</button>
                 </div>
             </div>
             <div class="modal-footer">
