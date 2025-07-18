@@ -1642,7 +1642,7 @@ async function loadTeamsToSelect() {
                 result.data.forEach(brigade => {
                     const option = document.createElement('option');
                     option.value = brigade.leader_id;
-                    option.textContent = `[Номер бригады: ${brigade.brigade_id}] [Бригадир: ${brigade.leader_name}]`;
+                    option.textContent = `[${brigade.brigade_name}] [Бригадир: ${brigade.leader_name}]`;
                     option.setAttribute('data-brigade-id', brigade.brigade_id);
                     selectElement.appendChild(option);
                 });
