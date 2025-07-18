@@ -1711,11 +1711,41 @@ function handleTransferRequest(button) {
     const modalElement = document.getElementById('transferRequestModal');
     const modal = new bootstrap.Modal(modalElement);
     
-    // Устанавливаем минимальную дату - завтрашний день
+    // Устанавливаем минимальную дату - гарантированно завтрашний день
     const dateInput = modalElement.querySelector('#transferDate');
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    dateInput.min = tomorrow.toISOString().split('T')[0];
+    
+    // Получаем текущую дату в локальном формате
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+    
+    // Создаем дату на завтра (без времени, только дата)
+    const tomorrow = new Date(year, month, day + 1);
+    
+    // Форматируем дату в формате YYYY-MM-DD для инпута типа date
+    const tomorrowFormatted = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+    
+    console.log('Текущая дата:', today.toISOString().split('T')[0]);
+    console.log('Завтрашняя дата:', tomorrowFormatted);
+    
+    // Устанавливаем минимальную дату
+    dateInput.min = tomorrowFormatted;
+    
+    // Устанавливаем завтрашнюю дату как значение по умолчанию
+    dateInput.value = tomorrowFormatted;
+    
+    // Добавляем обработчик изменения даты, чтобы проверить, что выбранная дата не раньше завтрашней
+    dateInput.addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        const minDate = new Date(tomorrowFormatted);
+        
+        // Если выбранная дата раньше минимальной, сбрасываем на минимальную
+        if (selectedDate < minDate) {
+            this.value = tomorrowFormatted;
+            showAlert('Дата переноса не может быть раньше завтрашнего дня', 'warning');
+        }
+    });
     
     // Обработчик подтверждения переноса
     modalElement.querySelector('#confirmTransfer').addEventListener('click', async () => {
@@ -1733,6 +1763,13 @@ function handleTransferRequest(button) {
         }
         
         try {
+            // Выводим в консоль отправляемые данные для отладки
+            console.log('Отправка запроса на перенос заявки:', {
+                request_id: requestId,
+                new_date: selectedDate,
+                reason: reason
+            });
+            
             const response = await fetch('/api/requests/transfer', {
                 method: 'POST',
                 headers: {
@@ -1747,6 +1784,9 @@ function handleTransferRequest(button) {
             });
             
             const result = await response.json();
+            
+            // Выводим ответ сервера в консоль
+            console.log('Ответ сервера при переносе заявки:', result);
 
             // console.log(result);
             

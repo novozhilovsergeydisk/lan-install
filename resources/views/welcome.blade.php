@@ -549,254 +549,19 @@
 
                                 <!-- Адрес -->
                                 <div>
-                                    <h6>Добавить адрес</h6>
+                                    <!-- Кнопка для открытия модального окна добавления адреса -->
+                                    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#assignAddressModal">
+                                        <i class="bi bi-plus-circle me-1"></i>Добавить адрес
+                                    </button>
+                                </div>
 
-                                    <form id="addressForm" class="row g-2 align-items-end" method="POST"
-                                          action="{{ route('address.add') }}">
-                                        @csrf
-                                        <div class="col-md-3">
-                                            <label class="form-label">Улица</label>
-                                            <input type="text" name="street" class="form-control" placeholder="Улица"
-                                                   required>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label">Дом</label>
-                                            <input type="text" name="houses" class="form-control" placeholder="12А"
-                                                   required>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Район</label>
-                                            <input type="text" name="district" class="form-control"
-                                                   placeholder="Центральный">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label">Город</label>
-                                            <select id="filter_city_id" name="city_id" class="form-select" required>
-                                                <option value="">Выберите город</option>
-                                            </select>
-                                        </div>
+                                <div id="addressInfo">
+                                    <!-- Здесь будет только добавленный адрес -->
+                                </div>
 
-                                        <div class="col-auto d-flex gap-2 mt-4">
-                                            <button type="submit" class="btn btn-outline-primary">Добавить адрес</button>
-                                            <button id="testFillBtn" type="button" class="btn btn-secondary">Автозаполнение</button>
-                                        </div>
-                                    </form>
-
-                                    <script>
-                                        // Функция для загрузки городов
-                                        function loadCities(selectElement) {
-                                            // Устанавливаем состояние загрузки
-                                            const loadingOption = document.createElement('option');
-                                            loadingOption.value = '';
-                                            loadingOption.textContent = 'Загрузка городов...';
-                                            selectElement.innerHTML = '';
-                                            selectElement.appendChild(loadingOption);
-
-                                            // Загружаем города с сервера
-                                            return fetch('/api/cities')
-                                                .then(response => {
-                                                    if (!response.ok) {
-                                                        throw new Error('Ошибка загрузки городов');
-                                                    }
-                                                    return response.json();
-                                                })
-                                                .then(cities => {
-                                                    // Очищаем список
-                                                    selectElement.innerHTML = '';
-
-                                                    // Добавляем опцию по умолчанию
-                                                    const defaultOption = document.createElement('option');
-                                                    defaultOption.value = '';
-                                                    defaultOption.textContent = 'Выберите город';
-                                                    selectElement.appendChild(defaultOption);
-
-                                                    // Добавляем города в список
-                                                    if (Array.isArray(cities) && cities.length > 0) {
-                                                        cities.forEach(city => {
-                                                            const option = document.createElement('option');
-                                                            option.value = city.id;
-                                                            option.textContent = city.name;
-                                                            selectElement.appendChild(option);
-                                                        });
-                                                        // console.log('Загружено городов:', cities.length);
-                                                    } else {
-                                                        console.warn('Получен пустой список городов');
-                                                    }
-                                                    return cities;
-                                                })
-                                                .catch(error => {
-                                                    console.error('Ошибка при загрузке городов:', error);
-                                                    selectElement.innerHTML = '<option value="">Ошибка загрузки</option>';
-                                                    throw error;
-                                                });
-                                        }
-
-                                        // Загружаем города при загрузке страницы
-                                        document.addEventListener('DOMContentLoaded', function () {
-                                            const citySelect = document.getElementById('filter_city_id');
-                                            if (citySelect) {
-                                                loadCities(citySelect);
-                                            }
-                                        });
-
-                                        const testData = [
-                                            {street: "Ленина", houses: "12А", district: "Центральный", city_id: "1"},
-                                            {street: "Пушкина", houses: "5", district: "Северный", city_id: "2"},
-                                            {street: "Крылова", houses: "34", district: "Южный", city_id: "3"},
-                                            {street: "Мира", houses: "17Б", district: "Западный", city_id: "4"},
-                                            {street: "Садовая", houses: "8", district: "Восточный", city_id: "5"},
-                                            {street: "Чехова", houses: "21", district: "Центральный", city_id: "1"},
-                                            {street: "Толстого", houses: "13", district: "Северный", city_id: "2"},
-                                            {street: "Гагарина", houses: "3", district: "Южный", city_id: "3"},
-                                            {street: "Космонавтов", houses: "9А", district: "Западный", city_id: "4"},
-                                            {street: "Новая", houses: "27", district: "Восточный", city_id: "5"},
-                                            {street: "Лесная", houses: "11", district: "Центральный", city_id: "1"},
-                                            {street: "Зеленая", houses: "4", district: "Северный", city_id: "2"},
-                                            {street: "Речная", houses: "19", district: "Южный", city_id: "3"},
-                                            {street: "Березовая", houses: "7", district: "Западный", city_id: "4"},
-                                            {street: "Солнечная", houses: "15", district: "Восточный", city_id: "5"},
-                                            {street: "Победы", houses: "2", district: "Центральный", city_id: "1"},
-                                            {street: "Калинина", houses: "16", district: "Северный", city_id: "2"},
-                                            {street: "Молодежная", houses: "10", district: "Южный", city_id: "3"},
-                                            {street: "Луговая", houses: "6", district: "Западный", city_id: "4"},
-                                            {street: "Восточная", houses: "20", district: "Восточный", city_id: "5"},
-                                            {street: "Цветочная", houses: "14", district: "Центральный", city_id: "1"},
-                                            {street: "Школьная", houses: "22", district: "Северный", city_id: "2"},
-                                            {street: "Парковая", houses: "9", district: "Южный", city_id: "3"},
-                                            {street: "Кленовая", houses: "18", district: "Западный", city_id: "4"},
-                                            {street: "Набережная", houses: "5А", district: "Восточный", city_id: "5"},
-                                            {
-                                                street: "Магистральная",
-                                                houses: "29",
-                                                district: "Центральный",
-                                                city_id: "1"
-                                            },
-                                            {street: "Советская", houses: "7Б", district: "Северный", city_id: "2"},
-                                            {street: "Индустриальная", houses: "12", district: "Южный", city_id: "3"},
-                                            {street: "Октябрьская", houses: "3А", district: "Западный", city_id: "4"},
-                                            {
-                                                street: "Революционная",
-                                                houses: "10",
-                                                district: "Восточный",
-                                                city_id: "5"
-                                            },
-                                            {street: "Лазурная", houses: "8Б", district: "Центральный", city_id: "1"},
-                                            {street: "Кирова", houses: "26", district: "Северный", city_id: "2"},
-                                            {street: "Горького", houses: "13А", district: "Южный", city_id: "3"},
-                                            {street: "Фестивальная", houses: "4", district: "Западный", city_id: "4"},
-                                            {street: "Заречная", houses: "15Б", district: "Восточный", city_id: "5"},
-                                            {street: "Полевая", houses: "11А", district: "Центральный", city_id: "1"},
-                                            {street: "Южная", houses: "19Б", district: "Северный", city_id: "2"},
-                                            {street: "Вишневая", houses: "6А", district: "Южный", city_id: "3"},
-                                            {street: "Вокзальная", houses: "1", district: "Западный", city_id: "4"},
-                                            {street: "Шоссейная", houses: "23", district: "Восточный", city_id: "5"},
-                                            {street: "Мирная", houses: "17А", district: "Центральный", city_id: "1"},
-                                            {street: "Песчаная", houses: "20Б", district: "Северный", city_id: "2"},
-                                            {street: "Ясная", houses: "14А", district: "Южный", city_id: "3"},
-                                            {street: "Полярная", houses: "9Б", district: "Западный", city_id: "4"},
-                                            {street: "Светлая", houses: "5А", district: "Восточный", city_id: "5"},
-                                            {street: "Пионерская", houses: "3Б", district: "Центральный", city_id: "1"},
-                                            {
-                                                street: "Водопроводная",
-                                                houses: "12Б",
-                                                district: "Северный",
-                                                city_id: "2"
-                                            },
-                                            {street: "Золотая", houses: "7А", district: "Южный", city_id: "3"},
-                                            {street: "Медовая", houses: "18Б", district: "Западный", city_id: "4"},
-                                            {street: "Кавказская", houses: "10А", district: "Восточный", city_id: "5"}
-                                        ];
-
-                                        document.getElementById('testFillBtn').addEventListener('click', function () {
-                                            const randomIndex = Math.floor(Math.random() * testData.length);
-                                            const data = testData[randomIndex];
-
-                                            const form = document.getElementById('addressForm');
-                                            form.elements['street'].value = data.street;
-                                            form.elements['houses'].value = data.houses;
-                                            form.elements['district'].value = data.district;
-                                            // Устанавливаем значение города
-                                            form.elements['city_id'].value = data.city_id;
-                                        });
-                                    </script>
-
-                                    <script>
-                                        // Обработчик отправки формы добавления адреса
-                                        document.getElementById('addressForm').addEventListener('submit', async function (e) {
-                                            e.preventDefault();
-
-                                            const form = e.target;
-                                            const submitBtn = form.querySelector('button[type="submit"]');
-                                            const originalBtnText = submitBtn.innerHTML;
-
-                                            try {
-                                                // Показываем индикатор загрузки
-                                                submitBtn.disabled = true;
-                                                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
-
-                                                const formData = new FormData(form);
-                                                const response = await fetch(form.action, {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Accept': 'application/json',
-                                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                                    },
-                                                    body: formData
-                                                });
-
-                                                const result = await response.json();
-
-                                                if (response.ok) {
-                                                    // Очищаем форму при успешном сохранении
-                                                    form.reset();
-                                                    // Сбрасываем выпадающий список городов
-                                                    const citySelect = form.elements['city_id'];
-                                                    citySelect.innerHTML = '<option value="">Выберите город</option>';
-                                                    // Перезагружаем города
-                                                    loadCities(citySelect);
-                                                    // Показываем уведомление об успехе
-                                                    if (typeof showAlert === 'function') {
-                                                        showAlert('Адрес успешно добавлен!', 'success');
-                                                    } else {
-                                                        alert('Адрес успешно добавлен!');
-                                                    }
-                                                } else if (response.status === 422) {
-                                                    // Обработка ошибок валидации
-                                                    const errorMessages = [];
-                                                    for (const field in result.errors) {
-                                                        errorMessages.push(result.errors[field].join('\n'));
-                                                    }
-                                                    const errorMessage = errorMessages.join('\n');
-                                                    if (typeof showAlert === 'function') {
-                                                        showAlert(errorMessage, 'danger');
-                                                    } else {
-                                                        alert(errorMessage);
-                                                    }
-                                                    throw new Error(errorMessage);
-                                                } else {
-                                                    const errorMessage = result.message || 'Ошибка при сохранении адреса';
-                                                    if (typeof showAlert === 'function') {
-                                                        showAlert(errorMessage, 'danger');
-                                                    } else {
-                                                        alert(errorMessage);
-                                                    }
-                                                    throw new Error(errorMessage);
-                                                }
-                                            } catch (error) {
-                                                console.error('Ошибка:', error);
-                                                const errorMessage = error.message || 'Произошла ошибка при сохранении адреса';
-                                                if (typeof showAlert === 'function') {
-                                                    showAlert(errorMessage, 'danger');
-                                                } else {
-                                                    alert(errorMessage);
-                                                }
-                                            } finally {
-                                                // Восстанавливаем кнопку
-                                                submitBtn.disabled = false;
-                                                submitBtn.innerHTML = originalBtnText;
-                                            }
-                                        });
-                                    </script>
+                                <!-- Список всех адресов -->
+                                <div id="addressesList">
+                                    <!-- Здесь будет список всех адресов -->
                                 </div>
 
                             </div>
@@ -2184,28 +1949,7 @@
         });
     });
 
-    // Функция для отображения уведомлений
-    function showAlert(message, type = 'success') {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        alertDiv.style.top = '20px';
-        alertDiv.style.right = '20px';
-        alertDiv.style.zIndex = '2000';
-        alertDiv.role = 'alert';
-        alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-        document.body.appendChild(alertDiv);
-
-        // Автоматическое скрытие через 5 секунд
-        setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alertDiv);
-            bsAlert.close();
-        }, 5000);
-    }
 </script>
-
 
 <!-- Модальное окно для редактирования сотрудника -->
 <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
@@ -2260,6 +2004,8 @@
     {{--window.requestsData = @json($requests);--}}
     // console.log('Данные заявок переданы в JavaScript:', window.requestsData);
 </script>
+<!-- Bootstrap JS уже подключен через CDN выше -->
+
 <script src="{{ asset('js/brigades.js') }}"></script>
 <script type="module" src="{{ asset('js/handler.js') }}"></script>
 <script src="{{ asset('js/calendar.js') }}"></script>
@@ -2339,6 +2085,390 @@
         </div>
     </div>
 </div>
+
+<!-- Модальное окно для добавления адреса -->
+<div class="modal fade" id="assignAddressModal" tabindex="-1" aria-labelledby="assignAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignAddressModalLabel">Добавление адреса</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addressForm" class="row g-2 align-items-end" method="POST" action="{{ route('address.add') }}">
+                    @csrf
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Город <span class="text-danger">*</span></label>
+                        <select name="city_id" id="citySelect" class="form-select" data-required="true">
+                            <option value="" disabled>Выберите город</option>
+                            <option value="1" selected>Москва</option>
+                            <!-- Остальные города будут загружены динамически -->
+                        </select>
+                        <div class="invalid-feedback">Пожалуйста, выберите город</div>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Район <span class="text-danger">*</span></label>
+                        <input type="text" name="district" class="form-control" placeholder="Район" data-required="true">
+                        <div class="invalid-feedback">Пожалуйста, укажите район</div>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Улица <span class="text-danger">*</span></label>
+                        <input type="text" name="street" class="form-control" placeholder="Улица" data-required="true">
+                        <div class="invalid-feedback">Пожалуйста, укажите улицу</div>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Дом <span class="text-danger">*</span></label>
+                        <input type="text" name="houses" class="form-control" placeholder="Дом" data-required="true">
+                        <div class="invalid-feedback">Пожалуйста, укажите номер дома</div>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Ответственное лицо</label>
+                        <input type="text" name="responsible_person" class="form-control" placeholder="ФИО ответственного лица">
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Комментарий</label>
+                        <textarea name="comments" class="form-control" rows="3" placeholder="Дополнительная информация"></textarea>
+                    </div>
+                </form>
+                <div class="mt-3">
+                    <button id="testFillBtn" type="button" class="btn btn-secondary" style="display: block;">Автозаполнение</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveAddressBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Загрузка городов при открытии модального окна
+    document.getElementById('assignAddressModal').addEventListener('show.bs.modal', function () {
+        loadCities();
+    });
+
+    // Функция загрузки городов
+    async function loadCities() {
+        try {
+            const response = await fetch('/api/cities');
+            const cities = await response.json();
+            const select = document.getElementById('citySelect');
+            
+            // Сохраняем Москву как выбранный город по умолчанию
+            select.innerHTML = `
+                <option value="" disabled>Выберите город</option>
+                <option value="1" selected>Москва</option>
+            `;
+            
+            // Добавляем остальные города, кроме Москвы
+            cities.forEach(city => {
+                // Пропускаем Москву, так как она уже добавлена
+                if (city.id != 1) {
+                    const option = document.createElement('option');
+                    option.value = city.id;
+                    option.textContent = city.name;
+                    select.appendChild(option);
+                }
+            });
+        } catch (error) {
+            console.error('Ошибка при загрузке городов:', error);
+        }
+    }
+
+    // Автозаполнение формы
+    document.getElementById('testFillBtn').addEventListener('click', function() {
+        const form = document.getElementById('addressForm');
+        form.querySelector('input[name="street"]').value = 'Ленина';
+        form.querySelector('input[name="houses"]').value = '10';
+        form.querySelector('input[name="district"]').value = 'Центральный';
+        
+        // Выбираем первый город из списка
+        const citySelect = document.getElementById('citySelect');
+        if (citySelect.options.length > 1) {
+            citySelect.selectedIndex = 1; // Первый город после placeholder
+        }
+        
+        // Показываем уведомление
+        const toastEl = document.getElementById('autoFillToast');
+        const toast = new bootstrap.Toast(toastEl);
+        document.getElementById('autoFillToastBody').textContent = 'Форма автоматически заполнена тестовыми данными';
+        toast.show();
+    });
+
+    // Функция валидации формы адреса
+    function validateAddressForm(form) {
+        let isValid = true;
+        const requiredFields = form.querySelectorAll('[data-required="true"]');
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                field.classList.remove('is-valid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+                field.classList.add('is-valid');
+            }
+        });
+
+        return isValid;
+    }
+
+    // Функция для отображения уведомлений
+    function showAlert(message, type = 'success') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '2000';
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(alertDiv);
+
+        // Автоматическое скрытие через 5 секунд
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 5000);
+    }
+
+    // Функция форматирования адреса для отображения в уведомлении
+    function formatAddressInfo(address) {
+        return `Город: ${address.city || '-'}, Район: ${address.district || '-'}, Улица: ${address.street || '-'}, Дом: ${address.houses || '-'}`;
+    }
+
+    // Функция для загрузки и отображения списка адресов в выпадающем списке
+    async function loadAddresses() {
+        try {
+            const addressesList = document.getElementById('addressesList');
+            if (!addressesList) return;
+            
+            // Показываем индикатор загрузки
+            addressesList.innerHTML = `
+                <div class="d-flex justify-content-center my-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                </div>
+            `;
+            
+            // Загружаем список адресов
+            const response = await fetch('/api/geo/addresses', {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Ошибка при загрузке адресов');
+            }
+            
+            const addresses = await response.json();
+            
+            // Если адресов нет, показываем соответствующее сообщение
+            if (!addresses || addresses.length === 0) {
+                addressesList.innerHTML = `
+                    <div class="alert alert-info">
+                        Список адресов пуст. Добавьте новый адрес, используя кнопку "Добавить адрес".
+                    </div>
+                `;
+                return;
+            }
+            
+            // Формируем выпадающий список с адресами
+            let html = `
+                <div class="form-group mb-3">
+                    <label for="addressSelect" class="form-label">Выберите адрес:</label>
+                    <select id="addressSelect" class="form-select">
+                        <option value="" selected disabled>Выберите адрес из списка</option>
+            `;
+            
+            // Сортируем адреса по городу, району и улице
+            addresses.sort((a, b) => {
+                if (a.city !== b.city) return a.city.localeCompare(b.city);
+                if (a.district !== b.district) return a.district.localeCompare(b.district);
+                if (a.street !== b.street) return a.street.localeCompare(b.street);
+                return a.houses.localeCompare(b.houses);
+            });
+            
+            // Добавляем опции в выпадающий список
+            addresses.forEach(address => {
+                const addressText = `${address.city}, ${address.district}, ул. ${address.street}, д. ${address.houses}`;
+                html += `<option value="${address.id}">${addressText}</option>`;
+            });
+            
+            html += `
+                    </select>
+                    <div class="form-text">Всего адресов: ${addresses.length}</div>
+                </div>
+            `;
+            
+            addressesList.innerHTML = html;
+            
+            // Добавляем обработчик события для выбора адреса
+            const addressSelect = document.getElementById('addressSelect');
+            if (addressSelect) {
+                addressSelect.addEventListener('change', function() {
+                    const selectedAddressId = this.value;
+                    if (!selectedAddressId) return;
+                    
+                    // Находим выбранный адрес
+                    const selectedAddress = addresses.find(addr => addr.id == selectedAddressId);
+                    if (!selectedAddress) return;
+                    
+                    // Отображаем информацию о выбранном адресе
+                    const addressInfoBlock = document.getElementById('addressInfo');
+                    if (addressInfoBlock) {
+                        let addressHtml = `
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <strong>Выбранный адрес</strong>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Город:</strong> ${selectedAddress.city || '-'}</p>
+                                    <p><strong>Район:</strong> ${selectedAddress.district || '-'}</p>
+                                    <p><strong>Улица:</strong> ${selectedAddress.street || '-'}</p>
+                                    <p><strong>Дом:</strong> ${selectedAddress.houses || '-'}</p>
+                                    <p class="text-muted"><small>Идентификатор адреса: ${selectedAddress.id}</small></p>
+                                </div>
+                            </div>
+                        `;
+                        addressInfoBlock.innerHTML = addressHtml;
+                    }
+                });
+            }
+            
+        } catch (error) {
+            console.error('Ошибка при загрузке адресов:', error);
+            document.getElementById('addressesList').innerHTML = `
+                <div class="alert alert-danger">
+                    Ошибка при загрузке адресов. Пожалуйста, попробуйте обновить страницу.
+                </div>
+            `;
+        }
+    }
+
+    // Добавляем валидацию при вводе данных
+    document.addEventListener('DOMContentLoaded', function() {
+        // Загружаем список адресов при загрузке страницы
+        loadAddresses();
+        
+        const addressForm = document.getElementById('addressForm');
+        if (addressForm) {
+            const requiredFields = addressForm.querySelectorAll('[data-required="true"]');
+            requiredFields.forEach(field => {
+                field.addEventListener('input', function() {
+                    if (!this.value.trim()) {
+                        this.classList.add('is-invalid');
+                        this.classList.remove('is-valid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    }
+                });
+            });
+        }
+    });
+
+    // Обработка отправки формы
+    document.getElementById('saveAddressBtn').addEventListener('click', async function() {
+        const form = document.getElementById('addressForm');
+        const submitBtn = this;
+        const originalBtnText = submitBtn.innerHTML;
+        
+        // Проверка валидности формы
+        let isValid = validateAddressForm(form);
+        if (!isValid) {
+            showAlert('Пожалуйста, заполните все обязательные поля', 'warning');
+            return;
+        }
+        
+        const formData = new FormData(form);
+        
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+            
+            const response = await fetch('/address/add', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('assignAddressModal'));
+                modal.hide();
+                
+                // Очищаем форму и убираем классы валидации
+                form.reset();
+                form.querySelectorAll('.is-valid, .is-invalid').forEach(field => {
+                    field.classList.remove('is-valid');
+                    field.classList.remove('is-invalid');
+                });
+                
+                // Показываем уведомление об успехе
+                showAlert('Адрес успешно добавлен', 'success');
+                
+                // Отображаем информацию о добавленном адресе в блоке addressInfo
+                if (result.address) {
+                    const addressInfoBlock = document.getElementById('addressInfo');
+                    
+                    // Формируем текст с информацией об адресе
+                    let addressHtml = `
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <strong>Добавленный адрес</strong>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Город:</strong> ${result.address.city || '-'}</p>
+                                <p><strong>Район:</strong> ${result.address.district || '-'}</p>
+                                <p><strong>Улица:</strong> ${result.address.street || '-'}</p>
+                                <p><strong>Дом:</strong> ${result.address.houses || '-'}</p>
+                    `;
+                    
+                    // Добавляем необязательные поля, если они заполнены
+                    if (result.address.responsible_person) {
+                        addressHtml += `<p><strong>Ответственное лицо:</strong> ${result.address.responsible_person}</p>`;
+                    }
+                    
+                    if (result.address.comments) {
+                        addressHtml += `<p><strong>Комментарий:</strong> ${result.address.comments}</p>`;
+                    }
+                    
+                    // Добавляем ID адреса
+                    addressHtml += `
+                                <p class="text-muted"><small>Идентификатор адреса: ${result.address.id}</small></p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Вставляем текст в блок
+                    addressInfoBlock.innerHTML = addressHtml;
+                }
+
+                // Обновляем список адресов
+                loadAddresses();
+            } else {
+                showAlert(result.message || 'Ошибка при добавлении адреса', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка при добавлении адреса:', error);
+            showAlert('Произошла ошибка при добавлении адреса', 'danger');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    });
+</script>
 
 </body>
 

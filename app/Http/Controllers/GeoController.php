@@ -37,18 +37,42 @@ class GeoController extends Controller
         $request->validate([
             'street' => 'required|string|max:255',
             'houses' => 'required|string|max:255',
-            'district' => 'nullable|string|max:255',
-            'city_id' => 'required|exists:cities,id'
+            'district' => 'required|string|max:255',
+            'city_id' => 'required|exists:cities,id',
+            'responsible_person' => 'nullable|string|max:100',
+            'comments' => 'nullable|string'
         ]);
 
-        DB::insert('INSERT INTO addresses (street, houses, district, city_id) VALUES (?, ?, ?, ?)', [
-            $request->street,
-            $request->houses,
-            $request->district ?? '',
-            $request->city_id
+        // Добавляем адрес и получаем его ID
+        $addressId = DB::table('addresses')->insertGetId([
+            'street' => $request->street,
+            'houses' => $request->houses,
+            'district' => $request->district,
+            'city_id' => $request->city_id,
+            'responsible_person' => $request->responsible_person,
+            'comments' => $request->comments
         ]);
+        
+        // Получаем информацию о городе
+        $city = DB::table('cities')->where('id', $request->city_id)->first();
+        $cityName = $city ? $city->name : '';
+        
+        // Создаем объект с информацией о добавленном адресе
+        $addressInfo = [
+            'id' => $addressId,
+            'city' => $cityName,
+            'district' => $request->district,
+            'street' => $request->street,
+            'houses' => $request->houses,
+            'responsible_person' => $request->responsible_person,
+            'comments' => $request->comments
+        ];
 
-        return response()->json(['success' => true, 'message' => 'Адрес добавлен']);
+        return response()->json([
+            'success' => true, 
+            'message' => 'Адрес добавлен',
+            'address' => $addressInfo
+        ]);
     }
 
     public function addCity(Request $request)
