@@ -590,6 +590,66 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
 
 //************* Назначение обработчиков событий ************//
 
+
+export function initEmployeeEditHandlers() {
+    // Инициализация модального окна
+    const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+    
+    // Обработчик кнопок редактирования
+    document.querySelectorAll('.edit-employee-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const employeeId = this.getAttribute('data-employee-id');
+            const employeeName = this.getAttribute('data-employee-name');
+            
+            // Вывод информации в консоль
+            console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId})`);
+            
+            // Обновление заголовка модального окна
+            document.getElementById('editEmployeeModalLabel').textContent = `Редактирование сотрудника: ${employeeName}`;
+            
+            // Здесь можно добавить загрузку данных сотрудника по ID
+            
+            // Открытие модального окна
+            editEmployeeModal.show();
+        });
+    });
+    
+    // Функция для корректного закрытия модального окна
+    function closeModalProperly() {
+        const modalElement = document.getElementById('editEmployeeModal');
+        const bsModal = bootstrap.Modal.getInstance(modalElement);
+        if (bsModal) {
+            bsModal.hide();
+            // Дополнительно удаляем класс modal-backdrop и стили body
+            setTimeout(() => {
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) backdrop.remove();
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }, 100);
+        }
+    }
+    
+    // Обработчик кнопки сохранения изменений
+    document.getElementById('saveEmployeeChanges').addEventListener('click', function() {
+        console.log('Сохранение изменений сотрудника');
+        // Здесь будет логика сохранения изменений
+        
+        // Закрытие модального окна после сохранения
+        closeModalProperly();
+    });
+    
+    // Добавляем обработчик для кнопки "Закрыть"
+    const closeButton = document.querySelector('#editEmployeeModal .btn-secondary[data-bs-dismiss="modal"]');
+    if (closeButton) {
+        closeButton.addEventListener('click', function(e) {
+            e.preventDefault(); // Предотвращаем стандартное поведение
+            closeModalProperly();
+        });
+    }
+}
+
 /**
  * Инициализирует обработчики событий для форм
  */
@@ -640,7 +700,7 @@ function initExecutionDateField() {
             dateInput.value = today;
             console.log('Установлена текущая дата:', today);
         } else {
-            console.log('Сохранена существующая дата:', dateInput.value);
+            console.log('Значение поля не пустое:', dateInput.value);
         }
     }
 }

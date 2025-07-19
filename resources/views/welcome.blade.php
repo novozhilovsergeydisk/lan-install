@@ -2045,7 +2045,10 @@
 
 <!-- Обработчик для кнопок редактирования сотрудников -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    /**
+     * Инициализирует обработчики для модального окна редактирования сотрудников
+     */
+    function initEmployeeEditHandlers() {
         // Инициализация модального окна
         const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
         
@@ -2076,6 +2079,11 @@
             // Закрытие модального окна после сохранения
             editEmployeeModal.hide();
         });
+    }
+    
+    // Вызываем функцию инициализации при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        initEmployeeEditHandlers();
     });
 </script>
 
