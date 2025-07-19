@@ -90,7 +90,7 @@ class BrigadeController extends Controller
                 JOIN 
                     employees AS e ON b.leader_id = e.id 
                 WHERE 
-                    DATE(b.formation_date) >= '{$today}'";
+                    DATE(b.formation_date) >= '{$today}' and b.is_deleted = false";
         
         $brigades = DB::select($sql);
         

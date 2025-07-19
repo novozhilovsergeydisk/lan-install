@@ -208,7 +208,7 @@ class EmployeeUserController extends Controller
             );
 
             // Получаем ID сотрудника
-            $employee = DB::selectOne("SELECT * FROM employees WHERE user_id = ?", [$request->user_id]);
+            $employee = DB::selectOne("SELECT * FROM employees WHERE is_deleted = false and user_id = ?", [$request->user_id]);
 
             if (!$employee) {
                 throw new \Exception('Сотрудник не найден');

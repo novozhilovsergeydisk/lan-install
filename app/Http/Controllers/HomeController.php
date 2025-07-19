@@ -207,7 +207,7 @@ class HomeController extends Controller
      */
     public function getEmployees()
     {
-        $employees = DB::select('SELECT * FROM employees ORDER BY fio');
+        $employees = DB::select('SELECT * FROM employees where is_deleted = false ORDER BY fio');
         return response()->json($employees);
     }
 
@@ -992,7 +992,7 @@ class HomeController extends Controller
     public function getOperators()
     {
         try {
-            $operators = DB::select('SELECT id, fio FROM employees WHERE position_id = 1 ORDER BY fio');
+            $operators = DB::select('SELECT id, fio FROM employees WHERE position_id = 1 and is_deleted = false ORDER BY fio');
             return response()->json($operators);
         } catch (\Exception $e) {
             \Log::error('Error getting operators: ' . $e->getMessage());

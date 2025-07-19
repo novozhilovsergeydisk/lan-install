@@ -102,7 +102,7 @@ class RequestTeamFilterController extends Controller
     {
         $today = now()->toDateString();
 
-        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE DATE(b.formation_date) >= '{$today}'";
+        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE b.is_deleted = false and DATE(b.formation_date) >= '{$today}'";
 
         $leaders = DB::select($sql);
 
@@ -121,7 +121,7 @@ class RequestTeamFilterController extends Controller
     {
         $today = now()->toDateString();
 
-        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE DATE(b.formation_date) >= '{$today}'";
+        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE b.is_deleted = false and DATE(b.formation_date) >= '{$today}'";
 
         $leaders = DB::select($sql);
 
