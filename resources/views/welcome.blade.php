@@ -601,7 +601,7 @@
                                             </div>
                                             
                                             <div id="employeesFormContainer" class="">
-                                                <form id="employeeForm" action="{{ route('employees.store') }}" method="POST" class="needs-validation" novalidate>
+                                                <form id="employeeForm" action="{{ route('employee.update') }}" method="POST" class="needs-validation" novalidate>
                                                     @csrf
 
                                                     <input type="hidden" name="user_id" id="userIdInput" value="">
@@ -736,7 +736,7 @@
                                                     <!-- <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3 hide-me">Изменить</button> -->
 
                                                 </form>
-                                            </div>  
+                                            </div>
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
@@ -774,6 +774,7 @@
                                                             <td>
                                                                 <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn" 
                                                                         data-employee-id="{{ $employee->id }}" 
+                                                                        data-user-id="{{ $employee->user_id }}" 
                                                                         data-employee-name="{{ $employee->fio }}">
                                                                     <i class="bi bi-pencil-square"></i>
                                                                 </button>
@@ -1980,7 +1981,91 @@
             <div class="modal-body">
                 <!-- Здесь будет форма редактирования сотрудника -->
                 <div id="editEmployeeContent">
-                    <p>Информация о сотруднике будет загружена сюда...</p>
+                    <form id="employeeFormUpdate" action="{{ route('employee.update') }}" method="POST" class="needs-validation" novalidate>
+                        @csrf
+
+                        <input type="hidden" name="user_id_update" id="userIdInputUpdate" value="">
+                        
+                        <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
+                        
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label class="form-label">ФИО</label>
+                                    <input type="text" name="fio_update" class="form-control" required data-field-name="ФИО">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Телефон</label>
+                                    <input type="text" name="phone_update" class="form-control" required data-field-name="Телефон">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Должность</label> 
+                                <select name="position_id_update" id="position_id_update" class="form-select mb-4" required data-field-name="Должность">
+                                    @foreach ($positions as $position)
+                                        <option value="{{ $position->id }}">{{ $position->name }}</option>
+                                    @endforeach 
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Место регистрации</label>
+                                    <input type="text" name="registration_place_update" class="form-control" required data-field-name="Место регистрации">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Дата рождения</label>
+                                    <input type="date" name="birth_date_update" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Место рождения</label>
+                                    <input type="text" name="birth_place_update" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Паспорт (серия и номер)</label>
+                                    <input type="text" name="passport_series_update" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Кем выдан</label>
+                                    <input type="text" name="passport_issued_by_update" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Дата выдачи</label>
+                                    <input type="date" name="passport_issued_at_update" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Код подразделения</label>
+                                    <input type="text" name="passport_department_code_update" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Марка машины</label>
+                                    <input type="text" name="car_brand_update" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Госномер</label>
+                                    <input type="text" name="car_plate_update" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
                 </div>
             </div>
             <div class="modal-footer">
@@ -2042,50 +2127,6 @@
         <div class="toast-body" id="autoFillToastBody"></div>
     </div>
 </div>
-
-<!-- Обработчик для кнопок редактирования сотрудников -->
-<script>
-    /**
-     * Инициализирует обработчики для модального окна редактирования сотрудников
-     */
-    function initEmployeeEditHandlers() {
-        // Инициализация модального окна
-        const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
-        
-        // Обработчик кнопок редактирования
-        document.querySelectorAll('.edit-employee-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const employeeId = this.getAttribute('data-employee-id');
-                const employeeName = this.getAttribute('data-employee-name');
-                
-                // Вывод информации в консоль
-                console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId})`);
-                
-                // Обновление заголовка модального окна
-                document.getElementById('editEmployeeModalLabel').textContent = `Редактирование сотрудника: ${employeeName}`;
-                
-                // Здесь можно добавить загрузку данных сотрудника по ID
-                
-                // Открытие модального окна
-                editEmployeeModal.show();
-            });
-        });
-        
-        // Обработчик кнопки сохранения изменений
-        document.getElementById('saveEmployeeChanges').addEventListener('click', function() {
-            console.log('Сохранение изменений сотрудника');
-            // Здесь будет логика сохранения изменений
-            
-            // Закрытие модального окна после сохранения
-            editEmployeeModal.hide();
-        });
-    }
-    
-    // Вызываем функцию инициализации при загрузке страницы
-    document.addEventListener('DOMContentLoaded', function() {
-        initEmployeeEditHandlers();
-    });
-</script>
 
 <!-- Модальное окно для назначения бригады -->
 <div class="modal fade" id="assign-team-modal" tabindex="-1" aria-labelledby="assignTeamModalLabel" aria-hidden="true">

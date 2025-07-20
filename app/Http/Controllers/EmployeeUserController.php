@@ -176,24 +176,43 @@ class EmployeeUserController extends Controller
 
     public function update(Request $request)
     {
+        // Получаем ID пользователя из запроса или используем текущего пользователя
+        $user_id = auth()->id();
+        
         // Валидация
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
             'fio' => 'required|string|max:255',
             'phone' => 'nullable|string|max:50',
             'birth_date' => 'nullable|date',
             'birth_place' => 'nullable|string|max:255',
+            'position_id' => 'required|exists:positions,id',
+            'registration_place' => 'nullable|string|max:255',
             'passport_series' => 'nullable|string|max:20',
             'passport_issued_by' => 'nullable|string|max:255',
             'passport_issued_at' => 'nullable|date',
             'passport_department_code' => 'nullable|string|max:20',
             'car_brand' => 'nullable|string|max:100',
             'car_plate' => 'nullable|string|max:20',
+        ], [
+            'fio.required' => 'Поле "ФИО" обязательно для заполнения',
+            'position_id.required' => 'Поле "Должность" обязательно для выбора',
+            'position_id.exists' => 'Выбранная должность недействительна',
         ]);
 
-        DB::beginTransaction();
+        // Для тестирования
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'debug' => true,
+                'debug_message' => 'Данные сотрудника успешно обновлены',
+                'entry-data' => $request->all(),
+                'user_id' => auth()->id(),
+            ], 200);
+        }
 
         try {
+            DB::beginTransaction();
+
             // Обновление данных сотрудника
             DB::update(
                 "UPDATE employees SET fio = ?, phone = ?, birth_date = ?, birth_place = ?, updated_at = ? WHERE user_id = ?",
@@ -203,12 +222,12 @@ class EmployeeUserController extends Controller
                     $request->birth_date,
                     $request->birth_place,
                     now(),
-                    $request->user_id
+                    $user_id
                 ]
             );
 
             // Получаем ID сотрудника
-            $employee = DB::selectOne("SELECT * FROM employees WHERE is_deleted = false and user_id = ?", [$request->user_id]);
+            $employee = DB::selectOne("SELECT * FROM employees WHERE is_deleted = false and user_id = ?", [$user_id]);
 
             if (!$employee) {
                 throw new \Exception('Сотрудник не найден');
@@ -305,7 +324,23 @@ class EmployeeUserController extends Controller
             }
 
             DB::commit();
-            return redirect()->back()->with('success', 'Данные сотрудника успешно обновлены');
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Данные сотрудника успешно обновлены.',
+                    'user_id' => $request->user_id,
+                    'data' => [
+                        'employee' => $employee,
+                        'user' => $user,
+                        'passport' => $passport,
+                        'car' => $car,
+                    ],
+                    'errors' => $request->errors(),
+                ], 200);
+            }
+                  
+            return redirect()->back()->with('success', 'Данные сотрудника успешно обновлены!');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()

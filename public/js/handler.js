@@ -1,6 +1,7 @@
 import { showAlert } from './utils.js';
 import { initFormHandlers } from './form-handlers.js';
 import { initEmployeeEditHandlers } from './form-handlers.js';
+import { initSaveEmployeeChanges } from './form-handlers.js';
 
 /**
  * Функция для отображения информации о бригадах
@@ -3574,6 +3575,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initializePage();
     initFormHandlers();
     initEmployeeEditHandlers();
+    initSaveEmployeeChanges();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {

@@ -27,7 +27,7 @@ export const selectedDateState = {
     updateDate(newDate) {
         this.date = newDate;
         // console.log('Дата в selectedDateState обновлена:', this.date);
-    } 
+    }
 };
 
 export const executionDateState = {
@@ -64,7 +64,7 @@ export const selectedRequestState = {
     operator_name: null,
     request_date: null,
     brigade_id: null,
-    
+
     updateRequest(newRequest) {
         this.id = newRequest.id;
         this.number = newRequest.number;
@@ -111,7 +111,7 @@ export const selectedRequestState = {
         this.houses = newAddress.houses;
         this.district = newAddress.district;
     },
-    
+
     updateClientPhone(newPhone) {
         this.client_phone = newPhone;
     },
@@ -134,15 +134,15 @@ export const selectedRequestState = {
         onDateChange: [],
         onRequestChange: []
     },
-    
+
     // Методы для добавления слушателей
     addStatusChangeListener(callback) {
         this.listeners.onStatusChange.push(callback);
     },
-    
+
     // Методы для вызова слушателей
     notifyStatusChange(oldStatus, newStatus) {
-        this.listeners.onStatusChange.forEach(callback => 
+        this.listeners.onStatusChange.forEach(callback =>
             callback(oldStatus, newStatus, this));
     }
 };
@@ -159,20 +159,20 @@ function displayEmployeeInfo(employeeData) {
     const employeeInfoBlock = document.getElementById('employeeInfo');
 
     if (!employeeInfoBlock || !employeeData) return;
-    
+
     // console.log('Получены данные сотрудника:', employeeData);
-    
+
     // Форматирование даты рождения, если она есть
     const birthDate = employeeData.birth_date ? new Date(employeeData.birth_date).toLocaleDateString('ru-RU') : 'Не указана';
-    
+
     // Форматирование даты выдачи паспорта, если она есть
-    const passportIssuedAt = employeeData.passport && employeeData.passport.issued_at 
-        ? new Date(employeeData.passport.issued_at).toLocaleDateString('ru-RU') 
+    const passportIssuedAt = employeeData.passport && employeeData.passport.issued_at
+        ? new Date(employeeData.passport.issued_at).toLocaleDateString('ru-RU')
         : 'Не указана';
-    
+
     // Подготовка блока с паспортными данными, если они есть
     let passportHtml = '';
-    
+
     if (employeeData.passport) {
         passportHtml = `
             <div class="card mb-3">
@@ -186,7 +186,7 @@ function displayEmployeeInfo(employeeData) {
             </div>
         `;
     }
-    
+
     // Подготовка блока с данными об автомобиле, если они есть
     let carHtml = '';
     if (employeeData.car) {
@@ -200,7 +200,7 @@ function displayEmployeeInfo(employeeData) {
             </div>
         `;
     }
-    
+
     // Создаем HTML для отображения основной информации
     const mainInfoHtml = `
         <div class="card mb-3">
@@ -220,11 +220,11 @@ function displayEmployeeInfo(employeeData) {
         <button id="editBtn" type="button" class="btn btn-primary w-100 mt-3
         ">Изменить</button>
     `;
-    
+
     // Собираем все блоки вместе
     const html = mainInfoHtml + passportHtml + carHtml + btnUpdate;
-    
-    
+
+
     // Вставляем HTML в блок
     employeeInfoBlock.innerHTML = html;
     employeeInfoBlock.style.display = 'block';
@@ -236,28 +236,28 @@ function displayEmployeeInfo(employeeData) {
  */
 function addRequestToTable(result) {
     console.log('Начало функции addRequestToTable', result);
-    
+
     if (!result.data) {
         console.error('Отсутствует result.data');
         return false;
     }
-    
+
     if (!result.data.request) {
         console.error('Отсутствует result.data.request');
         return false;
     }
-    
+
     const requestData = result.data.request;
     const clientData = result.data.client || {};
     const clientOrganization = clientData.organization || '';
     const addressData = result.data.address || {};
     const commentData = result.data.comment || {};
-    
+
     console.log('Данные заявки:', requestData);
     console.log('Данные клиента:', clientData);
     console.log('Данные адреса:', addressData);
     console.log('Данные комментария:', commentData);
-    
+
     // Исправление обработки комментария
     // Проверяем разные варианты структуры данных комментария
     let extractedComment = '';
@@ -270,24 +270,24 @@ function addRequestToTable(result) {
     } else if (result.data && result.data.comments && result.data.comments.length > 0) {
         extractedComment = result.data.comments[0].text || result.data.comments[0].comment || '';
     }
-    
+
     console.log('Извлеченный текст комментария:', extractedComment);
-    
+
     // Попробуем найти таблицу заявок с разными селекторами
     let requestsTable = document.querySelector('.table.table-hover.align-middle tbody');
-    
+
     if (!requestsTable) {
         console.log('Попытка найти таблицу с другим селектором');
         requestsTable = document.querySelector('#requestsTab table tbody');
     }
-    
+
     if (!requestsTable) {
         console.error('Не найдена таблица заявок');
         return false;
     }
-    
+
     // console.log('Таблица найдена:', requestsTable);
-    
+
     // Получаем текущую дату для отображения
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleDateString('ru-RU', {
@@ -295,25 +295,25 @@ function addRequestToTable(result) {
         month: '2-digit',
         year: 'numeric'
     });
-    
+
     // Создаем новую строку для таблицы
     const newRow = document.createElement('tr');
     newRow.className = 'align-middle status-row';
     newRow.dataset.requestId = requestData.id;
     newRow.style.setProperty('--status-color', requestData.status_color || '#e2e0e6');
-    
+
     // Формируем адрес из данных адреса
     const street = addressData.street || '';
     const house = addressData.house || '';
     const addressText = street && house ? `ул. ${street}, д. ${house}` : 'Адрес не указан';
-    
+
     // Получаем комментарий, если есть
     const commentText = commentData.comment || requestData.comment || '';
-            
+
     // Формируем содержимое строки
     newRow.innerHTML = `
         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">1</td>
-        <td>        
+        <td>
             <div>${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate}</div>
             <div class="text-dark" style="font-size: 0.8rem;">${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>
         </td>
@@ -330,9 +330,9 @@ function addRequestToTable(result) {
         </td>
         <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
             ${extractedComment ? `
-                <div class="comment-preview small text-dark" 
-                    data-bs-toggle="tooltip" 
-                    style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;" 
+                <div class="comment-preview small text-dark"
+                    data-bs-toggle="tooltip"
+                    style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
                     data-bs-original-title="${extractedComment}">
                     <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
                     ${extractedComment}
@@ -362,8 +362,8 @@ function addRequestToTable(result) {
                 <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="${requestData.id}">
                     <i class="bi bi-people me-1"></i>Назначить бригаду
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-success transfer-request-btn p-1" 
-                        style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;" 
+                <button type="button" class="btn btn-sm btn-outline-success transfer-request-btn p-1"
+                        style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;"
                         data-request-id="${requestData.id}">
                     <i class="bi bi-arrow-left-right me-1"></i>Перенести заявку
                 </button>
@@ -384,7 +384,7 @@ function addRequestToTable(result) {
             </div>
         </td>
     `;
-    
+
     // Добавляем строку в начало таблицы
     const firstRow = requestsTable.querySelector('tr');
     if (firstRow) {
@@ -392,16 +392,16 @@ function addRequestToTable(result) {
     } else {
         requestsTable.appendChild(newRow);
     }
-    
+
     // Инициализируем тултипы Bootstrap для новых элементов
     const tooltips = newRow.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltips.forEach(tooltip => {
         new bootstrap.Tooltip(tooltip);
     });
-    
+
     // Обновляем нумерацию строк
     updateRowNumbers();
-    
+
     // console.log('Строка успешно добавлена в таблицу');
     return true;
 }
@@ -411,16 +411,16 @@ function addRequestToTable(result) {
  */
 function updateRowNumbers() {
     // console.log('Обновление нумерации строк');
-    
+
     // Попробуем найти таблицу заявок с разными селекторами
     let rows = document.querySelectorAll('.table.table-hover.align-middle tbody tr');
-    
+
     if (!rows.length) {
         rows = document.querySelectorAll('#requestsTab table tbody tr');
     }
-    
+
     // console.log('Найдено строк для обновления:', rows.length);
-    
+
     rows.forEach((row, index) => {
         const numberCell = row.querySelector('td:first-child');
         if (numberCell) {
@@ -466,55 +466,55 @@ window.initCommentValidation = initCommentValidation;
 async function handleCommentEdit(commentElement, commentId, commentNumber, editButton) {
     // Получаем текущий текст комментария
     const commentText = commentElement.textContent;
-    
+
     // Создаем поле для редактирования
     const inputElement = document.createElement('textarea');
     inputElement.className = 'form-control mb-2';
     inputElement.style.width = '730px';
     inputElement.style.minHeight = '60px';
     inputElement.value = commentText;
-    
+
     // Создаем кнопки Сохранить/Отмена
     const saveButton = document.createElement('button');
     saveButton.className = 'btn btn-sm btn-success me-2';
     saveButton.textContent = 'Сохранить';
-    
+
     const cancelButton = document.createElement('button');
     cancelButton.className = 'btn btn-sm btn-secondary';
     cancelButton.textContent = 'Отмена';
-    
+
     // Создаем контейнер для поля ввода
     const inputContainer = document.createElement('div');
     inputContainer.className = 'mb-2';
     inputContainer.style.width = '100%';
-    
+
     // Создаем контейнер для кнопок
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'mb-2';
-    
+
     // Создаем общий контейнер для редактирования
     const editContainer = document.createElement('div');
     editContainer.className = 'edit-comment-container';
     editContainer.setAttribute('data-comment-number', commentNumber);
     editContainer.setAttribute('data-comment-id', commentId);
     editContainer.style.width = '730px';
-    
+
     // Добавляем поле ввода в контейнер
     inputContainer.appendChild(inputElement);
     editContainer.appendChild(inputContainer);
-    
+
     // Добавляем кнопки в контейнер
     buttonContainer.appendChild(saveButton);
     buttonContainer.appendChild(cancelButton);
     editContainer.appendChild(buttonContainer);
-    
+
     // Скрываем параграф и вставляем наш контейнер после него
     commentElement.style.display = 'none';
     commentElement.parentNode.insertBefore(editContainer, commentElement.nextSibling);
-    
+
     // Скрываем кнопку редактирования
     editButton.style.display = 'none';
-    
+
     // Обработчик кнопки Сохранить
     saveButton.addEventListener('click', async function() {
         const newText = inputElement.value.trim();
@@ -528,10 +528,10 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
                 // Показываем индикатор загрузки
                 saveButton.disabled = true;
                 saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
-                
+
                 // Отправляем запрос на сервер
                 const url = `/api/comments/${commentId}`;
-                
+
                 const response = await fetch(url, {
                     method: 'PUT',
                     headers: {
@@ -542,104 +542,101 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
                     body: JSON.stringify({ content: newText }),
                     credentials: 'same-origin'
                 });
-                
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.message || 'Ошибка при сохранении комментария');
                 }
-                
+
                 const result = await response.json();
-                
+
                 // Показываем уведомление об успехе
                 showAlert('Комментарий успешно обновлен', 'success');
-                
+
                 // Обновляем текст комментария в DOM
                 commentElement.textContent = newText;
                 commentElement.style.display = '';
                 editButton.style.display = 'inline-block';
-                
+
                 // Удаляем контейнер редактирования
                 editContainer.remove();
-                
+
             } catch (error) {
                 console.error('Ошибка при сохранении комментария:', error);
-                
+
                 // Показываем уведомление об ошибке
                 showAlert(`Ошибка: ${error.message}`, 'danger');
-                
+
                 // Возвращаем кнопку в исходное состояние
                 saveButton.disabled = false;
                 saveButton.textContent = 'Сохранить';
             }
         }
     });
-    
+
     // Обработчик кнопки Отмена
     cancelButton.addEventListener('click', function() {
         // Возвращаем обычный вид комментария
         commentElement.style.display = '';
         editButton.style.display = 'inline-block';
-        
+
         // Удаляем контейнер редактирования
         editContainer.remove();
     });
-    
+
     // Фокус на поле ввода
     inputElement.focus();
 }
 
-//************* Назначение обработчиков событий ************//
+// ************* Common functions ************* //
 
+// Функция для корректного закрытия модального окна (вынесена на уровень модуля для доступности из разных функций)
+function closeModalProperly() {
+    const modalElement = document.getElementById('editEmployeeModal');
+    const bsModal = bootstrap.Modal.getInstance(modalElement);
+    if (bsModal) {
+        bsModal.hide();
+        // Дополнительно удаляем класс modal-backdrop и стили body
+        setTimeout(() => {
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }, 100);
+    }
+}
+
+// ************* 1. Назначение обработчиков событий ************ //
 
 export function initEmployeeEditHandlers() {
     // Инициализация модального окна
     const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
-    
+
     // Обработчик кнопок редактирования
     document.querySelectorAll('.edit-employee-btn').forEach(button => {
         button.addEventListener('click', function() {
             const employeeId = this.getAttribute('data-employee-id');
+            const userId = this.getAttribute('data-user-id');
             const employeeName = this.getAttribute('data-employee-name');
-            
+
             // Вывод информации в консоль
-            console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId})`);
-            
+            console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId}, User ID: ${userId})`);
+
             // Обновление заголовка модального окна
             document.getElementById('editEmployeeModalLabel').textContent = `Редактирование сотрудника: ${employeeName}`;
             
+            // Устанавливаем ID пользователя в скрытое поле формы
+            document.getElementById('userIdInputUpdate').value = userId;
+            console.log('Установлен ID пользователя в форме:', userId);
+
             // Здесь можно добавить загрузку данных сотрудника по ID
-            
+
             // Открытие модального окна
             editEmployeeModal.show();
         });
     });
-    
-    // Функция для корректного закрытия модального окна
-    function closeModalProperly() {
-        const modalElement = document.getElementById('editEmployeeModal');
-        const bsModal = bootstrap.Modal.getInstance(modalElement);
-        if (bsModal) {
-            bsModal.hide();
-            // Дополнительно удаляем класс modal-backdrop и стили body
-            setTimeout(() => {
-                const backdrop = document.querySelector('.modal-backdrop');
-                if (backdrop) backdrop.remove();
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
-            }, 100);
-        }
-    }
-    
-    // Обработчик кнопки сохранения изменений
-    document.getElementById('saveEmployeeChanges').addEventListener('click', function() {
-        console.log('Сохранение изменений сотрудника');
-        // Здесь будет логика сохранения изменений
-        
-        // Закрытие модального окна после сохранения
-        closeModalProperly();
-    });
-    
+
     // Добавляем обработчик для кнопки "Закрыть"
     const closeButton = document.querySelector('#editEmployeeModal .btn-secondary[data-bs-dismiss="modal"]');
     if (closeButton) {
@@ -651,20 +648,43 @@ export function initEmployeeEditHandlers() {
 }
 
 /**
- * Инициализирует обработчики событий для форм
+ * Инициализирует обработчик события для формы редактирования сотрудника
+ */
+export function initSaveEmployeeChanges() {
+    // Проверяем существование элемента перед добавлением обработчика
+    const saveButton = document.getElementById('saveEmployeeChanges');
+    if (saveButton) {
+        saveButton.addEventListener('click', function() {
+            console.log('Сохранение изменений сотрудника');
+            // Здесь будет логика сохранения изменений
+
+            handleSaveEmployeeChanges();
+    
+            // Закрытие модального окна после сохранения
+            closeModalProperly();
+        });
+    } else {
+        console.error('Элемент с ID "saveEmployeeChanges" не найден');
+    }
+}
+
+/**
+ * Инициализирует обработчики событий для формы заявки
  */
 export function initFormHandlers() {
     // Находим кнопку отправки формы заявки
     const submitBtn = document.getElementById('submitRequest');
-    
+
     // Если кнопка найдена, добавляем обработчик события click
     if (submitBtn) {
         submitBtn.addEventListener('click', submitRequestForm);
     }
-    
+
+    // ----- Дополнительная логика ----- //
+
     // Инициализация поля даты исполнения
     initExecutionDateField();
-    
+
     // Добавляем обработчик события для модального окна создания заявки
     const newRequestModal = document.getElementById('newRequestModal');
     if (newRequestModal) {
@@ -689,12 +709,12 @@ function initExecutionDateField() {
         const month = String(now.getMonth() + 1).padStart(2, '0'); // Месяцы начинаются с 0
         const day = String(now.getDate()).padStart(2, '0');
         const today = `${year}-${month}-${day}`;
-        
+
         console.log('Текущая дата (локальное время):', today);
-        
+
         // Устанавливаем минимальную дату
         dateInput.min = today;
-        
+
         // Если значение поля пустое или меньше текущей даты, устанавливаем текущую дату
         if (!dateInput.value || dateInput.value < today) {
             dateInput.value = today;
@@ -705,8 +725,6 @@ function initExecutionDateField() {
     }
 }
 
-//************* Обработчики событий форм ************//
-
 /**
  * Обрабатывает отправку формы новой заявки
  */
@@ -716,7 +734,7 @@ async function submitRequestForm() {
 
     if (!form.checkValidity()) {
         form.classList.add('was-validated');
-        
+
         // Проверяем поле комментария отдельно
         const commentField = document.getElementById('comment');
         if (commentField && commentField.validity && !commentField.validity.valid) {
@@ -724,7 +742,7 @@ async function submitRequestForm() {
             commentField.classList.add('is-invalid');
 
             console.log('Форма создания новой заявки для поля комментария невалидна');
-            
+
             // Показываем сообщение об ошибке
             // Закомментировано, так как есть подсказка под полем ввода и подсветка рамки
             // if (commentField.value.length < 3) {
@@ -734,7 +752,7 @@ async function submitRequestForm() {
             commentField.classList.remove('is-invalid');
             console.log('Форма создания новой заявки для поля комментария валидна');
         }
-     
+
         return;
     }
 
@@ -745,14 +763,14 @@ async function submitRequestForm() {
         showAlert('Пожалуйста, выберите адрес из списка', 'danger');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Создать заявку';
-        
+
         // Используем стандартную валидацию Bootstrap для оригинального селекта
         const addressSelect = document.getElementById('addresses_id');
         if (addressSelect) {
             // Добавляем класс is-invalid к оригинальному селекту
             addressSelect.classList.add('is-invalid');
         }
-        
+
         // Находим кастомный селект для addresses_id и применяем к нему валидацию с подсветкой
         const customSelects = document.querySelectorAll('.custom-select-wrapper');
         for (const wrapper of customSelects) {
@@ -769,7 +787,7 @@ async function submitRequestForm() {
                 break;
             }
         }
-        
+
         return;
     }
 
@@ -832,7 +850,7 @@ async function submitRequestForm() {
             console.log('selectedDateState.date:', selectedDateState.date);
             console.log('executionDateState.date:', executionDateState.date);
 
-            
+
 
             // Динамическое формирование строки заявки и добавление её в начало таблицы
             if (currentDateState.date === selectedDateState.date && executionDateState.date === selectedDateState.date) {
@@ -841,23 +859,23 @@ async function submitRequestForm() {
                 console.log('Добавляем заявку в таблицу, если дата исполнения заявки совпадает с выбранной датой');
                 addRequestToTable(result);
             }
-            
+
             // Не перезагружаем страницу, чтобы не потерять динамически добавленную строку
-            
+
             // Отображаем информацию о сотруднике, если она есть в ответе
             if (result.data && result.data.employee) {
                 displayEmployeeInfo(result.data.employee);
             }
-            
+
             const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
             modal.hide();
-            
+
             // Сохраняем текущую дату перед сбросом формы
             const currentDate = document.getElementById('executionDate').value;
-            
+
             // Reset the form
             form.reset();
-            
+
             // Восстанавливаем дату после сброса формы
             const dateInput = document.getElementById('executionDate');
             if (dateInput) {
@@ -868,7 +886,7 @@ async function submitRequestForm() {
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const day = String(now.getDate()).padStart(2, '0');
                 const today = `${year}-${month}-${day}`;
-                
+
                 // Проверяем, что сохраненная дата не раньше текущей
                 if (currentDate >= today) {
                     dateInput.value = currentDate;
@@ -878,15 +896,15 @@ async function submitRequestForm() {
                     dateInput.value = today;
                     console.log('Установлена текущая дата:', today, 'т.к. сохраненная дата была раньше:', currentDate);
                 }
-                
+
                 // Обновляем атрибут min для предотвращения выбора прошедших дат
                 dateInput.min = today;
             }
-            
+
             // Dispatch event to notify other components about the new request
             const event = new CustomEvent('requestCreated', { detail: result.data });
             document.dispatchEvent(event);
-   
+
             // If there's a refreshRequestsTable function, call it
             if (typeof window.refreshRequestsTable === 'function') {
                 // showAlert('window.refreshRequestsTable()', 'info');
@@ -909,6 +927,66 @@ async function submitRequestForm() {
         submitBtn.textContent = 'Создать заявку';
     }
 }
+
+//************* 2. Обработчики событий форм ************//
+
+async function handleSaveEmployeeChanges() {
+    try {
+        const form = document.getElementById('employeeFormUpdate');
+
+        const formData = new FormData(form);
+
+        console.log('formData', formData);
+
+        const data = {};
+
+        // Обрабатываем все поля формы
+        formData.forEach((value, key) => {
+            // Если поле с таким именем уже существует
+            if (data[key] !== undefined) {
+                // Преобразуем значение в массив, если это ещё не массив
+                if (!Array.isArray(data[key])) data[key] = [data[key]];
+                // Добавляем новое значение в массив (для полей с множественным выбором)
+                data[key].push(value);
+            } else {
+                // Для нового поля просто сохраняем значение
+                data[key] = value;
+            }
+        });
+
+        console.log('data', data);
+
+        // Формируем данные для отправки
+        const requestData = {
+            _token: data._token,
+            user_id: data.user_id_update,
+            fio: data.fio_update,
+            position_id: data.position_id_update,
+            phone: data.phone_update,
+            birth_date: data.birth_date_update,
+            birth_place: data.birth_place_update,
+            registration_place: data.registration_place_update,
+            passport_series: data.passport_series_update,
+            passport_issued_by: data.passport_issued_by_update,
+            passport_issued_at: data.passport_issued_at_update,
+            passport_department_code: data.passport_department_code_update,
+            car_brand: data.car_brand_update,
+            car_plate: data.car_plate_update,
+            car_year: data.car_year_update,
+            car_color: data.car_color_update,
+        };
+        
+        const result = await postData('/employee/update', requestData);
+
+        console.log('Ответ от сервера:', result);
+
+        console.log('requestData', requestData);
+    } catch (error) {
+        console.error('Ошибка при сохранении изменений сотрудника:', error);
+        showAlert(`Ошибка: ${error.message}`, 'danger');
+    }
+}
+
 
 // Экспортируем функции для использования в других модулях
 export { submitRequestForm, displayEmployeeInfo, updateRowNumbers, addRequestToTable, handleCommentEdit };

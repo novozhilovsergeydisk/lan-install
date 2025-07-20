@@ -164,6 +164,12 @@ Route::get('/api/employees', [HomeController::class, 'getEmployees'])
     ->name('api.employees')
     ->middleware('auth');
 
-Route::post('/employees', [EmployeeUserController::class, 'store'])
-    ->name('employees.store')
-    ->middleware('auth');
+Route::post('/employees/store', [EmployeeUserController::class, 'store'])
+->name('employees.store')
+->middleware('auth');
+
+Route::post('/employee/update', [EmployeeUserController::class, 'update'])
+->name('employee.update')
+->middleware('auth');
+
+    
