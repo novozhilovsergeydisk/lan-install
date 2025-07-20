@@ -1030,11 +1030,21 @@ async function handleSaveEmployeeChanges() {
         console.log('data', data);
 
         // Формируем данные для отправки
+        // Проверяем наличие position_id_update и выводим предупреждение, если оно отсутствует
+        console.log('position_id_update:', data.position_id_update);
+        
+        // Проверяем, что поле должности заполнено
+        const positionValue = data.position_id_update || document.getElementById('positionSelectUpdate').value;
+        if (!positionValue) {
+            showAlert('Поле "Должность" обязательно для выбора', 'danger');
+            return; // Прерываем выполнение функции
+        }
+        
         const requestData = {
             _token: data._token,
             user_id: data.user_id_update,
             fio: data.fio_update,
-            position_id: data.position_id_update,
+            position_id: positionValue,
             employee_id: data.employee_id_update,
             phone: data.phone_update,
             birth_date: data.birth_date_update,
