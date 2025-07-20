@@ -222,7 +222,7 @@ function displayEmployeeInfo(employeeData) {
     `;
 
     // Собираем все блоки вместе
-    const html = mainInfoHtml + passportHtml + carHtml + btnUpdate;
+    const html = mainInfoHtml + passportHtml + carHtml;
 
 
     // Вставляем HTML в блок

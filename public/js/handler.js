@@ -1,4 +1,4 @@
-import { showAlert } from './utils.js';
+import { showAlert, postData } from './utils.js';
 import { initFormHandlers } from './form-handlers.js';
 import { initEmployeeEditHandlers } from './form-handlers.js';
 import { initSaveEmployeeChanges } from './form-handlers.js';
@@ -2655,70 +2655,60 @@ async function handleEmployeeFormSubmit(e) {
                 }
             });
 
-            // console.log('Отправляемые данные:', formDataObj);
+            console.log('Отправляемые данные:', formDataObj);
 
-            // Отправляем форму на сервер
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(formDataObj)
-            });
+            // Определяем URL в зависимости от наличия employee_id
+            let url = '/employees/store'; // По умолчанию - создание нового сотрудника
+            
+            // Если есть employee_id, значит это обновление существующего сотрудника
+            if (formDataObj.employee_id) {
+                url = '/employee/update';
+            }
+            
+            // Отправляем форму на сервер используя postData
+            const data = await postData(url, formDataObj);
+            console.log('Ответ сервера:', data);
 
-            const data = await response.json();
-            // console.log('Ответ сервера:', { status: response.status, data });
+            // Проверяем наличие ошибок валидации
+            if (data.errors) {
+                console.log('Ошибки валидации с сервера:', data.errors);
 
-            if (!response.ok) {
-                // Если это ошибка валидации (422), обрабатываем её отдельно
-                if (response.status === 422) {
-                    // console.log('Ошибки валидации с сервера (422):', data);
+                // Собираем все ошибки в один массив
+                const allErrors = [];
 
-                    // Собираем все ошибки в один массив
-                    const allErrors = [];
-
-                    if (data.errors) {
-                        // Laravel-style errors - преобразуем объект ошибок в массив сообщений
-                        Object.entries(data.errors).forEach(([field, messages]) => {
-                            if (Array.isArray(messages)) {
-                                allErrors.push(...messages);
-                            } else if (typeof messages === 'string') {
-                                allErrors.push(messages);
-                            }
-
-                            // Выделяем невалидные поля
-                            const input = form.querySelector(`[name="${field}"]`);
-                            if (input) {
-                                input.classList.add('is-invalid');
-                                const feedback = input.nextElementSibling || document.createElement('div');
-                                if (!feedback.classList.contains('invalid-feedback')) {
-                                    feedback.className = 'invalid-feedback';
-                                    input.parentNode.insertBefore(feedback, input.nextSibling);
-                                }
-                                feedback.textContent = Array.isArray(messages) ? messages[0] : messages;
-                            }
-                        });
-                    } else if (data.message) {
-                        // Стандартное сообщение об ошибке
-                        allErrors.push(data.message);
-                    } else {
-                        allErrors.push('Пожалуйста, заполните все обязательные поля');
+                // Laravel-style errors - преобразуем объект ошибок в массив сообщений
+                Object.entries(data.errors).forEach(([field, messages]) => {
+                    if (Array.isArray(messages)) {
+                        allErrors.push(...messages);
+                    } else if (typeof messages === 'string') {
+                        allErrors.push(messages);
                     }
 
-                    // Отображаем ошибки
-                    if (window.formValidator && window.formValidator.displayErrors) {
-                        window.formValidator.displayErrors(allErrors, messagesContainer);
-                    } else {
-                        showAlert(allErrors.join('\n'), 'danger', messagesContainer);
+                    // Выделяем невалидные поля
+                    const input = form.querySelector(`[name="${field}"]`);
+                    if (input) {
+                        input.classList.add('is-invalid');
+                        const feedback = input.nextElementSibling || document.createElement('div');
+                        if (!feedback.classList.contains('invalid-feedback')) {
+                            feedback.className = 'invalid-feedback';
+                            input.parentNode.insertBefore(feedback, input.nextSibling);
+                        }
+                        feedback.textContent = Array.isArray(messages) ? messages[0] : messages;
                     }
-                    return;
+                });
+
+                // Отображаем ошибки
+                if (window.formValidator && window.formValidator.displayErrors) {
+                    window.formValidator.displayErrors(allErrors, messagesContainer);
+                } else {
+                    showAlert(allErrors.join('\n'), 'danger', messagesContainer);
                 }
-
-                // Для других ошибок бросаем исключение
-                throw { response, data };
+                return;
+            }
+            
+            // Проверяем на явную ошибку (когда success: false)
+            if (data.success === false) {
+                throw new Error(data.message || 'Ошибка при сохранении сотрудника');
             }
 
             // Успешное завершение
@@ -2747,33 +2737,24 @@ async function handleEmployeeFormSubmit(e) {
             console.error('Ошибка при сохранении:', error);
             let errorMessage = 'Произошла ошибка при сохранении. Пожалуйста, попробуйте еще раз.';
 
-            if (error.response) {
-                // Обработка HTTP ошибок
-                console.error('Данные ответа об ошибке:', error.data);
-                console.error('Статус ошибки:', error.response.status);
-
-                // Пытаемся получить сообщение об ошибке из ответа
-                if (error.data) {
-                    if (error.data.message) {
-                        errorMessage = error.data.message;
-                    } else if (error.data.errors) {
-                        // Обработка ошибок валидации Laravel
-                        const errors = Object.values(error.data.errors).flat();
-                        errorMessage = errors.join('\n');
-                    }
+            // Проверяем, есть ли сообщение об ошибке в объекте error
+            if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            // Если есть дополнительные данные об ошибке
+            if (error.data) {
+                console.error('Данные об ошибке:', error.data);
+                
+                if (error.data.message) {
+                    errorMessage = error.data.message;
+                } else if (error.data.errors) {
+                    // Обработка ошибок валидации Laravel
+                    const errors = Object.values(error.data.errors).flat();
+                    errorMessage = errors.join('\n');
                 }
-
-                // Общие сообщения для стандартных кодов ошибок
-                if (error.response.status === 401) {
-                    errorMessage = 'Требуется авторизация';
-                } else if (error.response.status === 403) {
-                    errorMessage = 'Доступ запрещен';
-                } else if (error.response.status === 404) {
-                    errorMessage = 'Ресурс не найден';
-                } else if (error.response.status >= 500) {
-                    errorMessage = 'Ошибка на сервере. Пожалуйста, попробуйте позже.';
-                }
-            } else if (error.request) {
+            }
+            else if (error.request) {
                 // Запрос был сделан, но ответ не получен
                 console.error('Не удалось получить ответ от сервера');
                 errorMessage = 'Не удалось соединиться с сервером. Пожалуйста, проверьте подключение к интернету и попробуйте снова.';
