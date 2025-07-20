@@ -617,18 +617,17 @@ export function initEmployeeEditHandlers() {
     document.querySelectorAll('.edit-employee-btn').forEach(button => {
         button.addEventListener('click', function() {
             const employeeId = this.getAttribute('data-employee-id');
-            const userId = this.getAttribute('data-user-id');
             const employeeName = this.getAttribute('data-employee-name');
 
             // Вывод информации в консоль
-            console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId}, User ID: ${userId})`);
+            console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId})`);
 
             // Обновление заголовка модального окна
             document.getElementById('editEmployeeModalLabel').textContent = `Редактирование сотрудника: ${employeeName}`;
             
             // Устанавливаем ID пользователя в скрытое поле формы
-            document.getElementById('userIdInputUpdate').value = userId;
-            console.log('Установлен ID пользователя в форме:', userId);
+            document.getElementById('userIdInputUpdate').value = employeeId;
+            console.log('Установлен ID пользователя в форме:', employeeId);
 
             // Здесь можно добавить загрузку данных сотрудника по ID
 
