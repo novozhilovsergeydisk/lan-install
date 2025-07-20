@@ -776,7 +776,15 @@
                                                                         data-employee-id="{{ $employee->id }}" 
                                                                         data-employee-name="{{ $employee->fio }}">
                                                                     <i class="bi bi-pencil-square"></i>
-                                                                </button> {{ $employee->fio }}
+                                                                </button> 
+
+                                                                <button type="button" class="btn btn-sm btn-outline-primary ms-2  delete-employee-btn me-1" 
+                                                                        data-employee-id="{{ $employee->id }}" 
+                                                                        data-employee-name="{{ $employee->fio }}">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+
+                                                                {{ $employee->fio }}
                                                             </td>
                                                             <td>{{ $employee->phone }}</td>
                                                             <td>{{ $employee->position }}</td>

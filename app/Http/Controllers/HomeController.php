@@ -1138,22 +1138,24 @@ class HomeController extends Controller
             // Получаем данные из запроса
             $input = $request->all();
 
-            // Если operator_id не указан, используем ID текущего пользователя или null
-            $operatorId = $input['operator_id'] ?? auth()->id();
-            $input['operator_id'] = $operatorId; // Обновляем значение в массиве входных данных
+            // Если operator_id не указан, используем ID текущего пользователя или значение по умолчанию
+            $userId = auth()->id(); // ID пользователя из авторизации
+            $input['user_id'] = $userId; // Сохраняем ID пользователя для логирования
+            \Log::info('ID авторизованного пользователя: ' . $userId);
             
-            // Проверяем наличие сотрудника только если указан operator_id
+            // Проверяем наличие сотрудника только если указан user_id
             $employeeId = null;
-            if ($operatorId) {
+            if ($userId) {
                 $employee = DB::table('employees')
-                    ->where('user_id', $operatorId)
+                    ->where('user_id', $userId)
                     ->first();
                     
                 if ($employee) {
                     $employeeId = $employee->id;
-                    \Log::info('Найден сотрудник с ID: ' . $employeeId . ' для пользователя: ' . $operatorId);
+                    $input['operator_id'] = $employeeId; // Устанавливаем operator_id как ID сотрудника, а не пользователя
+                    \Log::info('Найден сотрудник с ID: ' . $employeeId . ' для пользователя: ' . $userId);
                 } else {
-                    \Log::info('Сотрудник не найден для пользователя с ID: ' . $operatorId . ', но продолжаем создание заявки');
+                    \Log::info('Сотрудник не найден для пользователя с ID: ' . $userId . ', но продолжаем создание заявки');
                 }
             } else {
                 \Log::info('Оператор не указан, создаем заявку без привязки к сотруднику');
@@ -1170,7 +1172,7 @@ class HomeController extends Controller
                 'execution_date' => $input['execution_date'] ?? null,
                 'execution_time' => $input['execution_time'] ?? null,
                 'brigade_id' => $input['brigade_id'] ?? null,
-                'operator_id' => $input['operator_id'] ?? null,
+                'operator_id' => $employeeId,
                 'address_id' => $input['address_id'] ?? null
             ];
 
@@ -1178,7 +1180,7 @@ class HomeController extends Controller
             $validationData['operator_id'] = $employeeId;
             
             \Log::info('Используем для заявки operator_id:', [
-                'user_id' => $input['operator_id'],
+                'user_id' => $userId,
                 'employee_id' => $employeeId
             ]);
 
@@ -1193,7 +1195,7 @@ class HomeController extends Controller
                 'execution_date' => 'required|date',
                 'execution_time' => 'nullable|date_format:H:i',
                 'brigade_id' => 'nullable|exists:brigades,id',
-                'operator_id' => 'nullable', // Изменено с required на nullable
+                'operator_id' => 'nullable',
                 'address_id' => 'required|exists:addresses,id'
             ];
 
@@ -1296,7 +1298,7 @@ class HomeController extends Controller
                             'fio' => $clientData['fio'],
                             'phone' => $clientData['phone'],
                             'email' => $clientData['email'],
-                         'organization' => $clientData['organization']
+                            'organization' => $clientData['organization']
                         ]);
                     $clientId = $client->id;
                     $clientState = 'updated';
@@ -1307,7 +1309,7 @@ class HomeController extends Controller
                         'fio' => $clientData['fio'],
                         'phone' => $clientData['phone'],
                         'email' => $clientData['email'],
-                         'organization' => $clientData['organization']
+                        'organization' => $clientData['organization']
                     ]);
                     $clientState = 'created';
                     \Log::info('Создан новый клиент:', ['id' => $clientId]);
@@ -1329,9 +1331,7 @@ class HomeController extends Controller
                 'execution_date' => $validated['execution_date'],
                 'execution_time' => $validated['execution_time'],
                 'brigade_id' => $validated['brigade_id'] ?? null,
-                'operator_id' => $validated['operator_id'],
-                'created_at' => now(),
-                'updated_at' => now()
+                'operator_id' => $validated['operator_id']
             ];
 
             // Генерируем номер заявки
@@ -1354,7 +1354,7 @@ class HomeController extends Controller
                     $validated['execution_date'],
                     $validated['execution_time'] ?? null,
                     $validated['brigade_id'] ?? null,
-                    $validated['operator_id'],
+                    $employeeId,
                     $requestNumber,
                     $currentDate
                 ]
