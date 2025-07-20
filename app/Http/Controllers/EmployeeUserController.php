@@ -299,12 +299,13 @@ class EmployeeUserController extends Controller
 
             // Обновление данных сотрудника
             DB::update(
-                "UPDATE employees SET fio = ?, phone = ?, birth_date = ?, birth_place = ?, position_id = ? WHERE id = ?",
+                "UPDATE employees SET fio = ?, phone = ?, birth_date = ?, birth_place = ?, registration_place = ?, position_id = ? WHERE id = ?",
                 [
                     $request->fio,
                     $request->phone,
                     $request->birth_date,
                     $request->birth_place,
+                    $request->registration_place,
                     $request->position_id,
                     $employee_id
                 ]
