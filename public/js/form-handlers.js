@@ -615,7 +615,7 @@ export function initEmployeeEditHandlers() {
 
     // Обработчик кнопок редактирования
     document.querySelectorAll('.edit-employee-btn').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function() {
             const employeeId = this.getAttribute('data-employee-id');
             const employeeName = this.getAttribute('data-employee-name');
 
@@ -627,9 +627,83 @@ export function initEmployeeEditHandlers() {
             
             // Устанавливаем ID пользователя в скрытое поле формы
             document.getElementById('userIdInputUpdate').value = employeeId;
-            console.log('Установлен ID пользователя в форме:', employeeId);
+            // Устанавливаем ID сотрудника в скрытое поле формы
+            document.getElementById('employeeIdInputUpdate').value = employeeId;
+            console.log('Установлен ID пользователя и сотрудника в форме:', employeeId);
 
-            // Здесь можно добавить загрузку данных сотрудника по ID
+            // Загрузка данных сотрудника по ID
+            try {
+                const response = await fetch(`/employee/get?employee_id=${employeeId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Заполняем форму данными сотрудника
+                    const employee = data.data.employee;
+                    const passport = data.data.passport;
+                    const car = data.data.car;
+                    
+                    // Заполняем основные поля сотрудника
+                    document.getElementById('fioInputUpdate').value = employee.fio || '';
+                    document.getElementById('phoneInputUpdate').value = employee.phone || '';
+                    
+                    // Устанавливаем должность
+                    const positionSelect = document.getElementById('positionSelectUpdate');
+                    if (positionSelect) {
+                        positionSelect.value = employee.position_id || '';
+                    }
+                    
+                    // Заполняем дополнительные поля
+                    if (employee.birth_date) {
+                        document.getElementById('birthDateInputUpdate').value = employee.birth_date;
+                    }
+                    
+                    if (employee.birth_place) {
+                        document.getElementById('birthPlaceInputUpdate').value = employee.birth_place;
+                    }
+                    
+                    if (employee.registration_place) {
+                        document.getElementById('registrationPlaceInputUpdate').value = employee.registration_place;
+                    }
+                    
+                    // Заполняем паспортные данные, если они есть
+                    if (passport) {
+                        document.getElementById('passportSeriesInputUpdate').value = passport.series_number || '';
+                        document.getElementById('passportIssuedByInputUpdate').value = passport.issued_by || '';
+                        
+                        if (passport.issued_at) {
+                            document.getElementById('passportIssuedAtInputUpdate').value = passport.issued_at;
+                        }
+                        
+                        document.getElementById('passportDepartmentCodeInputUpdate').value = passport.department_code || '';
+                    }
+                    
+                    // Заполняем данные об автомобиле, если они есть
+                    if (car) {
+                        document.getElementById('carBrandInputUpdate').value = car.brand || '';
+                        document.getElementById('carLicensePlateInputUpdate').value = car.license_plate || '';
+                        // Поля для года и цвета автомобиля отсутствуют в форме
+                    }
+                    
+                    console.log('Данные сотрудника успешно загружены');
+                } else {
+                    console.error('Ошибка при загрузке данных сотрудника:', data.message);
+                    showAlert('Ошибка при загрузке данных сотрудника: ' + data.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке данных сотрудника:', error);
+                showAlert('Ошибка при загрузке данных сотрудника', 'danger');
+            }
 
             // Открытие модального окна
             editEmployeeModal.show();
@@ -961,6 +1035,7 @@ async function handleSaveEmployeeChanges() {
             user_id: data.user_id_update,
             fio: data.fio_update,
             position_id: data.position_id_update,
+            employee_id: data.employee_id_update,
             phone: data.phone_update,
             birth_date: data.birth_date_update,
             birth_place: data.birth_place_update,
@@ -971,8 +1046,7 @@ async function handleSaveEmployeeChanges() {
             passport_department_code: data.passport_department_code_update,
             car_brand: data.car_brand_update,
             car_plate: data.car_plate_update,
-            car_year: data.car_year_update,
-            car_color: data.car_color_update,
+            car_registered_at: data.car_registered_at_update,
         };
         
         const result = await postData('/employee/update', requestData);

@@ -6,10 +6,103 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class EmployeeUserController extends Controller
 {
+    /**
+     * Получает данные сотрудника по ID
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getEmployee(Request $request)
+    {
+        try {
+            $employeeId = $request->input('employee_id');
+            
+            if (!$employeeId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID сотрудника не указан'
+                ], 400);
+            }
+            
+            // Получаем данные сотрудника
+            $employee = DB::table('employees')
+                ->select(
+                    'employees.id as employee_id',
+                    'employees.fio',
+                    'employees.phone',
+                    'employees.birth_date',
+                    'employees.birth_place',
+                    'employees.registration_place',
+                    'employees.position_id',
+                    'positions.name as position_name',
+                    // Паспортные данные
+                    'passports.series_number',
+                    'passports.issued_by',
+                    'passports.issued_at',
+                    'passports.department_code',
+                    // Данные автомобиля
+                    'cars.brand',
+                    'cars.license_plate',
+                    'cars.registered_at'
+                )
+                ->leftJoin('positions', 'employees.position_id', '=', 'positions.id')
+                ->leftJoin('passports', 'employees.id', '=', 'passports.employee_id')
+                ->leftJoin('cars', 'employees.id', '=', 'cars.employee_id')
+                ->where('employees.id', $employeeId)
+                ->where('employees.is_deleted', false)
+                ->first();
+                
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Сотрудник не найден'
+                ], 404);
+            }
+            
+            // Преобразуем данные паспорта и автомобиля в отдельные объекты для сохранения совместимости с фронтендом
+            $passport = null;
+            if ($employee->series_number) {
+                $passport = (object)[
+                    'series_number' => $employee->series_number,
+                    'issued_by' => $employee->issued_by,
+                    'issued_at' => $employee->issued_at,
+                    'department_code' => $employee->department_code
+                ];
+            }
+                
+            $car = null;
+            if ($employee->brand) {
+                $car = (object)[
+                    'brand' => $employee->brand,
+                    'license_plate' => $employee->license_plate,
+                    'registered_at' => $employee->registered_at
+                ];
+            }
+                
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'employee' => $employee,
+                    'passport' => $passport,
+                    'car' => $car
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Ошибка при получении данных сотрудника: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении данных сотрудника',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function store(Request $request)
     {
         // Валидация
@@ -176,8 +269,8 @@ class EmployeeUserController extends Controller
 
     public function update(Request $request)
     {
-        // Получаем ID пользователя из запроса или используем текущего пользователя
-        $user_id = auth()->id();
+        // Получаем ID сотрудника из формы
+        $employee_id = $request->input('employee_id');
         
         // Валидация
         $validated = $request->validate([
@@ -199,43 +292,36 @@ class EmployeeUserController extends Controller
             'position_id.exists' => 'Выбранная должность недействительна',
         ]);
 
-        // Для тестирования
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'debug' => true,
-                'debug_message' => 'Данные сотрудника успешно обновлены',
-                'entry-data' => $request->all(),
-                'user_id' => auth()->id(),
-            ], 200);
-        }
-
         try {
             DB::beginTransaction();
 
+            // Продолжаем выполнение обновления данных
+
             // Обновление данных сотрудника
             DB::update(
-                "UPDATE employees SET fio = ?, phone = ?, birth_date = ?, birth_place = ?, updated_at = ? WHERE user_id = ?",
+                "UPDATE employees SET fio = ?, phone = ?, birth_date = ?, birth_place = ?, position_id = ? WHERE id = ?",
                 [
                     $request->fio,
                     $request->phone,
                     $request->birth_date,
                     $request->birth_place,
-                    now(),
-                    $user_id
+                    $request->position_id,
+                    $employee_id
                 ]
             );
 
-            // Получаем ID сотрудника
-            $employee = DB::selectOne("SELECT * FROM employees WHERE is_deleted = false and user_id = ?", [$user_id]);
+            // ID сотрудника уже получен из формы
+            $employeeId = $employee_id;
+            
+            // Проверяем, что сотрудник существует
+            $employee = DB::selectOne("SELECT * FROM employees WHERE (is_deleted IS NULL OR is_deleted = false) AND id = ?", [$employeeId]);
 
             if (!$employee) {
                 throw new \Exception('Сотрудник не найден');
             }
 
-            $employeeId = $employee->id;
-
             // Обновление или создание паспорта
+            // Проверяем наличие обязательного поля series_number
             if ($request->passport_series) {
                 $passportData = [
                     'series_number' => $request->passport_series,
@@ -287,7 +373,7 @@ class EmployeeUserController extends Controller
             }
 
             // Обновление или создание данных об автомобиле
-            if ($request->car_brand && $request->car_plate) {
+            if ($request->car_brand || $request->car_plate || $request->car_registered_at) {
                 $carExists = DB::selectOne(
                     "SELECT id FROM cars WHERE employee_id = ? LIMIT 1",
                     [$employeeId]
@@ -298,26 +384,25 @@ class EmployeeUserController extends Controller
                         "UPDATE cars SET 
                             brand = ?, 
                             license_plate = ?, 
-                            updated_at = ? 
+                            registered_at = ? 
                         WHERE employee_id = ?",
                         [
                             $request->car_brand,
                             $request->car_plate,
-                            now(),
+                            $request->car_registered_at,
                             $employeeId
                         ]
                     );
                 } else {
                     DB::insert(
                         "INSERT INTO cars 
-                            (employee_id, brand, license_plate, created_at, updated_at) 
-                        VALUES (?, ?, ?, ?, ?)",
+                            (employee_id, brand, license_plate, registered_at) 
+                        VALUES (?, ?, ?, ?)",
                         [
                             $employeeId,
                             $request->car_brand,
                             $request->car_plate,
-                            now(),
-                            now()
+                            $request->car_registered_at
                         ]
                     );
                 }
@@ -326,23 +411,33 @@ class EmployeeUserController extends Controller
             DB::commit();
             
             if ($request->wantsJson()) {
+                // Получаем данные паспорта и автомобиля для ответа
+                $passport = DB::selectOne("SELECT * FROM passports WHERE employee_id = ?", [$employeeId]);
+                $car = DB::selectOne("SELECT * FROM cars WHERE employee_id = ?", [$employeeId]);
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Данные сотрудника успешно обновлены.',
                     'user_id' => $request->user_id,
                     'data' => [
                         'employee' => $employee,
-                        'user' => $user,
                         'passport' => $passport,
                         'car' => $car,
                     ],
-                    'errors' => $request->errors(),
                 ], 200);
             }
                   
             return redirect()->back()->with('success', 'Данные сотрудника успешно обновлены!');
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ошибка при обновлении данных: ' . $e->getMessage(),
+                ], 422);
+            }
+            
             return redirect()->back()
                 ->with('error', 'Ошибка при обновлении данных: ' . $e->getMessage())
                 ->withInput();

@@ -172,4 +172,8 @@ Route::post('/employee/update', [EmployeeUserController::class, 'update'])
 ->name('employee.update')
 ->middleware('auth');
 
+Route::get('/employee/get', [EmployeeUserController::class, 'getEmployee'])
+->name('employee.get')
+->middleware('auth');
+
     

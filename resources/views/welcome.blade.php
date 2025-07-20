@@ -772,13 +772,11 @@
                                                     @foreach($employees as $employee)
                                                         <tr class="small">
                                                             <td>
-                                                                <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn" 
+                                                                <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn me-1" 
                                                                         data-employee-id="{{ $employee->id }}" 
-                                                                        data-user-id="{{ $employee->user_id }}" 
                                                                         data-employee-name="{{ $employee->fio }}">
                                                                     <i class="bi bi-pencil-square"></i>
-                                                                </button>
-                                                                {{ $employee->fio }}
+                                                                </button> {{ $employee->fio }}
                                                             </td>
                                                             <td>{{ $employee->phone }}</td>
                                                             <td>{{ $employee->position }}</td>
@@ -1985,6 +1983,7 @@
                         @csrf
 
                         <input type="hidden" name="user_id_update" id="userIdInputUpdate" value="">
+                        <input type="hidden" name="employee_id_update" id="employeeIdInputUpdate" value="">
                         
                         <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
                         
@@ -1992,18 +1991,18 @@
                             <div class="col-md-6">
                                 <div class="mb-4">
                                     <label class="form-label">ФИО</label>
-                                    <input type="text" name="fio_update" class="form-control" required data-field-name="ФИО">
+                                    <input type="text" name="fio_update" id="fioInputUpdate" class="form-control" required data-field-name="ФИО">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Телефон</label>
-                                    <input type="text" name="phone_update" class="form-control" required data-field-name="Телефон">
+                                    <input type="text" name="phone_update" id="phoneInputUpdate" class="form-control" required data-field-name="Телефон">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Должность</label> 
-                                <select name="position_id_update" id="position_id_update" class="form-select mb-4" required data-field-name="Должность">
+                                <select name="position_id_update" id="positionSelectUpdate" class="form-select mb-4" required data-field-name="Должность">
                                     @foreach ($positions as $position)
                                         <option value="{{ $position->id }}">{{ $position->name }}</option>
                                     @endforeach 
@@ -2012,55 +2011,55 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Место регистрации</label>
-                                    <input type="text" name="registration_place_update" class="form-control" required data-field-name="Место регистрации">
+                                    <input type="text" name="registration_place_update" id="registrationPlaceInputUpdate" class="form-control" required data-field-name="Место регистрации">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Дата рождения</label>
-                                    <input type="date" name="birth_date_update" class="form-control">
+                                    <input type="date" name="birth_date_update" id="birthDateInputUpdate" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Место рождения</label>
-                                    <input type="text" name="birth_place_update" class="form-control">
+                                    <input type="text" name="birth_place_update" id="birthPlaceInputUpdate" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Паспорт (серия и номер)</label>
-                                    <input type="text" name="passport_series_update" class="form-control">
+                                    <input type="text" name="passport_series_update" id="passportSeriesInputUpdate" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Кем выдан</label>
-                                    <input type="text" name="passport_issued_by_update" class="form-control">
+                                    <input type="text" name="passport_issued_by_update" id="passportIssuedByInputUpdate" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Дата выдачи</label>
-                                    <input type="date" name="passport_issued_at_update" class="form-control">
+                                    <input type="date" name="passport_issued_at_update" id="passportIssuedAtInputUpdate" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Код подразделения</label>
-                                    <input type="text" name="passport_department_code_update" class="form-control">
+                                    <input type="text" name="passport_department_code_update" id="passportDepartmentCodeInputUpdate" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Марка машины</label>
-                                    <input type="text" name="car_brand_update" class="form-control">
+                                    <input type="text" name="car_brand_update" id="carBrandInputUpdate" class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Госномер</label>
-                                    <input type="text" name="car_plate_update" class="form-control">
+                                    <input type="text" name="car_plate_update" id="carLicensePlateInputUpdate" class="form-control">
                                 </div>
                             </div>
                         </div>
