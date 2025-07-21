@@ -3,6 +3,7 @@ import { initFormHandlers } from './form-handlers.js';
 import { initEmployeeEditHandlers } from './form-handlers.js';
 import { initSaveEmployeeChanges } from './form-handlers.js';
 import { initEmployeeFilter } from './form-handlers.js';
+import { initDeleteEmployee } from './form-handlers.js';
 
 /**
  * Функция для отображения информации о бригадах
@@ -3558,6 +3559,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initEmployeeEditHandlers();
     initSaveEmployeeChanges();
     initEmployeeFilter();
+    initDeleteEmployee()
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {

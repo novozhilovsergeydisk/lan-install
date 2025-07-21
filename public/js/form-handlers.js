@@ -609,7 +609,27 @@ function closeModalProperly() {
 
 // ************* 1. Назначение обработчиков событий ************ //
 
-// initEmployeeFilter() - инициализация фильтра сотрудников
+// Инициализация удаления сотрудника
+export function initDeleteEmployee() {
+    const deleteEmployeeBtns = document.querySelectorAll('.delete-employee-btn');
+    if (deleteEmployeeBtns && deleteEmployeeBtns.length > 0) {
+        deleteEmployeeBtns.forEach(button => {
+            button.addEventListener('click', handleDeleteEmployee);
+        });
+    }
+}
+
+function handleDeleteEmployee(event) {
+    // Получаем данные о сотруднике из атрибутов кнопки
+    const employeeName = event.currentTarget.getAttribute('data-employee-name');
+    const employeeId = event.currentTarget.getAttribute('data-employee-id');
+    
+    console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
+    showAlert(`Реализация удаления сотрудника "${employeeName}" в разработке`, 'warning');
+}
+// END Инициализация удаления сотрудника
+
+// Инициализация фильтра сотрудников
 export function initEmployeeFilter() {
     const employeeFilter = document.getElementById('employeeFilter');   
     if (employeeFilter) {
