@@ -79,7 +79,7 @@ class HomeController extends Controller
                 throw new \Exception('Статус "отменена" не найден в системе');
             }
 
-            $status_color = $canceledStatus->color;  
+            $status_color = $canceledStatus->color;
 
             // Создаем комментарий об отмене
             $comment = "Заявка отменена. Причина: " . $validated['reason'];
@@ -89,7 +89,7 @@ class HomeController extends Controller
                 'comment' => $comment,
                 'created_at' => now()
             ]);
-            
+
             // Привязываем комментарий к заявке
             DB::table('request_comments')->insert([
                 'request_id' => $validated['request_id'],
@@ -118,7 +118,7 @@ class HomeController extends Controller
                 'message' => 'Заявка успешно отменена',
                 'comments_count' => $commentsCount,
                 'execution_date' => $requestData->execution_date,
-                'status_color' => $status_color 
+                'status_color' => $status_color
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -131,7 +131,7 @@ class HomeController extends Controller
             // Откатываем транзакцию в случае ошибки
             DB::rollBack();
             Log::error('Ошибка при отмене заявки: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -174,7 +174,7 @@ class HomeController extends Controller
                 'comment' => $comment,
                 'created_at' => now()
             ]);
-            
+
             // Link comment to request
             DB::table('request_comments')->insert([
                 'request_id' => $validated['request_id'],
@@ -272,14 +272,14 @@ class HomeController extends Controller
     public function getCurrentBrigades()
     {
         $today = now()->toDateString();
-        
-        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS leader_name, e.id as employee_id 
-                FROM brigades AS b 
-                JOIN employees AS e ON b.leader_id = e.id 
+
+        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS leader_name, e.id as employee_id
+                FROM brigades AS b
+                JOIN employees AS e ON b.leader_id = e.id
                 WHERE DATE(b.formation_date) >= '{$today}' and b.is_deleted = false";
 
         $brigades = DB::select($sql);
-        
+
         return response()->json($brigades);
     }
 
@@ -303,7 +303,7 @@ class HomeController extends Controller
 
         // Запрашиваем employees с паспортными данными и должностями
         $employees = DB::select("
-            SELECT 
+            SELECT
                 e.*,
                 p.series_number,
                 p.issued_at as passport_issued_at,
@@ -795,13 +795,13 @@ class HomeController extends Controller
 
                 // Группируем членов по ID бригады и сохраняем информацию о бригадире
                 $brigadeLeaders = [];
-                
+
                 foreach ($members as $member) {
                     // Сохраняем информацию о бригадире
                     if (!isset($brigadeLeaders[$member->brigade_id]) && $member->employee_leader_name) {
                         $brigadeLeaders[$member->brigade_id] = $member->employee_leader_name;
                     }
-                    
+
                     $brigadeMembers[$member->brigade_id][] = [
                         'name' => $member->member_name,
                         'phone' => $member->member_phone,
@@ -1085,7 +1085,7 @@ class HomeController extends Controller
 
         return response()->json(['count' => $count]);
     }
-    
+
     /**
      * Обновление комментария
      *
@@ -1100,38 +1100,38 @@ class HomeController extends Controller
             'id' => $id,
             'content' => $request->input('content'),
         ]);
-        
+
         try {
             // Проверяем, существует ли комментарий
             $comment = DB::table('comments')->where('id', $id)->first();
-            
+
             if (!$comment) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Комментарий не найден'
                 ], 404);
             }
-            
+
             // Обновляем комментарий
             DB::table('comments')
                 ->where('id', $id)
                 ->update([
                     'comment' => $request->input('content')
                 ]);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Комментарий успешно обновлен',
                 'comment' => DB::table('comments')->where('id', $id)->first()
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Ошибка при обновлении комментария:', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при обновлении комментария: ' . $e->getMessage()
@@ -1153,7 +1153,7 @@ class HomeController extends Controller
         //     'message' => 'Тестирование',
         //     'data' => []
         // ];
-        
+
         // return response()->json($response);
 
         // Включаем логирование SQL-запросов
@@ -1173,14 +1173,14 @@ class HomeController extends Controller
             $userId = auth()->id(); // ID пользователя из авторизации
             $input['user_id'] = $userId; // Сохраняем ID пользователя для логирования
             \Log::info('ID авторизованного пользователя: ' . $userId);
-            
+
             // Проверяем наличие сотрудника только если указан user_id
             $employeeId = null;
             if ($userId) {
                 $employee = DB::table('employees')
                     ->where('user_id', $userId)
                     ->first();
-                    
+
                 if ($employee) {
                     $employeeId = $employee->id;
                     $input['operator_id'] = $employeeId; // Устанавливаем operator_id как ID сотрудника, а не пользователя
@@ -1209,7 +1209,7 @@ class HomeController extends Controller
 
             // Используем ранее найденный employeeId или null
             $validationData['operator_id'] = $employeeId;
-            
+
             \Log::info('Используем для заявки operator_id:', [
                 'user_id' => $userId,
                 'employee_id' => $employeeId
@@ -1307,7 +1307,7 @@ class HomeController extends Controller
                     $foundClient = true;
                 }
             }
-            
+
             // Выполняем запрос только если хотя бы одно поле заполнено
             $client = $foundClient ? $query->first() : null;
 
@@ -1316,7 +1316,7 @@ class HomeController extends Controller
             //     'message' => 'Тестирование',
             //     'data' => [$client]
             // ];
-            
+
             // return response()->json($response);
 
             // 4. Создание или обновление клиента
@@ -1569,5 +1569,36 @@ class HomeController extends Controller
                 ]
             ], 500);
         }
+    }
+
+    public function getRequestByEmployee() {
+        try {
+            $employeeId = auth()->user()->employee_id;
+            
+            $requests = DB::select("SELECT * FROM requests WHERE operator_id = {$employeeId}");
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявки успешно получены',
+                'data' => $requests
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при получении заявок:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении заявок: ' . $e->getMessage(),
+                'error' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
+        }   
     }
 }

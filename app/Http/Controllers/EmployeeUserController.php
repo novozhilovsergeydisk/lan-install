@@ -11,6 +11,89 @@ use Illuminate\Support\Str;
 
 class EmployeeUserController extends Controller
 {
+    public function filterEmployee(Request $request)
+    {
+
+        // $response = [
+        //     'success' => true,
+        //     'data' => $request->all()
+        // ];
+
+        // return response()->json($response);
+
+        // Валидация входящих данных
+        $validated = $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+            'date' => 'required|date',
+        ]);
+
+        if (!$validated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при фильтрации сотрудников',
+                'error' => $validated->errors()
+            ], 400);
+        }
+
+        try {
+            $employeeId = $request->input('employee_id');
+            
+            $sql = "SELECT
+                r.*,
+                c.fio AS client_fio,
+                c.phone AS client_phone,
+                c.organization AS client_organization,
+                rs.name AS status_name,
+                rs.color AS status_color,
+                b.name AS brigade_name,
+                e.fio AS brigade_lead,
+                op.fio AS operator_name,
+                addr.street,
+                addr.houses,
+                addr.district,
+                addr.city_id,
+                ct.name AS city_name,
+                ct.postal_code AS city_postal_code
+            FROM requests r
+            LEFT JOIN clients c ON r.client_id = c.id
+            LEFT JOIN request_statuses rs ON r.status_id = rs.id
+            LEFT JOIN brigades b ON r.brigade_id = b.id
+            LEFT JOIN employees e ON b.leader_id = e.id
+            LEFT JOIN employees op ON r.operator_id = op.id
+            LEFT JOIN request_addresses ra ON r.id = ra.request_id
+            LEFT JOIN addresses addr ON ra.address_id = addr.id
+            LEFT JOIN cities ct ON addr.city_id = ct.id
+            LEFT JOIN brigade_members bm ON r.brigade_id = bm.brigade_id
+            WHERE r.execution_date::date = '{$request->input('date')}' AND (b.is_deleted = false OR b.id IS NULL) AND bm.employee_id = {$employeeId}
+            ORDER BY r.id DESC ";
+
+            $requests = DB::select($sql);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявки успешно получены',
+                'data' => $requests
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при получении заявок при фильтрации сотрудников:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении заявок при фильтрации сотрудников: ' . $e->getMessage(),
+                'error' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
+        }  
+    }
+
     /**
      * Получает данные сотрудника по ID
      *

@@ -2,6 +2,7 @@ import { showAlert, postData } from './utils.js';
 import { initFormHandlers } from './form-handlers.js';
 import { initEmployeeEditHandlers } from './form-handlers.js';
 import { initSaveEmployeeChanges } from './form-handlers.js';
+import { initEmployeeFilter } from './form-handlers.js';
 
 /**
  * Функция для отображения информации о бригадах
@@ -1894,7 +1895,6 @@ function handleTransferRequest(button) {
 }
 
 // Обработчик кнопки 'Отменить заявку'
-
 function handleCancelRequest(button) {
     const requestId = button.dataset.requestId;
     // console.log('Отмена заявки:', requestId);
@@ -2659,12 +2659,12 @@ async function handleEmployeeFormSubmit(e) {
 
             // Определяем URL в зависимости от наличия employee_id
             let url = '/employees/store'; // По умолчанию - создание нового сотрудника
-            
+
             // Если есть employee_id, значит это обновление существующего сотрудника
             if (formDataObj.employee_id) {
                 url = '/employee/update';
             }
-            
+
             // Отправляем форму на сервер используя postData
             const data = await postData(url, formDataObj);
             console.log('Ответ сервера:', data);
@@ -2705,7 +2705,7 @@ async function handleEmployeeFormSubmit(e) {
                 }
                 return;
             }
-            
+
             // Проверяем на явную ошибку (когда success: false)
             if (data.success === false) {
                 throw new Error(data.message || 'Ошибка при сохранении сотрудника');
@@ -2741,11 +2741,11 @@ async function handleEmployeeFormSubmit(e) {
             if (error.message) {
                 errorMessage = error.message;
             }
-            
+
             // Если есть дополнительные данные об ошибке
             if (error.data) {
                 console.error('Данные об ошибке:', error.data);
-                
+
                 if (error.data.message) {
                     errorMessage = error.data.message;
                 } else if (error.data.errors) {
@@ -3557,6 +3557,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initFormHandlers();
     initEmployeeEditHandlers();
     initSaveEmployeeChanges();
+    initEmployeeFilter();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {

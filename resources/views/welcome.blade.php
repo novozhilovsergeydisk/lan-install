@@ -195,6 +195,15 @@
                                     </button>
                                 </div>
 
+                                <div class="d-flex justify-content-start" style="flex: 1;">
+                                    <select name="employee_filter" id="employeeFilter" class="form-select w-50">
+                                        <option value="">Все сотрудники</option>
+                                        @foreach ($employees as $employee)
+                                            <option value="{{ $employee->id }}" data-fio="{{ $employee->fio }}">{{ $employee->fio }}</option>
+                                        @endforeach 
+                                    </select>
+                                </div>
+
                                 <div class="d-flex justify-content-end" style="flex: 1;">
                                     <button type="button" class="btn btn-primary" id="new-request-button"
                                             data-bs-toggle="modal" data-bs-target="#newRequestModal">
@@ -1564,6 +1573,69 @@
 </script>
 
 <script>
+    // Функция для фильтрации строк таблицы по сотруднику
+    document.addEventListener('DOMContentLoaded', function() {
+        const employeeFilter = document.getElementById('employeeFilter');
+        
+        // Функция для сокращения ФИО до формата "Фамилия И."
+        function shortenNameJs(fullName) {
+            if (!fullName) return '';
+            
+            const parts = fullName.split(' ');
+            if (parts.length < 2) return fullName;
+            
+            const lastName = parts[0];
+            const firstName = parts[1];
+            
+            return lastName + ' ' + firstName.charAt(0) + '.';
+        }
+        
+        if (employeeFilter) {
+            employeeFilter.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const selectedFio = selectedOption.getAttribute('data-fio');
+                const shortenedSelectedFio = shortenNameJs(selectedFio);
+                const requestRows = document.querySelectorAll('#requestsTable tbody tr.status-row');
+                const noRequestsRow = document.getElementById('no-requests-row');
+                let visibleRowsCount = 0;
+                
+                // Если выбрано "Все сотрудники", показываем все строки
+                if (!this.value) {
+                    requestRows.forEach(row => {
+                        row.style.display = '';
+                        visibleRowsCount++;
+                    });
+                } else {
+                    // Иначе фильтруем по сокращенному ФИО сотрудника
+                    requestRows.forEach(row => {
+                        // Получаем текст ячейки с составом бригады
+                        const brigadeCell = row.querySelector('td:nth-child(5)');
+                        if (brigadeCell) {
+                            const brigadeCellText = brigadeCell.textContent;
+                            
+                            // Проверяем, содержит ли состав бригады сокращенное ФИО
+                            if (brigadeCellText.includes(shortenedSelectedFio)) {
+                                row.style.display = '';
+                                visibleRowsCount++;
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                }
+                
+                // Показываем или скрываем сообщение об отсутствии заявок
+                if (visibleRowsCount === 0) {
+                    noRequestsRow.classList.remove('d-none');
+                } else {
+                    noRequestsRow.classList.add('d-none');
+                }
+            });
+        }
+    });
+    
     // New Request Form Functionality
     document.addEventListener('DOMContentLoaded', function () {
         const newRequestModal = document.getElementById('newRequestModal');

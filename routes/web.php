@@ -181,3 +181,8 @@ Route::get('/api/roles', [EmployeeUserController::class, 'getRoles'])
 ->name('api.roles')
 ->middleware('auth');
 
+Route::post('/employee/filter', [EmployeeUserController::class, 'filterEmployee'])
+->name('employee.filter')
+->middleware('auth');
+
+
