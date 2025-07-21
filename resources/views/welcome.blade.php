@@ -807,7 +807,7 @@
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
 
-                                                                {{ $employee->fio }}
+                                                                {{ $employee->fio }} | {{ $employee->user_email }}
                                                             </td>
                                                             <td>{{ $employee->phone }}</td>
                                                             <td>{{ $employee->position }}</td>

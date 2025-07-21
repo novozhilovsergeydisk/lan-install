@@ -311,11 +311,14 @@ class HomeController extends Controller
                 p.department_code,
                 pos.name as position,
                 c.brand as car_brand,
-                c.license_plate as car_plate
+                c.license_plate as car_plate,
+                u.email as user_email
             FROM employees e
             LEFT JOIN passports p ON e.id = p.employee_id
             LEFT JOIN positions pos ON e.position_id = pos.id
             LEFT JOIN cars c ON e.id = c.employee_id
+            LEFT JOIN users u ON u.id = e.user_id
+            WHERE e.is_deleted = false
             ORDER BY e.fio
         ");
 

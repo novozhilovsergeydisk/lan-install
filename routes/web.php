@@ -185,4 +185,8 @@ Route::post('/employee/filter', [EmployeeUserController::class, 'filterEmployee'
 ->name('employee.filter')
 ->middleware('auth');
 
+Route::post('/employee/delete', [EmployeeUserController::class, 'deleteEmployee'])
+->name('employee.delete')
+->middleware('auth');   
+
 
