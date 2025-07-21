@@ -636,6 +636,19 @@
                                                     </div>
                                                     
                                                     <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
+
+                                                    <div class="row g-3 mt-3">
+                                                        <div class="col-md-6">
+                                                            <div class="mb-4">
+                                                                <label class="form-label">Системная роль</label>
+                                                                <select name="role_id" id="roles" class="form-select mb-4" required data-field-name="Системная роль">
+                                                                    @foreach ($roles as $role)
+                                                                        <option value="{{ $role->id }}" {{ $role->id == 2 ? 'selected' : '' }}>{{ $role->name }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     
                                                     <div class="row g-3 mt-3">
                                                         <div class="col-md-6">
@@ -1994,6 +2007,19 @@
                         <input type="hidden" name="employee_id_update" id="employeeIdInputUpdate" value="">
                         
                         <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
+
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label class="form-label">Системная роль</label>
+                                    <select name="role_id_update" id="roleSelectUpdate" class="form-select mb-4" required data-field-name="Системная роль" disabled>
+                                        @foreach ($roles as $role)
+                                            <option value="{{ $role->id }}" {{ $role->id == 2 ? 'selected' : '' }}>{{ $role->name }}</option>
+                                        @endforeach 
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="row g-3 mt-3">
                             <div class="col-md-6">

@@ -176,4 +176,8 @@ Route::get('/employee/get', [EmployeeUserController::class, 'getEmployee'])
 ->name('employee.get')
 ->middleware('auth');
 
-    
+// API для получения списка ролей
+Route::get('/api/roles', [EmployeeUserController::class, 'getRoles'])
+->name('api.roles')
+->middleware('auth');
+

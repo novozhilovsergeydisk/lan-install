@@ -12,6 +12,34 @@ use Illuminate\Support\Facades\Log;
 class HomeController extends Controller
 {
     /**
+     * Получает список ролей для селекта
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRoles()
+    {
+        try {
+            $roles = DB::table('roles')
+                ->select('id', 'name')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'roles' => $roles
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting roles: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении списка ролей',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Отмена заявки
      *
      * @param  \Illuminate\Http\Request  $request
@@ -265,6 +293,8 @@ class HomeController extends Controller
         $users = DB::select('SELECT * FROM users');
         // $users = DB::query('commit');
 
+        $roles = DB::select('SELECT * FROM roles');
+
         // Запрашиваем clients
         $clients = DB::select('SELECT * FROM clients');
 
@@ -431,7 +461,8 @@ class HomeController extends Controller
             'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
             'brigadesCurrentDay' => $brigadesCurrentDay,
             'flags' => $flags,
-            'positions' => $positions
+            'positions' => $positions,
+            'roles' => $roles
         ];
 
         // Логируем данные для отладки
@@ -1195,7 +1226,7 @@ class HomeController extends Controller
                 'execution_date' => 'required|date',
                 'execution_time' => 'nullable|date_format:H:i',
                 'brigade_id' => 'nullable|exists:brigades,id',
-                'operator_id' => 'nullable',
+                'operator_id' => 'nullable|exists:employees,id',
                 'address_id' => 'required|exists:addresses,id'
             ];
 

@@ -117,6 +117,7 @@ class EmployeeUserController extends Controller
             // Поля сотрудника (обязательные на фронтенде)
             'fio' => 'required|string|max:255',
             'position_id' => 'required|exists:positions,id',
+            'role_id' => 'required|exists:roles,id',
 
             // Необязательные поля
             'phone' => 'nullable|string|max:50',
@@ -142,6 +143,8 @@ class EmployeeUserController extends Controller
             'fio.required' => 'Поле "ФИО" обязательно для заполнения',
             'position_id.required' => 'Поле "Должность" обязательно для выбора',
             'position_id.exists' => 'Выбранная должность недействительна',
+            'role_id.required' => 'Поле "Роль" обязательно для выбора',
+            'role_id.exists' => 'Выбранная роль недействительна',
         ]);
 
         DB::beginTransaction();
@@ -171,6 +174,16 @@ class EmployeeUserController extends Controller
             ]);
 
             $employeeId = DB::getPdo()->lastInsertId();
+
+            //insert into user_roles
+
+            DB::select(
+                'INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)',
+                [
+                    $user->id,
+                    $request->role_id
+                ]
+            );  
 
             // Паспорт (если заполнен)
             if ($request->passport_series) {
