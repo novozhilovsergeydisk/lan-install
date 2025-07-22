@@ -953,16 +953,79 @@ class HomeController extends Controller
                         'created_at' => now(),
                         'updated_at' => now()
                     ]);
+
+                    // И создаем заявку на завтра с комментарием о недоделанных работах
+                    
+                    // Получаем ID сотрудника, связанного с текущим пользователем
+                    $employeeId = DB::table('employees')
+                        ->where('user_id', Auth::id())
+                        ->value('id');
+
+                        // 
+
+                    // Если не нашли сотрудника, используем ID по умолчанию
+                    if (!$employeeId) {
+                        throw new \Exception('Не удалось найти сотрудника для текущего пользователя');
+                    }
+
+                    // Получаем данные текущей заявки
+                    $currentRequest = DB::table('requests')->where('id', $id)->first();
+                    
+                    // Генерируем номер заявки
+                    $count = DB::table('requests')->count() + 1;
+                    $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                    
+                    // Создаем новую заявку на завтра
+                    $newRequestId = DB::table('requests')->insertGetId([
+                        'number' => $requestNumber,
+                        'client_id' => $currentRequest->client_id, // Копируем client_id из текущей заявки
+                        'brigade_id' => null,
+                        'status_id' => DB::table('request_statuses')->where('name', 'перенесена')->first()->id,
+                        'request_type_id' => DB::table('request_types')->where('name', 'монтаж')->first()->id,
+                        'operator_id' => $employeeId, // Используем ID сотрудника
+                        'execution_date' => now()->addDay()->toDateString(),
+                        'request_date' => now()->toDateString()
+                    ]);
+
+                    // Получаем адрес текущей заявки
+                    $requestAddress = DB::table('request_addresses')
+                        ->where('request_id', $id)
+                        ->first();
+
+                    // Если адрес найден, копируем его для новой заявки
+                    if ($requestAddress) {
+                        DB::table('request_addresses')->insert([
+                            'request_id' => $newRequestId,
+                            'address_id' => $requestAddress->address_id
+                        ]);
+                    }
                 }
 
                 // Фиксируем изменения
                 DB::commit();
 
-                return response()->json([
+                // Формируем ответ JSON
+                $response = [
                     'success' => true,
                     'message' => 'Заявка успешно закрыта',
                     'comment_id' => $commentId
-                ]);
+                ];
+                
+                // Если была создана новая заявка на недоделанные работы, добавляем её ID в ответ
+                if (isset($newRequestId)) {
+                    // Связываем комментарий с заявкой
+                    DB::table('request_comments')->insert([
+                        'request_id' => $newRequestId,
+                        'comment_id' => $commentId,
+                        'user_id'    => Auth::id(), // ID пользователя из аутентификации
+                        'created_at' => now()
+                    ]);
+
+                    $response['new_request_id'] = $newRequestId;
+                    $response['new_request_number'] = $requestNumber;
+                }
+                
+                return response()->json($response);
             }
 
             return response()->json([

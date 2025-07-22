@@ -2115,7 +2115,7 @@
                     console.log(result);
 
                     // Обновляем страницу
-                    setTimeout(() => location.reload(), 5000);
+                    setTimeout(() => location.reload(), 2000);
                 } else {
                     throw new Error(result.message || 'Неизвестная ошибка при закрытии заявки');
                 }
