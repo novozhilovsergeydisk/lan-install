@@ -42,6 +42,7 @@
                            class="form-control @error('login') is-invalid @enderror"
                            placeholder="Введите логин или email"
                            value="{{ old('login') }}"
+                           autocomplete="username"
                            required autofocus>
                     @error('login')
                         <div class="invalid-feedback">
@@ -55,6 +56,7 @@
                     <input type="password" name="password" id="password"
                            class="form-control @error('password') is-invalid @enderror"
                            placeholder="Введите пароль"
+                           autocomplete="current-password"
                            required>
                     @error('password')
                         <div class="invalid-feedback">

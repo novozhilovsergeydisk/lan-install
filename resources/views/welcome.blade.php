@@ -592,7 +592,7 @@
                             </div>
                             
                             <!-- Модальное окно для нового сотрудника -->
-                            <div class="modal fade" id="newEmployeeModal" tabindex="-1" aria-labelledby="newEmployeeModalLabel" aria-hidden="true">
+                            <div class="modal fade" id="newEmployeeModal" tabindex="-1" aria-labelledby="newEmployeeModalLabel">
                                 <div class="modal-dialog modal-lg">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -1574,6 +1574,51 @@
 </script>
 
 <script>
+    // Обработчик для модальных окон для исправления проблемы доступности
+    document.addEventListener('DOMContentLoaded', function() {
+        // Список модальных окон, которые нужно исправить
+        const modalIds = ['newEmployeeModal', 'editEmployeeModal'];
+        
+        // Патч для Bootstrap модальных окон
+        const originalModalShow = bootstrap.Modal.prototype.show;
+        bootstrap.Modal.prototype.show = function() {
+            // Вызываем оригинальный метод
+            originalModalShow.apply(this, arguments);
+            
+            // После открытия модального окна удаляем aria-hidden
+            if (this._element && modalIds.includes(this._element.id)) {
+                setTimeout(() => {
+                    this._element.removeAttribute('aria-hidden');
+                    
+                    // Добавляем обработчик для предотвращения добавления aria-hidden
+                    const observer = new MutationObserver((mutations) => {
+                        mutations.forEach((mutation) => {
+                            if (mutation.type === 'attributes' && 
+                                mutation.attributeName === 'aria-hidden' && 
+                                this._element.getAttribute('aria-hidden') === 'true' &&
+                                this._isShown) {
+                                this._element.removeAttribute('aria-hidden');
+                            }
+                        });
+                    });
+                    
+                    observer.observe(this._element, { attributes: true });
+                    
+                    // Сохраняем наблюдатель в элементе, чтобы он не был удален сборщиком мусора
+                    this._element._accessibilityObserver = observer;
+                }, 0);
+            }
+        };
+        
+        // Для каждого модального окна удаляем атрибут aria-hidden из HTML
+        modalIds.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.removeAttribute('aria-hidden');
+            }
+        });
+    });
+
     // Функция для фильтрации строк таблицы по сотруднику
     document.addEventListener('DOMContentLoaded', function() {
         const employeeFilter = document.getElementById('employeeFilter');
@@ -2063,7 +2108,7 @@
 </script>
 
 <!-- Модальное окно для редактирования сотрудника -->
-<div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+<div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">

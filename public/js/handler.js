@@ -2288,7 +2288,9 @@ function initAllCustomSelects() {
     // console.log('Инициализация всех кастомных селектов');
 
     // Инициализируем селект с адресами в основном списке
-    initCustomSelect("addressSelect", "Выберите адрес из списка");
+    if (document.getElementById('addressSelect')) {
+        initCustomSelect("addressSelect", "Выберите адрес из списка");
+    }
 
     // Инициализируем селект с адресами в форме создания заявки
     if (document.getElementById('addresses_id')) {
