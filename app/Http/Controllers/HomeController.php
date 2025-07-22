@@ -913,6 +913,15 @@ class HomeController extends Controller
     public function closeRequest($id, Request $request)
     {
         try {
+            // Для отладки
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => 'Заявка успешно закрыта (test)',
+            //     'RequestID' => $id,
+            //     'RequestComment' => $request->input('comment'),
+            //     'RequestUncompletedWorks' => $request->input('uncompleted_works')
+            // ]);
+
             // Начинаем транзакцию
             DB::beginTransaction();
 
@@ -935,6 +944,16 @@ class HomeController extends Controller
                     'user_id'    => $request->user()->id,
                     'created_at' => now()
                 ]);
+                
+                // Если отмечен чекбокс "Недоделанные работы", добавляем запись в таблицу incomplete_works
+                if ($request->input('uncompleted_works')) {
+                    DB::table('incomplete_works')->insert([
+                        'request_id' => $id,
+                        'description' => $request->input('comment', 'Недоделанные работы'),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
 
                 // Фиксируем изменения
                 DB::commit();

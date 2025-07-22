@@ -620,26 +620,27 @@ export function initDeleteEmployee() {
 }
 
 async function handleDeleteEmployee(event) {
-    // Получаем данные о сотруднике из атрибутов кнопки
-    const employeeName = event.currentTarget.getAttribute('data-employee-name');
-    const employeeId = event.currentTarget.getAttribute('data-employee-id');
+    if (confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
+        // Получаем данные о сотруднике из атрибутов кнопки
+        const employeeName = event.currentTarget.getAttribute('data-employee-name');
+        const employeeId = event.currentTarget.getAttribute('data-employee-id');
 
-    console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
+        console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
 
-    const data = {
-        employee_id: employeeId,
-    };
+        const data = {
+            employee_id: employeeId,
+        };
 
-    const result = await postData('/employee/delete', data);
+        const result = await postData('/employee/delete', data);
 
-    console.log('Ответ от сервера:', result);
+        console.log('Ответ от сервера:', result);
 
-    if (result.success) {
-        showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
-    } else {
-        showAlert(`Ошибка при удалении сотрудника "${employeeName}"`, 'danger');
-    }
-    
+        if (result.success) {
+            showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
+        } else {
+            showAlert(result.message, 'danger');
+        }
+    }    
     // showAlert(`Реализация удаления сотрудника "${employeeName}" в разработке`, 'warning');
 }
 // END Инициализация удаления сотрудника

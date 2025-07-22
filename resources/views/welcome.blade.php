@@ -2018,12 +2018,16 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="closeRequestForm">
+                <form id="closeRequestForm" novalidate="novalidate">
                     @csrf
                     <input type="hidden" id="requestIdToClose" name="request_id">
                     <div class="mb-3">
                         <label for="closeComment" class="form-label">Комментарий</label>
                         <textarea class="form-control" id="closeComment" name="comment" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <input type="checkbox" id="uncompletedWorks" name="uncompleted_works">
+                        <label for="uncompletedWorks">Недоделанные работы</label>
                     </div>
                 </form>
             </div>
@@ -2054,12 +2058,27 @@
             }
         });
 
+        // Обработчик для поля комментария - удаление класса is-invalid при вводе текста
+        document.getElementById('closeComment').addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+        
         // Обработчик для кнопки подтверждения в модальном окне
         document.getElementById('confirmCloseRequest').addEventListener('click', async function () {
             const form = document.getElementById('closeRequestForm');
-            if (!form.checkValidity()) {
-                form.reportValidity();
+            const commentField = document.getElementById('closeComment');
+            
+            // Кастомная валидация вместо встроенной
+            if (!commentField.value.trim()) {
+                // Добавляем класс is-invalid для визуальной индикации ошибки
+                commentField.classList.add('is-invalid');
+                showAlert('Пожалуйста, заполните комментарий', 'warning');
                 return;
+            } else {
+                // Убираем класс is-invalid, если поле заполнено
+                commentField.classList.remove('is-invalid');
             }
 
             const requestId = document.getElementById('requestIdToClose').value;
@@ -2079,6 +2098,7 @@
                     },
                     body: JSON.stringify({
                         comment: comment,
+                        uncompleted_works: document.getElementById('uncompletedWorks').checked,
                         _token: document.querySelector('input[name="_token"]').value
                     })
                 });
@@ -2090,8 +2110,12 @@
                     // Закрываем модальное окно
                     const modal = bootstrap.Modal.getInstance(document.getElementById('closeRequestModal'));
                     modal.hide();
+
+
+                    console.log(result);
+
                     // Обновляем страницу
-                    setTimeout(() => location.reload(), 1000);
+                    setTimeout(() => location.reload(), 5000);
                 } else {
                     throw new Error(result.message || 'Неизвестная ошибка при закрытии заявки');
                 }

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class EmployeeUserController extends Controller
 {
@@ -547,8 +548,6 @@ class EmployeeUserController extends Controller
     public function deleteEmployee(Request $request)
     {
         try {
-            
-
             DB::beginTransaction();
 
             // Валидация входящих данных
@@ -572,26 +571,37 @@ class EmployeeUserController extends Controller
             
             $user_id = $employee->user_id;
 
-            $user_exists = DB::select("SELECT * FROM users WHERE id = ?", [$user_id]);
+            if ($user_id === Auth::user()->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Нельзя удалить самого себя',
+                    'error' => 'Ошибка при удалении сотрудника'
+                ], 200);
+            } 
             
-            DB::commit();
+            DB::beginTransaction();
+
+            $user_exists = DB::select("SELECT * FROM users WHERE id = ?", [$user_id]);
 
             // Тестовый response
-            // return response()->json([
-            //     'success' => true,
-            //     'message' => 'Тестовый response',
-            //     'data' => $request->all(),
-            //     'validated' => $validated,
-            //     'employee' => $employee,
-            //     'user_id' => $user_id,
-            //     'user_exists' => $user_exists,
-            // ], 200);
+            return response()->json([
+                'success' => true,
+                'message' => 'Тестовый response',
+                'data' => $request->all(),
+                'validated' => $validated,
+                'employee' => $employee,
+                'user_id' => $user_id,
+                'user_exists' => $user_exists,
+                'Auth::user()->id' => Auth::user()->id
+            ], 200);
 
             $user_employee = DB::update("UPDATE employees SET is_deleted = true WHERE id = ?", [$employeeId]);
 
             if (!$user_exists) {
                 $res_user_employee = DB::update("UPDATE users SET password = null WHERE id = ?", [$user_id]);
             }
+
+            DB::commit();
             
             return response()->json([
                 'success' => true,

@@ -1,127 +1,117 @@
+diff --git a/app/Http/Controllers/EmployeeUserController.php b/app/Http/Controllers/EmployeeUserController.php
+index 9259c32..5034b27 100644
+--- a/app/Http/Controllers/EmployeeUserController.php
++++ b/app/Http/Controllers/EmployeeUserController.php
+@@ -8,6 +8,7 @@
+ use Illuminate\Support\Facades\Hash;
+ use Illuminate\Support\Facades\Log;
+ use Illuminate\Support\Str;
++use Illuminate\Support\Facades\Auth;
+ 
+ class EmployeeUserController extends Controller
+ {
+@@ -547,8 +548,6 @@ public function update(Request $request)
+     public function deleteEmployee(Request $request)
+     {
+         try {
+-            
+-
+             DB::beginTransaction();
+ 
+             // Валидация входящих данных
+@@ -572,26 +571,37 @@ public function deleteEmployee(Request $request)
+             
+             $user_id = $employee->user_id;
+ 
+-            $user_exists = DB::select("SELECT * FROM users WHERE id = ?", [$user_id]);
++            if ($user_id === Auth::user()->id) {
++                return response()->json([
++                    'success' => false,
++                    'message' => 'Нельзя удалить самого себя',
++                    'error' => 'Ошибка при удалении сотрудника'
++                ], 200);
++            } 
+             
+-            DB::commit();
++            DB::beginTransaction();
++
++            $user_exists = DB::select("SELECT * FROM users WHERE id = ?", [$user_id]);
+ 
+             // Тестовый response
+-            // return response()->json([
+-            //     'success' => true,
+-            //     'message' => 'Тестовый response',
+-            //     'data' => $request->all(),
+-            //     'validated' => $validated,
+-            //     'employee' => $employee,
+-            //     'user_id' => $user_id,
+-            //     'user_exists' => $user_exists,
+-            // ], 200);
++            return response()->json([
++                'success' => true,
++                'message' => 'Тестовый response',
++                'data' => $request->all(),
++                'validated' => $validated,
++                'employee' => $employee,
++                'user_id' => $user_id,
++                'user_exists' => $user_exists,
++                'Auth::user()->id' => Auth::user()->id
++            ], 200);
+ 
+             $user_employee = DB::update("UPDATE employees SET is_deleted = true WHERE id = ?", [$employeeId]);
+ 
+             if (!$user_exists) {
+                 $res_user_employee = DB::update("UPDATE users SET password = null WHERE id = ?", [$user_id]);
+             }
++
++            DB::commit();
+             
+             return response()->json([
+                 'success' => true,
 diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index 3c5ca18..9cc41ad 100644
+index c3c4cf1..3d92ed6 100644
 --- a/public/js/form-handlers.js
 +++ b/public/js/form-handlers.js
-@@ -590,6 +590,66 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
- 
- //************* Назначение обработчиков событий ************//
- 
-+
-+export function initEmployeeEditHandlers() {
-+    // Инициализация модального окна
-+    const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
-+    
-+    // Обработчик кнопок редактирования
-+    document.querySelectorAll('.edit-employee-btn').forEach(button => {
-+        button.addEventListener('click', function() {
-+            const employeeId = this.getAttribute('data-employee-id');
-+            const employeeName = this.getAttribute('data-employee-name');
-+            
-+            // Вывод информации в консоль
-+            console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId})`);
-+            
-+            // Обновление заголовка модального окна
-+            document.getElementById('editEmployeeModalLabel').textContent = `Редактирование сотрудника: ${employeeName}`;
-+            
-+            // Здесь можно добавить загрузку данных сотрудника по ID
-+            
-+            // Открытие модального окна
-+            editEmployeeModal.show();
-+        });
-+    });
-+    
-+    // Функция для корректного закрытия модального окна
-+    function closeModalProperly() {
-+        const modalElement = document.getElementById('editEmployeeModal');
-+        const bsModal = bootstrap.Modal.getInstance(modalElement);
-+        if (bsModal) {
-+            bsModal.hide();
-+            // Дополнительно удаляем класс modal-backdrop и стили body
-+            setTimeout(() => {
-+                const backdrop = document.querySelector('.modal-backdrop');
-+                if (backdrop) backdrop.remove();
-+                document.body.classList.remove('modal-open');
-+                document.body.style.overflow = '';
-+                document.body.style.paddingRight = '';
-+            }, 100);
-+        }
-+    }
-+    
-+    // Обработчик кнопки сохранения изменений
-+    document.getElementById('saveEmployeeChanges').addEventListener('click', function() {
-+        console.log('Сохранение изменений сотрудника');
-+        // Здесь будет логика сохранения изменений
-+        
-+        // Закрытие модального окна после сохранения
-+        closeModalProperly();
-+    });
-+    
-+    // Добавляем обработчик для кнопки "Закрыть"
-+    const closeButton = document.querySelector('#editEmployeeModal .btn-secondary[data-bs-dismiss="modal"]');
-+    if (closeButton) {
-+        closeButton.addEventListener('click', function(e) {
-+            e.preventDefault(); // Предотвращаем стандартное поведение
-+            closeModalProperly();
-+        });
-+    }
-+}
-+
- /**
-  * Инициализирует обработчики событий для форм
-  */
-@@ -640,7 +700,7 @@ function initExecutionDateField() {
-             dateInput.value = today;
-             console.log('Установлена текущая дата:', today);
-         } else {
--            console.log('Сохранена существующая дата:', dateInput.value);
-+            console.log('Значение поля не пустое:', dateInput.value);
-         }
-     }
+@@ -620,26 +620,27 @@ export function initDeleteEmployee() {
  }
-diff --git a/public/js/handler.js b/public/js/handler.js
-index 72aa2ff..a0b2082 100644
---- a/public/js/handler.js
-+++ b/public/js/handler.js
-@@ -1,5 +1,6 @@
- import { showAlert } from './utils.js';
- import { initFormHandlers } from './form-handlers.js';
-+import { initEmployeeEditHandlers } from './form-handlers.js';
  
- /**
-  * Функция для отображения информации о бригадах
-@@ -3572,6 +3573,7 @@ document.addEventListener('DOMContentLoaded', function () {
-     console.log('DOM полностью загружен');
-     initializePage();
-     initFormHandlers();
-+    initEmployeeEditHandlers();
+ async function handleDeleteEmployee(event) {
+-    // Получаем данные о сотруднике из атрибутов кнопки
+-    const employeeName = event.currentTarget.getAttribute('data-employee-name');
+-    const employeeId = event.currentTarget.getAttribute('data-employee-id');
++    if (confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
++        // Получаем данные о сотруднике из атрибутов кнопки
++        const employeeName = event.currentTarget.getAttribute('data-employee-name');
++        const employeeId = event.currentTarget.getAttribute('data-employee-id');
  
-     // Запускаем инициализацию кастомных селектов с задержкой
-     setTimeout(() => {
-diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index 29cfa1c..0b45bef 100644
---- a/resources/views/welcome.blade.php
-+++ b/resources/views/welcome.blade.php
-@@ -2045,7 +2045,10 @@ function createRequestRow(request) {
+-    console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
++        console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
  
- <!-- Обработчик для кнопок редактирования сотрудников -->
- <script>
--    document.addEventListener('DOMContentLoaded', function() {
-+    /**
-+     * Инициализирует обработчики для модального окна редактирования сотрудников
-+     */
-+    function initEmployeeEditHandlers() {
-         // Инициализация модального окна
-         const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
-         
-@@ -2076,6 +2079,11 @@ function createRequestRow(request) {
-             // Закрытие модального окна после сохранения
-             editEmployeeModal.hide();
-         });
-+    }
-+    
-+    // Вызываем функцию инициализации при загрузке страницы
-+    document.addEventListener('DOMContentLoaded', function() {
-+        initEmployeeEditHandlers();
-     });
- </script>
+-    const data = {
+-        employee_id: employeeId,
+-    };
++        const data = {
++            employee_id: employeeId,
++        };
  
+-    const result = await postData('/employee/delete', data);
++        const result = await postData('/employee/delete', data);
+ 
+-    console.log('Ответ от сервера:', result);
++        console.log('Ответ от сервера:', result);
+ 
+-    if (result.success) {
+-        showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
+-    } else {
+-        showAlert(`Ошибка при удалении сотрудника "${employeeName}"`, 'danger');
+-    }
+-    
++        if (result.success) {
++            showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
++        } else {
++            showAlert(result.message, 'danger');
++        }
++    }    
+     // showAlert(`Реализация удаления сотрудника "${employeeName}" в разработке`, 'warning');
+ }
+ // END Инициализация удаления сотрудника
