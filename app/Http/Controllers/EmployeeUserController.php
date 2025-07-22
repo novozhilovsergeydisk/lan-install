@@ -584,16 +584,16 @@ class EmployeeUserController extends Controller
             $user_exists = DB::select("SELECT * FROM users WHERE id = ?", [$user_id]);
 
             // Тестовый response
-            return response()->json([
-                'success' => true,
-                'message' => 'Тестовый response',
-                'data' => $request->all(),
-                'validated' => $validated,
-                'employee' => $employee,
-                'user_id' => $user_id,
-                'user_exists' => $user_exists,
-                'Auth::user()->id' => Auth::user()->id
-            ], 200);
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => 'Тестовый response',
+            //     'data' => $request->all(),
+            //     'validated' => $validated,
+            //     'employee' => $employee,
+            //     'user_id' => $user_id,
+            //     'user_exists' => $user_exists,
+            //     'Auth::user()->id' => Auth::user()->id
+            // ], 200);
 
             $user_employee = DB::update("UPDATE employees SET is_deleted = true WHERE id = ?", [$employeeId]);
 
