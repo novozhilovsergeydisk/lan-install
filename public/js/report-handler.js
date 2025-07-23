@@ -254,19 +254,19 @@ function renderReportTable(data) {
         const addressHtml = request.client_organization || request.street || request.client_fio || request.client_phone 
             ? `
                 ${request.client_organization ? 
-                    `<div class="text-dark" style="font-size: 0.8rem;">${request.client_organization}</div>` : ''}
+                    `<div class="text-muted" style="font-size: 0.8rem;">${request.client_organization}</div>` : ''}
                 ${request.street ? 
-                    `<small class="text-dark text-truncate d-block" 
+                    `<small class="text-muted text-truncate d-block" 
                             data-bs-toggle="tooltip" 
                             title="ул. ${request.street}, д. ${request.houses || ''} (${request.district || ''})">
                         ${request.city_name && request.city_name !== 'Москва' ? 
-                            `<strong>${request.city_name}</strong>, ` : ''}ул. ${request.street}, д. ${request.houses || ''}
+                            `${request.city_name}, ` : ''}ул. ${request.street}, д. ${request.houses || ''}
                     </small>` : 
-                    '<small class="text-dark text-truncate d-block">Адрес не указан</small>'}
+                    '<small class="text-muted text-truncate d-block">Адрес не указан</small>'}
                 ${request.client_fio ? 
-                    `<div class="text-dark" style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>` : ''}
+                    `<div class="text-muted" style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>` : ''}
                 <small style="font-size: 0.8rem;" 
-                       class="${request.status_name && request.status_name !== 'выполнена' ? 'text-success fw-bold' : 'text-black'} text-truncate d-block">
+                       class="text-muted text-truncate d-block">
                     <i>${request.client_phone || 'Нет телефона'}</i>
                 </small>
             `
