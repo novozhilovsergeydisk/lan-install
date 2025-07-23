@@ -41,6 +41,54 @@
             border-radius: 3px;
             white-space: nowrap; /* предотвращаем перенос текста */
         }
+        
+        /* Стили для таблицы отчётов */
+        #reportTable tbody tr.status-row {
+            --status-color: #ffffff; /* Белый цвет по умолчанию */
+            background-color: var(--status-color);
+            transition: background-color 0.2s;
+        }
+
+        /* Если у строки есть цвет статуса, применим его с прозрачностью */
+        #reportTable tbody tr.status-row[style*="--status-color"] {
+            background-color: color-mix(in srgb, var(--status-color) 10%, #ffffff);
+        }
+
+        /* Ховер-эффект для строк таблицы отчётов */
+        #reportTable tbody tr.status-row:hover {
+            background-color: color-mix(in srgb, var(--status-color, #e9ecef) 20%, #ffffff) !important;
+        }
+
+        /* Переопределение стилей Bootstrap для строк таблицы отчётов */
+        #reportTable tbody tr.status-row > * {
+            background-color: transparent !important;
+        }
+
+        /* Стили для кастомизации скроллбара в блоке комментариев */
+        .comment-preview {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+        }
+        
+        /* Для WebKit (Chrome, Safari, Edge) */
+        .comment-preview::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .comment-preview::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 3px;
+        }
+        
+        .comment-preview::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+        
+        .comment-preview::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
     </style>
 
 
@@ -898,18 +946,24 @@
                         <h4>Отчеты</h4>
 
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label for="startDate" class="form-label">Дата начала</label>
                                 
                                 <div id="calendar-content" class="max-w-400 p-4">
                                     <div id="datepicker-reports-start"></div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label for="endDate" class="form-label">Дата окончания</label>
                                 <div id="calendar-content" class="max-w-400 p-4">
                                     <div id="datepicker-reports-end"></div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div id="report-employees-container" class="col-md-4">
+                                <!-- Сюда динамически загружаем список сотрудников -->
                             </div>
                         </div>
 
@@ -924,7 +978,7 @@
                         <button id="generate-report-btn" class="btn btn-outline-primary mt-3 mb-3">Сгенерировать отчет</button>
                         
                         <!-- Report Table -->
-                        <div class="table-responsive">
+                        <div class="table-responsive t-custom">
                             <table id="requestsReportTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>

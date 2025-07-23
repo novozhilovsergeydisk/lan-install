@@ -54,9 +54,9 @@ export async function loadEmployeesForReport() {
             select.appendChild(option);
         });
         
-        const container = document.querySelector('.col-md-4');
+        const container = document.getElementById('report-employees-container');
         if (container) {
-            container.prepend(select);
+            container.appendChild(select);
         }
     } catch (error) {
         console.error('Ошибка при загрузке сотрудников:', error);
@@ -69,14 +69,14 @@ export async function loadReport() {
     const startDate = $('#datepicker-reports-start').datepicker('getFormattedDate');
     const endDate = $('#datepicker-reports-end').datepicker('getFormattedDate');
     const employeeSelect = document.getElementById('report-employees');
-    let url = '/reports';    
+    let url = '';    
     
     if (!startDate || !endDate) {
         showAlert('Необходимо указать даты', 'warning');
         return;
     }
 
-    console.log(employeeSelect.value);
+    // console.log(employeeSelect.value);
 
     if (startDate && endDate && employeeSelect.value === 'all') {
         url = '/reports/requests/by-date';
@@ -87,6 +87,7 @@ export async function loadReport() {
     }  
     
     console.log('Request URL:', url);
+
     console.log('Request data:', { startDate, endDate, employeeId: employeeSelect.value });
 
     const result = await postData(url, { startDate, endDate, employeeId: employeeSelect.value });
@@ -94,96 +95,6 @@ export async function loadReport() {
     console.log('Result:', result); 
 
     renderReportTable(result);
-}
-
-/**
- * Формирует информацию о бригаде на основе данных заявки и глобальных данных о бригадах
- * @param {Object} request - Данные заявки
- * @returns {string} HTML-код с информацией о бригаде
- */
-function getBrigadeInfo(request) {
-    try {
-        // Проверяем, есть ли у заявки бригада
-        if (!request.brigade_id) return 'Не назначена';
-        
-        // Получаем данные о бригадах из глобальной переменной
-        const brigadeMembers = window.brigadeMembersData || [];
-        
-        // Ищем информацию о бригаде по ID
-        const brigadeData = brigadeMembers.find(b => b.id === request.brigade_id);
-
-        console.log('brigadeMembers', brigadeMembers);
-        console.log('brigadeData', brigadeData);
-        
-        // Если данные о бригаде не найдены, возвращаем информацию об ID
-        if (!brigadeData) {
-            return `
-                <div class="small">
-                    <div class="fw-bold">ID бригады: ${request.brigade_id}</div>
-                    <div class="text-muted">Данные о бригаде не найдены</div>
-                </div>
-            `;
-        }
-        
-        // Формируем информацию о бригаде
-        return `
-            <div class="small">
-                <div class="fw-bold">${brigadeData.name || 'Без названия'}</div>
-                ${brigadeData.leader_id ? 
-                    `<div class="text-muted">Бригадир: ID ${brigadeData.leader_id}</div>` : ''}
-                ${brigadeData.employee_leader_name ? 
-                    `<div class="text-muted">Бригадир: ${brigadeData.employee_leader_name}</div>` : ''}
-                ${request.brigade_lead ? 
-                    `<div class="text-muted">Ответственный: ${request.brigade_lead}</div>` : ''}
-            </div>
-        `;
-    } catch (error) {
-        console.error('Ошибка при формировании информации о бригаде:', error);
-        return `
-            <div class="small text-danger">
-                Ошибка загрузки информации о бригаде
-                ${request.brigade_id ? `<div>ID: ${request.brigade_id}</div>` : ''}
-            </div>
-        `;
-    }
-}
-
-/**
- * Formats brigade members information for display
- * @param {number} brigadeId - ID of the brigade
- * @param {Array} brigadeMembers - Array of all brigade members
- * @returns {string} HTML string with formatted brigade info
- */
-function getBrigadeMembersInfo(brigadeId, brigadeMembers) {
-    if (!brigadeId || !brigadeMembers || !brigadeMembers.length) return '';
-    
-    // Filter members of this specific brigade
-    const brigadeGroup = brigadeMembers.filter(m => m.brigade_id == brigadeId);
-    
-    if (!brigadeGroup.length) return '';
-    
-    // Get brigade leader and name from the first member (all should have the same brigade info)
-    const leaderName = brigadeGroup[0].employee_leader_name;
-    const brigadeName = brigadeGroup[0].brigade_name;
-    
-    if (!leaderName) return '';
-    
-    // Create member list, excluding the leader
-    const memberNames = brigadeGroup
-        .filter(m => m.employee_name && m.employee_name !== leaderName)
-        .map(m => {
-            // Simple name shortening (first word + first letter of next words)
-            const parts = m.employee_name.split(' ');
-            if (parts.length <= 1) return m.employee_name;
-            return parts[0] + ' ' + parts[1][0] + '.' + (parts[2] ? parts[2][0] + '.' : '');
-        });
-    
-    return `
-        <div style="font-size: 0.75rem; line-height: 1.2;">
-            <div class="mb-1"><i>${brigadeName || 'Бригада'}</i></div>
-            <div><strong>${shortenName(leaderName)}</strong>${memberNames.length ? ', ' + memberNames.join(', ') : ''}</div>
-        </div>
-    `;
 }
 
 /**
@@ -204,8 +115,6 @@ function shortenName(fullName) {
  */
 function renderReportTable(data) {
     const tbody = document.getElementById('requestsReportBody');
-    // console.log('Rendering report table with data:', data);
-
     
     if (!tbody) {
         console.error('Table body element not found');
@@ -218,6 +127,7 @@ function renderReportTable(data) {
     if (!data || data.length === 0) {
         // Show "no data" message
         const row = document.createElement('tr');
+        
         row.innerHTML = `
             <td colspan="8" class="text-center py-4">
                 <div class="alert alert-info m-0">
@@ -241,8 +151,13 @@ function renderReportTable(data) {
     requests.forEach((request, index) => {
         const row = document.createElement('tr');
         row.id = `request-${request.id}`;
-        row.className = 'align-middle';
-        row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
+        row.className = 'align-middle status-row';
+        
+        // Устанавливаем цвет статуса через CSS-переменную
+        if (request.status_color) {
+            row.style.setProperty('--status-color', request.status_color);
+        }
+        
         row.setAttribute('data-request-id', request.id);
         
         // Format the execution date
@@ -254,23 +169,23 @@ function renderReportTable(data) {
         const addressHtml = request.client_organization || request.street || request.client_fio || request.client_phone 
             ? `
                 ${request.client_organization ? 
-                    `<div class="text-muted" style="font-size: 0.8rem;">${request.client_organization}</div>` : ''}
+                    `<div style="font-size: 0.8rem;">${request.client_organization}</div>` : ''}
                 ${request.street ? 
-                    `<small class="text-muted text-truncate d-block" 
+                    `<small class="text-truncate d-block" 
                             data-bs-toggle="tooltip" 
                             title="ул. ${request.street}, д. ${request.houses || ''} (${request.district || ''})">
                         ${request.city_name && request.city_name !== 'Москва' ? 
                             `${request.city_name}, ` : ''}ул. ${request.street}, д. ${request.houses || ''}
                     </small>` : 
-                    '<small class="text-muted text-truncate d-block">Адрес не указан</small>'}
+                    '<small class="text-truncate d-block">Адрес не указан</small>'}
                 ${request.client_fio ? 
-                    `<div class="text-muted" style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>` : ''}
+                    `<div style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>` : ''}
                 <small style="font-size: 0.8rem;" 
-                       class="text-muted text-truncate d-block">
+                       class="text-truncate d-block">
                     <i>${request.client_phone || 'Нет телефона'}</i>
                 </small>
             `
-            : '<small class="text-muted">Нет данных</small>';
+            : '<small>Нет данных</small>';
         
         // Format brigade info for display
         let brigadeInfo = '';
@@ -292,8 +207,8 @@ function renderReportTable(data) {
                             ''}
                     </div>
                     <a href="#" 
-                       class="text-muted hover-text-gray-700 hover-underline view-brigade-btn"
-                       style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
+                       class="hover-text-gray-700 hover-underline view-brigade-btn"
+                       style="color: #000; text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
                        onmouseover="this.style.textDecoration='underline'"
                        onmouseout="this.style.textDecoration='none'"
                        data-bs-toggle="modal" 
@@ -310,8 +225,8 @@ function renderReportTable(data) {
                         ${request.brigade_lead ? `<div><strong>${shortenName(request.brigade_lead)}</strong></div>` : ''}
                     </div>
                     <a href="#" 
-                       class="text-muted hover-text-gray-700 hover-underline view-brigade-btn"
-                       style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
+                       class="hover-text-gray-700 hover-underline view-brigade-btn"
+                       style="color: #000; text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
                        onmouseover="this.style.textDecoration='underline'"
                        onmouseout="this.style.textDecoration='none'"
                        data-bs-toggle="modal" 
@@ -322,7 +237,7 @@ function renderReportTable(data) {
                 `;
             }
         } else {
-            brigadeInfo = '<small class="text-muted d-block mb-1">Не назначена</small>';
+            brigadeInfo = '<small>Не назначена</small>';
         }
         
         // Format comment with status info if available
@@ -341,47 +256,64 @@ function renderReportTable(data) {
         }
         
         // Create the row HTML
-        row.innerHTML = `
-            <!-- Номер заявки -->
-            <td class="text-muted">${index + 1}</td>
-            <!-- Дата заявки -->
-            <td class="text-muted">
-                <div class="d-flex flex-column">
-                    <span>${executionDate}</span>${request.execution_time ? `<small>${request.execution_time}</small>` : ''}
-                    <div class="text-muted"style="font-size: 0.8rem;">${request.number}</div>
-                </div>
-            </td>
-            <!-- Адрес -->
-            <td class="text-muted" style="width: 14rem; max-width: 14rem; overflow: hidden; text-overflow: ellipsis;">
-                ${addressHtml}
-            </td>
-            <!-- Комментарии -->
-            <td>
-                ${comments_by_request[request.id] && comments_by_request[request.id].length > 0 ? 
-                    `<div class="comment-preview small text-muted" 
-                          style="max-height: 100px; overflow: auto; font-size: 0.85rem;">
-                        ${comments_by_request[request.id].map(comment => {
-                            const date = new Date(comment.created_at).toLocaleString('ru-RU');
-                            return `
-                                <div class="mb-1">
-                                    <div class="d-flex justify-content-between">
-                                        <span>${comment.comment || 'Аноним'}</span>
-                                    </div>
-                                    <div>${date}</div>
-                                </div>
-                            `;
-                        }).join('<hr class="my-1">')}
-                    </div>` : 
-                    '<small class="text-muted">Нет комментариев</small>'
-                }
-            </td>
-            <!-- Бригада -->
-            <td class="text-muted">
-                <div class="brigade-info">
-                    ${brigadeInfo}
-                </div>
-            </td>
+        const numberCell = document.createElement('td');
+        numberCell.textContent = index + 1;
+        row.appendChild(numberCell);
+        
+        // Дата заявки
+        const dateCell = document.createElement('td');
+        dateCell.innerHTML = `
+            <div class="d-flex flex-column">
+                <span>${executionDate}</span>
+                <div style="font-size: 0.8rem;">${request.request_number || ''}</div>
+            </div>
         `;
+        row.appendChild(dateCell);
+        
+        // Адрес
+        const addressCell = document.createElement('td');
+        addressCell.style.width = '14rem';
+        addressCell.style.maxWidth = '14rem';
+        addressCell.style.overflow = 'hidden';
+        addressCell.style.textOverflow = 'ellipsis';
+        addressCell.innerHTML = addressHtml;
+        row.appendChild(addressCell);
+        
+        // Комментарии
+        const commentCell = document.createElement('td');
+        let commentHtml = '';
+        
+        if (comments_by_request[request.id] && comments_by_request[request.id].length > 0) {
+            commentHtml = `
+                <div class="comment-preview small" 
+                     style="max-height: 100px; overflow: auto; font-size: 0.85rem;">
+                    ${comments_by_request[request.id].map(comment => {
+                        const date = new Date(comment.created_at).toLocaleString('ru-RU');
+                        return `
+                            <div class="comment-item" style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller; margin-bottom: 5px;">
+                                <div class="d-flex justify-content-between">
+                                    <span>${comment.comment || 'Аноним'}</span>
+                                </div>
+                                <div style="color: #6c757d; font-size: 0.8em;">${date}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>`;
+        } else {
+            commentHtml = '<small>Нет комментариев</small>';
+        }
+        
+        commentCell.innerHTML = commentHtml;
+        row.appendChild(commentCell);
+        
+        // Бригада
+        const brigadeCell = document.createElement('td');
+        brigadeCell.innerHTML = `
+            <div class="brigade-info">
+                ${brigadeInfo}
+            </div>
+        `;
+        row.appendChild(brigadeCell);
         
         tbody.appendChild(row);
     });
