@@ -342,19 +342,19 @@ function renderReportTable(data) {
         
         // Create the row HTML
         row.innerHTML = `
-            <td class="text-muted">111 ${index + 1}</td>
+            <td class="text-muted">${index + 1}</td>
             <td class="text-muted">
                 <div class="d-flex flex-column">
-                    <span>222 ${executionDate}</span>
+                    <span>${executionDate}</span>
                     ${request.execution_time ? 
                         `<small>${request.execution_time}</small>` : ''}
                 </div>
             </td>
             <td class="text-muted" style="width: 14rem; max-width: 14rem; overflow: hidden; text-overflow: ellipsis;">
-                333 ${addressHtml}
+                ${addressHtml}
             </td>
             <td>
-                444${comments_by_request[request.id] && comments_by_request[request.id].length > 0 ? 
+                ${comments_by_request[request.id] && comments_by_request[request.id].length > 0 ? 
                     `<div class="comment-preview small text-muted" 
                           style="max-height: 100px; overflow: auto; font-size: 0.85rem;">
                         ${comments_by_request[request.id].map(comment => {
@@ -374,7 +374,7 @@ function renderReportTable(data) {
             </td>
             <td class="text-muted">
                 <div class="brigade-info">
-                    555 ${brigadeInfo}
+                    ${brigadeInfo}
                 </div>
             </td>
         `;
