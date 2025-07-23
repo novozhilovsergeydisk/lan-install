@@ -292,7 +292,7 @@ function renderReportTable(data) {
                             ''}
                     </div>
                     <a href="#" 
-                       class="text-black hover-text-gray-700 hover-underline view-brigade-btn"
+                       class="text-muted hover-text-gray-700 hover-underline view-brigade-btn"
                        style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
                        onmouseover="this.style.textDecoration='underline'"
                        onmouseout="this.style.textDecoration='none'"
@@ -310,7 +310,7 @@ function renderReportTable(data) {
                         ${request.brigade_lead ? `<div><strong>${shortenName(request.brigade_lead)}</strong></div>` : ''}
                     </div>
                     <a href="#" 
-                       class="text-black hover-text-gray-700 hover-underline view-brigade-btn"
+                       class="text-muted hover-text-gray-700 hover-underline view-brigade-btn"
                        style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
                        onmouseover="this.style.textDecoration='underline'"
                        onmouseout="this.style.textDecoration='none'"
@@ -327,6 +327,7 @@ function renderReportTable(data) {
         
         // Format comment with status info if available
         let commentContent = comments_by_request[request.id] || 'Нет комментариев';
+
         if (request.status_name) {
             commentContent = `
                 <div class="d-flex align-items-center mb-1">
@@ -341,19 +342,19 @@ function renderReportTable(data) {
         
         // Create the row HTML
         row.innerHTML = `
-            <td class="text-muted">${index + 1}</td>
+            <td class="text-muted">111 ${index + 1}</td>
             <td class="text-muted">
                 <div class="d-flex flex-column">
-                    <span>${executionDate}</span>
+                    <span>222 ${executionDate}</span>
                     ${request.execution_time ? 
                         `<small>${request.execution_time}</small>` : ''}
                 </div>
             </td>
             <td class="text-muted" style="width: 14rem; max-width: 14rem; overflow: hidden; text-overflow: ellipsis;">
-                ${addressHtml}
+                333 ${addressHtml}
             </td>
             <td>
-                ${comments_by_request[request.id] && comments_by_request[request.id].length > 0 ? 
+                444${comments_by_request[request.id] && comments_by_request[request.id].length > 0 ? 
                     `<div class="comment-preview small text-muted" 
                           style="max-height: 100px; overflow: auto; font-size: 0.85rem;">
                         ${comments_by_request[request.id].map(comment => {
@@ -361,16 +362,10 @@ function renderReportTable(data) {
                             return `
                                 <div class="mb-1">
                                     <div class="d-flex justify-content-between">
-                                        <span>${comment.user_name || 'Аноним'}</span>
-                                        <small>${date}</small>
+                                        <span>${comment.comment || 'Аноним'}</span>
                                     </div>
-                                    <div>${comment.comment_text || ''}</div>
+                                    <div>${date}</div>
                                 </div>
-                                ${comment.media_url ? 
-                                    `<a href="${comment.media_url}" target="_blank" class="d-block mt-1 text-muted">
-                                        <i class="bi bi-paperclip"></i> Вложение
-                                    </a>` : ''
-                                }
                             `;
                         }).join('<hr class="my-1">')}
                     </div>` : 
@@ -379,17 +374,7 @@ function renderReportTable(data) {
             </td>
             <td class="text-muted">
                 <div class="brigade-info">
-                    ${brigadeInfo}
-                </div>
-            </td>
-            <td class="text-muted">
-                <div class="btn-group-vertical btn-group-sm" role="group">
-                    
-                </div>
-            </td>
-            <td class="text-muted">
-                <div class="d-flex flex-column align-items-center">
-                    
+                    555 ${brigadeInfo}
                 </div>
             </td>
         `;

@@ -921,12 +921,7 @@
 
                         <div class="row">
                             <div class="col-md-4">
-                                <select id="report-brigades" class="form-select">
-                                    <option value="all">Все бригады</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <select id="report-addresses" class="form-select">
+                                <select id="report-addresses" class="form-select mt-2">
                                     <option value="all">Все адреса</option>
                                 </select>
                             </div>
@@ -943,10 +938,7 @@
                                     <th style="width: 10rem;">Дата исполнения</th>
                                     <th style="width: 15rem;">Адрес/Телефон</th>
                                     <th style="width: 30rem;">Комментарий</th>
-                                    <!-- <th style="width: 12rem;">Оператор / Дата создания</th> -->
                                     <th id="brigadeHeader" style="width: 20rem;">Бригада <span id="brigadeSortIcon"></span></th>
-                                    <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
-                                    <th style="width: 3rem;"></th>
                                 </tr>
                                 </thead>
                                 <tbody id="requestsReportBody">
