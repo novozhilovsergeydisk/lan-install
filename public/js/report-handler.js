@@ -342,17 +342,20 @@ function renderReportTable(data) {
         
         // Create the row HTML
         row.innerHTML = `
+            <!-- Номер заявки -->
             <td class="text-muted">${index + 1}</td>
+            <!-- Дата заявки -->
             <td class="text-muted">
                 <div class="d-flex flex-column">
-                    <span>${executionDate}</span>
-                    ${request.execution_time ? 
-                        `<small>${request.execution_time}</small>` : ''}
+                    <span>${executionDate}</span>${request.execution_time ? `<small>${request.execution_time}</small>` : ''}
+                    <div class="text-muted"style="font-size: 0.8rem;">${request.number}</div>
                 </div>
             </td>
+            <!-- Адрес -->
             <td class="text-muted" style="width: 14rem; max-width: 14rem; overflow: hidden; text-overflow: ellipsis;">
                 ${addressHtml}
             </td>
+            <!-- Комментарии -->
             <td>
                 ${comments_by_request[request.id] && comments_by_request[request.id].length > 0 ? 
                     `<div class="comment-preview small text-muted" 
@@ -372,6 +375,7 @@ function renderReportTable(data) {
                     '<small class="text-muted">Нет комментариев</small>'
                 }
             </td>
+            <!-- Бригада -->
             <td class="text-muted">
                 <div class="brigade-info">
                     ${brigadeInfo}

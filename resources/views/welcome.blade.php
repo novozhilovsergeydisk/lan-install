@@ -273,16 +273,10 @@
                                     <tr id="request-{{ $request->id }}" class="align-middle status-row"
                                         style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                         data-request-id="{{ $request->id }}">
+                                        <!-- Номер заявки -->
                                         <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
 
-                                        <!-- <td class="text-center" style="width: 1rem;">
-                                            @if($request->status_name !== 'выполнена')
-                                                <input type="checkbox" id="request-{{ $request->id }}"
-                                                       class="form-check-input request-checkbox"
-                                                       value="{{ $request->id }}" aria-label="Выбрать заявку">
-                                            @endif
-                                        </td> -->
-                                        <!-- Дата и номер заявки -->
+                                        <!-- Дата заявки -->
                                         <td>
                                             <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
                                             <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
