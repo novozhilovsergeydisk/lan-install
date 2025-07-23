@@ -91,7 +91,7 @@ async function postData(url, body) {
             throw new Error(responseData.message || `Ошибка сервера: ${response.status}`);
         }
 
-        console.log('responseData', responseData);
+        // console.log('responseData', responseData);
 
         return responseData;
     } catch (error) {

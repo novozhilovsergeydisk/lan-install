@@ -258,7 +258,7 @@
                                     <th style="width: 10rem;">Дата исполнения</th>
                                     <th style="width: 15rem;">Адрес/Телефон</th>
                                     <th style="width: 30rem;">Комментарий</th>
-                                    <!-- <th style="width: 12rem;">Оператор / Дата создания</th> -->
+
                                     <th id="brigadeHeader" style="width: 20rem;">Бригада <span id="brigadeSortIcon"></span></th>
                                     <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
                                     <th style="width: 3rem;"></th>
@@ -902,10 +902,57 @@
 
                     <div class="tab-pane fade" id="reports" role="tabpanel">
                         <h4>Отчеты</h4>
-                        <p>В этом разделе доступны различные отчеты по деятельности компании. Вы можете
-                            анализировать загруженность бригад, финансовые показатели и эффективность работы.</p>
-                        <p>Настраивайте автоматическую отправку отчетов на электронную почту в удобное для вас
-                            время. Доступны шаблоны отчетов для различных подразделений компании.</p>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="startDate" class="form-label">Дата начала</label>
+                                
+                                <div id="calendar-content" class="max-w-400 p-4">
+                                    <div id="datepicker-reports-start"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="endDate" class="form-label">Дата окончания</label>
+                                <div id="calendar-content" class="max-w-400 p-4">
+                                    <div id="datepicker-reports-end"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <select id="report-brigades" class="form-select">
+                                    <option value="all">Все бригады</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select id="report-addresses" class="form-select">
+                                    <option value="all">Все адреса</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button id="generate-report-btn" class="btn btn-outline-primary mt-3 mb-3">Сгенерировать отчет</button>
+                        
+                        <!-- Report Table -->
+                        <div class="table-responsive">
+                            <table id="requestsReportTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
+                                <thead class="bg-dark">
+                                <tr>
+                                <th style="width: 1rem;"></th>
+                                    <th style="width: 10rem;">Дата исполнения</th>
+                                    <th style="width: 15rem;">Адрес/Телефон</th>
+                                    <th style="width: 30rem;">Комментарий</th>
+                                    <!-- <th style="width: 12rem;">Оператор / Дата создания</th> -->
+                                    <th id="brigadeHeader" style="width: 20rem;">Бригада <span id="brigadeSortIcon"></span></th>
+                                    <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
+                                    <th style="width: 3rem;"></th>
+                                </tr>
+                                </thead>
+                                <tbody id="requestsReportBody">
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -2728,6 +2775,19 @@
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;
         }
+    });
+
+
+    
+</script>
+
+<!-- Подключаем модуль для работы с отчётами -->
+<script type="module">
+    import { initReportHandlers } from '{{ asset('js/report-handler.js') }}';
+    
+    // Инициализируем обработчики для отчётов при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        initReportHandlers();
     });
 </script>
 

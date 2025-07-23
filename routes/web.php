@@ -10,6 +10,7 @@ use App\Http\Controllers\RequestTeamFilterController;
 use App\Http\Controllers\GeoController; 
 use App\Http\Controllers\EmployeeUserController;
 use App\Http\Controllers\EmployeesUserPositionPassportController;
+use App\Http\Controllers\ReportController;
 
 Route::get('/employees', [EmployeesUserPositionPassportController::class, 'index'])->name('employees.index');
 
@@ -111,6 +112,13 @@ Route::get('/api/brigade-leaders', [RequestTeamFilterController::class, 'getBrig
 Route::post('/api/brigades/info-current-day', [RequestTeamFilterController::class, 'brigadesInfoCurrentDay'])
     ->name('api.brigades.info-current-day')
     ->middleware('auth');
+
+// Report Routes
+Route::prefix('reports')->middleware('auth')->group(function () {
+    Route::get('/employees', [ReportController::class, 'getEmployees'])->name('reports.employees');
+    Route::post('/requests/by-date', [ReportController::class, 'getRequestsByDateRange'])->name('reports.requests.by-date');
+    Route::post('/requests/by-employee-date', [ReportController::class, 'getRequestsByEmployeeAndDateRange'])->name('reports.requests.by-employee-date');
+});
 
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {
