@@ -94,7 +94,20 @@ export async function loadReport() {
 
     console.log('Result:', result); 
 
-    renderReportTable(result);
+    if (result.success) {
+        renderReportTable({
+            requests: result.requestsByDateRange || result.requestsByEmployeeAndDateRange || [],
+            brigadeMembers: result.brigadeMembersWithDetails || [],
+            comments_by_request: result.comments_by_request || {}
+        });
+    } else {
+        renderReportTable({
+            requests: [],
+            brigadeMembers: [],
+            comments_by_request: {}
+        });
+        showAlert(result.message || 'Ошибка при загрузке отчёта', 'danger');
+    }
 }
 
 /**
@@ -114,39 +127,55 @@ function shortenName(fullName) {
  * @param {Array} data - Array of request objects
  */
 function renderReportTable(data) {
-    const tbody = document.getElementById('requestsReportBody');
+    console.log('Полученные данные в renderReportTable:', data);
     
+    const tbody = document.querySelector('#requestsReportTable tbody');
     if (!tbody) {
-        console.error('Table body element not found');
+        console.error('Table body not found. Looking for: #requestsReportTable tbody');
+        return;
+    }
+
+    // Очищаем таблицу
+    tbody.innerHTML = '';
+
+    // Определяем, пришёл ли массив или объект
+    const responseData = Array.isArray(data) ? data[0] : data;
+    
+    // Проверяем данные (поддерживаем оба формата ответа)
+    let requests, brigadeMembers, comments_by_request;
+    
+    // Новый формат ответа
+    if (responseData.requestsByDateRange && Array.isArray(responseData.requestsByDateRange)) {
+        requests = responseData.requestsByDateRange || [];
+        brigadeMembers = responseData.brigadeMembersWithDetails || [];
+        comments_by_request = responseData.comments_by_request || {};
+    } 
+    // Старый формат ответа
+    else if (Array.isArray(responseData.requests)) {
+        requests = responseData.requests || [];
+        brigadeMembers = responseData.brigadeMembers || [];
+        comments_by_request = responseData.comments_by_request || {};
+    } 
+    // Неизвестный формат
+    else {
+        console.error('Некорректный формат данных от сервера:', responseData);
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="8" class="text-center">Ошибка формата данных</td>';
+        tbody.appendChild(row);
         return;
     }
     
-    // Clear existing rows
-    tbody.innerHTML = '';
-    
-    if (!data || data.length === 0) {
-        // Show "no data" message
+    if (requests.length === 0) {
         const row = document.createElement('tr');
-        
-        row.innerHTML = `
-            <td colspan="8" class="text-center py-4">
-                <div class="alert alert-info m-0">
-                    <i class="bi bi-info-circle me-2"></i>Нет данных для отображения
-                </div>
-            </td>
-        `;
+        row.innerHTML = '<td colspan="8" class="text-center">Нет данных для отображения</td>';
         tbody.appendChild(row);
         return;
     }
 
-    const requests = data.requestsByDateRange;
-    const brigadeMembers = data.brigadeMembersWithDetails;
-    const comments_by_request = data.comments_by_request;
+    console.log('Обработка запросов:', requests);
+    console.log('Данные бригад:', brigadeMembers);
+    console.log('Комментарии:', comments_by_request);
 
-    console.log('Requests:', requests);
-    console.log('Brigade members:', brigadeMembers);
-    console.log('Comments by request:', comments_by_request);
-    
     // Add a row for each request   
     requests.forEach((request, index) => {
         const row = document.createElement('tr');

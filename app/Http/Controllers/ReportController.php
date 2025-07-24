@@ -111,6 +111,9 @@ class ReportController extends Controller
         $requestsByDateRange = DB::select($sql, [$startDate, $endDate]);
 
         $data = [
+            'success' => true,
+            'debug' => false,
+            'message' => 'Заявки успешно получены',
             'requestsByDateRange' => $requestsByDateRange,
             'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
             'comments_by_request' => $comments_by_request
@@ -181,52 +184,74 @@ class ReportController extends Controller
         $endDate = \DateTime::createFromFormat('d.m.Y', $request->input('endDate'))->format('Y-m-d');
         $employeeId = $request->input('employeeId');
 
-        $query = '
-            SELECT
+        $query = DB::table('requests as r')
+            ->selectRaw("
                 r.*,
-                c.fio AS client_fio,
-                c.phone AS client_phone,
-                c.organization AS client_organization,
-                rs.name AS status_name,
-                rs.color AS status_color,
-                b.name AS brigade_name,
-                e.fio AS brigade_lead,
-                op.fio AS operator_name,
+                c.fio as client_fio,
+                c.phone as client_phone,
+                c.organization as client_organization,
+                rs.name as status_name,
+                rs.color as status_color,
+                b.name as brigade_name,
+                e.fio as brigade_lead,
+                op.fio as operator_name,
                 addr.street,
                 addr.houses,
                 addr.district,
                 addr.city_id,
-                ct.name AS city_name,
-                ct.postal_code AS city_postal_code
-            FROM requests r
-            LEFT JOIN clients c ON r.client_id = c.id
-            LEFT JOIN request_statuses rs ON r.status_id = rs.id
-            LEFT JOIN brigades b ON r.brigade_id = b.id
-            LEFT JOIN employees e ON b.leader_id = e.id
-            LEFT JOIN employees op ON r.operator_id = op.id
-            LEFT JOIN request_addresses ra ON r.id = ra.request_id
-            LEFT JOIN addresses addr ON ra.address_id = addr.id
-            LEFT JOIN cities ct ON addr.city_id = ct.id
-            LEFT JOIN brigade_employees be ON b.id = be.brigade_id
-            WHERE r.execution_date::date BETWEEN ? AND ? 
-            AND (b.is_deleted = false OR b.id IS NULL)
-            AND (be.employee_id = ? OR e.id = ? OR ? = 0)
-            GROUP BY r.id, c.id, rs.id, b.id, e.id, op.id, addr.id, ct.id
-            ORDER BY r.execution_date DESC, r.id DESC
-        ';
+                ct.name as city_name,
+                ct.postal_code as city_postal_code,
+                STRING_AGG(em.fio, ', ') as brigade_members
+            ")
+            ->leftJoin('clients as c', 'r.client_id', '=', 'c.id')
+            ->leftJoin('request_statuses as rs', 'r.status_id', '=', 'rs.id')
+            ->leftJoin('brigades as b', 'r.brigade_id', '=', 'b.id')
+            ->leftJoin('employees as e', 'b.leader_id', '=', 'e.id')
+            ->leftJoin('employees as op', 'r.operator_id', '=', 'op.id')
+            ->leftJoin('request_addresses as ra', 'r.id', '=', 'ra.request_id')
+            ->leftJoin('addresses as addr', 'ra.address_id', '=', 'addr.id')
+            ->leftJoin('cities as ct', 'addr.city_id', '=', 'ct.id')
+            ->leftJoin('brigade_members as bm', 'b.id', '=', 'bm.brigade_id')
+            ->leftJoin('employees as em', 'bm.employee_id', '=', 'em.id')
+            ->where(function($query) {
+                $query->where('b.is_deleted', false)->orWhereNull('b.id');
+            })
+            ->whereExists(function($query) use ($employeeId) {
+                $query->select(DB::raw(1))
+                      ->from('brigade_members as bm2')
+                      ->whereColumn('bm2.brigade_id', 'b.id')
+                      ->where('bm2.employee_id', $employeeId);
+            })
+            ->groupBy('r.id', 'c.id', 'rs.id', 'b.id', 'e.id', 'op.id', 'addr.id', 'ct.id')
+            ->orderByDesc('r.execution_date')
+            ->orderByDesc('r.id');
 
-        $requestsByEmployeeAndDateRange = DB::select($query, [
-            $startDate, 
-            $endDate,
-            $employeeId,
-            $employeeId,
-            $employeeId === 'all' ? 0 : $employeeId
+        // Логируем параметры запроса
+        \Log::info('Filter params:', [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'employeeId' => $employeeId
         ]);
 
+        // Изменяем фильтрацию дат
+        $query->whereDate('r.execution_date', '>=', $startDate)
+              ->whereDate('r.execution_date', '<=', $endDate);
+
+        // Логируем SQL-запрос и привязки
+        \Log::info('SQL Query:', [
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings()
+        ]);
+
+        $requestsByEmployeeAndDateRange = $query->get();
+
         $data = [
+            'success' => true,
+            'message' => 'Заявки для отчёта успешно получены',
             'requestsByEmployeeAndDateRange' => $requestsByEmployeeAndDateRange,
             'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
-            'comments_by_request' => $comments_by_request
+            'comments_by_request' => $comments_by_request,
+            'debug' => false,
         ];
 
         return response()->json($data);
