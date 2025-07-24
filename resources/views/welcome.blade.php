@@ -359,7 +359,7 @@
                                                     $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
                                                 @endphp
                                                 <div class="comment-preview small text-dark" 
-                                                    style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
+                                                    style="background-color: white; border: 1px solid gray; max-width: 20rem; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
                                                     data-bs-toggle="tooltip" title="{{ $commentText }}">
                                                     <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
                                                     @if(count($comments_by_request[$request->id]) > 1)
@@ -1013,7 +1013,7 @@
                                 <th style="width: 1rem;"></th>
                                     <th style="width: 10rem;">Дата исполнения</th>
                                     <th style="width: 15rem;">Адрес/Телефон</th>
-                                    <th style="width: 15rem;">Комментарий</th>
+                                    <th style="width: 2rem;">Комментарий</th>
                                     <th id="brigadeHeader" style="width: 20rem;">Бригада <span id="brigadeSortIcon"></span></th>
                                 </tr>
                                 </thead>
