@@ -2871,21 +2871,9 @@
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;
         }
-    });
-
-
-    
+    }); 
 </script>
 
-<!-- Подключаем модуль для работы с отчётами -->
-<script type="module">
-    import { initReportHandlers } from '{{ asset('js/report-handler.js') }}';
-    
-    // Инициализируем обработчики для отчётов при загрузке страницы
-    document.addEventListener('DOMContentLoaded', function() {
-        initReportHandlers();
-    });
-</script>
 
 </body>
 

@@ -120,6 +120,8 @@ Route::prefix('reports')->middleware('auth')->group(function () {
     Route::post('requests/all-period', [ReportController::class, 'getAllPeriod'])->name('reports.all-period');
     Route::post('requests/by-date', [ReportController::class, 'getRequestsByDateRange'])->name('reports.requests.by-date');
     Route::post('requests/by-employee-date', [ReportController::class, 'getRequestsByEmployeeAndDateRange'])->name('reports.requests.by-employee-date');
+    Route::post('requests/by-address-date', [ReportController::class, 'getRequestsByAddressAndDateRange'])->name('reports.requests.by-address-date');
+    Route::post('requests/by-address-and-date', [ReportController::class, 'getRequestsByAddressAndDateRange'])->name('reports.requests.by-address-and-date');
 });
 
 // API Routes for request management

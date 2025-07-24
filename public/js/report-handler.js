@@ -94,7 +94,11 @@ export async function loadAddressesForReport() {
         data.forEach(address => {
             const option = document.createElement('option');
             option.value = address.id;
-            option.textContent = 'ул.' + address.street + ', ' + address.name;
+            // Используем address.city_name вместо address.name
+            option.textContent = 'ул. ' + address.street + ', ' + 
+                              (address.houses ? 'д.' + address.houses + ', ' : '') + 
+                              (address.city_name || '');
+            option.setAttribute('data-city-id', address.city_id);
             select.appendChild(option);
         });
         
@@ -107,7 +111,6 @@ export async function loadAddressesForReport() {
         showAlert('Не удалось загрузить список адресов', 'danger');
     }
 }
-
 
 // Функция для загрузки отчёта
 export async function loadReport() {
@@ -134,13 +137,17 @@ export async function loadReport() {
         url = '/reports/requests/all-period';
     }
 
-    if (startDate && endDate && employeeSelect.value === 'all_employees') {
+    if (startDate && endDate && employeeSelect.value === 'all_employees' && addressSelect.value === 'all_addresses') {
         url = '/reports/requests/by-date';
     }
 
-    if (startDate && endDate && employeeSelect.value > 0) {
+    if (startDate && endDate && employeeSelect.value > 0 && addressSelect.value === 'all_addresses') {
         url = '/reports/requests/by-employee-date';
-    }  
+    } 
+    
+    if (startDate && endDate && addressSelect.value > 0 && employeeSelect.value === 'all_employees') {
+        url = '/reports/requests/by-address-date';
+    }
     
     console.log('Request URL:', url);
 
@@ -152,7 +159,7 @@ export async function loadReport() {
 
     if (result.success) {
         renderReportTable({
-            requests: result.requestsByDateRange || result.requestsByEmployeeAndDateRange || result.requestsAllPeriod || [],
+            requests: result.requestsByDateRange || result.requestsByEmployeeAndDateRange || result.requestsAllPeriod || result.requestsByAddressAndDateRange || [],
             brigadeMembers: result.brigadeMembersWithDetails || [],
             comments_by_request: result.comments_by_request || {}
         });
@@ -443,15 +450,82 @@ function handleViewRequest(event) {
 }
 
 // Инициализация обработчиков для отчётов
-export function initReportHandlers() {
-    // Инициализация календарей
-    initReportDatepickers();
-    
-    // Загрузка списка сотрудников
-    loadEmployeesForReport();
+export async function initReportHandlers() {
+    try {
+        // Инициализация календарей
+        initReportDatepickers();
+        
+        // Загрузка списка сотрудников
+        await loadEmployeesForReport();
 
-    // Загрузка списка адресов
-    loadAddressesForReport();
+        // Загрузка списка адресов и ожидание её завершения
+        await loadAddressesForReport();
+
+        const employeeSelect = document.getElementById('report-employees');
+        const addressSelect = document.getElementById('report-addresses');
+        const allPeriodCheckbox = document.getElementById('report-all-period');
+        
+        if (allPeriodCheckbox) {
+            allPeriodCheckbox.addEventListener('change', () => {
+                if (allPeriodCheckbox.checked) {
+                  console.log('All period checkbox is checked');
+
+                  // Сбрасываем выбор адреса на "Все адреса"
+                  if (addressSelect) {
+                      addressSelect.value = 'all_addresses';
+                  }
+
+                  // Сбрасываем выбор сотрудника на "Все сотрудники"
+                  if (employeeSelect) {
+                      employeeSelect.value = 'all_employees';
+                  }
+                } else {
+                  console.log('All period checkbox is not checked');
+                }
+            });
+        }
+
+        if (employeeSelect) {
+            employeeSelect.addEventListener('change', () => {
+                const selectedEmployeeId = employeeSelect.value;
+                console.log('Selected employee ID:', selectedEmployeeId);
+
+                // Сбрасываем выбор адреса на "Все адреса"
+                if (addressSelect) {
+                    addressSelect.value = 'all_addresses';
+                }   
+
+                // Сбрасываем чекбокс "За весь период"
+                if (allPeriodCheckbox) {
+                    allPeriodCheckbox.checked = false;
+                }
+            });
+        }
+
+        if (addressSelect) {
+            addressSelect.addEventListener('change', () => {
+                const selectedAddressId = addressSelect.value;
+                console.log('Selected address ID:', selectedAddressId);
+                
+                // Сбрасываем выбор сотрудника на "Все сотрудники"
+                if (employeeSelect) {
+                    employeeSelect.value = 'all_employees';
+                }
+                
+                // Сбрасываем чекбокс "За весь период"
+                if (allPeriodCheckbox) {
+                    allPeriodCheckbox.checked = false;
+                }
+                
+                // Дополнительная логика фильтрации, если нужна
+            });
+        } else {
+            console.error('Элемент report-addresses не найден после загрузки адресов');
+        }
+    } catch (error) {
+        console.error('Ошибка при инициализации обработчиков отчета:', error);
+        showAlert('Произошла ошибка при загрузке отчета', 'danger');
+    }
     
     // Обработчик кнопки генерации отчёта
     const generateBtn = document.getElementById('generate-report-btn');
