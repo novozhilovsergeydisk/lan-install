@@ -1013,7 +1013,7 @@
                                 <th style="width: 1rem;"></th>
                                     <th style="width: 10rem;">Дата исполнения</th>
                                     <th style="width: 15rem;">Адрес/Телефон</th>
-                                    <th style="width: 30rem;">Комментарий</th>
+                                    <th style="width: 15rem;">Комментарий</th>
                                     <th id="brigadeHeader" style="width: 20rem;">Бригада <span id="brigadeSortIcon"></span></th>
                                 </tr>
                                 </thead>
