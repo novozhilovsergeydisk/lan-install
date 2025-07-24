@@ -167,7 +167,12 @@ function renderReportTable(data) {
     
     if (requests.length === 0) {
         const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="8" class="text-center">Нет данных для отображения</td>';
+        row.innerHTML = `
+            <td colspan="8" class="text-center py-4">
+                <div class="alert alert-info m-0">
+                    <i class="bi bi-info-circle me-2"></i>Нет данных для отображения.
+                </div>
+            </td>`;
         tbody.appendChild(row);
         return;
     }
@@ -321,9 +326,10 @@ function renderReportTable(data) {
                         return `
                             <div class="comment-item" style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller; margin-bottom: 5px;">
                                 <div class="d-flex justify-content-between">
-                                    <span>${comment.comment || 'Аноним'}</span>
+                                    <span>${comment.comment || 'Система'}</span>
                                 </div>
                                 <div style="color: #6c757d; font-size: 0.8em;">${date}</div>
+                                <div style="color: #6c757d; font-size: 0.9em;">Добавил: ${comment.author_name}</div>
                             </div>
                         `;
                     }).join('')}

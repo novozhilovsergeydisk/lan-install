@@ -219,6 +219,20 @@ body.dark-mode .custom-select-options li:hover {
     background-color: #444;
 }
 
+/* No data message styling */
+.no-data-message {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    padding: 1rem;
+    font-style: italic;
+}
+
+/* Dark theme for no data message */
+[data-bs-theme="dark"] .no-data-message {
+    background-color: #2d2d2d;
+    color: #adb5bd;
+}
+
 /**/
 
 /* Table container styles */
