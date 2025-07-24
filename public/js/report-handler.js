@@ -186,6 +186,8 @@ function renderReportTable(data) {
         const row = document.createElement('tr');
         row.id = `request-${request.id}`;
         row.className = 'align-middle status-row';
+
+        console.log('Обработка запроса:', request);
         
         // Устанавливаем цвет статуса через CSS-переменную
         if (request.status_color) {
@@ -299,7 +301,7 @@ function renderReportTable(data) {
         dateCell.innerHTML = `
             <div class="d-flex flex-column">
                 <span>${executionDate}</span>
-                <div style="font-size: 0.8rem;">${request.request_number || ''}</div>
+                <div style="font-size: 0.8rem;">${request.number || ''}</div>
             </div>
         `;
         row.appendChild(dateCell);
@@ -328,8 +330,8 @@ function renderReportTable(data) {
                                 <div class="d-flex justify-content-between">
                                     <span>${comment.comment || 'Система'}</span>
                                 </div>
-                                <div style="color: #6c757d; font-size: 0.8em;">${date}</div>
-                                <div style="color: #6c757d; font-size: 0.9em;">Добавил: ${comment.author_name}</div>
+                                <div style="color:rgb(66, 68, 69); font-size: 0.9em;">${date}</div>
+                                <div style="color:rgb(66, 68, 69); font-size: 1.0em;">Добавил: ${comment.author_name}</div>
                             </div>
                         `;
                     }).join('')}

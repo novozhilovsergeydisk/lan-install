@@ -334,17 +334,17 @@
                                         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
                                             <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_organization }}</div>
                                             @if(!empty($request->street))
-                                                <small class="text-dark text-truncate d-block"
+                                                <small class="text-dark text-truncate_ d-block"
                                                        data-bs-toggle="tooltip"
                                                        title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
                                                        @if($request->city_name && $request->city_name !== 'Москва')<strong>{{ $request->city_name }}</strong>, @endif ул. {{ $request->street }}, д. {{ $request->houses }}
                                                 </small>
                                             @else
-                                                <small class="text-dark text-truncate d-block">Адрес не указан</small>
+                                                <small class="text-dark text-truncate_ d-block">Адрес не указан</small>
                                             @endif
                                             <div class="text-dark" style="font-size: 0.8rem;"><i>{{ $request->client_fio }}</i></div>
                                             <small style="font-size: 0.8rem;"
-                                                class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate d-block">
+                                                class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate_ d-block">
                                                     <i>{{ $request->client_phone ?? 'Нет телефона' }}</i>
                                             </small>                              
                                         </td>
@@ -440,22 +440,41 @@
                                                 @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-primary assign-team-btn p-1"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="left"
+                                                            data-bs-title="Назначить бригаду"
                                                             data-request-id="{{ $request->id }}">
-                                                        <i class="bi bi-people me-1"></i>Назначить бригаду
+                                                        <i class="bi bi-people"></i>
                                                     </button>
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-success transfer-request-btn p-1"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="left"
+                                                            data-bs-title="Перенести заявку"
                                                             style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;"
                                                             data-request-id="{{ $request->id }}">
-                                                        <i class="bi bi-arrow-left-right me-1"></i>Перенести заявку
+                                                        <i class="bi bi-arrow-left-right"></i>
                                                     </button>
                                                     
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-danger cancel-request-btn p-1"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="left"
+                                                            data-bs-title="Отменить заявку"
                                                             data-request-id="{{ $request->id }}">
-                                                        <i class="bi bi-x-circle me-1"></i>Отменить заявку
+                                                        <i class="bi bi-x-circle"></i>
                                                     </button>
+                                                    
+                                                    <!-- Инициализация тултипов -->
+                                                    <script>
+                                                        document.addEventListener('DOMContentLoaded', function() {
+                                                            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                                                            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                                                return new bootstrap.Tooltip(tooltipTriggerEl);
+                                                            });
+                                                        });
+                                                    </script>
                                                 @endif
                                             </div>
                                         </td>

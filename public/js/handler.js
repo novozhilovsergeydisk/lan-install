@@ -468,14 +468,30 @@ function applyFilters() {
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
                                 ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
-                                    <button type="button" class="btn btn-sm btn-outline-primary assign-team-btn p-1" data-request-id="${request.id}">
-                                        <i class="bi bi-people me-1"></i>Назначить бригаду
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary assign-team-btn p-1" 
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-placement="left" 
+                                            data-bs-title="Назначить бригаду"
+                                            data-request-id="${request.id}">
+                                        <i class="bi bi-people"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-success transfer-request-btn p-1" style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;" data-request-id="${request.id}">
-                                        <i class="bi bi-arrow-left-right me-1"></i>Перенести заявку
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-success transfer-request-btn p-1" 
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-placement="left" 
+                                            data-bs-title="Перенести заявку"
+                                            style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;" 
+                                            data-request-id="${request.id}">
+                                        <i class="bi bi-arrow-left-right"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger cancel-request-btn p-1" data-request-id="${request.id}">
-                                        <i class="bi bi-x-circle me-1"></i>Отменить заявку
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger cancel-request-btn p-1" 
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-placement="left" 
+                                            data-bs-title="Отменить заявку"
+                                            data-request-id="${request.id}">
+                                        <i class="bi bi-x-circle"></i>
                                     </button>
                                 ` : ''}
                                 </div>
