@@ -382,7 +382,7 @@ function renderReportTable(data) {
                     ${comments_by_request[request.id].map(comment => {
                         const date = new Date(comment.created_at).toLocaleString('ru-RU');
                         return `
-                            <div class="comment-item" style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller; margin-bottom: 5px;">
+                            <div class="comment-item" style="background-color: white; border: 1px solid gray; max-width: 30rem; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller; margin-bottom: 5px;">
                                 <div class="d-flex justify-content-between">
                                     <span>${comment.comment || 'Система'}</span>
                                 </div>
