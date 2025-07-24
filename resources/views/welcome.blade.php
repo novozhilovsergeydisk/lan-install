@@ -987,10 +987,19 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-4">
-                                <select id="report-addresses" class="form-select mt-2">
-                                    <option value="all">Все адреса</option>
-                                </select>
+                            <div id="report-addresses-container" class="col-md-4">
+                                <!-- Сюда динамически загружаем список адресов -->
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="report-all-period" name="report-all-period" style="width: 2.5em; height: 1.3em;" value="1">
+                                    <label class="form-check-label ms-2 mt-1" for="report-all-period">
+                                        <span class="fw-medium">За весь период</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -1026,6 +1035,34 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Custom styles for the switch toggle */
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .form-switch .form-check-input:focus {
+        border-color: rgba(13, 110, 253, 0.25);
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    /* Dark theme support */
+    [data-bs-theme="dark"] .form-switch .form-check-input {
+        background-color: #495057;
+        border-color: #6c757d;
+    }
+    
+    [data-bs-theme="dark"] .form-switch .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    [data-bs-theme="dark"] .form-switch .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
 
 <!-- Divider -->
 <hr class="my-0 border-top border-2 border-opacity-10">

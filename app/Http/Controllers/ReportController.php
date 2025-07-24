@@ -8,12 +8,145 @@ use Illuminate\Support\Facades\DB;
 class ReportController extends Controller
 {
     /**
+     * Get addresses list for reports
+     */
+    public function getAddresses()
+    {
+        $addresses = DB::select('SELECT * FROM addresses JOIN cities ON addresses.city_id = cities.id ORDER BY cities.name, addresses.street');
+        
+        // $data = [
+        //     'success' => true,
+        //     'message' => 'Адреса успешно получены',
+        //     'data' => $addresses
+        // ];
+        
+        return response()->json($addresses);
+    }
+
+    /**
      * Get employees list for reports
      */
     public function getEmployees()
     {
         $employees = DB::select('SELECT * FROM employees WHERE is_deleted = false ORDER BY fio');
         return response()->json($employees);
+    }
+
+    public function getAllPeriod(Request $request)
+    {
+        // Тест
+        // $data = [
+        //     'success' => true,
+        //     'debug' => false,
+        //     'message' => 'Заявки успешно получены',
+        //     'request-all' => $request->all(),
+        // ];
+
+        // return response()->json($data);
+
+        $sql = "SELECT r.*,
+            c.fio AS client_fio,
+            c.phone AS client_phone,
+            c.organization AS client_organization,
+            rs.name AS status_name,
+            rs.color AS status_color,
+            b.name AS brigade_name,
+            e.fio AS brigade_lead,
+            op.fio AS operator_name,
+            addr.street,
+            addr.houses,
+            addr.district,
+            addr.city_id,
+            ct.name AS city_name,
+            ct.postal_code AS city_postal_code
+        FROM requests r
+        LEFT JOIN clients c ON r.client_id = c.id
+        LEFT JOIN request_statuses rs ON r.status_id = rs.id
+        LEFT JOIN brigades b ON r.brigade_id = b.id
+        LEFT JOIN employees e ON b.leader_id = e.id
+        LEFT JOIN employees op ON r.operator_id = op.id
+        LEFT JOIN request_addresses ra ON r.id = ra.request_id
+        LEFT JOIN addresses addr ON ra.address_id = addr.id
+        LEFT JOIN cities ct ON addr.city_id = ct.id
+        WHERE r.execution_date IS NOT NULL ORDER BY execution_date DESC";
+
+        $requestsAllPeriod = DB::select($sql);
+
+        // $data = [
+        //     'success' => true,
+        //     'debug' => false,
+        //     'message' => 'Заявки успешно получены',
+        //     'requests' => $requestsAllPeriod,
+        //     'sql' => $sql
+        // ];
+
+        // return response()->json($data);
+
+        $brigadeMembersWithDetails = DB::select(
+            'SELECT
+                bm.*,
+                b.name as brigade_name,
+                b.leader_id,
+                e.fio as employee_name,
+                e.phone as employee_phone,
+                e.group_role as employee_group_role,
+                e.sip as employee_sip,
+                e.position_id as employee_position_id,
+                el.fio as employee_leader_name,
+                el.phone as employee_leader_phone,
+                el.group_role as employee_leader_group_role,
+                el.sip as employee_leader_sip,
+                el.position_id as employee_leader_position_id
+            FROM brigade_members bm
+            JOIN brigades b ON bm.brigade_id = b.id
+            LEFT JOIN employees e ON bm.employee_id = e.id
+            LEFT JOIN employees el ON b.leader_id = el.id'
+        );
+
+        $requestComments = DB::select("
+            SELECT
+                rc.request_id,
+                c.id as comment_id,
+                c.comment,
+                c.created_at,
+                CASE 
+                    WHEN e.fio IS NOT NULL THEN e.fio
+                    WHEN u.name IS NOT NULL THEN u.name
+                    WHEN u.email IS NOT NULL THEN u.email
+                    ELSE 'Система'
+                END as author_name
+            FROM request_comments rc
+            JOIN comments c ON rc.comment_id = c.id
+            LEFT JOIN users u ON rc.user_id = u.id
+            LEFT JOIN employees e ON u.id = e.user_id
+            ORDER BY rc.request_id, c.created_at
+        ");
+
+        $commentsByRequest = collect($requestComments)
+            ->groupBy('request_id')
+            ->map(function ($comments) {
+                return collect($comments)->map(function ($comment) {
+                    return (object) [
+                        'id' => $comment->comment_id,
+                        'comment' => $comment->comment,
+                        'created_at' => $comment->created_at,
+                        'author_name' => $comment->author_name
+                    ];
+                })->toArray();
+            });
+
+        $comments_by_request = $commentsByRequest->toArray();
+
+        $data = [
+            'success' => true,
+            'debug' => false,
+            'message' => 'Заявки успешно получены',
+            'requestsAllPeriod' => $requestsAllPeriod,
+            'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+            'comments_by_request' => $comments_by_request
+        ];
+
+        return response()->json($data);
     }
 
     /**

@@ -43,7 +43,7 @@ export async function loadEmployeesForReport() {
         select.className = 'form-select';
         
         const defaultOption = document.createElement('option');
-        defaultOption.value = 'all';
+        defaultOption.value = 'all_employees';
         defaultOption.textContent = 'Все сотрудники';
         select.appendChild(defaultOption);
         
@@ -64,11 +64,58 @@ export async function loadEmployeesForReport() {
     }
 }
 
+// Функция для загрузки списка адресов
+export async function loadAddressesForReport() {
+    try {
+
+        // console.log('Загрузка адресов для отчета');
+
+        const response = await fetch('/reports/addresses');
+
+        if (!response.ok) {
+            throw new Error('Ошибка при загрузке адресов');
+        }
+
+        const data = await response.json();
+
+        // console.log(data);
+
+        // return;
+        
+        const select = document.createElement('select');
+        select.id = 'report-addresses';
+        select.className = 'form-select mt-2';
+        
+        const defaultOption = document.createElement('option');
+        defaultOption.value = 'all_addresses';
+        defaultOption.textContent = 'Все адреса';
+        select.appendChild(defaultOption);
+        
+        data.forEach(address => {
+            const option = document.createElement('option');
+            option.value = address.id;
+            option.textContent = 'ул.' + address.street + ', ' + address.name;
+            select.appendChild(option);
+        });
+        
+        const container = document.getElementById('report-addresses-container');
+        if (container) {
+            container.appendChild(select);
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке адресов:', error);
+        showAlert('Не удалось загрузить список адресов', 'danger');
+    }
+}
+
+
 // Функция для загрузки отчёта
 export async function loadReport() {
-    const startDate = $('#datepicker-reports-start').datepicker('getFormattedDate');
-    const endDate = $('#datepicker-reports-end').datepicker('getFormattedDate');
+    let startDate = $('#datepicker-reports-start').datepicker('getFormattedDate');
+    let endDate = $('#datepicker-reports-end').datepicker('getFormattedDate');
     const employeeSelect = document.getElementById('report-employees');
+    const addressSelect = document.getElementById('report-addresses');
+    const allPeriod = document.getElementById('report-all-period');
     let url = '';    
     
     if (!startDate || !endDate) {
@@ -77,8 +124,17 @@ export async function loadReport() {
     }
 
     // console.log(employeeSelect.value);
+    // console.log(addressSelect.value);
+    // console.log(allPeriod.checked);
 
-    if (startDate && endDate && employeeSelect.value === 'all') {
+    // If 'all period' is checked, we can ignore the date range
+    if (allPeriod.checked) {
+        startDate = null;
+        endDate = null;
+        url = '/reports/requests/all-period';
+    }
+
+    if (startDate && endDate && employeeSelect.value === 'all_employees') {
         url = '/reports/requests/by-date';
     }
 
@@ -88,15 +144,15 @@ export async function loadReport() {
     
     console.log('Request URL:', url);
 
-    console.log('Request data:', { startDate, endDate, employeeId: employeeSelect.value });
+    console.log('Request data:', { startDate, endDate, employeeId: employeeSelect.value, addressId: addressSelect.value, allPeriod: allPeriod.checked });
 
-    const result = await postData(url, { startDate, endDate, employeeId: employeeSelect.value });
+    const result = await postData(url, { startDate, endDate, employeeId: employeeSelect.value, addressId: addressSelect.value, allPeriod: allPeriod.checked });
 
     console.log('Result:', result); 
 
     if (result.success) {
         renderReportTable({
-            requests: result.requestsByDateRange || result.requestsByEmployeeAndDateRange || [],
+            requests: result.requestsByDateRange || result.requestsByEmployeeAndDateRange || result.requestsAllPeriod || [],
             brigadeMembers: result.brigadeMembersWithDetails || [],
             comments_by_request: result.comments_by_request || {}
         });
@@ -393,6 +449,9 @@ export function initReportHandlers() {
     
     // Загрузка списка сотрудников
     loadEmployeesForReport();
+
+    // Загрузка списка адресов
+    loadAddressesForReport();
     
     // Обработчик кнопки генерации отчёта
     const generateBtn = document.getElementById('generate-report-btn');

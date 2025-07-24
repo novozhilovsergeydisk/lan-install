@@ -113,11 +113,13 @@ Route::post('/api/brigades/info-current-day', [RequestTeamFilterController::clas
     ->name('api.brigades.info-current-day')
     ->middleware('auth');
 
-// Report Routes
+// Report Routes    
 Route::prefix('reports')->middleware('auth')->group(function () {
+    Route::get('/addresses', [ReportController::class, 'getAddresses'])->name('reports.addresses');
     Route::get('/employees', [ReportController::class, 'getEmployees'])->name('reports.employees');
-    Route::post('/requests/by-date', [ReportController::class, 'getRequestsByDateRange'])->name('reports.requests.by-date');
-    Route::post('/requests/by-employee-date', [ReportController::class, 'getRequestsByEmployeeAndDateRange'])->name('reports.requests.by-employee-date');
+    Route::post('requests/all-period', [ReportController::class, 'getAllPeriod'])->name('reports.all-period');
+    Route::post('requests/by-date', [ReportController::class, 'getRequestsByDateRange'])->name('reports.requests.by-date');
+    Route::post('requests/by-employee-date', [ReportController::class, 'getRequestsByEmployeeAndDateRange'])->name('reports.requests.by-employee-date');
 });
 
 // API Routes for request management

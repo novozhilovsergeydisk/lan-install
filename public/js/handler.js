@@ -3577,7 +3577,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initEmployeeEditHandlers();
     initSaveEmployeeChanges();
     initEmployeeFilter();
-    initDeleteEmployee()
+    initDeleteEmployee();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {
