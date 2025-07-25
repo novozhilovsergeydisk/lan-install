@@ -406,7 +406,7 @@
                                                 @endphp
 
                                                 @if($brigadeMembers->isNotEmpty())
-                                                    <div class="" style="font-size: 0.75rem; line-height: 1.2;">
+                                                    <div class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
                                                         @php
                                                             $leaderName = $brigadeMembers->first()->employee_leader_name;
                                                             $brigadeName = $brigadeMembers->first()->brigade_name;
@@ -439,8 +439,8 @@
 
                                         @if($user->isAdmin)
                                         <!-- Action Buttons Group -->
-                                        <td class="text-nowrap">
-                                            <div class="d-flex flex-column gap-1">
+                                        <td class="col-actions text-nowrap">
+                                            <div class="col-actions__div d-flex flex-column gap-1">
                                                 @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-primary assign-team-btn p-1"
@@ -484,8 +484,8 @@
                                         </td>
                                         @endif
                                         <!-- Action Buttons -->
-                                        <td class="text-nowrap">
-                                            <div class="d-flex flex-column gap-1">
+                                        <td class="col-actions text-nowrap">
+                                            <div class="col-actions__div d-flex flex-column gap-1">
                                                 @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
                                                     <button data-request-id="{{ $request->id }}" type="button"
                                                             class="btn btn-sm btn-custom-brown p-1 close-request-btn">

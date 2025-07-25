@@ -124,6 +124,18 @@
     .col-date {
         width: 6rem;
     }
+
+    .col-actions {
+        width: 4rem;
+    }
+
+    .col-actions__div {
+        /* width: 4rem; */
+    }
+
+    .col-actions__div button {
+        font-size: 12px;
+    }
 }
 
 /* Скрываем иконки в кнопках на очень маленьких экранах */
