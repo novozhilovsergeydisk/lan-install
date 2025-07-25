@@ -212,6 +212,8 @@ function applyFilters() {
             .then(async response => {
                 const data = await response.json().catch(() => ({}));
 
+                console.log(data);
+
                 // Логи ответов отключены
 
                 if (!response.ok) {
@@ -371,7 +373,7 @@ function applyFilters() {
 
                             // Создаем HTML строки таблицы
                             const row = document.createElement('tr');
-                            row.className = 'align-middle status-row';
+                            row.className = 'align-middle status-row xxx-5';
                             row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
                             // Отладочный вывод
                             // Логи данных запроса отключены
@@ -383,7 +385,9 @@ function applyFilters() {
                             // Добавляем счетчик для нумерации строк (начинаем с 1)
                             const rowNumber = index + 1;
 
-                            // console.log({ request });
+                            console.log({ request });
+
+                            console.log(request.is_admin);
 
                             row.innerHTML = `
                             <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
@@ -466,6 +470,7 @@ function applyFilters() {
                                 </div>
                             </td>
 
+                            ${request.isAdmin ? `
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
                                 ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
@@ -510,6 +515,7 @@ function applyFilters() {
                                     </button>
                                 </div>
                             </td>
+                            ` : ''}
                         `;
 
                             tbody.appendChild(row);
@@ -2908,14 +2914,25 @@ if (saveBtn) {
 
 // Обработчик добавления сотрудника в бригаду
 function hanlerAddToBrigade() {
-    document.getElementById('addToBrigadeBtn').addEventListener('click', function () {
+    const addToBrigadeBtn = document.getElementById('addToBrigadeBtn');
+    
+    // Проверяем, существует ли кнопка на странице
+    if (!addToBrigadeBtn) {
+        console.log('Кнопка добавления в бригаду не найдена на странице');
+        return;
+    }
+    
+    addToBrigadeBtn.addEventListener('click', function () {
         const select = document.getElementById('employeesSelect');
         const brigadeMembers = document.getElementById('brigadeMembers');
+        
+        // Проверяем существование элементов
+        if (!select || !brigadeMembers) {
+            console.error('Не удалось найти необходимые элементы на странице');
+            return;
+        }
+        
         const selectedOptions = Array.from(select.selectedOptions);
-
-        // console.log('selectedOptions', selectedOptions);
-
-        // return;
 
         if (selectedOptions.length > 0) {
             selectedOptions.forEach(option => {

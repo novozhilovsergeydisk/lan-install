@@ -253,12 +253,16 @@
                                     </select>
                                 </div>
 
+                                @if($user->isAdmin)
                                 <div class="d-flex justify-content-end" style="flex: 1;">
                                     <button type="button" class="btn btn-primary" id="new-request-button"
                                             data-bs-toggle="modal" data-bs-target="#newRequestModal">
                                         <i class="bi bi-plus-circle me-1"></i>Новая заявка
                                     </button>
                                 </div>
+                                @else
+                                <div class="alert alert-info">Добавление заявок доступно только для администраторов</div>
+                                @endif
                             </div>
                         </div>
 
@@ -308,8 +312,10 @@
                                     <th style="width: 30rem;">Комментарий</th>
 
                                     <th id="brigadeHeader" style="width: 20rem;">Бригада <span id="brigadeSortIcon"></span></th>
+                                    @if($user->isAdmin)
                                     <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
                                     <th style="width: 3rem;"></th>
+                                    @endif
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -318,7 +324,7 @@
                                         $rowNumber = $loop->iteration; 
                                         // Get the current loop iteration (1-based index)
                                     @endphp
-                                    <tr id="request-{{ $request->id }}" class="align-middle status-row"
+                                    <tr id="request-{{ $request->id }}" class="align-middle status-row zzzz"
                                         style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                         data-request-id="{{ $request->id }}">
                                         <!-- Номер заявки -->
@@ -434,6 +440,7 @@
                                             @endif
                                         </td>
 
+                                        @if($user->isAdmin)
                                         <!-- Action Buttons Group -->
                                         <td class="text-nowrap">
                                             <div class="d-flex flex-column gap-1">
@@ -503,6 +510,7 @@
                                                 </button>
                                             </div>
                                         </td>
+                                        @endif
                                     </tr>
                                 @endforeach
                                 </tbody>
@@ -546,6 +554,7 @@
                             <!-- Бригадир выбирается кликом по участнику в списке -->
                             <input type="hidden" id="brigadeLeader" name="leader_id" value="">
 
+                            @if($user->isAdmin)
                             <div class="d-flex gap-3 mb-3" style="height: 450px;">
                                 <div class="d-flex flex-column" style="flex: 1.2;">
                                     <label class="form-label">Выбрать сотрудника</label>
@@ -576,6 +585,9 @@
                                 <button type="button" id="createBrigadeBtn" data-info-handler="handlerCreateBrigade()[handler.js]" class="btn btn-primary">Создать бригаду
                                 </button>
                             </div>
+                            @else
+                            <div class="alert alert-info">Добавление бригады доступно только для администраторов</div>
+                            @endif
 
                             <div id="brigadeInfo" class="mt-4"> 
                             <!-- Здесь будет отображаться информация о бригадах за выбранный дату -->
@@ -626,12 +638,16 @@
                                 -->
 
                                 <!-- Адрес -->
+                                @if($user->isAdmin)
                                 <div>
                                     <!-- Кнопка для открытия модального окна добавления адреса -->
                                     <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#assignAddressModal">
                                         <i class="bi bi-plus-circle me-1"></i>Добавить адрес
                                     </button>
                                 </div>
+                                @else
+                                <div class="alert alert-info">Добавление адресов доступно только для администраторов</div>
+                                @endif
 
                                 <div id="addressInfo">
                                     <!-- Здесь будет только добавленный адрес -->
@@ -648,9 +664,11 @@
 
                     <div class="tab-pane fade" id="users" role="tabpanel">
                         <div class="row">
+                            @if($user->isAdmin)
                             <div class="mb-3 text-end">
                                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newEmployeeModal">Новый сотрудник</button>
                             </div>
+                            @endif
                             
                             <!-- Модальное окно для нового сотрудника -->
                             <div class="modal fade" id="newEmployeeModal" tabindex="-1" aria-labelledby="newEmployeeModalLabel">
@@ -837,6 +855,7 @@
                                     <div class="card-header">
                                         <h5 class="mb-0">Список пользователей</h5>
                                     </div>
+                                    @if($user->isAdmin)
                                     <div class="card-body p-0">
                                         <div class="table-responsive">
                                             <div class="table-container">
@@ -890,6 +909,10 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @else
+                                    <div class="alert alert-info">Управление пользователями доступно только для администраторов</div>
+                                    @endif
+
                                 </div>
                             </div>
                         </div>
@@ -913,7 +936,9 @@
                                                 <th>Название</th>
                                                 <th>Цвет</th>
                                                 <th>Количество заявок</th>
+                                                @if($user->isAdmin)
                                                 <th class="text-end">Действия</th>
+                                                @endif
                                             </tr>
                                         </thead>
                                         <tbody id="statusesList">
@@ -2097,7 +2122,7 @@
         // Helper function to create a request row
         function createRequestRow(request) {
             const row = document.createElement('tr');
-            row.className = 'align-middle status-row';
+            row.className = 'align-middle status-row xxx';
             row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
             row.setAttribute('data-request-id', request.id);
 

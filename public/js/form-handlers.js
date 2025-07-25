@@ -298,7 +298,7 @@ function addRequestToTable(result) {
 
     // Создаем новую строку для таблицы
     const newRow = document.createElement('tr');
-    newRow.className = 'align-middle status-row';
+    newRow.className = 'align-middle status-row xxx-3';
     newRow.dataset.requestId = requestData.id;
     newRow.style.setProperty('--status-color', requestData.status_color || '#e2e0e6');
 
@@ -357,6 +357,8 @@ function addRequestToTable(result) {
                 Не назначена
             </div>
         </td>
+
+        ${requestData.isAdmin ? `
         <td class="text-nowrap">
             <div class="d-flex flex-column gap-1">
                 <button type="button" 
@@ -389,7 +391,7 @@ function addRequestToTable(result) {
         <td class="text-nowrap">
             <div class="d-flex flex-column gap-1">
                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                    Закрыть заявку
+                    Закрыть заявку!
                 </button>
 
                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
@@ -397,6 +399,7 @@ function addRequestToTable(result) {
                 </button>
             </div>
         </td>
+        ` : ''}
     `;
 
     // Добавляем строку в начало таблицы

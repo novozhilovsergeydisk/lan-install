@@ -12,6 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\LogRequestMiddleware::class);
+        
+        // Регистрируем алиас для middleware
+        $middleware->alias([
+            'roles' => \App\Http\Middleware\AddUserRolesToView::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

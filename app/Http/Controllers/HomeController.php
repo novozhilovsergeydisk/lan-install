@@ -285,8 +285,8 @@ class HomeController extends Controller
 
     public function index()
     {
-        // Получаем текущего пользователя
-        $user = Auth::user();
+        // Получаем текущего пользователя (проверка аутентификации уже выполнена в роутере)
+        $user = auth()->user();
 
         // Запрашиваем users
         // $users = DB::query('start transaction');
@@ -465,7 +465,10 @@ class HomeController extends Controller
             'brigadesCurrentDay' => $brigadesCurrentDay,
             'flags' => $flags,
             'positions' => $positions,
-            'roles' => $roles
+            'roles' => $roles,
+            'isAdmin' => $user->isAdmin ?? false,
+            'isUser' => $user->isUser ?? false,
+            'isFitter' => $user->isFitter ?? false
         ];
 
         // Логируем данные для отладки
@@ -843,13 +846,40 @@ class HomeController extends Controller
                 }
             }
 
+            $user = auth()->user();
+
+            // Загружаем роли пользователя
+            $sql = "SELECT roles.name FROM user_roles
+                JOIN roles ON user_roles.role_id = roles.id
+                WHERE user_roles.user_id = " . $user->id;
+            
+            $roles = DB::select($sql);
+            
+            // Извлекаем только имена ролей из результатов запроса
+            $roleNames = array_map(function($role) {
+                return $role->name;
+            }, $roles);
+            
+            // Устанавливаем роли и флаги
+            $user->roles = $roleNames;
+            $user->isAdmin = in_array('admin', $roleNames);
+            $user->isUser = in_array('user', $roleNames);
+            $user->isFitter = in_array('fitter', $roleNames);
+            $user->user_id = $user->id;
+            $user->sql = $sql;
+
             // Добавляем членов бригады, информацию о бригадире и комментарии к каждой заявке
-            $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest) {
+            $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest, $user) {
                 $brigadeId = $request->brigade_id;
                 $request->brigade_members = $brigadeMembers[$brigadeId] ?? [];
                 $request->brigade_leader_name = $brigadeLeaders[$brigadeId] ?? null;
                 $request->comments = $commentsByRequest[$request->id] ?? [];
                 $request->comments_count = count($request->comments);
+                $request->isAdmin = $user->isAdmin ?? false;
+                $request->isUser = $user->isUser ?? false;
+                $request->isFitter = $user->isFitter ?? false;
+                $request->sql = $user->sql;
+                $request->user_id = $user->id;
                 return $request;
             }, $requestByDate);
 
@@ -944,7 +974,7 @@ class HomeController extends Controller
                     'user_id'    => $request->user()->id,
                     'created_at' => now()
                 ]);
-                
+
                 // Если отмечен чекбокс "Недоделанные работы", добавляем запись в таблицу incomplete_works
                 if ($request->input('uncompleted_works')) {
                     DB::table('incomplete_works')->insert([
@@ -955,13 +985,13 @@ class HomeController extends Controller
                     ]);
 
                     // И создаем заявку на завтра с комментарием о недоделанных работах
-                    
+
                     // Получаем ID сотрудника, связанного с текущим пользователем
                     $employeeId = DB::table('employees')
                         ->where('user_id', Auth::id())
                         ->value('id');
 
-                        // 
+                        //
 
                     // Если не нашли сотрудника, используем ID по умолчанию
                     if (!$employeeId) {
@@ -970,11 +1000,11 @@ class HomeController extends Controller
 
                     // Получаем данные текущей заявки
                     $currentRequest = DB::table('requests')->where('id', $id)->first();
-                    
+
                     // Генерируем номер заявки
                     $count = DB::table('requests')->count() + 1;
                     $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
-                    
+
                     // Создаем новую заявку на завтра
                     $newRequestId = DB::table('requests')->insertGetId([
                         'number' => $requestNumber,
@@ -1010,7 +1040,7 @@ class HomeController extends Controller
                     'message' => 'Заявка успешно закрыта',
                     'comment_id' => $commentId
                 ];
-                
+
                 // Если была создана новая заявка на недоделанные работы, добавляем её ID в ответ
                 if (isset($newRequestId)) {
                     // Связываем комментарий с заявкой
@@ -1024,7 +1054,7 @@ class HomeController extends Controller
                     $response['new_request_id'] = $newRequestId;
                     $response['new_request_number'] = $requestNumber;
                 }
-                
+
                 return response()->json($response);
             }
 
@@ -1232,14 +1262,51 @@ class HomeController extends Controller
      */
     public function storeRequest(Request $request)
     {
+        // Проверяем авторизацию пользователя
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Необходима авторизация',
+                'redirect' => '/login'
+            ], 401);
+        }
 
-        // $response = [
-        //     'success' => true,
-        //     'message' => 'Тестирование',
-        //     'data' => []
-        // ];
-
-        // return response()->json($response);
+        // Проверяем наличие необходимых ролей
+        $user = auth()->user();
+        
+        // Проверяем, загружены ли роли пользователя
+        if (!isset($user->roles) || !is_array($user->roles)) {
+            // Если роли не загружены, загружаем их из базы
+            $roles = DB::table('user_roles')
+                ->join('roles', 'user_roles.role_id', '=', 'roles.id')
+                ->where('user_roles.user_id', $user->id)
+                ->pluck('roles.name')
+                ->toArray();
+            
+            $user->roles = $roles;
+            $user->isAdmin = in_array('admin', $roles);
+        }
+        
+        // Проверяем права доступа
+        $allowedRoles = ['admin'];
+        $hasAllowedRole = false;
+        
+        if (is_array($user->roles)) {
+            foreach ($user->roles as $role) {
+                if (in_array($role, $allowedRoles)) {
+                    $hasAllowedRole = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!$hasAllowedRole) {
+            return response()->json([
+                'success' => false,
+                'message' => 'У вас недостаточно прав для создания заявки. Необходима одна из ролей: ' . implode(', ', $allowedRoles),
+                'user_roles' => $user->roles ?? []
+            ], 403);
+        }
 
         // Включаем логирование SQL-запросов
         \DB::enableQueryLog();
@@ -1600,6 +1667,7 @@ class HomeController extends Controller
                         'status_id' => $validated['status_id'],
                         'execution_date' => $validated['execution_date'],
                         'requestById' => $requestById,
+                        'isAdmin' => $user->isAdmin,
                     ],
                     'client' => $clientId ? [
                         'id' => $clientId,
@@ -1659,9 +1727,9 @@ class HomeController extends Controller
     public function getRequestByEmployee() {
         try {
             $employeeId = auth()->user()->employee_id;
-            
+
             $requests = DB::select("SELECT * FROM requests WHERE operator_id = {$employeeId}");
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Заявки успешно получены',
@@ -1674,7 +1742,7 @@ class HomeController extends Controller
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении заявок: ' . $e->getMessage(),
@@ -1684,6 +1752,6 @@ class HomeController extends Controller
                     'line' => $e->getLine()
                 ]
             ], 500);
-        }   
+        }
     }
 }

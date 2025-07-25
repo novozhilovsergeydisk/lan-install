@@ -14,7 +14,7 @@ use App\Http\Controllers\ReportController;
 
 Route::get('/employees', [EmployeesUserPositionPassportController::class, 'index'])->name('employees.index');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'roles'])->group(function () {
     Route::get('/brigades/create', [BrigadeController::class, 'create'])->name('brigades.create');
     Route::post('/brigades', [BrigadeController::class, 'store'])->name('brigades.store');
 });
@@ -33,7 +33,7 @@ Route::post('/register', [RegisterController::class, 'register']);
 // home
 
 // Главная страница
-Route::get('/', [HomeController::class, 'index'])->name('home')->middleware('auth');
+Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['auth', 'roles']);
 
 // Close request
 Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth');
