@@ -1,5 +1,28 @@
 /* public/css/mobile-requests.css */
 
+/* Стили для фильтра сотрудников на мобильных устройствах */
+@media (max-width: 767.98px) {
+    /* Стили для контейнера фильтра сотрудников */
+    .d-flex.justify-content-start {
+        flex-direction: column;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Стили для метки фильтра */
+    .d-flex.justify-content-start .form-label {
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Стили для выпадающего списка */
+    .d-flex.justify-content-start .form-select {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+
 /* Основные стили для колонок */
 #requestsTable .col-number {
     /* width: 24px;

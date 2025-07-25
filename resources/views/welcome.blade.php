@@ -260,7 +260,7 @@
                                     </button>
                                 </div>
                                 @else
-                                <div class="alert alert-info">Добавление заявок доступно только для администраторов</div>
+                                <div class="alert alert-info hide-me">Добавление заявок доступно только для администраторов</div>
                                 @endif
                             </div>
                         </div>

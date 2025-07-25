@@ -1,0 +1,71 @@
+/* Стили для карточного отображения таблицы на мобильных устройствах */
+
+@media (max-width: 768px) {
+    /* Основные стили для таблицы */
+    .table-stacked {
+        display: block;
+        width: 100%;
+    }
+    
+    /* Стили для строк таблицы */
+    .table-stacked tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Стили для ячеек */
+    .table-stacked td {
+        display: block;
+        width: 100%;
+        padding: 0.75rem;
+        text-align: left;
+        border: none;
+    }
+    
+    /* Скрываем заголовки таблицы */
+    .table-stacked th {
+        display: none;
+    }
+    
+    /* Добавляем заголовки перед значениями */
+    .table-stacked td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        margin-right: 0.5rem;
+        display: inline-block;
+        min-width: 120px;
+        color: #6c757d;
+    }
+    
+    /* Стили для кнопок в карточках */
+    .table-stacked .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        text-align: left;
+    }
+    
+    /* Стили для комментариев */
+    .table-stacked .comment-preview {
+        margin: 0.5rem 0;
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+    }
+    
+    /* Стили для заголовков карточек */
+    .table-stacked tr:first-child td {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    /* Стили для последней ячейки (действия) */
+    .table-stacked tr td:last-child {
+        padding: 0.75rem;
+        border-top: 1px solid #dee2e6;
+    }
+}
