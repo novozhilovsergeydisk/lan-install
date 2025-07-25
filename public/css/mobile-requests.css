@@ -95,6 +95,10 @@
 
 /* Адаптация для мобильных устройств (ширина экрана до 768px) */
 @media (max-width: 768px) {
+    #employeeFilter {
+        margin-top: 1rem !important;
+    }
+    
     .comment-preview-title {
         font-size: smaller;
     }
