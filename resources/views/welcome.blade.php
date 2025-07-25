@@ -306,16 +306,16 @@
                             <table id="requestsTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>
-                                    <th style="width: 1rem;"></th>
-                                    <th style="width: 10rem;">Дата исполнения</th>
-                                    <th style="width: 15rem;">Адрес/Телефон</th>
-                                    <th style="width: 30rem;">Комментарий</th>
+                                    <th style_="width: 1rem;"></th>
+                                    <th style_ ="width: auto;">Дата<br> исполнения</th>
+                                    <th style_="width: auto;">Адрес<br>Телефон</th>
+                                    <th style_="width: auto;">Комментарии</th>
 
-                                    <th id="brigadeHeader" style="width: 20rem;">Бригада <span id="brigadeSortIcon"></span></th>
+                                    <th id="brigadeHeader" style_="width: auto;">Бригада <span id="brigadeSortIcon"></span></th>
                                     @if($user->isAdmin)
-                                    <th style="width: 3rem;" colspan_="2">Действия с заявкой</th>
+                                    <th style_="width: 1rem;" colspan_="2">Действия с заявкой</th>
                                     @endif
-                                    <th style="width: 3rem;"></th>
+                                    <th style_="width: 2rem;"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -328,7 +328,7 @@
                                         style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                         data-request-id="{{ $request->id }}">
                                         <!-- Номер заявки -->
-                                        <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
+                                        <td style_="max-width: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
 
                                         <!-- Дата заявки -->
                                         <td>
@@ -337,7 +337,7 @@
                                         </td>
 
                                         <!-- Клиент -->
-                                        <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                        <td style_="max-width: 10rem; overflow: hidden; text-overflow: ellipsis;">
                                             <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_organization }}</div>
                                             @if(!empty($request->street))
                                                 <small class="text-dark text-truncate_ d-block"
@@ -356,7 +356,7 @@
                                         </td>
 
                                         <!-- Комментарий -->
-                                        <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
+                                        <td style_="max-width: 50rem; overflow: hidden; text-overflow: ellipsis;">
                                             @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
                                                 @php
                                                     $firstComment = $comments_by_request[$request->id][0];
