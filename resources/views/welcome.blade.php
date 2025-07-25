@@ -91,8 +91,6 @@
         }
     </style>
 
-
-
     <!-- Bootstrap 5 CSS -->
     <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -104,6 +102,7 @@
     <link href="{{ asset('css/table-styles.css') }}" rel="stylesheet">
     <link href="{{ asset('css/dark-theme.css') }}" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/mobile-requests.css') }}" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">
 
@@ -306,16 +305,16 @@
                             <table id="requestsTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>
-                                    <th style_="width: 1rem;"></th>
-                                    <th style_ ="width: auto;">Дата<br> исполнения</th>
-                                    <th style_="width: auto;">Адрес<br>Телефон</th>
-                                    <th style_="width: auto;">Комментарии</th>
+                                    <th class="th-col" style_="width: 1rem;"></th>
+                                    <th class="th-col" style_ ="width: auto;">Дата<br> исполнения</th>
+                                    <th class="th-col" style_="width: auto;">Адрес<br>Телефон</th>
+                                    <th class="th-col" style_="width: auto;">Комментарии</th>
 
-                                    <th id="brigadeHeader" style_="width: auto;">Бригада <span id="brigadeSortIcon"></span></th>
+                                    <th id="brigadeHeader" class="th-col" style_="width: auto;">Бригада <span id="brigadeSortIcon"></span></th>
                                     @if($user->isAdmin)
-                                    <th style_="width: 1rem;" colspan_="2">Действия с заявкой</th>
+                                    <th class="th-col" style_="width: 1rem;" colspan_="2">Действия с заявкой</th>
                                     @endif
-                                    <th style_="width: 2rem;"></th>
+                                    <th class="th-col" style_="width: 2rem;"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -328,19 +327,19 @@
                                         style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                         data-request-id="{{ $request->id }}">
                                         <!-- Номер заявки -->
-                                        <td style_="max-width: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
+                                        <td class="col-number" style_="max-width: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
 
                                         <!-- Дата заявки -->
-                                        <td>
-                                            <div>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
-                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->number }}</div>
+                                        <td class="col-date">
+                                            <div class="col-date__date" style_="font-size: 0.8rem;">{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
+                                            <div class="col-date__number" style_="font-size: 0.8rem;">{{ $request->number }}</div>
                                         </td>
 
                                         <!-- Клиент -->
-                                        <td style_="max-width: 10rem; overflow: hidden; text-overflow: ellipsis;">
-                                            <div class="text-dark"style="font-size: 0.8rem;">{{ $request->client_organization }}</div>
+                                        <td class="col-address" style_="max-width: 10rem; overflow: hidden; text-overflow: ellipsis;">
+                                            <div class="text-dark col-address__organization"style_="font-size: 0.8rem;">{{ $request->client_organization }}</div>
                                             @if(!empty($request->street))
-                                                <small class="text-dark text-truncate_ d-block"
+                                                <small class="text-dark text-truncate_ d-block col-address__street"
                                                        data-bs-toggle="tooltip"
                                                        title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
                                                        @if($request->city_name && $request->city_name !== 'Москва')<strong>{{ $request->city_name }}</strong>, @endif ул. {{ $request->street }}, д. {{ $request->houses }}
@@ -356,7 +355,7 @@
                                         </td>
 
                                         <!-- Комментарий -->
-                                        <td style_="max-width: 50rem; overflow: hidden; text-overflow: ellipsis;">
+                                        <td class="col-comments" style_="max-width: 50rem; overflow: hidden; text-overflow: ellipsis;">
                                             @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
                                                 @php
                                                     $firstComment = $comments_by_request[$request->id][0];
@@ -367,12 +366,10 @@
                                                 <div class="comment-preview small text-dark" 
                                                     style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
                                                     data-bs-toggle="tooltip" title="{{ $commentText }}">
-                                                    <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
-                                                    @if(count($comments_by_request[$request->id]) > 1)
-                                                        {{ Str::limit($commentText, 300, '...') }}
-                                                    @else
-                                                        {{ $commentText }}
-                                                    @endif
+                                                    <p class="comment-preview-title" style_="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
+
+                                                    <p class="comment-preview-text">{{ $commentText }}</p>
+
                                                 </div>
                                             @endif
                                             @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) >= 1)
@@ -383,7 +380,7 @@
                                                             data-bs-target="#commentsModal"
                                                             data-request-id="{{ $request->id }}"
                                                             style="position: relative; z-index: 1;">
-                                                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                                                        <i class="bi bi-chat-left-text me-1"></i><span class="text-comment">Все комментарии</span>
                                                         <span class="badge bg-primary rounded-pill ms-1">
                                                             {{ count($comments_by_request[$request->id]) }}
                                                         </span>
@@ -401,7 +398,7 @@
                                         </td> -->
 
                                         <!-- Состав бригады -->
-                                        <td>
+                                        <td class="col-brigade">
                                             @if($request->brigade_id)
                                                 @php
                                                     $brigadeMembers = collect($brigadeMembersWithDetails)

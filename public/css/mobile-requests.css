@@ -1,93 +1,137 @@
 /* public/css/mobile-requests.css */
 
-/* Base styles for desktop - ensure table displays normally */
-#requestsTable {
-    width: 100%;
-    margin-bottom: 1rem;
-    color: #212529;
-    vertical-align: top;
-    border-color: #dee2e6;
+/* Основные стили для колонок */
+#requestsTable .col-number {
+    /* width: 24px;
+    min-width: 24px;
+    max-width: 24px;
+    padding: 0 1px;
+    text-align: center;
+    box-sizing: border-box; */
 }
 
-/* Mobile styles */
+#requestsTable .col-date {
+    /* width: 8rem; */
+}
+
+#requestsTable .col-address {
+    /* width: 15rem;
+    max-width: 15rem; */    
+}
+
+#requestsTable .col-comments {
+    /* min-width: 20rem;
+    max-width: 30rem; */
+}
+
+#requestsTable .col-brigade {
+    /* width: 15rem;
+    max-width: 15rem; */
+}
+
+#requestsTable .col-actions {
+    /* width: 8rem; */
+}
+
+#requestsTable .col-photo {
+    /* width: 6rem; */
+}
+
+.comment-preview {
+    /* white-space: pre-wrap; */
+    /* word-break: break-word;
+    overflow-wrap: break-word; */
+}
+
+.comment-preview-title {
+    font-weight: bold;
+    word-break: break-all;
+    margin-bottom: 2px;
+}
+
+.comment-preview-text {
+    word-break: break-all;
+    margin-bottom: 2px;
+}
+
+.text-comment {
+    /* font-size: 0.8rem; */
+}
+
+.col-date__date {
+    font-size: 0.8rem;
+}
+
+.col-date__number {
+    font-size: 0.8rem;
+}
+
+.col-address__organization {
+    font-size: 0.8rem;
+}
+
+/* Адаптация для мобильных устройств (ширина экрана до 768px) */
 @media (max-width: 768px) {
-    /* Make table scrollable horizontally */
-    .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    .comment-preview-title {
+        font-size: smaller;
+    }
+    
+    .comment-preview-text {
+        font-size: smaller;
     }
 
-    /* Hide table headers */
-    #requestsTable thead {
+    #requestsTable .col-number {
         display: none;
     }
 
-    /* Make each row a card */
-    #requestsTable tbody tr {
-        display: block;
-        margin-bottom: 1rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        padding: 0.5rem;
+    #requestsTable thead th:first-child {
+        display: none;
     }
-
-    /* Make cells stack vertically */
-    #requestsTable tbody td {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.5rem 0.75rem;
-        border: none;
-        border-bottom: 1px solid #f0f0f0;
-        position: relative;
-        padding-left: 50%;
-    }
-
-    /* Add labels before each cell */
-    #requestsTable tbody td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 0.75rem;
-        width: 45%;
-        padding-right: 10px;
-        font-weight: 600;
-        text-align: left;
-    }
-
-    /* Remove border from last cell in each row */
-    #requestsTable tbody tr td:last-child {
-        border-bottom: none;
-    }
-
-    /* Adjust action buttons for mobile */
-    #requestsTable .btn-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem;
-    }
-
-    #requestsTable .btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
-    }
-
-    /* Hide less important columns on mobile */
-    .mobile-hide {
+    
+    .view-comments-btn i {
         display: none;
     }
 
-    /* Status badge adjustments */
-    .badge {
-        font-size: 0.8em;
-        padding: 0.35em 0.65em;
+    .col-comments {
+        width: 11rem;
     }
 
-    /* Comment preview adjustments */
-    .comment-preview {
-        max-height: 100px;
-        overflow-y: auto;
-        font-size: 0.85em;
-        padding: 0.5rem;
-        background-color: #f8f9fa;
-        border-radius: 0.25rem;
+    .col-date__date {
+        font-size: 10px;
     }
+
+    .col-date__number {
+        font-size: 10px;
+    }
+
+    .col-address__organization, .col-address__street {
+        font-size: 12px;
+    }
+
+    .th-col {
+        font-size: 12px;
+        line-height: 12px;
+    }
+
+    .col-address {
+        width: 8rem;
+    }
+
+    .col-brigade {
+        width: 8rem;
+    }
+
+    .col-date {
+        width: 6rem;
+    }
+}
+
+/* Скрываем иконки в кнопках на очень маленьких экранах */
+@media (max-width: 480px) {
+
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 400px) {
+
 }
