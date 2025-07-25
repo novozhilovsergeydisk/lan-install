@@ -485,7 +485,7 @@
                                                 @endif
                                             </div>
                                         </td>
-
+                                        @endif
                                         <!-- Action Buttons -->
                                         <td class="text-nowrap">
                                             <div class="d-flex flex-column gap-1">
@@ -510,7 +510,6 @@
                                                 </button>
                                             </div>
                                         </td>
-                                        @endif
                                     </tr>
                                 @endforeach
                                 </tbody>

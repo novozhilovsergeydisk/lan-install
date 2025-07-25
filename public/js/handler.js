@@ -502,7 +502,7 @@ function applyFilters() {
                                 ` : ''}
                                 </div>
                             </td>
-
+                            ` : ''}
                             <td class="text-nowrap">
                                 <div class="d-flex flex-column gap-1">
                                     ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
@@ -515,7 +515,6 @@ function applyFilters() {
                                     </button>
                                 </div>
                             </td>
-                            ` : ''}
                         `;
 
                             tbody.appendChild(row);

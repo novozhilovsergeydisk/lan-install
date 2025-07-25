@@ -388,10 +388,12 @@ function addRequestToTable(result) {
                 </button>
             </div>
         </td>
+        ` : ''}
+
         <td class="text-nowrap">
             <div class="d-flex flex-column gap-1">
                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                    Закрыть заявку!
+                    Закрыть заявку
                 </button>
 
                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
@@ -399,7 +401,6 @@ function addRequestToTable(result) {
                 </button>
             </div>
         </td>
-        ` : ''}
     `;
 
     // Добавляем строку в начало таблицы
