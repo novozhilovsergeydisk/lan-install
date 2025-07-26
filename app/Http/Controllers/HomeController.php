@@ -708,7 +708,27 @@ class HomeController extends Controller
     public function getRequestsByDate($date)
     {
         try {
-            $user = Auth::user();
+            $user = auth()->user();
+
+            // Загружаем роли пользователя
+            $sql = "SELECT roles.name FROM user_roles
+                JOIN roles ON user_roles.role_id = roles.id
+                WHERE user_roles.user_id = " . $user->id;
+            
+            $roles = DB::select($sql);
+            
+            // Извлекаем только имена ролей из результатов запроса
+            $roleNames = array_map(function($role) {
+                return $role->name;
+            }, $roles);
+            
+            // Устанавливаем роли и флаги
+            $user->roles = $roleNames;
+            $user->isAdmin = in_array('admin', $roleNames);
+            $user->isUser = in_array('user', $roleNames);
+            $user->isFitter = in_array('fitter', $roleNames);
+            $user->user_id = $user->id;
+            $user->sql = $sql;
 
             // Валидация даты
             $validator = validator(['date' => $date], [
@@ -736,48 +756,10 @@ class HomeController extends Controller
             // }
 
             // Получаем заявки с основной информацией
-            $requestByDate = DB::select("
-                SELECT
-                    r.*,
-                    c.fio AS client_fio,
-                    c.phone AS client_phone,
-                    c.organization AS client_organization,
-                    rs.name AS status_name,
-                    rs.color AS status_color,
-                    b.name AS brigade_name,
-                    b.id AS brigade_id,
-                    e.fio AS brigade_lead,
-                    op.fio AS operator_name,
-                    CONCAT(addr.street, ', д. ', addr.houses) as address,
-                    addr.street,
-                    addr.houses,
-                    addr.district,
-                    addr.city_id,
-                    ct.name AS city_name,
-                    (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count
-                FROM requests r
-                LEFT JOIN clients c ON r.client_id = c.id
-                LEFT JOIN request_statuses rs ON r.status_id = rs.id
-                LEFT JOIN brigades b ON r.brigade_id = b.id
-                LEFT JOIN employees e ON b.leader_id = e.id
-                LEFT JOIN employees op ON r.operator_id = op.id
-                LEFT JOIN request_addresses ra ON r.id = ra.request_id
-                LEFT JOIN addresses addr ON ra.address_id = addr.id
-                LEFT JOIN cities ct ON addr.city_id = ct.id
-                WHERE DATE(r.execution_date) = ? AND (b.is_deleted = false OR b.id IS NULL)
-                AND EXISTS (
-                    SELECT 1
-                    FROM brigade_members bm
-                    JOIN employees emp ON bm.employee_id = emp.id
-                    WHERE bm.brigade_id = r.brigade_id
-                    AND emp.user_id = {$user->id}
-                )
-                ORDER BY r.id DESC
-            ", [$requestDate]);
 
             // Если пользователь является фитчером, то получаем заявки только из бригады с его участием
             if ($user->isFitter) {
-                $requestByDate = DB::select("
+                $sqlRequestByDate = "
                     SELECT
                         r.*,
                         c.fio AS client_fio,
@@ -814,8 +796,55 @@ class HomeController extends Controller
                         AND emp.user_id = {$user->id}
                     )
                     ORDER BY r.id DESC
-                ", [$requestDate]);
+                ";
+            } else {
+                $sqlRequestByDate = "
+                    SELECT
+                        r.*,
+                        c.fio AS client_fio,
+                        c.phone AS client_phone,
+                        c.organization AS client_organization,
+                        rs.name AS status_name,
+                        rs.color AS status_color,
+                        b.name AS brigade_name,
+                        b.id AS brigade_id,
+                        e.fio AS brigade_lead,
+                        op.fio AS operator_name,
+                        CONCAT(addr.street, ', д. ', addr.houses) as address,
+                        addr.street,
+                        addr.houses,
+                        addr.district,
+                        addr.city_id,
+                        ct.name AS city_name,
+                        (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count
+                    FROM requests r
+                    LEFT JOIN clients c ON r.client_id = c.id
+                    LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                    LEFT JOIN brigades b ON r.brigade_id = b.id
+                    LEFT JOIN employees e ON b.leader_id = e.id
+                    LEFT JOIN employees op ON r.operator_id = op.id
+                    LEFT JOIN request_addresses ra ON r.id = ra.request_id
+                    LEFT JOIN addresses addr ON ra.address_id = addr.id
+                    LEFT JOIN cities ct ON addr.city_id = ct.id
+                    WHERE DATE(r.execution_date) = ? AND (b.is_deleted = false OR b.id IS NULL)
+                    ORDER BY r.id DESC
+                ";
             }
+
+            $requestByDate = DB::select($sqlRequestByDate, [$requestDate]);
+
+            // return response()->json([
+            //     'success' => false,
+            //     'message' => 'Проверка обработки ошибок',
+            //     'data' => $user,
+            //     'roleNames' => $roleNames,
+            //     'isAdmin' => $user->isAdmin,
+            //     'isUser' => $user->isUser,
+            //     'isFitter' => $user->isFitter,
+            //     'user_id' => $user->user_id,
+            //     'sql' => $user->sql,
+            //     'sqlRequestByDate' => $sqlRequestByDate,
+            // ], 200);
 
             // Преобразуем объекты в массивы для удобства работы
             $requests = array_map(function ($item) {
@@ -935,27 +964,27 @@ class HomeController extends Controller
                 }
             }
 
-            $user = auth()->user();
+            // $user = auth()->user();
 
-            // Загружаем роли пользователя
-            $sql = "SELECT roles.name FROM user_roles
-                JOIN roles ON user_roles.role_id = roles.id
-                WHERE user_roles.user_id = " . $user->id;
+            // // Загружаем роли пользователя
+            // $sql = "SELECT roles.name FROM user_roles
+            //     JOIN roles ON user_roles.role_id = roles.id
+            //     WHERE user_roles.user_id = " . $user->id;
             
-            $roles = DB::select($sql);
+            // $roles = DB::select($sql);
             
-            // Извлекаем только имена ролей из результатов запроса
-            $roleNames = array_map(function($role) {
-                return $role->name;
-            }, $roles);
+            // // Извлекаем только имена ролей из результатов запроса
+            // $roleNames = array_map(function($role) {
+            //     return $role->name;
+            // }, $roles);
             
-            // Устанавливаем роли и флаги
-            $user->roles = $roleNames;
-            $user->isAdmin = in_array('admin', $roleNames);
-            $user->isUser = in_array('user', $roleNames);
-            $user->isFitter = in_array('fitter', $roleNames);
-            $user->user_id = $user->id;
-            $user->sql = $sql;
+            // // Устанавливаем роли и флаги
+            // $user->roles = $roleNames;
+            // $user->isAdmin = in_array('admin', $roleNames);
+            // $user->isUser = in_array('user', $roleNames);
+            // $user->isFitter = in_array('fitter', $roleNames);
+            // $user->user_id = $user->id;
+            // $user->sql = $sql;
 
             // Добавляем членов бригады, информацию о бригадире и комментарии к каждой заявке
             $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest, $user) {
