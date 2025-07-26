@@ -312,9 +312,9 @@
 
                                     <th id="brigadeHeader" class="th-col" style_="width: auto;">Бригада <span id="brigadeSortIcon"></span></th>
                                     @if($user->isAdmin)
-                                    <th class="th-col" style_="width: 1rem;" colspan_="2">Действия с заявкой</th>
+                                    <th class="th-col" style="width: 1rem;" colspan_="2">Действия с заявкой</th>
                                     @endif
-                                    <th class="th-col" style_="width: 2rem;"></th>
+                                    <th class="th-col" style="width: 2rem;"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
