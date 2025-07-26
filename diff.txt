@@ -1,117 +1,64 @@
-diff --git a/app/Http/Controllers/EmployeeUserController.php b/app/Http/Controllers/EmployeeUserController.php
-index 9259c32..5034b27 100644
---- a/app/Http/Controllers/EmployeeUserController.php
-+++ b/app/Http/Controllers/EmployeeUserController.php
-@@ -8,6 +8,7 @@
- use Illuminate\Support\Facades\Hash;
- use Illuminate\Support\Facades\Log;
- use Illuminate\Support\Str;
-+use Illuminate\Support\Facades\Auth;
+diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
+index 875080d..35abe5b 100644
+--- a/app/Http/Controllers/HomeController.php
++++ b/app/Http/Controllers/HomeController.php
+@@ -405,8 +405,7 @@ public function index()
+         $brigadesCurrentDay = DB::select($sql);
  
- class EmployeeUserController extends Controller
- {
-@@ -547,8 +548,6 @@ public function update(Request $request)
-     public function deleteEmployee(Request $request)
-     {
-         try {
--            
--
-             DB::beginTransaction();
- 
-             // Валидация входящих данных
-@@ -572,26 +571,37 @@ public function deleteEmployee(Request $request)
-             
-             $user_id = $employee->user_id;
- 
--            $user_exists = DB::select("SELECT * FROM users WHERE id = ?", [$user_id]);
-+            if ($user_id === Auth::user()->id) {
-+                return response()->json([
-+                    'success' => false,
-+                    'message' => 'Нельзя удалить самого себя',
-+                    'error' => 'Ошибка при удалении сотрудника'
-+                ], 200);
-+            } 
-             
--            DB::commit();
-+            DB::beginTransaction();
+         // 🔽 Комплексный запрос получения списка заявок с подключением к employees
+-        $requests = DB::select('
+-            SELECT
++        $sql = "SELECT
+                 r.*,
+                 c.fio AS client_fio,
+                 c.phone AS client_phone,
+@@ -432,8 +431,47 @@ public function index()
+             LEFT JOIN addresses addr ON ra.address_id = addr.id
+             LEFT JOIN cities ct ON addr.city_id = ct.id
+             WHERE r.execution_date::date = CURRENT_DATE AND (b.is_deleted = false OR b.id IS NULL)
+-            ORDER BY r.id DESC
+-        ');
++            ORDER BY r.id DESC";
 +
-+            $user_exists = DB::select("SELECT * FROM users WHERE id = ?", [$user_id]);
- 
-             // Тестовый response
--            // return response()->json([
--            //     'success' => true,
--            //     'message' => 'Тестовый response',
--            //     'data' => $request->all(),
--            //     'validated' => $validated,
--            //     'employee' => $employee,
--            //     'user_id' => $user_id,
--            //     'user_exists' => $user_exists,
--            // ], 200);
-+            return response()->json([
-+                'success' => true,
-+                'message' => 'Тестовый response',
-+                'data' => $request->all(),
-+                'validated' => $validated,
-+                'employee' => $employee,
-+                'user_id' => $user_id,
-+                'user_exists' => $user_exists,
-+                'Auth::user()->id' => Auth::user()->id
-+            ], 200);
- 
-             $user_employee = DB::update("UPDATE employees SET is_deleted = true WHERE id = ?", [$employeeId]);
- 
-             if (!$user_exists) {
-                 $res_user_employee = DB::update("UPDATE users SET password = null WHERE id = ?", [$user_id]);
-             }
-+
-+            DB::commit();
-             
-             return response()->json([
-                 'success' => true,
-diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index c3c4cf1..3d92ed6 100644
---- a/public/js/form-handlers.js
-+++ b/public/js/form-handlers.js
-@@ -620,26 +620,27 @@ export function initDeleteEmployee() {
- }
- 
- async function handleDeleteEmployee(event) {
--    // Получаем данные о сотруднике из атрибутов кнопки
--    const employeeName = event.currentTarget.getAttribute('data-employee-name');
--    const employeeId = event.currentTarget.getAttribute('data-employee-id');
-+    if (confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
-+        // Получаем данные о сотруднике из атрибутов кнопки
-+        const employeeName = event.currentTarget.getAttribute('data-employee-name');
-+        const employeeId = event.currentTarget.getAttribute('data-employee-id');
- 
--    console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
-+        console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
- 
--    const data = {
--        employee_id: employeeId,
--    };
-+        const data = {
-+            employee_id: employeeId,
-+        };
- 
--    const result = await postData('/employee/delete', data);
-+        const result = await postData('/employee/delete', data);
- 
--    console.log('Ответ от сервера:', result);
-+        console.log('Ответ от сервера:', result);
- 
--    if (result.success) {
--        showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
--    } else {
--        showAlert(`Ошибка при удалении сотрудника "${employeeName}"`, 'danger');
--    }
--    
-+        if (result.success) {
-+            showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
-+        } else {
-+            showAlert(result.message, 'danger');
++        if ($user->isFitter) {
++            $sql = "SELECT
++                r.*,
++                c.fio AS client_fio,
++                c.phone AS client_phone,
++                c.organization AS client_organization,
++                rs.name AS status_name,
++                rs.color AS status_color,
++                b.name AS brigade_name,
++                e.fio AS brigade_lead,
++                op.fio AS operator_name,
++                addr.street,
++                addr.houses,
++                addr.district,
++                addr.city_id,
++                ct.name AS city_name,
++                ct.postal_code AS city_postal_code
++            FROM requests r
++            LEFT JOIN clients c ON r.client_id = c.id
++            LEFT JOIN request_statuses rs ON r.status_id = rs.id
++            LEFT JOIN brigades b ON r.brigade_id = b.id
++            LEFT JOIN employees e ON b.leader_id = e.id
++            LEFT JOIN employees op ON r.operator_id = op.id
++            LEFT JOIN request_addresses ra ON r.id = ra.request_id
++            LEFT JOIN addresses addr ON ra.address_id = addr.id
++            LEFT JOIN cities ct ON addr.city_id = ct.id
++            WHERE r.execution_date::date = CURRENT_DATE 
++            AND (b.is_deleted = false OR b.id IS NULL)
++            AND EXISTS (
++                SELECT 1
++                FROM brigade_members bm
++                JOIN employees emp ON bm.employee_id = emp.id
++                WHERE bm.brigade_id = r.brigade_id
++                AND emp.user_id = {$user->id}
++            )
++            ORDER BY r.id DESC";
 +        }
-+    }    
-     // showAlert(`Реализация удаления сотрудника "${employeeName}" в разработке`, 'warning');
- }
- // END Инициализация удаления сотрудника
++
++        $requests = DB::select($sql);
+ 
+         //        dd($requestByDate);
+ 
