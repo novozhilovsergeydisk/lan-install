@@ -2319,8 +2319,9 @@
                                 <div class="mb-4">
                                     <label class="form-label">Системная роль</label>
                                     <select name="role_id_update" id="roleSelectUpdate" class="form-select mb-4" required data-field-name="Системная роль">
-                                        @foreach ($roles as $role)
-                                            <option value="{{ $role->id }}" {{ $role->id == 2 ? 'selected' : '' }}>{{ $role->name }}</option>
+                                    <option value="">Выберите системную роль</option>    
+                                    @foreach ($roles as $role)
+                                            <option value="{{ $role->id }}">{{ $role->name }}</option>
                                         @endforeach 
                                     </select>
                                 </div>
