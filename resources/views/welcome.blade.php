@@ -1595,7 +1595,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button>
+                        <!-- <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button> -->
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                         <button type="button" class="btn btn-primary" id="submitRequest">Создать заявку</button>
                     </div>
