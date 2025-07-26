@@ -708,6 +708,8 @@ class HomeController extends Controller
     public function getRequestsByDate($date)
     {
         try {
+            $user = Auth::user();
+
             // Валидация даты
             $validator = validator(['date' => $date], [
                 'date' => 'required|date_format:Y-m-d'
@@ -763,8 +765,57 @@ class HomeController extends Controller
                 LEFT JOIN addresses addr ON ra.address_id = addr.id
                 LEFT JOIN cities ct ON addr.city_id = ct.id
                 WHERE DATE(r.execution_date) = ? AND (b.is_deleted = false OR b.id IS NULL)
+                AND EXISTS (
+                    SELECT 1
+                    FROM brigade_members bm
+                    JOIN employees emp ON bm.employee_id = emp.id
+                    WHERE bm.brigade_id = r.brigade_id
+                    AND emp.user_id = {$user->id}
+                )
                 ORDER BY r.id DESC
             ", [$requestDate]);
+
+            // Если пользователь является фитчером, то получаем заявки только из бригады с его участием
+            if ($user->isFitter) {
+                $requestByDate = DB::select("
+                    SELECT
+                        r.*,
+                        c.fio AS client_fio,
+                        c.phone AS client_phone,
+                        c.organization AS client_organization,
+                        rs.name AS status_name,
+                        rs.color AS status_color,
+                        b.name AS brigade_name,
+                        b.id AS brigade_id,
+                        e.fio AS brigade_lead,
+                        op.fio AS operator_name,
+                        CONCAT(addr.street, ', д. ', addr.houses) as address,
+                        addr.street,
+                        addr.houses,
+                        addr.district,
+                        addr.city_id,
+                        ct.name AS city_name,
+                        (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count
+                    FROM requests r
+                    LEFT JOIN clients c ON r.client_id = c.id
+                    LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                    LEFT JOIN brigades b ON r.brigade_id = b.id
+                    LEFT JOIN employees e ON b.leader_id = e.id
+                    LEFT JOIN employees op ON r.operator_id = op.id
+                    LEFT JOIN request_addresses ra ON r.id = ra.request_id
+                    LEFT JOIN addresses addr ON ra.address_id = addr.id
+                    LEFT JOIN cities ct ON addr.city_id = ct.id
+                    WHERE DATE(r.execution_date) = ? AND (b.is_deleted = false OR b.id IS NULL)
+                    AND EXISTS (
+                        SELECT 1
+                        FROM brigade_members bm
+                        JOIN employees emp ON bm.employee_id = emp.id
+                        WHERE bm.brigade_id = r.brigade_id
+                        AND emp.user_id = {$user->id}
+                    )
+                    ORDER BY r.id DESC
+                ", [$requestDate]);
+            }
 
             // Преобразуем объекты в массивы для удобства работы
             $requests = array_map(function ($item) {
