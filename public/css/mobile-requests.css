@@ -120,7 +120,7 @@
     }
 
     .col-comments {
-        width: 11rem;
+        width: 10rem;
     }
 
     .col-date__date {
@@ -132,12 +132,12 @@
     }
 
     .col-address__organization, .col-address__street {
-        font-size: 12px;
+        font-size: 8px;
     }
 
     .th-col {
-        font-size: 12px;
-        line-height: 12px;
+        font-size: 8px;
+        line-height: 8px;
     }
 
     .col-address {
@@ -161,7 +161,19 @@
     }
 
     .col-actions__div button {
-        font-size: 12px;
+        font-size: 8px;
+    }
+
+    #requestsTable th, #requestsTable td {
+        font-size: 8px !important;
+    }
+
+    .tab-content {
+        padding: 0.1rem !important;
+    }
+
+    .col-actions__span {
+        display: none;
     }
 }
 

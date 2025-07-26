@@ -1132,6 +1132,7 @@ async function handleSaveEmployeeChanges() {
         const requestData = {
             _token: data._token,
             user_id: data.user_id_update,
+            role_id_update: data.role_id_update,
             fio: data.fio_update,
             position_id: positionValue,
             employee_id: data.employee_id_update,

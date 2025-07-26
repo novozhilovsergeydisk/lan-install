@@ -369,6 +369,7 @@ class EmployeeUserController extends Controller
 
     public function update(Request $request)
     {
+        // $user_id = $request->input('user_id');
         // Получаем ID сотрудника из формы
         $employee_id = $request->input('employee_id');
 
@@ -386,13 +387,19 @@ class EmployeeUserController extends Controller
             'passport_department_code' => 'nullable|string|max:20',
             'car_brand' => 'nullable|string|max:100',
             'car_plate' => 'nullable|string|max:20',
+            'role_id_update' => 'required|exists:roles,id',
         ], [
             'fio.required' => 'Поле "ФИО" обязательно для заполнения',
             'position_id.required' => 'Поле "Должность" обязательно для выбора',
             'position_id.exists' => 'Выбранная должность недействительна',
+            'role_id_update.required' => 'Поле "Системная роль" обязательно для выбора',
+            'role_id_update.exists' => 'Выбранная система роль недействительна',
         ]);
 
         try {
+
+// return $request->all();
+
             DB::beginTransaction();
 
             // Продолжаем выполнение обновления данных
@@ -416,10 +423,27 @@ class EmployeeUserController extends Controller
 
             // Проверяем, что сотрудник существует
             $employee = DB::selectOne("SELECT * FROM employees WHERE (is_deleted IS NULL OR is_deleted = false) AND id = ?", [$employeeId]);
-
+            
+            // return $employee;
+            
             if (!$employee) {
                 throw new \Exception('Сотрудник не найден');
             }
+
+            $user_id = $employee->user_id;
+
+            $sqlEmployee = "select user_id from employees where id = $employee_id";
+
+            $sqlUpdateRole = "UPDATE user_roles SET role_id = $request->role_id_update WHERE user_id = ($sqlEmployee)";
+
+            // $request->sql = $sql;
+
+            // return $request->all();
+
+            // Обновление роли
+            DB::update(
+                $sqlUpdateRole
+            );
 
             // Обновление или создание паспорта
             // Проверяем наличие обязательного поля series_number
@@ -520,6 +544,8 @@ class EmployeeUserController extends Controller
                     'success' => true,
                     'message' => 'Данные сотрудника успешно обновлены.',
                     'user_id' => $request->user_id,
+                    'sqlUpdateRole' => $sqlUpdateRole,
+                    'sqlEmployee' => $sqlEmployee,
                     'data' => [
                         'employee' => $employee,
                         'passport' => $passport,
