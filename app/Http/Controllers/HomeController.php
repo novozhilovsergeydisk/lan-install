@@ -536,9 +536,13 @@ class HomeController extends Controller
             'sql' => $sql
         ];
 
-        // $data = DB::select($sql);
+        // $data = [
+        //     'isAdmin' => $user->isAdmin ?? false,
+        //     'isUser' => $user->isUser ?? false,
+        //     'isFitter' => $user->isFitter ?? false,
+        // ];
 
-        // return response()->json($viewData);
+        // return response()->json($data);
 
         // Логируем данные для отладки
         // \Log::info('View data:', ['comments_by_request' => $comments_by_request]);
