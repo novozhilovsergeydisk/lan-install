@@ -1,46 +1,56 @@
 diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index 65f99d2..057cd1a 100644
+index 057cd1a..9a1a2cb 100644
 --- a/app/Http/Controllers/HomeController.php
 +++ b/app/Http/Controllers/HomeController.php
-@@ -329,7 +329,7 @@ public function index()
-         $positions = DB::select('SELECT * FROM positions');
+@@ -532,9 +532,14 @@ public function index()
+             'roles' => $roles,
+             'isAdmin' => $user->isAdmin ?? false,
+             'isUser' => $user->isUser ?? false,
+-            'isFitter' => $user->isFitter ?? false
++            'isFitter' => $user->isFitter ?? false,
++            'sql' => $sql
+         ];
  
-         // Комплексный запрос для получения информации о членах бригад с данными о бригадах
--        $brigadeMembersWithDetails = DB::select(
-+        $brigadeMembersWithDetails_ = DB::select(
-             'SELECT
-                 bm.*,
-                 b.name as brigade_name,
-@@ -350,6 +350,32 @@ public function index()
-             LEFT JOIN employees el ON b.leader_id = el.id'
-         );
++        // $data = DB::select($sql);
++
++        // return response()->json($viewData);
++
+         // Логируем данные для отладки
+         // \Log::info('View data:', ['comments_by_request' => $comments_by_request]);
  
-+        $sql = "SELECT
-+            b.id AS brigade_id,
-+            bm.employee_id,
-+            b.name AS brigade_name,
-+            b.leader_id,
-+            e.fio AS employee_name,
-+            e.phone AS employee_phone,
-+            e.group_role AS employee_group_role,
-+            e.sip AS employee_sip,
-+            e.position_id AS employee_position_id,
-+            el.fio AS employee_leader_name,
-+            el.phone AS employee_leader_phone,
-+            el.group_role AS employee_leader_group_role,
-+            el.sip AS employee_leader_sip,
-+            el.position_id AS employee_leader_position_id
-+        FROM brigades b
-+        LEFT JOIN brigade_members bm ON bm.brigade_id = b.id
-+        LEFT JOIN employees e ON bm.employee_id = e.id
-+        LEFT JOIN employees el ON b.leader_id = el.id
-+        WHERE b.is_deleted = false
-+        AND el.is_deleted = false
-+        ORDER BY b.id, employee_name";
-+
-+        $brigadeMembersWithDetails = DB::select($sql);
-+
-+
-         // dd($brigadeMembersWithDetails);`
- 
-         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
+diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
+index 05fdbe7..a9c0c88 100644
+--- a/public/js/form-handlers.js
++++ b/public/js/form-handlers.js
+@@ -320,11 +320,11 @@ function addRequestToTable(result) {
+         <!-- Клиент -->
+         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+             <div class="text-dark"style="font-size: 0.8rem;">${clientOrganization}</div>
+-            <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
++            <small class="text-dark text-truncate_ d-block" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
+             ${addressData.city_name && addressData.city_name !== 'Москва' ? `<strong>${addressData.city_name}</strong>, ` : ''}ул. ${addressText}
+             </small>
+             <div class="text-dark"style="font-size: 0.8rem;"><i>${clientData.fio || requestData.client_fio}</i></div>
+-            <small class="text-truncate d-block">
++            <small class="text-truncate_ d-block">
+                 <i>${clientData.phone || requestData.client_phone || 'Нет телефона'}</i>
+             </small>
+         </td>
+diff --git a/public/js/handler.js b/public/js/handler.js
+index d012d50..ef44656 100644
+--- a/public/js/handler.js
++++ b/public/js/handler.js
+@@ -405,11 +405,11 @@ function applyFilters() {
+                             <!-- Клиент -->
+                             <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                 <div class="text-dark"style="font-size: 0.8rem;">${request.client_organization}</div>
+-                                <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
++                                <small class="text-dark text-truncate_ d-block" data-bs-toggle="tooltip" title="${request.address || address}">
+                                     ${request.city_name && request.city_name !== 'Москва' ? `<strong>${request.city_name}</strong>, ` : ''}ул. ${request.address || address}
+                                 </small>
+                                 <div class="text-dark"style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>
+-                                <small class="text-success_ fw-bold_ text-truncate d-block">
++                                <small class="text-success_ fw-bold_ text-truncate_ d-block">
+                                     <i>${request.phone || request.client_phone || ''}</i>
+                                 </small>
+                             </td>

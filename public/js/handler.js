@@ -405,11 +405,11 @@ function applyFilters() {
                             <!-- Клиент -->
                             <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
                                 <div class="text-dark"style="font-size: 0.8rem;">${request.client_organization}</div>
-                                <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
+                                <small class="text-dark text-truncate_ d-block" data-bs-toggle="tooltip" title="${request.address || address}">
                                     ${request.city_name && request.city_name !== 'Москва' ? `<strong>${request.city_name}</strong>, ` : ''}ул. ${request.address || address}
                                 </small>
                                 <div class="text-dark"style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>
-                                <small class="text-success_ fw-bold_ text-truncate d-block">
+                                <small class="text-success_ fw-bold_ text-truncate_ d-block">
                                     <i>${request.phone || request.client_phone || ''}</i>
                                 </small>
                             </td>
