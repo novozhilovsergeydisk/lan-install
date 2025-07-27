@@ -902,7 +902,7 @@ class HomeController extends Controller
 
             if (!empty($brigadeIds)) {
                 // Получаем всех членов бригад для загруженных заявок
-                $members = DB::select('
+                $members_old = DB::select('
                     SELECT
                         bm.brigade_id,
                         e.fio as member_name,
@@ -916,6 +916,28 @@ class HomeController extends Controller
                     LEFT JOIN employees el ON b.leader_id = el.id
                     WHERE bm.brigade_id IN (' . implode(',', $brigadeIds) . ')
                 ');
+
+                $sql = "
+                    SELECT
+                        b.id AS brigade_id,
+                        COALESCE(e.fio, '') AS member_name,
+                        e.phone AS member_phone,
+                        e.position_id,
+                        b.leader_id,
+                        COALESCE(el.fio, '') AS employee_leader_name
+                    FROM brigades b
+                    LEFT JOIN brigade_members bm ON bm.brigade_id = b.id
+                    LEFT JOIN employees e ON bm.employee_id = e.id
+                    LEFT JOIN employees el ON b.leader_id = el.id
+                    WHERE b.id IN (" . implode(',', $brigadeIds) . ")
+                    AND b.is_deleted = false
+                    AND (el.id IS NULL OR el.is_deleted = false)
+                    AND (e.id IS NULL OR e.is_deleted = false)
+                    ORDER BY b.id, member_name
+                ";
+                
+                $members = DB::select($sql);
+
 
                 // Группируем членов по ID бригады и сохраняем информацию о бригадире
                 $brigadeLeaders = [];

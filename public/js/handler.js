@@ -319,10 +319,15 @@ function applyFilters() {
                             if (request.brigade_members && request.brigade_members.length > 0) {
                                 // Функция для сокращения ФИО до фамилии и первой буквы имени
                                 const shortenName = (fullName) => {
+                                    // Проверяем, что fullName существует и является строкой
                                     if (!fullName) return '';
-
-                                    const parts = fullName.split(' ');
-                                    if (parts.length < 2) return fullName;
+                                    
+                                    // Если fullName - это объект с полем name, используем его
+                                    const nameToProcess = typeof fullName === 'object' ? fullName.name || '' : String(fullName);
+                                    
+                                    // Разбиваем строку на части по пробелам
+                                    const parts = nameToProcess.trim().split(/\s+/);
+                                    if (parts.length < 2) return nameToProcess;
 
                                     const lastName = parts[0];
                                     const firstName = parts[1];
