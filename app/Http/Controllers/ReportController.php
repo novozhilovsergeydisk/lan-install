@@ -481,53 +481,52 @@ class ReportController extends Controller
         $employeeId = $request->input('employeeId');
 
         $query = DB::table('requests as r')
-            ->selectRaw("
-                r.*,
-                c.fio as client_fio,
-                c.phone as client_phone,
-                c.organization as client_organization,
-                rs.name as status_name,
-                rs.color as status_color,
-                b.name as brigade_name,
-                e.fio as brigade_lead,
-                op.fio as operator_name,
-                addr.street,
-                addr.houses,
-                addr.district,
-                addr.city_id,
-                ct.name as city_name,
-                ct.postal_code as city_postal_code,
-                STRING_AGG(em.fio, ', ') as brigade_members
-            ")
-            ->leftJoin('clients as c', 'r.client_id', '=', 'c.id')
-            ->leftJoin('request_statuses as rs', 'r.status_id', '=', 'rs.id')
-            ->leftJoin('brigades as b', 'r.brigade_id', '=', 'b.id')
-            ->leftJoin('employees as e', 'b.leader_id', '=', 'e.id')
-            ->leftJoin('employees as op', 'r.operator_id', '=', 'op.id')
-            ->leftJoin('request_addresses as ra', 'r.id', '=', 'ra.request_id')
-            ->leftJoin('addresses as addr', 'ra.address_id', '=', 'addr.id')
-            ->leftJoin('cities as ct', 'addr.city_id', '=', 'ct.id')
-            ->leftJoin('brigade_members as bm', 'b.id', '=', 'bm.brigade_id')
-            ->leftJoin('employees as em', 'bm.employee_id', '=', 'em.id')
-            ->where(function($query) {
-                $query->where('b.is_deleted', false)->orWhereNull('b.id');
-            })
-            ->whereExists(function($query) use ($employeeId) {
-                $query->select(DB::raw(1))
-                      ->from('brigade_members as bm2')
-                      ->whereColumn('bm2.brigade_id', 'b.id')
-                      ->where('bm2.employee_id', $employeeId);
-            })
-            ->groupBy('r.id', 'c.id', 'rs.id', 'b.id', 'e.id', 'op.id', 'addr.id', 'ct.id')
-            ->orderByDesc('r.execution_date')
-            ->orderByDesc('r.id');
-
-        // Логируем параметры запроса
-        \Log::info('Filter params:', [
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'employeeId' => $employeeId
-        ]);
+    ->selectRaw("
+        r.*,
+        c.fio AS client_fio,
+        c.phone AS client_phone,
+        c.organization AS client_organization,
+        rs.name AS status_name,
+        rs.color AS status_color,
+        b.name AS brigade_name,
+        e.fio AS brigade_lead,
+        op.fio AS operator_name,
+        addr.street,
+        addr.houses,
+        addr.district,
+        addr.city_id,
+        ct.name AS city_name,
+        ct.postal_code AS city_postal_code,
+        STRING_AGG(em.fio, ', ') AS brigade_members
+    ")
+    ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
+    ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+    ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
+    ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
+    ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
+    ->leftJoin('request_addresses AS ra', 'r.id', '=', 'ra.request_id')
+    ->leftJoin('addresses AS addr', 'ra.address_id', '=', 'addr.id')
+    ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
+    ->leftJoin('brigade_members AS bm', 'b.id', '=', 'bm.brigade_id')
+    ->leftJoin('employees AS em', 'bm.employee_id', '=', 'em.id')
+    ->where(function ($query) {
+        $query->where('b.is_deleted', false)
+            ->orWhereNull('b.id');
+    })
+    ->where(function ($query) use ($employeeId) {
+        $query->whereExists(function ($q) use ($employeeId) {
+            $q->select(DB::raw(1))
+                ->from('brigade_members as bm2')
+                ->whereColumn('bm2.brigade_id', 'b.id')
+                ->where('bm2.employee_id', $employeeId);
+        })->orWhere('b.leader_id', $employeeId); // ✅ упрощено и точно
+    })
+    ->groupBy(
+        'r.id', 'c.id', 'rs.id', 'b.id', 'e.id',
+        'op.id', 'addr.id', 'ct.id'
+    )
+    ->orderByDesc('r.execution_date')
+    ->orderByDesc('r.id');
 
         // Изменяем фильтрацию дат
         $query->whereDate('r.execution_date', '>=', $startDate)
