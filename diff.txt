@@ -1,186 +1,46 @@
 diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index d094ed5..5070983 100644
+index 65f99d2..057cd1a 100644
 --- a/app/Http/Controllers/HomeController.php
 +++ b/app/Http/Controllers/HomeController.php
-@@ -708,7 +708,27 @@ public function addComment(Request $request)
-     public function getRequestsByDate($date)
-     {
-         try {
--            $user = Auth::user();
-+            $user = auth()->user();
+@@ -329,7 +329,7 @@ public function index()
+         $positions = DB::select('SELECT * FROM positions');
+ 
+         // Комплексный запрос для получения информации о членах бригад с данными о бригадах
+-        $brigadeMembersWithDetails = DB::select(
++        $brigadeMembersWithDetails_ = DB::select(
+             'SELECT
+                 bm.*,
+                 b.name as brigade_name,
+@@ -350,6 +350,32 @@ public function index()
+             LEFT JOIN employees el ON b.leader_id = el.id'
+         );
+ 
++        $sql = "SELECT
++            b.id AS brigade_id,
++            bm.employee_id,
++            b.name AS brigade_name,
++            b.leader_id,
++            e.fio AS employee_name,
++            e.phone AS employee_phone,
++            e.group_role AS employee_group_role,
++            e.sip AS employee_sip,
++            e.position_id AS employee_position_id,
++            el.fio AS employee_leader_name,
++            el.phone AS employee_leader_phone,
++            el.group_role AS employee_leader_group_role,
++            el.sip AS employee_leader_sip,
++            el.position_id AS employee_leader_position_id
++        FROM brigades b
++        LEFT JOIN brigade_members bm ON bm.brigade_id = b.id
++        LEFT JOIN employees e ON bm.employee_id = e.id
++        LEFT JOIN employees el ON b.leader_id = el.id
++        WHERE b.is_deleted = false
++        AND el.is_deleted = false
++        ORDER BY b.id, employee_name";
 +
-+            // Загружаем роли пользователя
-+            $sql = "SELECT roles.name FROM user_roles
-+                JOIN roles ON user_roles.role_id = roles.id
-+                WHERE user_roles.user_id = " . $user->id;
-+            
-+            $roles = DB::select($sql);
-+            
-+            // Извлекаем только имена ролей из результатов запроса
-+            $roleNames = array_map(function($role) {
-+                return $role->name;
-+            }, $roles);
-+            
-+            // Устанавливаем роли и флаги
-+            $user->roles = $roleNames;
-+            $user->isAdmin = in_array('admin', $roleNames);
-+            $user->isUser = in_array('user', $roleNames);
-+            $user->isFitter = in_array('fitter', $roleNames);
-+            $user->user_id = $user->id;
-+            $user->sql = $sql;
- 
-             // Валидация даты
-             $validator = validator(['date' => $date], [
-@@ -736,48 +756,10 @@ public function getRequestsByDate($date)
-             // }
- 
-             // Получаем заявки с основной информацией
--            $requestByDate = DB::select("
--                SELECT
--                    r.*,
--                    c.fio AS client_fio,
--                    c.phone AS client_phone,
--                    c.organization AS client_organization,
--                    rs.name AS status_name,
--                    rs.color AS status_color,
--                    b.name AS brigade_name,
--                    b.id AS brigade_id,
--                    e.fio AS brigade_lead,
--                    op.fio AS operator_name,
--                    CONCAT(addr.street, ', д. ', addr.houses) as address,
--                    addr.street,
--                    addr.houses,
--                    addr.district,
--                    addr.city_id,
--                    ct.name AS city_name,
--                    (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count
--                FROM requests r
--                LEFT JOIN clients c ON r.client_id = c.id
--                LEFT JOIN request_statuses rs ON r.status_id = rs.id
--                LEFT JOIN brigades b ON r.brigade_id = b.id
--                LEFT JOIN employees e ON b.leader_id = e.id
--                LEFT JOIN employees op ON r.operator_id = op.id
--                LEFT JOIN request_addresses ra ON r.id = ra.request_id
--                LEFT JOIN addresses addr ON ra.address_id = addr.id
--                LEFT JOIN cities ct ON addr.city_id = ct.id
--                WHERE DATE(r.execution_date) = ? AND (b.is_deleted = false OR b.id IS NULL)
--                AND EXISTS (
--                    SELECT 1
--                    FROM brigade_members bm
--                    JOIN employees emp ON bm.employee_id = emp.id
--                    WHERE bm.brigade_id = r.brigade_id
--                    AND emp.user_id = {$user->id}
--                )
--                ORDER BY r.id DESC
--            ", [$requestDate]);
- 
-             // Если пользователь является фитчером, то получаем заявки только из бригады с его участием
-             if ($user->isFitter) {
--                $requestByDate = DB::select("
-+                $sqlRequestByDate = "
-                     SELECT
-                         r.*,
-                         c.fio AS client_fio,
-@@ -814,9 +796,56 @@ public function getRequestsByDate($date)
-                         AND emp.user_id = {$user->id}
-                     )
-                     ORDER BY r.id DESC
--                ", [$requestDate]);
-+                ";
-+            } else {
-+                $sqlRequestByDate = "
-+                    SELECT
-+                        r.*,
-+                        c.fio AS client_fio,
-+                        c.phone AS client_phone,
-+                        c.organization AS client_organization,
-+                        rs.name AS status_name,
-+                        rs.color AS status_color,
-+                        b.name AS brigade_name,
-+                        b.id AS brigade_id,
-+                        e.fio AS brigade_lead,
-+                        op.fio AS operator_name,
-+                        CONCAT(addr.street, ', д. ', addr.houses) as address,
-+                        addr.street,
-+                        addr.houses,
-+                        addr.district,
-+                        addr.city_id,
-+                        ct.name AS city_name,
-+                        (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count
-+                    FROM requests r
-+                    LEFT JOIN clients c ON r.client_id = c.id
-+                    LEFT JOIN request_statuses rs ON r.status_id = rs.id
-+                    LEFT JOIN brigades b ON r.brigade_id = b.id
-+                    LEFT JOIN employees e ON b.leader_id = e.id
-+                    LEFT JOIN employees op ON r.operator_id = op.id
-+                    LEFT JOIN request_addresses ra ON r.id = ra.request_id
-+                    LEFT JOIN addresses addr ON ra.address_id = addr.id
-+                    LEFT JOIN cities ct ON addr.city_id = ct.id
-+                    WHERE DATE(r.execution_date) = ? AND (b.is_deleted = false OR b.id IS NULL)
-+                    ORDER BY r.id DESC
-+                ";
-             }
- 
-+            $requestByDate = DB::select($sqlRequestByDate, [$requestDate]);
++        $brigadeMembersWithDetails = DB::select($sql);
 +
-+            // return response()->json([
-+            //     'success' => false,
-+            //     'message' => 'Проверка обработки ошибок',
-+            //     'data' => $user,
-+            //     'roleNames' => $roleNames,
-+            //     'isAdmin' => $user->isAdmin,
-+            //     'isUser' => $user->isUser,
-+            //     'isFitter' => $user->isFitter,
-+            //     'user_id' => $user->user_id,
-+            //     'sql' => $user->sql,
-+            //     'sqlRequestByDate' => $sqlRequestByDate,
-+            // ], 200);
 +
-             // Преобразуем объекты в массивы для удобства работы
-             $requests = array_map(function ($item) {
-                 return (array) $item;
-@@ -935,27 +964,27 @@ public function getRequestsByDate($date)
-                 }
-             }
+         // dd($brigadeMembersWithDetails);`
  
--            $user = auth()->user();
-+            // $user = auth()->user();
- 
--            // Загружаем роли пользователя
--            $sql = "SELECT roles.name FROM user_roles
--                JOIN roles ON user_roles.role_id = roles.id
--                WHERE user_roles.user_id = " . $user->id;
-+            // // Загружаем роли пользователя
-+            // $sql = "SELECT roles.name FROM user_roles
-+            //     JOIN roles ON user_roles.role_id = roles.id
-+            //     WHERE user_roles.user_id = " . $user->id;
-             
--            $roles = DB::select($sql);
-+            // $roles = DB::select($sql);
-             
--            // Извлекаем только имена ролей из результатов запроса
--            $roleNames = array_map(function($role) {
--                return $role->name;
--            }, $roles);
-+            // // Извлекаем только имена ролей из результатов запроса
-+            // $roleNames = array_map(function($role) {
-+            //     return $role->name;
-+            // }, $roles);
-             
--            // Устанавливаем роли и флаги
--            $user->roles = $roleNames;
--            $user->isAdmin = in_array('admin', $roleNames);
--            $user->isUser = in_array('user', $roleNames);
--            $user->isFitter = in_array('fitter', $roleNames);
--            $user->user_id = $user->id;
--            $user->sql = $sql;
-+            // // Устанавливаем роли и флаги
-+            // $user->roles = $roleNames;
-+            // $user->isAdmin = in_array('admin', $roleNames);
-+            // $user->isUser = in_array('user', $roleNames);
-+            // $user->isFitter = in_array('fitter', $roleNames);
-+            // $user->user_id = $user->id;
-+            // $user->sql = $sql;
- 
-             // Добавляем членов бригады, информацию о бригадире и комментарии к каждой заявке
-             $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest, $user) {
+         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);

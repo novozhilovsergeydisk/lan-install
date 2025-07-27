@@ -329,7 +329,7 @@ class HomeController extends Controller
         $positions = DB::select('SELECT * FROM positions');
 
         // Комплексный запрос для получения информации о членах бригад с данными о бригадах
-        $brigadeMembersWithDetails = DB::select(
+        $brigadeMembersWithDetails_ = DB::select(
             'SELECT
                 bm.*,
                 b.name as brigade_name,
@@ -349,6 +349,32 @@ class HomeController extends Controller
             LEFT JOIN employees e ON bm.employee_id = e.id
             LEFT JOIN employees el ON b.leader_id = el.id'
         );
+
+        $sql = "SELECT
+            b.id AS brigade_id,
+            bm.employee_id,
+            b.name AS brigade_name,
+            b.leader_id,
+            e.fio AS employee_name,
+            e.phone AS employee_phone,
+            e.group_role AS employee_group_role,
+            e.sip AS employee_sip,
+            e.position_id AS employee_position_id,
+            el.fio AS employee_leader_name,
+            el.phone AS employee_leader_phone,
+            el.group_role AS employee_leader_group_role,
+            el.sip AS employee_leader_sip,
+            el.position_id AS employee_leader_position_id
+        FROM brigades b
+        LEFT JOIN brigade_members bm ON bm.brigade_id = b.id
+        LEFT JOIN employees e ON bm.employee_id = e.id
+        LEFT JOIN employees el ON b.leader_id = el.id
+        WHERE b.is_deleted = false
+        AND el.is_deleted = false
+        ORDER BY b.id, employee_name";
+
+        $brigadeMembersWithDetails = DB::select($sql);
+
 
         // dd($brigadeMembersWithDetails);`
 
