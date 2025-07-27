@@ -305,16 +305,16 @@
                             <table id="requestsTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>
-                                    <th class="th-col" style_="width: 1rem;"></th>
-                                    <th class="th-col" style_ ="width: auto;">Дата<br> исполнения</th>
-                                    <th class="th-col" style_="width: auto;">Адрес<br>Телефон</th>
-                                    <th class="th-col" style_="width: auto;">Комментарии</th>
+                                    <th class_ ="th-col" style_="width: 1rem;"></th>
+                                    <th class_="th-col" style_ ="width: auto;">Дата<br> исполнения</th>
+                                    <th class_="th-col" style_="width: auto;">Адрес<br>Телефон</th>
+                                    <th class_="th-col" style_="width: auto;">Комментарии</th>
 
-                                    <th id="brigadeHeader" class="th-col" style_="width: auto;">Бригада <span id="brigadeSortIcon"></span></th>
+                                    <th id="brigadeHeader" class_="th-col" style_="width: auto;">Бригада <span id="brigadeSortIcon"></span></th>
                                     @if($user->isAdmin)
-                                    <th class="th-col" style="width: 1rem;" colspan_="2">Действия с заявкой</th>
+                                    <th class_="th-col" style_="width: 1rem;" colspan_="2">Действия с заявкой</th>
                                     @endif
-                                    <th class="th-col" style="width: 2rem;"></th>
+                                    <th class_="th-col" style_="width: 2rem;"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -399,14 +399,16 @@
 
                                         <!-- Состав бригады -->
                                         <td class="col-brigade">
+                                            <!-- @dump($brigadeMembersWithDetails) -->
                                             @if($request->brigade_id)
                                                 @php
                                                     $brigadeMembers = collect($brigadeMembersWithDetails)
                                                         ->where('brigade_id', $request->brigade_id);
                                                 @endphp
+                                                <!-- @dump($brigadeMembers) -->
 
                                                 @if($brigadeMembers->isNotEmpty())
-                                                    <div class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
+                                                    <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
                                                         @php
                                                             $leaderName = $brigadeMembers->first()->employee_leader_name;
                                                             $brigadeName = $brigadeMembers->first()->brigade_name;

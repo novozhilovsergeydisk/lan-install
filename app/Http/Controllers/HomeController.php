@@ -934,6 +934,14 @@ class HomeController extends Controller
                 }
             }
 
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => 'Режим тестирования',
+            //     'brigadeMembers' => $brigadeMembers,
+            //     'brigadeLeaders' => $brigadeLeaders,
+            //     'brigadeIds' => $brigadeIds
+            // ]);
+
             // Получаем ID заявок для загрузки комментариев
             $requestIds = array_column($requestByDate, 'id');
             $commentsByRequest = [];

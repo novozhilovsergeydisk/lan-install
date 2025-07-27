@@ -334,8 +334,8 @@ function addRequestToTable(result) {
                     data-bs-toggle="tooltip"
                     style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
                     data-bs-original-title="${extractedComment}">
-                    <p style="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
-                    ${extractedComment}
+                    <p class="comment-preview-title" style_="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
+                    <p class="comment-preview-text">${extractedComment}</p>
                 </div>
                 <div class="mt-1">
                     <button type="button"
@@ -353,7 +353,7 @@ function addRequestToTable(result) {
             ` : ''}
         </td>
         <td>
-            <div style="font-size: 0.75rem; line-height: 1.2;">
+            <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
                 Не назначена
             </div>
         </td>
