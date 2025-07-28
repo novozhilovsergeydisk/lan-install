@@ -1728,20 +1728,29 @@
         });
     }
 
-    document.getElementById('fillMockDataBtn').addEventListener('click', function () {
-        const randomIndex = Math.floor(Math.random() * mockData.length);
-        const data = mockData[randomIndex];
+    const fillMockDataBtn = document.getElementById('fillMockDataBtn');
+    if (fillMockDataBtn) {
+        fillMockDataBtn.addEventListener('click', function() {
+            const randomIndex = Math.floor(Math.random() * mockData.length);
+            const data = mockData[randomIndex];
 
-        document.getElementById('clientName').value = data.name;
-        document.getElementById('clientPhone').value = data.phone;
-        document.getElementById('clientOrganization').value = data.organization || '';
-        // Заполняем поле комментария напрямую
-        document.getElementById('comment').value = data.comment;
+            // Добавляем проверки для всех элементов
+            const clientName = document.getElementById('clientName');
+            const clientPhone = document.getElementById('clientPhone');
+            const clientOrg = document.getElementById('clientOrganization');
+            const comment = document.getElementById('comment');
 
-        if (document.getElementById('comment').value.length > 3) {
-            document.getElementById('comment').classList.remove('is-invalid');
-        }
-    });
+            if (clientName) clientName.value = data.name || '';
+            if (clientPhone) clientPhone.value = data.phone || '';
+            if (clientOrg) clientOrg.value = data.organization || '';
+            if (comment) {
+                comment.value = data.comment || '';
+                if (comment.value.length > 3) {
+                    comment.classList.remove('is-invalid');
+                }
+            }
+        });
+    }
 </script>
 
 <script>
