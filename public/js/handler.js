@@ -3035,11 +3035,18 @@ function handlerCreateBrigade() {
 
             // Обновляем данные бригады перед отправкой
             const members = getAllBrigadeMembers();
+
+            console.log('1) members', members);
+            
+            // return;
+
             const leaderId = document.getElementById('brigadeLeader')?.value;
+
+            console.log('2) leaderId', leaderId);
 
             // Проверяем валидность
             if (!leaderId) {
-                showAlert('Пожалуйста, выберите бригадира, кликнув по участнику в списке', 'warning');
+                showAlert('Пожалуйста, выберите бригадира, кликнув по участнику в списке 1', 'warning');
                 return;
             }
 
@@ -3059,10 +3066,16 @@ function handlerCreateBrigade() {
                     return el;
                 })();
 
+            console.log('3) hiddenField', hiddenField);
+
             hiddenField.value = JSON.stringify(members);
+
+            console.log('4) hiddenField.value', hiddenField.value);
 
             // Создаем FormData и добавляем все необходимые поля
             const formData = new FormData(form);
+
+            console.log('5) formData', formData);
 
             // Очищаем старые данные о членах бригады
             document.querySelectorAll('input[name^="brigade_members["]').forEach(input => {
@@ -3082,6 +3095,9 @@ function handlerCreateBrigade() {
 
             // Обновляем FormData
             formData.delete('brigade_members[]');
+
+            console.log('6) formData 2', formData);
+
             members.forEach((member, index) => {
                 if (!member.is_leader) {
                     formData.append('brigade_members[]', member.employee_id);
@@ -3097,6 +3113,7 @@ function handlerCreateBrigade() {
 
             // Собираем все данные формы в объект
             const formValues = {};
+
             for (let [key, value] of formData.entries()) {
                 if (formValues[key] !== undefined) {
                     // Если поле уже существует, преобразуем его в массив
@@ -3112,7 +3129,7 @@ function handlerCreateBrigade() {
             // Получаем данные о членах бригады
             const brigadeMembersData = JSON.parse(formValues.brigade_members_data || '[]');
 
-            // console.log('brigadeMembersData', brigadeMembersData );
+            console.log('7) brigadeMembersData', brigadeMembersData );
 
             // return;
 
@@ -3129,6 +3146,8 @@ function handlerCreateBrigade() {
                     timestamp: new Date().toISOString()
                 }
             };
+
+            console.log('8) formJson', formJson);
 
             // Выводим JSON в консоль
             // console.log('=== ДАННЫЕ ФОРМЫ В ФОРМАТЕ JSON ===');
@@ -3149,7 +3168,7 @@ function handlerCreateBrigade() {
             // Проверяем, что выбран бригадир
             const brigadierSelected = document.querySelector('#brigadeMembers .brigade-leader');
             if (!brigadierSelected) {
-                showAlert('Пожалуйста, выберите бригадира, кликнув по участнику в списке', 'warning');
+                showAlert('Пожалуйста, выберите бригадира, кликнув по участнику в списке 2', 'warning');
                 return;
             }
 
@@ -3170,12 +3189,16 @@ function handlerCreateBrigade() {
                             <p class="mt-2 mb-0">Загрузка списка бригад...</p>
                         </div>`;
 
+                        console.log('11) brigadesList', brigadesList);
+
                     const response = await fetch('/api/brigades');
                     if (!response.ok) {
                         throw new Error('Ошибка при загрузке списка бригад');
                     }
 
                     const brigades = await response.json();
+
+                    console.log('9) brigades', brigades);
 
                     if (brigades.length === 0) {
                         brigadesList.innerHTML = `
@@ -3187,6 +3210,8 @@ function handlerCreateBrigade() {
                             </div>`;
                         return;
                     }
+
+                    console.log('10) brigades', brigades);
 
                     // Формируем HTML для списка бригад
                     let html = `
@@ -3367,12 +3392,26 @@ function handlerCreateBrigade() {
                         const form = document.getElementById('brigadeForm');
                         if (form) {
                             form.reset();
+                            // Очищаем скрытые поля, кроме CSRF-токена
+                            const hiddenFields = form.querySelectorAll('input[type="hidden"]');
+                            hiddenFields.forEach(field => {
+                                // Не очищаем поле с CSRF-токеном
+                                if (field.name !== '_token' && field.name !== 'csrf-token') {
+                                    field.value = '';
+                                }
+                            });
                         }
 
                         // Очищаем список участников бригады
                         const brigadeMembers = document.getElementById('brigadeMembers');
                         if (brigadeMembers) {
                             brigadeMembers.innerHTML = '';
+                        }
+                        
+                        // Сбрасываем бригадира
+                        const brigadeLeader = document.getElementById('brigadeLeader');
+                        if (brigadeLeader) {
+                            brigadeLeader.value = '';
                         }
 
                         // Снимаем атрибут disabled у сотрудников в списке слева
