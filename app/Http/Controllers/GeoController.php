@@ -10,7 +10,15 @@ class GeoController extends Controller
     public function getAddresses()
     {
         $data = DB::select("
-            SELECT a.id, a.street, a.houses, a.district, c.name as city, r.name as region
+            SELECT 
+                a.id, 
+                a.street, 
+                a.houses, 
+                a.district, 
+                a.responsible_person,
+                a.comments,
+                c.name as city, 
+                r.name as region
             FROM addresses a
             JOIN cities c ON a.city_id = c.id
             LEFT JOIN regions r ON c.region_id = r.id

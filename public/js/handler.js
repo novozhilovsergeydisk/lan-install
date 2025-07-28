@@ -917,10 +917,12 @@ function loadAddresses() {
                 option.value = address.id;
                 option.textContent = address.full_address;
                 // Добавляем дополнительные данные для удобства
-                option.dataset.street = address.street;
-                option.dataset.houses = address.houses;
-                option.dataset.city = address.city;
-                option.dataset.district = address.district;
+                option.dataset.street = address.street || '';
+                option.dataset.houses = address.houses || '';
+                option.dataset.city = address.city || '';
+                option.dataset.district = address.district || '';
+                option.dataset.responsiblePerson = address.responsible_person || '';
+                option.dataset.comments = address.comments || '';
 
                 selectElement.appendChild(option);
             });

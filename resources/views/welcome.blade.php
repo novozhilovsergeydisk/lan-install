@@ -2766,6 +2766,8 @@
                                     <p><strong>Район:</strong> ${selectedAddress.district || '-'}</p>
                                     <p><strong>Улица:</strong> ${selectedAddress.street || '-'}</p>
                                     <p><strong>Дом:</strong> ${selectedAddress.houses || '-'}</p>
+                                    <p><strong>Ответственное лицо:</strong> ${selectedAddress.responsible_person || 'не указано'}</p>
+                                    <p><strong>Комментарий:</strong> ${selectedAddress.comments || 'нет комментариев'}</p>
                                     <p class="text-muted"><small>Идентификатор адреса: ${selectedAddress.id}</small></p>
                                 </div>
                             </div>
@@ -2868,14 +2870,11 @@
                                 <p><strong>Дом:</strong> ${result.address.houses || '-'}</p>
                     `;
                     
-                    // Добавляем необязательные поля, если они заполнены
-                    if (result.address.responsible_person) {
-                        addressHtml += `<p><strong>Ответственное лицо:</strong> ${result.address.responsible_person}</p>`;
-                    }
-                    
-                    if (result.address.comments) {
-                        addressHtml += `<p><strong>Комментарий:</strong> ${result.address.comments}</p>`;
-                    }
+                    // Добавляем все поля, включая необязательные, с подстановкой значений по умолчанию
+                    addressHtml += `
+                        <p><strong>Ответственное лицо:</strong> ${result.address.responsible_person || 'не указано'}</p>
+                        <p><strong>Комментарий:</strong> ${result.address.comments || 'нет комментариев'}</p>
+                    `;
                     
                     // Добавляем ID адреса
                     addressHtml += `
