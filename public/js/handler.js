@@ -1303,6 +1303,8 @@ function initializePage() {
                     console.log('Выбрана дата в календаре (handler.js):', window.selectedDateState.date);
                 }
 
+                console.log('Выбрана дата в календаре (handler.js):', selectedDate);
+
                 // Логи выбора даты отключены
                 applyFilters();
             });

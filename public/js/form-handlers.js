@@ -862,28 +862,30 @@ export function initFormHandlers() {
  * Устанавливает минимальную дату равной текущей
  */
 function initExecutionDateField() {
-    const dateInput = document.getElementById('executionDate');
-    if (dateInput) {
-        // Получаем текущую дату в формате YYYY-MM-DD
-        // Используем локальное время пользователя для корректного определения текущей даты
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0'); // Месяцы начинаются с 0
-        const day = String(now.getDate()).padStart(2, '0');
-        const today = `${year}-${month}-${day}`;
+    const executionDateField = document.getElementById('executionDate');
+    if (!executionDateField) return;
+    
+    // Устанавливаем минимальную дату на сегодня
+    const today = new Date().toISOString().split('T')[0];
+    executionDateField.min = today;
 
-        console.log('Текущая дата (локальное время):', today);
-
-        // Устанавливаем минимальную дату
-        dateInput.min = today;
-
-        // Если значение поля пустое или меньше текущей даты, устанавливаем текущую дату
-        if (!dateInput.value || dateInput.value < today) {
-            dateInput.value = today;
-            console.log('Установлена текущая дата:', today);
-        } else {
-            console.log('Значение поля не пустое:', dateInput.value);
-        }
+    // Инициализируем обработчик события показа модального окна
+    const newRequestModal = document.getElementById('newRequestModal');
+    if (newRequestModal) {
+        newRequestModal.addEventListener('show.bs.modal', function() {
+            // Если есть выбранная дата в selectedDateState, используем её
+            if (window.selectedDateState && window.selectedDateState.date) {
+                // Преобразуем дату из формата DD.MM.YYYY в YYYY-MM-DD
+                const [day, month, year] = window.selectedDateState.date.split('.');
+                const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                executionDateField.value = formattedDate;
+                console.log('Установлена выбранная дата из календаря:', formattedDate);
+            } else {
+                // Иначе используем текущую дату
+                executionDateField.value = today;
+                console.log('Установлена текущая дата:', today);
+            }
+        });
     }
 }
 
