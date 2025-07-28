@@ -199,6 +199,12 @@ Route::post('/employee/filter', [EmployeeUserController::class, 'filterEmployee'
 
 Route::post('/employee/delete', [EmployeeUserController::class, 'deleteEmployee'])
 ->name('employee.delete')
-->middleware('auth');   
+->middleware('auth'); 
+
+// Delete routes
+// Delete brigade member
+Route::post('/brigade/member/delete/{id}', [BrigadeController::class, 'deleteBrigadeMember'])
+->name('api.brigades.member.delete')
+->middleware('auth');
 
 

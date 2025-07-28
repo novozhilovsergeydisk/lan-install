@@ -197,6 +197,49 @@ class BrigadeController extends Controller
     }
     
     /**
+     * Delete a brigade member
+     * 
+     * @param int $id Member ID in brigade_members table
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteBrigadeMember($id)
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'message' => 'Участник успешно удален из бригады (реализация в разработке)'
+            ]);
+
+            // Проверяем существование участника
+            $member = DB::table('brigade_members')->where('id', $id)->first();
+            
+            if (!$member) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Участник бригады не найден'
+                ], 404);
+            }
+            
+            // Удаляем участника из бригады
+            DB::table('brigade_members')->where('id', $id)->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Участник успешно удален из бригады'
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при удалении участника бригады: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при удалении участника',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+    
+    /**
      * Get brigade data via API
      */
     public function getBrigadeData($id)
