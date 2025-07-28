@@ -917,12 +917,10 @@ function loadAddresses() {
                 option.value = address.id;
                 option.textContent = address.full_address;
                 // Добавляем дополнительные данные для удобства
-                option.dataset.street = address.street || '';
-                option.dataset.houses = address.houses || '';
-                option.dataset.city = address.city || '';
-                option.dataset.district = address.district || '';
-                option.dataset.responsiblePerson = address.responsible_person || '';
-                option.dataset.comments = address.comments || '';
+                option.dataset.street = address.street;
+                option.dataset.houses = address.houses;
+                option.dataset.city = address.city;
+                option.dataset.district = address.district;
 
                 selectElement.appendChild(option);
             });
@@ -2318,13 +2316,15 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
 function initAllCustomSelects() {
     // console.log('Инициализация всех кастомных селектов');
 
-    // Инициализируем селект с адресами в основном списке
-    if (document.getElementById('addressSelect')) {
+    // Инициализируем селект с адресами в основном списке, если он еще не инициализирован
+    const addressSelect = document.getElementById('addressSelect');
+    if (addressSelect && !addressSelect.classList.contains('custom-select-initialized')) {
         initCustomSelect("addressSelect", "Выберите адрес из списка");
     }
 
-    // Инициализируем селект с адресами в форме создания заявки
-    if (document.getElementById('addresses_id')) {
+    // Инициализируем селект с адресами в форме создания заявки, если он еще не инициализирован
+    const addressesId = document.getElementById('addresses_id');
+    if (addressesId && !addressesId.classList.contains('custom-select-initialized')) {
         initCustomSelect("addresses_id", "Выберите адрес из списка");
     }
 

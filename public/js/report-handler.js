@@ -67,9 +67,6 @@ export async function loadEmployeesForReport() {
 // Функция для загрузки списка адресов
 export async function loadAddressesForReport() {
     try {
-
-        // console.log('Загрузка адресов для отчета');
-
         const response = await fetch('/reports/addresses');
 
         if (!response.ok) {
@@ -77,11 +74,14 @@ export async function loadAddressesForReport() {
         }
 
         const data = await response.json();
-
-        // console.log(data);
-
-        // return;
+        const container = document.getElementById('report-addresses-container');
         
+        if (!container) return;
+        
+        // Очищаем контейнер перед добавлением нового содержимого
+        container.innerHTML = '';
+        
+        // Создаем выпадающий список
         const select = document.createElement('select');
         select.id = 'report-addresses';
         select.className = 'form-select mt-2';
@@ -91,20 +91,28 @@ export async function loadAddressesForReport() {
         defaultOption.textContent = 'Все адреса';
         select.appendChild(defaultOption);
         
+        // Заполняем выпадающий список адресами
         data.forEach(address => {
             const option = document.createElement('option');
             option.value = address.id;
-            // Используем address.city_name вместо address.name
-            option.textContent = 'ул. ' + address.street + ', ' + 
-                              (address.houses ? 'д.' + address.houses + ', ' : '') + 
-                              (address.city_name || '');
+            const addressText = 'ул. ' + address.street + ', ' + 
+                             (address.houses ? 'д.' + address.houses + ', ' : '') + 
+                             (address.city_name || '');
+            option.textContent = addressText;
+            option.dataset.text = addressText; // Сохраняем текст для поиска
             option.setAttribute('data-city-id', address.city_id);
             select.appendChild(option);
         });
         
-        const container = document.getElementById('report-addresses-container');
-        if (container) {
-            container.appendChild(select);
+        // Добавляем select в контейнер
+        container.appendChild(select);
+        
+        // Инициализируем кастомный селект, если функция доступна
+        if (typeof window.initCustomSelect === 'function') {
+            window.initCustomSelect('report-addresses', 'Выберите адрес из списка');
+        } else {
+            // Если функция initCustomSelect недоступна, просто показываем обычный select
+            select.classList.remove('d-none');
         }
     } catch (error) {
         console.error('Ошибка при загрузке адресов:', error);
@@ -473,11 +481,25 @@ export async function initReportHandlers() {
                   // Сбрасываем выбор адреса на "Все адреса"
                   if (addressSelect) {
                       addressSelect.value = 'all_addresses';
+                      
+                      // Очищаем кастомный инпут для адреса, если он существует
+                      const customAddressInput = document.querySelector('#custom-select-wrapper-report-addresses .custom-select-input');
+                      if (customAddressInput) {
+                          customAddressInput.value = '';
+                          customAddressInput.placeholder = 'Выберите адрес из списка';
+                      }
                   }
 
                   // Сбрасываем выбор сотрудника на "Все сотрудники"
                   if (employeeSelect) {
                       employeeSelect.value = 'all_employees';
+                      
+                      // Очищаем кастомный инпут для сотрудника, если он существует
+                      const customEmployeeInput = document.querySelector('#custom-select-wrapper-report-employees .custom-select-input');
+                      if (customEmployeeInput) {
+                          customEmployeeInput.value = '';
+                          customEmployeeInput.placeholder = 'Выберите сотрудника из списка';
+                      }
                   }
                 } else {
                   console.log('All period checkbox is not checked');
@@ -489,10 +511,17 @@ export async function initReportHandlers() {
             employeeSelect.addEventListener('change', () => {
                 const selectedEmployeeId = employeeSelect.value;
                 console.log('Selected employee ID:', selectedEmployeeId);
-
+                
                 // Сбрасываем выбор адреса на "Все адреса"
                 if (addressSelect) {
                     addressSelect.value = 'all_addresses';
+                    
+                    // Находим и очищаем кастомный инпут для адреса, если он существует
+                    const customAddressInput = document.querySelector('#custom-select-wrapper-report-addresses .custom-select-input');
+                    if (customAddressInput) {
+                        customAddressInput.value = '';
+                        customAddressInput.placeholder = 'Выберите адрес из списка';
+                    }
                 }   
 
                 // Сбрасываем чекбокс "За весь период"
@@ -510,6 +539,13 @@ export async function initReportHandlers() {
                 // Сбрасываем выбор сотрудника на "Все сотрудники"
                 if (employeeSelect) {
                     employeeSelect.value = 'all_employees';
+                    
+                    // Находим и очищаем кастомный инпут для сотрудника, если он существует
+                    const customEmployeeInput = document.querySelector('#custom-select-wrapper-report-employees .custom-select-input');
+                    if (customEmployeeInput) {
+                        customEmployeeInput.value = '';
+                        customEmployeeInput.placeholder = 'Выберите сотрудника из списка';
+                    }
                 }
                 
                 // Сбрасываем чекбокс "За весь период"
