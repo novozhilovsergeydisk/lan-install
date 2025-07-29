@@ -1,18 +1,6 @@
 @php
     // Заголовки для отключения кэширования
-
-    // Функция для сокращения ФИО до фамилии и первой буквы имени
-    function shortenName($fullName) {
-        if (empty($fullName)) return '';
-        
-        $parts = explode(' ', $fullName);
-        if (count($parts) < 2) return $fullName;
-        
-        $lastName = $parts[0];
-        $firstName = $parts[1];
-        
-        return $lastName . ' ' . mb_substr($firstName, 0, 1) . '.';
-    }
+    use App\Helpers\StringHelper;
 @endphp
 <!DOCTYPE html>
 <html lang="ru">
@@ -418,9 +406,9 @@
 
                                                         @if($leaderName)
                                                             <div class="mb-1"><i>{{ $brigadeName }}</i></div>
-                                                            <div><strong>{{ shortenName($leaderName) }}</strong>
+                                                            <div><strong>{{ StringHelper::shortenName($leaderName) }}</strong>
                                                             @foreach($brigadeMembers as $member)
-                                                                , {{ shortenName($member->employee_name) }}
+                                                                , {{ StringHelper::shortenName($member->employee_name) }}
                                                             @endforeach
                                                             </div>
                                                         @endif
@@ -1810,6 +1798,7 @@
             const lastName = parts[0];
             const firstName = parts[1];
             
+            // Using the same logic as the PHP backend
             return lastName + ' ' + firstName.charAt(0) + '.';
         }
         
