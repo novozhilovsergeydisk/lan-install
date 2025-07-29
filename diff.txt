@@ -1,56 +1,54 @@
-diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index 057cd1a..9a1a2cb 100644
---- a/app/Http/Controllers/HomeController.php
-+++ b/app/Http/Controllers/HomeController.php
-@@ -532,9 +532,14 @@ public function index()
-             'roles' => $roles,
-             'isAdmin' => $user->isAdmin ?? false,
-             'isUser' => $user->isUser ?? false,
--            'isFitter' => $user->isFitter ?? false
-+            'isFitter' => $user->isFitter ?? false,
-+            'sql' => $sql
-         ];
- 
-+        // $data = DB::select($sql);
-+
-+        // return response()->json($viewData);
-+
-         // Логируем данные для отладки
-         // \Log::info('View data:', ['comments_by_request' => $comments_by_request]);
- 
-diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
-index 05fdbe7..a9c0c88 100644
---- a/public/js/form-handlers.js
-+++ b/public/js/form-handlers.js
-@@ -320,11 +320,11 @@ function addRequestToTable(result) {
-         <!-- Клиент -->
-         <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-             <div class="text-dark"style="font-size: 0.8rem;">${clientOrganization}</div>
--            <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
-+            <small class="text-dark text-truncate_ d-block" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
-             ${addressData.city_name && addressData.city_name !== 'Москва' ? `<strong>${addressData.city_name}</strong>, ` : ''}ул. ${addressText}
-             </small>
-             <div class="text-dark"style="font-size: 0.8rem;"><i>${clientData.fio || requestData.client_fio}</i></div>
--            <small class="text-truncate d-block">
-+            <small class="text-truncate_ d-block">
-                 <i>${clientData.phone || requestData.client_phone || 'Нет телефона'}</i>
-             </small>
-         </td>
 diff --git a/public/js/handler.js b/public/js/handler.js
-index d012d50..ef44656 100644
+index a3b0867..3b4086a 100644
 --- a/public/js/handler.js
 +++ b/public/js/handler.js
-@@ -405,11 +405,11 @@ function applyFilters() {
-                             <!-- Клиент -->
-                             <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-                                 <div class="text-dark"style="font-size: 0.8rem;">${request.client_organization}</div>
--                                <small class="text-dark text-truncate d-block" data-bs-toggle="tooltip" title="${request.address || address}">
-+                                <small class="text-dark text-truncate_ d-block" data-bs-toggle="tooltip" title="${request.address || address}">
-                                     ${request.city_name && request.city_name !== 'Москва' ? `<strong>${request.city_name}</strong>, ` : ''}ул. ${request.address || address}
-                                 </small>
-                                 <div class="text-dark"style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>
--                                <small class="text-success_ fw-bold_ text-truncate d-block">
-+                                <small class="text-success_ fw-bold_ text-truncate_ d-block">
-                                     <i>${request.phone || request.client_phone || ''}</i>
-                                 </small>
-                             </td>
+@@ -3647,6 +3647,16 @@ function setupBrigadeAttachment() {
+     });
+ }
+ 
++function initTooltips() {
++    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
++    tooltipTriggerList.map(function (tooltipTriggerEl) {
++        return new bootstrap.Tooltip(tooltipTriggerEl, {
++            trigger: 'hover',
++            placement: 'left'
++        });
++    });
++}
++
+ // Инициализация страницы при загрузке DOM
+ document.addEventListener('DOMContentLoaded', function () {
+     console.log('DOM полностью загружен');
+@@ -3658,6 +3668,7 @@ document.addEventListener('DOMContentLoaded', function () {
+     initDeleteEmployee();
+     initReportHandlers();
+     initDeleteMember();
++    initTooltips();
+ 
+     // Запускаем инициализацию кастомных селектов с задержкой
+     setTimeout(() => {
+diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
+index 5a28852..7ec9fbc 100644
+--- a/resources/views/welcome.blade.php
++++ b/resources/views/welcome.blade.php
+@@ -2889,20 +2889,6 @@ function tryInitCustomSelect(attempts = 0) {
+     }); 
+ </script>
+ 
+-
+-    <!-- Initialize tooltips once when the page loads -->
+-    <script>
+-        document.addEventListener('DOMContentLoaded', function() {
+-            // Initialize all tooltips on the page
+-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+-            tooltipTriggerList.map(function (tooltipTriggerEl) {
+-                return new bootstrap.Tooltip(tooltipTriggerEl, {
+-                    trigger: 'hover',
+-                    placement: 'left'
+-                });
+-            });
+-        });
+-    </script>
+ </body>
+ 
+ </html>

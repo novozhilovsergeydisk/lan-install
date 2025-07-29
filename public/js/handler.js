@@ -3647,6 +3647,16 @@ function setupBrigadeAttachment() {
     });
 }
 
+function initTooltips() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            trigger: 'hover',
+            placement: 'left'
+        });
+    });
+}
+
 // Инициализация страницы при загрузке DOM
 document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM полностью загружен');
@@ -3658,6 +3668,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initDeleteEmployee();
     initReportHandlers();
     initDeleteMember();
+    initTooltips();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {
