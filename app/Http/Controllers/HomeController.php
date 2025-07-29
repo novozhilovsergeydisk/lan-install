@@ -429,7 +429,6 @@ class HomeController extends Controller
 
         $brigadeMembersWithDetails = DB::select($sql);
 
-
         // dd($brigadeMembersWithDetails);`
 
         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
@@ -500,7 +499,9 @@ class HomeController extends Controller
                 addr.district,
                 addr.city_id,
                 ct.name AS city_name,
-                ct.postal_code AS city_postal_code
+                ct.postal_code AS city_postal_code,
+                rs.name AS status_name,
+                rs.color AS status_color
             FROM requests r
             LEFT JOIN clients c ON r.client_id = c.id
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -510,7 +511,9 @@ class HomeController extends Controller
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
             LEFT JOIN cities ct ON addr.city_id = ct.id
-            WHERE r.execution_date::date = CURRENT_DATE AND (b.is_deleted = false OR b.id IS NULL)
+            WHERE r.execution_date::date = CURRENT_DATE 
+            AND (b.is_deleted = false OR b.id IS NULL) 
+            AND rs.name != 'отменена'
             ORDER BY r.id DESC";
 
             if ($user->isFitter) {
@@ -530,7 +533,9 @@ class HomeController extends Controller
                         addr.district,
                         addr.city_id,
                         ct.name AS city_name,
-                        ct.postal_code AS city_postal_code
+                        ct.postal_code AS city_postal_code,
+                        rs.name AS status_name,
+                        rs.color AS status_color
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -542,6 +547,7 @@ class HomeController extends Controller
                     LEFT JOIN cities ct ON addr.city_id = ct.id
                     WHERE r.execution_date::date = CURRENT_DATE 
                     AND (b.is_deleted = false OR b.id IS NULL)
+                    AND rs.name != 'отменена'
                     AND (
                         EXISTS (
                             SELECT 1
@@ -560,7 +566,6 @@ class HomeController extends Controller
                     ORDER BY r.id DESC
                 ";
             }
-
 
         $requests = DB::select($sql);
 

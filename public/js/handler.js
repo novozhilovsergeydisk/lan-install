@@ -276,6 +276,10 @@ function applyFilters() {
                         }
 
                         data.data.forEach((request, index) => {
+                            if (request.status_name === 'отменена') {
+                                return;
+                            }
+                            
                             // Отладочная информация
                             // Логи заявок отключены
 
@@ -2029,34 +2033,42 @@ function handleCancelRequest(button) {
                 // Находим строку заявки
                 const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
 
+                console.log('Заявка отменена:', requestRow);
+
                 if (requestRow) {
-                    // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
-                    const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
-                    if (firstActionBlock) {
-                        const buttonsToHide = firstActionBlock.querySelectorAll('button');
-                        buttonsToHide.forEach(button => {
-                            button.style.display = 'none';
-                        });
+                    // Скрыть саму строку
 
-                        // Добавляем текст "Заявка отменена"
-                        const statusText = document.createElement('div');
-                        statusText.className = 'text-muted small';
-                        statusText.textContent = 'Заявка отменена';
-                        firstActionBlock.appendChild(statusText);
-                    }
+                    console.log('Заявка отменена', requestRow.dataset.requestId);
 
-                    // Скрываем кнопки во втором блоке, кроме кнопки Фотоотчет
-                    const secondActionBlock = requestRow.querySelectorAll('td.text-nowrap .d-flex.flex-column.gap-1')[1];
-                    if (secondActionBlock) {
-                        const buttonsToHide = secondActionBlock.querySelectorAll('button:not(.add-photo-btn)');
-                        buttonsToHide.forEach(button => {
-                            button.style.display = 'none';
-                        });
-                    }
+                    requestRow.style.display = 'none';
+
+                    // // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
+                    // const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
+                    // if (firstActionBlock) {
+                    //     const buttonsToHide = firstActionBlock.querySelectorAll('button');
+                    //     buttonsToHide.forEach(button => {
+                    //         button.style.display = 'none';
+                    //     });
+
+                    //     // Добавляем текст "Заявка отменена"
+                    //     const statusText = document.createElement('div');
+                    //     statusText.className = 'text-muted small';
+                    //     statusText.textContent = 'Заявка отменена';
+                    //     firstActionBlock.appendChild(statusText);
+                    // }
+
+                    // // Скрываем кнопки во втором блоке, кроме кнопки Фотоотчет
+                    // const secondActionBlock = requestRow.querySelectorAll('td.text-nowrap .d-flex.flex-column.gap-1')[1];
+                    // if (secondActionBlock) {
+                    //     const buttonsToHide = secondActionBlock.querySelectorAll('button:not(.add-photo-btn)');
+                    //     buttonsToHide.forEach(button => {
+                    //         button.style.display = 'none';
+                    //     });
+                    // }
                 }
 
                 // Обновляем счетчик заявок, если он есть
-                updateRequestsCount();
+                // updateRequestsCount();
 
             } else {
                 throw new Error(result.message || 'Ошибка при отмене заявки');

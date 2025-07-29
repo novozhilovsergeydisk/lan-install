@@ -1,54 +1,143 @@
-diff --git a/public/js/handler.js b/public/js/handler.js
-index a3b0867..3b4086a 100644
---- a/public/js/handler.js
-+++ b/public/js/handler.js
-@@ -3647,6 +3647,16 @@ function setupBrigadeAttachment() {
-     });
- }
+diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
+index d65d77f..fdb7e67 100644
+--- a/app/Http/Controllers/HomeController.php
++++ b/app/Http/Controllers/HomeController.php
+@@ -429,7 +429,6 @@ public function index()
  
-+function initTooltips() {
-+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-+    tooltipTriggerList.map(function (tooltipTriggerEl) {
-+        return new bootstrap.Tooltip(tooltipTriggerEl, {
-+            trigger: 'hover',
-+            placement: 'left'
-+        });
-+    });
-+}
-+
- // Инициализация страницы при загрузке DOM
- document.addEventListener('DOMContentLoaded', function () {
-     console.log('DOM полностью загружен');
-@@ -3658,6 +3668,7 @@ document.addEventListener('DOMContentLoaded', function () {
-     initDeleteEmployee();
-     initReportHandlers();
-     initDeleteMember();
-+    initTooltips();
- 
-     // Запускаем инициализацию кастомных селектов с задержкой
-     setTimeout(() => {
-diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
-index 5a28852..7ec9fbc 100644
---- a/resources/views/welcome.blade.php
-+++ b/resources/views/welcome.blade.php
-@@ -2889,20 +2889,6 @@ function tryInitCustomSelect(attempts = 0) {
-     }); 
- </script>
+         $brigadeMembersWithDetails = DB::select($sql);
  
 -
--    <!-- Initialize tooltips once when the page loads -->
--    <script>
--        document.addEventListener('DOMContentLoaded', function() {
--            // Initialize all tooltips on the page
--            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
--            tooltipTriggerList.map(function (tooltipTriggerEl) {
--                return new bootstrap.Tooltip(tooltipTriggerEl, {
--                    trigger: 'hover',
--                    placement: 'left'
--                });
--            });
--        });
--    </script>
- </body>
+         // dd($brigadeMembersWithDetails);`
  
- </html>
+         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
+@@ -500,7 +499,9 @@ public function index()
+                 addr.district,
+                 addr.city_id,
+                 ct.name AS city_name,
+-                ct.postal_code AS city_postal_code
++                ct.postal_code AS city_postal_code,
++                rs.name AS status_name,
++                rs.color AS status_color
+             FROM requests r
+             LEFT JOIN clients c ON r.client_id = c.id
+             LEFT JOIN request_statuses rs ON r.status_id = rs.id
+@@ -510,7 +511,9 @@ public function index()
+             LEFT JOIN request_addresses ra ON r.id = ra.request_id
+             LEFT JOIN addresses addr ON ra.address_id = addr.id
+             LEFT JOIN cities ct ON addr.city_id = ct.id
+-            WHERE r.execution_date::date = CURRENT_DATE AND (b.is_deleted = false OR b.id IS NULL)
++            WHERE r.execution_date::date = CURRENT_DATE 
++            AND (b.is_deleted = false OR b.id IS NULL) 
++            AND rs.name != 'отменена'
+             ORDER BY r.id DESC";
+ 
+             if ($user->isFitter) {
+@@ -530,7 +533,9 @@ public function index()
+                         addr.district,
+                         addr.city_id,
+                         ct.name AS city_name,
+-                        ct.postal_code AS city_postal_code
++                        ct.postal_code AS city_postal_code,
++                        rs.name AS status_name,
++                        rs.color AS status_color
+                     FROM requests r
+                     LEFT JOIN clients c ON r.client_id = c.id
+                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
+@@ -542,6 +547,7 @@ public function index()
+                     LEFT JOIN cities ct ON addr.city_id = ct.id
+                     WHERE r.execution_date::date = CURRENT_DATE 
+                     AND (b.is_deleted = false OR b.id IS NULL)
++                    AND rs.name != 'отменена'
+                     AND (
+                         EXISTS (
+                             SELECT 1
+@@ -561,7 +567,6 @@ public function index()
+                 ";
+             }
+ 
+-
+         $requests = DB::select($sql);
+ 
+         //        dd($requestByDate);
+diff --git a/public/js/handler.js b/public/js/handler.js
+index 212f041..2726fd8 100644
+--- a/public/js/handler.js
++++ b/public/js/handler.js
+@@ -276,6 +276,10 @@ function applyFilters() {
+                         }
+ 
+                         data.data.forEach((request, index) => {
++                            if (request.status_name === 'отменена') {
++                                return;
++                            }
++                            
+                             // Отладочная информация
+                             // Логи заявок отключены
+ 
+@@ -2029,34 +2033,42 @@ function handleCancelRequest(button) {
+                 // Находим строку заявки
+                 const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
+ 
+-                if (requestRow) {
+-                    // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
+-                    const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
+-                    if (firstActionBlock) {
+-                        const buttonsToHide = firstActionBlock.querySelectorAll('button');
+-                        buttonsToHide.forEach(button => {
+-                            button.style.display = 'none';
+-                        });
++                console.log('Заявка отменена:', requestRow);
+ 
+-                        // Добавляем текст "Заявка отменена"
+-                        const statusText = document.createElement('div');
+-                        statusText.className = 'text-muted small';
+-                        statusText.textContent = 'Заявка отменена';
+-                        firstActionBlock.appendChild(statusText);
+-                    }
+-
+-                    // Скрываем кнопки во втором блоке, кроме кнопки Фотоотчет
+-                    const secondActionBlock = requestRow.querySelectorAll('td.text-nowrap .d-flex.flex-column.gap-1')[1];
+-                    if (secondActionBlock) {
+-                        const buttonsToHide = secondActionBlock.querySelectorAll('button:not(.add-photo-btn)');
+-                        buttonsToHide.forEach(button => {
+-                            button.style.display = 'none';
+-                        });
+-                    }
++                if (requestRow) {
++                    // Скрыть саму строку
++
++                    console.log('Заявка отменена', requestRow.dataset.requestId);
++
++                    requestRow.style.display = 'none';
++
++                    // // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
++                    // const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
++                    // if (firstActionBlock) {
++                    //     const buttonsToHide = firstActionBlock.querySelectorAll('button');
++                    //     buttonsToHide.forEach(button => {
++                    //         button.style.display = 'none';
++                    //     });
++
++                    //     // Добавляем текст "Заявка отменена"
++                    //     const statusText = document.createElement('div');
++                    //     statusText.className = 'text-muted small';
++                    //     statusText.textContent = 'Заявка отменена';
++                    //     firstActionBlock.appendChild(statusText);
++                    // }
++
++                    // // Скрываем кнопки во втором блоке, кроме кнопки Фотоотчет
++                    // const secondActionBlock = requestRow.querySelectorAll('td.text-nowrap .d-flex.flex-column.gap-1')[1];
++                    // if (secondActionBlock) {
++                    //     const buttonsToHide = secondActionBlock.querySelectorAll('button:not(.add-photo-btn)');
++                    //     buttonsToHide.forEach(button => {
++                    //         button.style.display = 'none';
++                    //     });
++                    // }
+                 }
+ 
+                 // Обновляем счетчик заявок, если он есть
+-                updateRequestsCount();
++                // updateRequestsCount();
+ 
+             } else {
+                 throw new Error(result.message || 'Ошибка при отмене заявки');
