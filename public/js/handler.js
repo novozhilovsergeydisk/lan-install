@@ -1,11 +1,14 @@
 import { showAlert, postData } from './utils.js';
-import { initFormHandlers } from './form-handlers.js';
-import { initEmployeeEditHandlers } from './form-handlers.js';
-import { initSaveEmployeeChanges } from './form-handlers.js';
-import { initEmployeeFilter } from './form-handlers.js';
-import { initDeleteEmployee } from './form-handlers.js';
+import { 
+    initFormHandlers, 
+    initEmployeeEditHandlers, 
+    initSaveEmployeeChanges, 
+    initEmployeeFilter, 
+    initDeleteEmployee, 
+    initDeleteMember,
+    currentDateState
+} from './form-handlers.js';
 import { initReportHandlers } from './report-handler.js';
-import { initDeleteMember } from './form-handlers.js';
 
 /**
  * Функция для отображения информации о бригадах
@@ -3707,6 +3710,8 @@ document.addEventListener('DOMContentLoaded', function () {
         confirmAssignTeamBtn.addEventListener('click', async function() {
             const modal = document.getElementById('assign-team-modal');
             const requestId = modal.dataset.requestId;
+            console.log('request_id =', requestId);
+
             const selectElement = document.getElementById('assign-team-select');
             const selectedTeamId = selectElement.value;
 
@@ -3751,7 +3756,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 const updateData = await updateResponse.json().catch(() => ({}));
-                // console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
+                console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
 
                 if (!updateResponse.ok) {
                     const errorMessage = updateData.message ||
@@ -3763,7 +3768,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 // console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
 
                 // 3. Обновляем страницу для отображения изменений
-                window.location.reload();
+                // window.location.reload();
+
+                // Обновляем данные заявки без перезагрузки страницы
+                updateRequest({
+                    id: requestId,
+                    brigade_id: brigade_id,
+                    brigade_name: brigadeName,
+                    brigadeMembers: updateData.data.brigadeMembers,
+                    date: currentDateState.date // Add current date to request data
+                });
 
             } catch (error) {
                 console.error('Ошибка при прикреплении бригады:', error.message);
@@ -3778,6 +3792,127 @@ document.addEventListener('DOMContentLoaded', function () {
             const bsModal = bootstrap.Modal.getInstance(modal);
             bsModal.hide();
         });
+    }
+
+    function updateRequest(requestData) {
+        console.log('Updating request with data:', requestData);
+        const requestId = requestData.id; // Убираем префикс 'request-'
+        console.log('Ищем строку с data-request-id:', requestId);
+        
+        // Ищем строку по атрибуту data-request-id
+        const requestRow = document.querySelector(`[data-request-id="${requestId}"]`);
+        
+        // Если строка не найдена, возможно, она еще не загружена
+        if (!requestRow) {
+            console.log('Строка заявки не найдена в DOM. ID:', requestId);
+            
+            // Если это новая заявка, добавляем её в начало таблицы
+            if (confirm('Заявка не найдена в текущем представлении. Хотите обновить страницу для отображения изменений?')) {
+                window.location.reload();
+            }
+            return;
+        }
+
+        // Находим ячейку с бригадой
+        console.log('Поиск ячейки бригады в строке:', requestRow);
+
+        /*
+<div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
+                                    
+        <div class="mb-1"><i>Бригада</i></div>
+        <div><strong>Селиверстов А.</strong>
+    , Марков А., Соловьев Н.</div>
+<a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn" style="text-decoration: none; font-size: 0.75rem; line-height: 1.2; display: inline-block; margin-top: 10px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="148">
+    подробнее...
+</a>
+</div>
+        */
+        
+        // Пробуем разные возможные селекторы
+        let brigadeCell = requestRow.querySelector('td[data-col="brigade"]') || 
+                         requestRow.querySelector('.col-brigade') ||
+                         requestRow.querySelector('td:nth-child(5)'); // 5-я колонка, если другие не сработают
+        
+        if (!brigadeCell) {
+            console.error('Ячейка бригады не найдена. Доступные ячейки:');
+            const allCells = requestRow.querySelectorAll('td');
+            allCells.forEach((cell, index) => {
+                console.log(`Ячейка ${index}:`, cell.outerHTML);
+            });
+            return;
+        }
+        
+        console.log('Найдена ячейка бригады:', brigadeCell);
+
+        try {
+            // Функция для сокращения ФИО
+            const shortenName = (fullName) => {
+                if (!fullName) return '';
+                const nameToProcess = typeof fullName === 'object' ? fullName.name || '' : String(fullName);
+                const parts = nameToProcess.trim().split(/\s+/);
+                if (parts.length < 2) return nameToProcess;
+                const lastName = parts[0];
+                const firstName = parts[1];
+                return `${lastName} ${firstName.charAt(0)}.`;
+            };
+
+            let brigadeHtml = '';
+            const brigade = requestData.brigadeMembers && requestData.brigadeMembers[0];
+
+            if (brigade) {
+                // Формируем HTML для бригадира
+                brigadeHtml = `
+                    <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
+                    <div class="mb-1"><i>${brigade.brigade_name}</i></div>
+                    <div><strong>${shortenName(brigade.leader_fio)}</strong>`;
+
+                // Добавляем участников бригады, если они есть
+                if (brigade.members) {
+                    const members = brigade.members.split(', ')
+                        .map(member => `, ${shortenName(member)}`)
+                        .join('');
+                    brigadeHtml += members;
+                }
+                brigadeHtml += '</div>';
+
+                // Добавляем кнопку "подробнее..."
+                brigadeHtml += `
+                <a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
+                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2; display: inline-block; margin-top: 10px;"
+                   onmouseover="this.style.textDecoration='underline'"
+                   onmouseout="this.style.textDecoration='none'"
+                   data-bs-toggle="modal"
+                   data-bs-target="#brigadeModal"
+                   data-brigade-id="${brigade.brigade_id || ''}">
+                    подробнее...
+                </a></div>`;
+            } else {
+                // Если данных о бригаде нет, отображаем только название
+                brigadeHtml = requestData.brigade_name || requestData.brigade_id || '';
+            }
+
+            // Обновляем содержимое ячейки
+            brigadeCell.innerHTML = brigadeHtml;
+            
+            // Обновляем data-атрибут, если он используется
+            if (brigadeCell.hasAttribute('data-col-brigade-id')) {
+                brigadeCell.setAttribute('data-col-brigade-id', requestData.brigade_id || '');
+            }
+            
+            // Показываем уведомление об успешном обновлении
+            showAlert(`Бригада успешно назначена на заявку #${requestData.id}`, 'success');
+        } catch (error) {
+            console.error('Ошибка при обновлении отображения бригады:', error);
+            // В случае ошибки просто отображаем название бригады как есть
+            brigadeCell.textContent = requestData.brigade_name || requestData.brigade_id || '';
+            
+            // Обновляем data-атрибут, если он используется
+            if (brigadeCell.hasAttribute('data-col-brigade-id')) {
+                brigadeCell.setAttribute('data-col-brigade-id', requestData.brigade_id || '');
+            }
+            
+            showAlert('Ошибка при обновлении информации о бригаде', 'danger');
+        }
     }
 
     // Инициализация кнопок заявок

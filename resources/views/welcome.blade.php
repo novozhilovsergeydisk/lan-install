@@ -403,7 +403,7 @@
                                         </td> -->
 
                                         <!-- Состав бригады -->
-                                        <td class="col-brigade">
+                                        <td class="col-brigade" data-col-brigade-id="{{ $request->brigade_id }}">
                                             <!-- @dump($brigadeMembersWithDetails) -->
                                             @if($request->brigade_id)
                                                 @php

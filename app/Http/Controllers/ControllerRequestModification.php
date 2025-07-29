@@ -77,12 +77,43 @@ class ControllerRequestModification extends Controller
             ]);
 
             if ($updated) {
+                $sql = "SELECT
+                    b.id AS brigade_id,
+                    b.name AS brigade_name,
+                    bl.fio AS leader_fio,
+                    b.formation_date,
+                    string_agg(
+                        CASE
+                            WHEN bm.employee_id IS NOT NULL AND bm.employee_id != b.leader_id THEN bm_employee.fio
+                            ELSE NULL
+                        END,
+                        ', ' ORDER BY bm_employee.fio
+                    ) AS members
+                FROM
+                    brigades b
+                JOIN
+                    employees bl ON b.leader_id = bl.id
+                LEFT JOIN
+                    brigade_members bm ON bm.brigade_id = b.id
+                LEFT JOIN
+                    employees bm_employee ON bm.employee_id = bm_employee.id
+                WHERE 1=1
+                    AND b.id = ?
+                    AND b.is_deleted = false
+                    AND bl.is_deleted = false
+                GROUP BY
+                    b.id, b.name, bl.fio
+                ORDER BY
+                    b.id desc;";
+                $brigadeMembers = DB::select($sql, [$validated['brigade_id']]);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Бригада успешно прикреплена к заявке',
                     'data' => [
                         'request_id' => $request->request_id,
-                        'brigade_id' => $request->brigade_id
+                        'brigade_id' => $request->brigade_id,
+                        'brigadeMembers' => $brigadeMembers
                     ]
                 ]);
             }

@@ -5,7 +5,7 @@ import { showAlert, postData, fetchData } from './utils.js';
 // Экспортируемые функции
 
 // Глобальная переменная для хранения текущей даты
-const currentDateState = {
+export const currentDateState = {
     // Инициализируем текущей датой в формате DD.MM.YYYY
     date: new Date().toLocaleDateString('ru-RU', {
         day: '2-digit',
