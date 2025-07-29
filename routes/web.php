@@ -113,6 +113,12 @@ Route::post('/api/brigades/info-current-day', [RequestTeamFilterController::clas
     ->name('api.brigades.info-current-day')
     ->middleware('auth');
 
+// User management routes
+Route::prefix('api/users')->middleware('auth')->group(function () {
+    // Update user credentials
+    Route::put('/{id}/credentials', [HomeController::class, 'updateCredentials'])->name('api.users.update-credentials');
+});
+
 // Report Routes    
 Route::prefix('reports')->middleware('auth')->group(function () {
     Route::get('/addresses', [ReportController::class, 'getAddresses'])->name('reports.addresses');

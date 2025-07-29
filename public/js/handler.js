@@ -9,6 +9,7 @@ import {
     currentDateState
 } from './form-handlers.js';
 import { initReportHandlers } from './report-handler.js';
+import { saveEmployeeChangesSystem } from './form-handlers.js';
 
 /**
  * Функция для отображения информации о бригадах
@@ -3669,6 +3670,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initReportHandlers();
     initDeleteMember();
     initTooltips();
+    saveEmployeeChangesSystem();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {

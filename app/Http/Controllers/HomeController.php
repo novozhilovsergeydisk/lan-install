@@ -16,6 +16,60 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
+    /**
+     * Update user credentials (login and password)
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateCredentials(Request $request, $id)
+    {
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'login' => 'required|string|email|max:255',
+                'password' => 'required|string|min:8',
+            ]);
+
+            // Find the user
+            $user = \App\Models\User::findOrFail($id);
+
+            // Update user credentials
+            $user->email = $validated['login'];
+            $user->password = bcrypt($validated['password']);
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Данные для входа успешно обновлены',
+                'data' => [
+                    'user_id' => $user->id,
+                    'email' => $user->email
+                ]
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Пользователь не найден',
+                'error' => $e->getMessage()
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error updating user credentials: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обновлении данных для входа',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Получает список ролей для селекта
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getRoles()
     {
         try {
@@ -1417,6 +1471,8 @@ class HomeController extends Controller
      */
     public function updateComment($id, Request $request)
     {
+        $user = Auth::user();
+        
         // Логируем входные данные
         \Log::info('Получен запрос на обновление комментария:', [
             'id' => $id,
@@ -1433,6 +1489,14 @@ class HomeController extends Controller
                     'message' => 'Комментарий не найден'
                 ], 404);
             }
+
+            // if ($user->role_id != 1) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'У вас нет прав на обновление комментария',
+            //         'comment' => $comment
+            //     ], 403);
+            // }
 
             // Обновляем комментарий
             DB::table('comments')

@@ -473,18 +473,10 @@
                                                             class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                                         Закрыть заявку
                                                     </button>
-                                                    <!-- <button type="button"
-                                                            id="btn-comment"
-                                                            class="btn btn-sm btn-outline-primary p-1 comment-btn"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#commentsModal"
-                                                            data-request-id="{{ $request->id }}">
-                                                        <i class="bi bi-chat-left-text me-1"></i>Комментарий
-                                                    </button> -->
                                                 @endif
                                                 <button data-request-id="{{ $request->id }}" type="button"
                                                         class="btn btn-sm btn-outline-success add-photo-btn"
-                                                        onclick="// console.log('Добавить фотоотчет', {{ $request->id }})">
+                                                        onclick="">
                                                     <i class="bi bi-camera me-1"></i>Фотоотчет
                                                 </button>
                                             </div>
@@ -1297,8 +1289,7 @@
                                 const commentElement = this.closest('.list-group-item').querySelector('p[data-comment-number]');
                                 const commentNumber = commentElement.getAttribute('data-comment-number');
                                 const commentId = commentElement.getAttribute('data-comment-id');
-                                
-                                // Вызываем функцию из модуля form-handlers.js
+
                                 handleCommentEdit(commentElement, commentId, commentNumber, this);
                             });
                         });
@@ -2303,6 +2294,25 @@
 
                         <input type="hidden" name="user_id_update" id="userIdInputUpdate" value="">
                         <input type="hidden" name="employee_id_update" id="employeeIdInputUpdate" value="">
+
+                        <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Системные данные</h5>
+
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label class="form-label">Логин</label>
+                                    <input type="text" name="login_update_system" id="loginInputUpdateSystem" class="form-control" required data-field-name="Логин">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Пароль</label>
+                                    <input type="text" name="password_update_system" id="passwordInputUpdateSystem" class="form-control" required data-field-name="Пароль">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="saveEmployeeChangesSystem" type="button" class="btn btn-primary">Сохранить</button>
                         
                         <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
 

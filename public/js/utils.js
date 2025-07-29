@@ -11,18 +11,23 @@
  */
 function showAlert(message, type = 'success') {
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
     alertDiv.style.zIndex = '1060';
     alertDiv.setAttribute('role', 'alert');
+    alertDiv.style.minWidth = '300px';
+    alertDiv.style.textAlign = 'center';
     alertDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
     document.body.appendChild(alertDiv);
 
+    // Auto-close after 5 seconds
     setTimeout(() => {
-        const bsAlert = new bootstrap.Alert(alertDiv);
-        bsAlert.close();
+        if (alertDiv.parentNode === document.body) {
+            const bsAlert = bootstrap.Alert.getInstance(alertDiv) || new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }
     }, 5000);
 }
 

@@ -627,6 +627,65 @@ function closeModalProperly() {
 
 // ************* 1. Назначение обработчиков событий ************ //
 
+export function saveEmployeeChangesSystem() {
+    const saveBtn = document.getElementById('saveEmployeeChangesSystem');
+    if (!saveBtn) return;
+
+    saveBtn.addEventListener('click', async function() {
+        showAlert('В разработке!', 'info');
+
+        return;
+
+        const userId = document.getElementById('userIdInputUpdate').value;
+        const login = document.getElementById('loginInputUpdateSystem').value.trim();
+        const password = document.getElementById('passwordInputUpdateSystem').value.trim();
+
+        if (!userId) {
+            showAlert('Ошибка: ID пользователя не найден', 'danger');
+            return;
+        }
+
+        if (!login) {
+            showAlert('Пожалуйста, укажите логин', 'warning');
+            return;
+        }
+
+        if (!password) {
+            showAlert('Пожалуйста, укажите пароль', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/users/${userId}/credentials`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    login: login,
+                    password: password
+                })
+            });
+
+            const result = await response.json();
+
+            console.log('result', result);
+
+            if (result.success) {
+                showAlert('Данные для входа успешно обновлены', 'success');
+                // Очищаем поле пароля после успешного обновления
+                document.getElementById('passwordInputUpdateSystem').value = '';
+            } else {
+                showAlert(result.message || 'Произошла ошибка при обновлении данных', 'danger');
+            }
+        } catch (error) {
+            console.error('Error updating user credentials:', error);
+            showAlert('Произошла ошибка при обновлении данных. Пожалуйста, попробуйте снова.', 'danger');
+        }
+    });
+}
+
 // Удаление участника бригады
 export function initDeleteMember() {
     // Используем делегирование событий для работы с динамически добавляемыми кнопками
@@ -813,6 +872,9 @@ export function initEmployeeEditHandlers() {
                     const employee = data.data.employee;
                     const passport = data.data.passport;
                     const car = data.data.car;
+
+                    // document.getElementById('loginInputUpdate').value = employee.login || '';
+                    // document.getElementById('passwordInputUpdate').value = employee.password || '';
 
                     // Заполняем основные поля сотрудника
                     document.getElementById('fioInputUpdate').value = employee.fio || '';
