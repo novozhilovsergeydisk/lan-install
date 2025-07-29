@@ -389,13 +389,11 @@
 
                                         <!-- Состав бригады -->
                                         <td class="col-brigade" data-col-brigade-id="{{ $request->brigade_id }}">
-                                            <!-- @dump($brigadeMembersWithDetails) -->
                                             @if($request->brigade_id)
                                                 @php
                                                     $brigadeMembers = collect($brigadeMembersWithDetails)
                                                         ->where('brigade_id', $request->brigade_id);
                                                 @endphp
-                                                <!-- @dump($brigadeMembers) -->
 
                                                 @if($brigadeMembers->isNotEmpty())
                                                     <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
