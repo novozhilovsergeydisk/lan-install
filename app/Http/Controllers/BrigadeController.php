@@ -193,51 +193,109 @@ class BrigadeController extends Controller
     public function show(string $id)
     {
         // This can be used for a full page view if needed
-        return view('brigade.show', ['id' => $id]);
+        return view('brigade.show', ['id' => $id]); 
     }
     
     /**
-     * Delete a brigade member
+     * Delete a brigade
      * 
-     * @param int $id Member ID in brigade_members table
+     * @param int $brigadeId ID of the brigade to delete
      * @return \Illuminate\Http\JsonResponse
      */
-    public function deleteBrigadeMember($id)
-    {
-        try {
-            return response()->json([
-                'success' => true,
-                'message' => 'Участник успешно удален из бригады (реализация в разработке)'
-            ]);
+    /**
+ * Удаляет бригаду и всех её участников, если бригада не назначена в заявках.
+ *
+ * @param int $brigadeId ID бригады
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function deleteBrigade($brigadeId)
+{
+    \Log::info('Попытка удаления бригады', ['brigadeId' => $brigadeId]);
 
-            // Проверяем существование участника
-            $member = DB::table('brigade_members')->where('id', $id)->first();
-            
-            if (!$member) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Участник бригады не найден'
-                ], 404);
-            }
-            
-            // Удаляем участника из бригады
-            DB::table('brigade_members')->where('id', $id)->delete();
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Участник успешно удален из бригады'
-            ]);
-            
-        } catch (\Exception $e) {
-            \Log::error('Ошибка при удалении участника бригады: ' . $e->getMessage());
-            
+    try {
+        DB::beginTransaction();
+
+        // Проверяем, существует ли бригада
+        $brigadeExists = DB::table('brigades')
+            ->where('id', $brigadeId)
+            ->where('is_deleted', false) // если is_deleted — флаг удаления
+            ->exists();
+
+        if (!$brigadeExists) {
+            DB::rollBack();
+            $error = 'Бригада не найдена или уже удалена';
+            \Log::warning($error, ['brigadeId' => $brigadeId]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Произошла ошибка при удалении участника',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'message' => $error
+            ], 404);
+        }
+
+        // Проверяем, назначена ли бригада в заявки
+        $isAssigned = DB::table('requests')
+            ->where('brigade_id', $brigadeId)
+            ->exists();
+
+        if ($isAssigned) {
+            DB::rollBack();
+            $error = 'Бригада назначена на одну или более заявок и не может быть удалена';
+            \Log::warning($error, ['brigadeId' => $brigadeId]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $error
+            ], 400);
+        }
+
+        // Удаляем всех участников бригады
+        $deletedMembers = DB::table('brigade_members')
+            ->where('brigade_id', $brigadeId)
+            ->delete();
+
+        \Log::info('Удалено участников бригады', [
+            'brigadeId' => $brigadeId,
+            'deletedMembersCount' => $deletedMembers
+        ]);
+
+        // Удаляем саму бригаду
+        $deleted = DB::table('brigades')
+            ->where('id', $brigadeId)
+            ->delete();
+
+        if ($deleted) {
+            DB::commit();
+            \Log::info('Бригада успешно удалена', ['brigadeId' => $brigadeId]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Бригада и все участники успешно удалены'
+            ]);
+        } else {
+            DB::rollBack();
+            $error = 'Не удалось удалить бригаду из базы данных';
+            \Log::error($error, ['brigadeId' => $brigadeId]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $error
             ], 500);
         }
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Исключение при удалении бригады: ' . $e->getMessage(), [
+            'brigadeId' => $brigadeId,
+            'exception' => $e
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Произошла ошибка при удалении бригады',
+            'error' => config('app.debug') ? $e->getMessage() : null
+        ], 500);
     }
+}
+
     
     /**
      * Get brigade data via API

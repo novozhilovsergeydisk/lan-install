@@ -5,6 +5,7 @@ import { initSaveEmployeeChanges } from './form-handlers.js';
 import { initEmployeeFilter } from './form-handlers.js';
 import { initDeleteEmployee } from './form-handlers.js';
 import { initReportHandlers } from './report-handler.js';
+import { initDeleteMember } from './form-handlers.js';
 
 /**
  * Функция для отображения информации о бригадах
@@ -30,6 +31,10 @@ function displayBrigadeInfo(data) {
         // Создаем карточки для каждой бригады
         data.$brigadesInfoCurrentDay.forEach(brigade => {
             // Парсим JSON-строки в объекты
+            const brigadeId = brigade.brigade_id;
+
+            console.log(brigadeId);
+
             let leaderInfoObj = {};
             let membersArray = [];
 
@@ -55,9 +60,9 @@ function displayBrigadeInfo(data) {
 
             const brigadeCard = document.createElement('div');
             brigadeCard.className = 'card mb-3';
+            brigadeCard.setAttribute('data-card-brigade-id', brigade.brigade_id);
 
             const cardHeader = document.createElement('div');
-            cardHeader.className = 'card-header d-flex justify-content-between align-items-center';
             cardHeader.innerHTML = `
                 <h5 class="mb-0">${brigade.brigade_name || 'Бригада без названия'}</h5>
                 <span class="badge bg-primary">${(brigade.member_count || 0) + 1} участников</span>
@@ -107,18 +112,23 @@ function displayBrigadeInfo(data) {
                         <tr>
                             <th>ФИО</th>
                             <th>Телефон</th>
-                            <th>Роль</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${membersArray.map(member => `
-                            <tr>
-                                <td>${member.fio || 'Не указано'}</td>
-                                <td>${member.phone || 'Не указан'}</td>
-                                <td>${member.is_leader ? '<span class="badge bg-success">Бригадир</span>' : 'Участник'}</td>
+                            <tr data-brigade-id="${brigadeId}" data-member-id="${member.id}">
+                                <td width="20%">${member.fio || 'Не указано'}</td>
+                                <td width="80%">${member.phone || 'Не указан'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
+                    <div>
+                        <button class="btn btn-sm btn-outline-danger delete-member-btn" 
+                                data-brigade-id="${brigadeId}" 
+                                data-employee-id="${leaderInfoObj.id}">
+                            Удалить
+                        </button>
+                    </div>
                 `;
                 membersList.appendChild(membersTable);
             } else {
@@ -1186,7 +1196,7 @@ function initializePage() {
                         });
 
                         const brigadeInfoData = await brigadeInfoResponse.json();
-                        // console.log('Информация о бригадах:', brigadeInfoData);
+                        console.log('Информация о бригадах:', brigadeInfoData);
 
                         // Очищаем контейнер для информации о бригадах
                         const brigadeInfoContainer = document.getElementById('brigadeInfo');
@@ -3644,6 +3654,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initEmployeeFilter();
     initDeleteEmployee();
     initReportHandlers();
+    initDeleteMember();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {

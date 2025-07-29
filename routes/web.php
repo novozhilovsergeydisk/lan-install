@@ -203,8 +203,8 @@ Route::post('/employee/delete', [EmployeeUserController::class, 'deleteEmployee'
 
 // Delete routes
 // Delete brigade member
-Route::post('/brigade/member/delete/{id}', [BrigadeController::class, 'deleteBrigadeMember'])
-->name('api.brigades.member.delete')
+Route::post('/brigade/delete/{id}', [BrigadeController::class, 'deleteBrigade'])
+->name('brigade.delete')
 ->middleware('auth');
 
 

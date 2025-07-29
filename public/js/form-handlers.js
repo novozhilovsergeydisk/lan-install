@@ -627,6 +627,74 @@ function closeModalProperly() {
 
 // ************* 1. Назначение обработчиков событий ************ //
 
+// Удаление участника бригады
+export function initDeleteMember() {
+    // Используем делегирование событий для работы с динамически добавляемыми кнопками
+    document.addEventListener('click', async function(event) {
+        const deleteBtn = event.target.closest('.delete-member-btn');
+        if (!deleteBtn) return;
+        
+        event.preventDefault();
+        
+        const brigadeId = deleteBtn.getAttribute('data-brigade-id');
+        const employeeId = deleteBtn.getAttribute('data-employee-id');
+        
+        if (!brigadeId || !employeeId) {
+            console.error('Не указаны ID бригады или сотрудника');
+            showAlert('Ошибка: не указаны необходимые данные для удаления', 'danger');
+            return;
+        }
+
+        if (!confirm('Вы уверены, что хотите удалить участника бригады?')) return;
+        
+        // Формируем ID в формате brigadeId
+        const memberId = `${brigadeId}`;
+        
+        try {
+            console.log(`Попытка удаления бригады: brigadeId=${brigadeId}`);
+            
+            const result = await postData(`/brigade/delete/${memberId}`, {});
+
+            console.log(result);
+
+            // return;
+            
+            if (result && result.success) {
+                showAlert(result.message || 'Бригада успешно удалена', 'success');
+                
+                // Находим и скрываем карточку удаленной бригады
+                const brigadeCard = document.querySelector(`div[data-card-brigade-id="${brigadeId}"]`);
+                if (brigadeCard) {
+                    brigadeCard.style.display = 'none';
+                }
+            } else {
+                // Показываем сообщение об ошибке с сервера
+                const errorMessage = result && result.message 
+                    ? result.message 
+                    : 'Произошла неизвестная ошибка при удалении бригады';
+                showAlert(errorMessage, 'warning');
+                console.error('Ошибка при удалении бригады:', errorMessage);
+               }
+        } catch (error) {
+            console.error('Ошибка при удалении бригады:', error);
+            const errorMessage = error.message || 'Произошла ошибка при удалении бригады';
+            showAlert(errorMessage, 'warning');
+            
+            // Если это ошибка 404, обновляем страницу
+            if (error.message && error.message.includes('404')) {
+                console.log('Обновляем страницу из-за ошибки 404');
+                setTimeout(() => window.location.reload(), 2000);
+            }
+        }
+    });
+}
+
+// async function handleDeleteMember(event) {
+//     console.log('handleDeleteMember');
+//     console.log(event);
+// }
+  
+
 // Инициализация удаления сотрудника
 export function initDeleteEmployee() {
     const deleteEmployeeBtns = document.querySelectorAll('.delete-employee-btn');
@@ -638,27 +706,31 @@ export function initDeleteEmployee() {
 }
 
 async function handleDeleteEmployee(event) {
-    if (confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
-        // Получаем данные о сотруднике из атрибутов кнопки
-        const employeeName = event.currentTarget.getAttribute('data-employee-name');
-        const employeeId = event.currentTarget.getAttribute('data-employee-id');
+    console.log('handleDeleteEmployee');
+    console.log(event);
+    // if (confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
+    //     // Получаем данные о сотруднике из атрибутов кнопки
+    //     // const employeeName = event.currentTarget.getAttribute('data-employee-name');
+    //     // const employeeId = event.currentTarget.getAttribute('data-employee-id');
 
-        console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
+    //     // console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
 
-        const data = {
-            employee_id: employeeId,
-        };
+    //     // const data = {
+    //     //     employee_id: employeeId,
+    //     // };
 
-        const result = await postData('/employee/delete', data);
+    //     // console.log('Отправка данных на сервер:', data);    
 
-        console.log('Ответ от сервера:', result);
+    //     // const result = await postData('/employee/delete', data);
 
-        if (result.success) {
-            showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
-        } else {
-            showAlert(result.message, 'danger');
-        }
-    }    
+    //     // console.log('Ответ от сервера:', result);
+
+    //     // if (result.success) {
+    //     //     showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
+    //     // } else {
+    //     //     showAlert(result.message, 'danger');
+    //     // }
+    // }    
     // showAlert(`Реализация удаления сотрудника "${employeeName}" в разработке`, 'warning');
 }
 // END Инициализация удаления сотрудника
