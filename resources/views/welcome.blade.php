@@ -462,15 +462,7 @@
                                                         <i class="bi bi-x-circle"></i>
                                                     </button>
                                                     
-                                                    <!-- Инициализация тултипов -->
-                                                    <script>
-                                                        document.addEventListener('DOMContentLoaded', function() {
-                                                            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                                                            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                                                                return new bootstrap.Tooltip(tooltipTriggerEl);
-                                                            });
-                                                        });
-                                                    </script>
+
                                                 @endif
                                             </div>
                                         </td>
@@ -2898,6 +2890,19 @@
 </script>
 
 
+    <!-- Initialize tooltips once when the page loads -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all tooltips on the page
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    trigger: 'hover',
+                    placement: 'left'
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>
