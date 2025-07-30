@@ -2998,6 +2998,8 @@ function hanlerAddToBrigade() {
                     // Разблокируем опцию в селекте
                     option.disabled = false;
                     option.selected = false;
+                    // Показываем опцию в выпадающем списке
+                    option.style.display = '';
                     // Обновляем скрытое поле с данными о составе бригады
                     updateBrigadeMembersFormField();
                 };
@@ -3017,8 +3019,9 @@ function hanlerAddToBrigade() {
                 // Добавляем в список бригады
                 brigadeMembers.appendChild(memberDiv);
 
-                // Делаем опцию в селекте неактивной
+                // Делаем опцию в селекте неактивной и скрываем её
                 option.disabled = true;
+                option.style.display = 'none';
                 option.selected = false;
             });
 
@@ -3034,6 +3037,20 @@ function hanlerAddToBrigade() {
 function handlerCreateBrigade() {
     // console.log('Инициализация handlerCreateBrigade...');
     const createBtn = document.getElementById('createBrigadeBtn');
+    const createBrigadeModal = document.getElementById('createBrigadeModal');
+
+    // Обработчик открытия модального окна
+    if (createBrigadeModal) {
+        createBrigadeModal.addEventListener('show.bs.modal', function () {
+            // При открытии модального окна скрываем уже добавленных сотрудников
+            const employeesSelect = document.getElementById('employeesSelect');
+            if (employeesSelect) {
+                Array.from(employeesSelect.options).forEach(option => {
+                    option.style.display = option.disabled ? 'none' : '';
+                });
+            }
+        });
+    }
 
     if (createBtn) {
         createBtn.addEventListener('click', async function (e) {
@@ -3429,11 +3446,13 @@ function handlerCreateBrigade() {
                             brigadeLeader.value = '';
                         }
 
-                        // Снимаем атрибут disabled у сотрудников в списке слева
+                        // Снимаем атрибут disabled у сотрудников в списке слева, но не показываем их
                         const employeesSelect = document.getElementById('employeesSelect');
                         if (employeesSelect) {
                             Array.from(employeesSelect.options).forEach(option => {
                                 option.disabled = false;
+                                // Не показываем опции, которые уже добавлены в бригаду
+                                // Они будут скрыты, так как при добавлении мы устанавливаем display: 'none'
                             });
                         }
 
