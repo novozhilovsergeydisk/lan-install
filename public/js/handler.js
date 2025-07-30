@@ -68,7 +68,7 @@ function displayBrigadeInfo(data) {
 
             const cardHeader = document.createElement('div');
             cardHeader.innerHTML = `
-                <h5 class="mb-0">${brigade.brigade_name || 'Бригада без названия'}</h5>
+                <h5 class="ms-1 mt-1">${brigade.brigade_name || 'Бригада без названия'}</h5>
             `;
 
             const cardBody = document.createElement('div');
@@ -76,13 +76,12 @@ function displayBrigadeInfo(data) {
 
             // Информация о бригадире
             const leaderInfo = document.createElement('div');
-            leaderInfo.className = 'mb-3';
+            leaderInfo.setAttribute('data-info', 'leader-info');
+            // leaderInfo.className = 'mb-3';
             if (leaderInfoObj && Object.keys(leaderInfoObj).length > 0) {
                 leaderInfo.innerHTML = `
                     <div class="d-flex align-items-center">
-                        <div>
-                            <div><strong>${leaderInfoObj.fio || 'Не указано'}</strong></div>
-                        </div>
+                        <div><strong>${leaderInfoObj.fio || 'Не указано'}</strong></div>
                     </div>
                 `;
             } else {
@@ -2993,10 +2992,14 @@ function hanlerAddToBrigade() {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'btn btn-sm btn-outline-danger';
                 deleteBtn.innerHTML = '&times;';
-                deleteBtn.onclick = function () {
+                deleteBtn.onclick = function (e) {
+                    e.stopPropagation(); // Предотвращаем всплытие события, чтобы не сработал клик на элементе
                     memberDiv.remove();
                     // Разблокируем опцию в селекте
+                    option.disabled = false;
                     option.selected = false;
+                    // Обновляем скрытое поле с данными о составе бригады
+                    updateBrigadeMembersFormField();
                 };
 
                 // Скрытое поле для формы
