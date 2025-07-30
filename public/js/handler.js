@@ -69,7 +69,6 @@ function displayBrigadeInfo(data) {
             const cardHeader = document.createElement('div');
             cardHeader.innerHTML = `
                 <h5 class="mb-0">${brigade.brigade_name || 'Бригада без названия'}</h5>
-                <span class="badge bg-primary">${(brigade.member_count || 0) + 1} участников</span>
             `;
 
             const cardBody = document.createElement('div');
@@ -80,15 +79,9 @@ function displayBrigadeInfo(data) {
             leaderInfo.className = 'mb-3';
             if (leaderInfoObj && Object.keys(leaderInfoObj).length > 0) {
                 leaderInfo.innerHTML = `
-                    <h6>Бригадир:</h6>
                     <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            <i class="bi bi-person-circle fs-2"></i>
-                        </div>
                         <div>
                             <div><strong>${leaderInfoObj.fio || 'Не указано'}</strong></div>
-                            <div>Телефон: ${leaderInfoObj.phone || 'Не указан'}</div>
-                            <div>Должность: ${leaderInfoObj.position || 'Не указана'}</div>
                         </div>
                     </div>
                 `;
@@ -98,7 +91,7 @@ function displayBrigadeInfo(data) {
 
             // Список участников бригады
             const membersList = document.createElement('div');
-            membersList.innerHTML = '<h6>Состав бригады:</h6>';
+            // membersList.innerHTML = '<h6>Состав бригады:</h6>';
 
             if (membersArray && membersArray.length > 0) {
                 const membersTable = document.createElement('table');
@@ -112,22 +105,15 @@ function displayBrigadeInfo(data) {
                 }
 
                 membersTable.innerHTML = `
-                    <thead>
-                        <tr>
-                            <th>ФИО</th>
-                            <th>Телефон</th>
-                        </tr>
-                    </thead>
                     <tbody>
                         ${membersArray.map(member => `
                             <tr data-brigade-id="${brigadeId}" data-member-id="${member.id}">
-                                <td width="20%">${member.fio || 'Не указано'}</td>
-                                <td width="80%">${member.phone || 'Не указан'}</td>
+                                <td>${member.fio || 'Не указано'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                     <div>
-                        <button class="btn btn-sm btn-outline-danger delete-member-btn" 
+                        <button class="btn btn-sm btn-outline-danger delete-member-btn mt-2" 
                                 data-brigade-id="${brigadeId}" 
                                 data-employee-id="${leaderInfoObj.id}">
                             Удалить
