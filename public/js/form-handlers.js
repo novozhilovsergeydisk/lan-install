@@ -634,16 +634,22 @@ export function saveEmployeeChangesSystem() {
     if (!saveBtn) return;
 
     saveBtn.addEventListener('click', async function() {
-        showAlert('В разработке!', 'info');
+        // showAlert('В разработке!', 'info');
 
-        return;
+        // return;
 
         const userId = document.getElementById('userIdInputUpdate').value;
         const login = document.getElementById('loginInputUpdateSystem').value.trim();
         const password = document.getElementById('passwordInputUpdateSystem').value.trim();
+        const employeeId = document.getElementById('employeeIdInputUpdate').value;
 
         if (!userId) {
             showAlert('Ошибка: ID пользователя не найден', 'danger');
+            return;
+        }
+
+        if (!employeeId) {
+            showAlert('Ошибка: ID сотрудника не найден', 'danger');
             return;
         }
 
@@ -658,7 +664,7 @@ export function saveEmployeeChangesSystem() {
         }
 
         try {
-            const response = await fetch(`/api/users/${userId}/credentials`, {
+            const response = await fetch(`/api/users/${employeeId}/credentials`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -675,7 +681,7 @@ export function saveEmployeeChangesSystem() {
             console.log('result', result);
 
             if (result.success) {
-                showAlert('Данные для входа успешно обновлены', 'success');
+                showAlert('Учетная запись успешно обновлена', 'success');
                 // Очищаем поле пароля после успешного обновления
                 document.getElementById('passwordInputUpdateSystem').value = '';
             } else {

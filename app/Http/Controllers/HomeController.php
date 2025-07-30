@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\RequestTeamFilterController;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
 class HomeController extends Controller
 {
@@ -28,24 +29,51 @@ class HomeController extends Controller
         try {
             // Validate the request
             $validated = $request->validate([
-                'login' => 'required|string|email|max:255',
+                'login' => 'required|string|max:255',
                 'password' => 'required|string|min:8',
             ]);
 
+            $sql = "select * from employees where id = $id";
+            $result = DB::select($sql);
+            $user_id = $result[0]->user_id;
+
             // Find the user
-            $user = \App\Models\User::findOrFail($id);
+            // $user = \App\Models\User::findOrFail($user_id);
 
             // Update user credentials
-            $user->email = $validated['login'];
-            $user->password = bcrypt($validated['password']);
-            $user->save();
+            // $user->email = $validated['login'];
+            // $user->password = bcrypt($validated['password']);
+            // $user->save();
+
+            // Проверяем существование пользователя
+            $user = DB::selectOne('SELECT id FROM users WHERE id = ?', [$user_id]);
+            
+            if (!$user) {
+                throw new \Exception('Пользователь не найден');
+            }
+
+            // Обновляем email, name и password
+            $result = DB::update(
+                'UPDATE users SET email = ?, name = ?, password = ?, updated_at = NOW() WHERE id = ?',
+                [
+                    $validated['login'],  // email
+                    $validated['login'],  // name (дублируем для совместимости)
+                    Hash::make($validated['password']), 
+                    $user_id
+                ]
+            );
+
+            if ($result === 0) {
+                throw new \Exception('Данные пользователя не были обновлены');
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Данные для входа успешно обновлены',
                 'data' => [
-                    'user_id' => $user->id,
-                    'email' => $user->email
+                    'updated' => true,
+                    'user_id' => $user_id,
+                    'email' => $validated['login']
                 ]
             ]);
 
