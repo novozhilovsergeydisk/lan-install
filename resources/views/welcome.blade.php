@@ -1019,7 +1019,7 @@
                     </div>
                 </div>
 
-                <div class="card mt-4">
+                <div class="card mt-4 hide-me">
                     <div class="card-body">
                         <h5 class="card-title">Выберите дату в календаре</h5>
                         <!-- <p class="card-text">Используйте календарь слева для выбора даты.</p> -->

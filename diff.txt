@@ -1,143 +1,73 @@
 diff --git a/app/Http/Controllers/HomeController.php b/app/Http/Controllers/HomeController.php
-index d65d77f..fdb7e67 100644
+index fdb7e67..5352fcc 100644
 --- a/app/Http/Controllers/HomeController.php
 +++ b/app/Http/Controllers/HomeController.php
-@@ -429,7 +429,6 @@ public function index()
- 
-         $brigadeMembersWithDetails = DB::select($sql);
- 
--
-         // dd($brigadeMembersWithDetails);`
- 
-         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
-@@ -500,7 +499,9 @@ public function index()
-                 addr.district,
-                 addr.city_id,
-                 ct.name AS city_name,
--                ct.postal_code AS city_postal_code
-+                ct.postal_code AS city_postal_code,
-+                rs.name AS status_name,
-+                rs.color AS status_color
-             FROM requests r
-             LEFT JOIN clients c ON r.client_id = c.id
-             LEFT JOIN request_statuses rs ON r.status_id = rs.id
-@@ -510,7 +511,9 @@ public function index()
-             LEFT JOIN request_addresses ra ON r.id = ra.request_id
-             LEFT JOIN addresses addr ON ra.address_id = addr.id
-             LEFT JOIN cities ct ON addr.city_id = ct.id
--            WHERE r.execution_date::date = CURRENT_DATE AND (b.is_deleted = false OR b.id IS NULL)
-+            WHERE r.execution_date::date = CURRENT_DATE 
-+            AND (b.is_deleted = false OR b.id IS NULL) 
-+            AND rs.name != 'отменена'
-             ORDER BY r.id DESC";
- 
-             if ($user->isFitter) {
-@@ -530,7 +533,9 @@ public function index()
-                         addr.district,
-                         addr.city_id,
-                         ct.name AS city_name,
--                        ct.postal_code AS city_postal_code
-+                        ct.postal_code AS city_postal_code,
-+                        rs.name AS status_name,
-+                        rs.color AS status_color
-                     FROM requests r
-                     LEFT JOIN clients c ON r.client_id = c.id
-                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
-@@ -542,6 +547,7 @@ public function index()
-                     LEFT JOIN cities ct ON addr.city_id = ct.id
-                     WHERE r.execution_date::date = CURRENT_DATE 
-                     AND (b.is_deleted = false OR b.id IS NULL)
-+                    AND rs.name != 'отменена'
-                     AND (
-                         EXISTS (
-                             SELECT 1
-@@ -561,7 +567,6 @@ public function index()
-                 ";
+@@ -1495,13 +1495,23 @@ public function updateComment($id, Request $request)
+                 ], 404);
              }
  
--
-         $requests = DB::select($sql);
- 
-         //        dd($requestByDate);
-diff --git a/public/js/handler.js b/public/js/handler.js
-index 212f041..2726fd8 100644
---- a/public/js/handler.js
-+++ b/public/js/handler.js
-@@ -276,6 +276,10 @@ function applyFilters() {
-                         }
- 
-                         data.data.forEach((request, index) => {
-+                            if (request.status_name === 'отменена') {
-+                                return;
-+                            }
-+                            
-                             // Отладочная информация
-                             // Логи заявок отключены
- 
-@@ -2029,34 +2033,42 @@ function handleCancelRequest(button) {
-                 // Находим строку заявки
-                 const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
- 
--                if (requestRow) {
--                    // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
--                    const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
--                    if (firstActionBlock) {
--                        const buttonsToHide = firstActionBlock.querySelectorAll('button');
--                        buttonsToHide.forEach(button => {
--                            button.style.display = 'none';
--                        });
-+                console.log('Заявка отменена:', requestRow);
- 
--                        // Добавляем текст "Заявка отменена"
--                        const statusText = document.createElement('div');
--                        statusText.className = 'text-muted small';
--                        statusText.textContent = 'Заявка отменена';
--                        firstActionBlock.appendChild(statusText);
--                    }
--
--                    // Скрываем кнопки во втором блоке, кроме кнопки Фотоотчет
--                    const secondActionBlock = requestRow.querySelectorAll('td.text-nowrap .d-flex.flex-column.gap-1')[1];
--                    if (secondActionBlock) {
--                        const buttonsToHide = secondActionBlock.querySelectorAll('button:not(.add-photo-btn)');
--                        buttonsToHide.forEach(button => {
--                            button.style.display = 'none';
--                        });
--                    }
-+                if (requestRow) {
-+                    // Скрыть саму строку
+-            // if ($user->role_id != 1) {
+-            //     return response()->json([
+-            //         'success' => false,
+-            //         'message' => 'У вас нет прав на обновление комментария',
+-            //         'comment' => $comment
+-            //     ], 403);
+-            // }
++            $sql = "SELECT * FROM user_roles WHERE user_id = {$user->id}";
++            $role = DB::select($sql);
 +
-+                    console.log('Заявка отменена', requestRow.dataset.requestId);
++            // return response()->json([
++            //     'success' => true,
++            //     'message' => 'Роль пользователя (тестовый режим)',
++            //     'sql' => $sql,
++            //     'role' => $role
++            // ], 200);
 +
-+                    requestRow.style.display = 'none';
-+
-+                    // // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
-+                    // const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
-+                    // if (firstActionBlock) {
-+                    //     const buttonsToHide = firstActionBlock.querySelectorAll('button');
-+                    //     buttonsToHide.forEach(button => {
-+                    //         button.style.display = 'none';
-+                    //     });
-+
-+                    //     // Добавляем текст "Заявка отменена"
-+                    //     const statusText = document.createElement('div');
-+                    //     statusText.className = 'text-muted small';
-+                    //     statusText.textContent = 'Заявка отменена';
-+                    //     firstActionBlock.appendChild(statusText);
-+                    // }
-+
-+                    // // Скрываем кнопки во втором блоке, кроме кнопки Фотоотчет
-+                    // const secondActionBlock = requestRow.querySelectorAll('td.text-nowrap .d-flex.flex-column.gap-1')[1];
-+                    // if (secondActionBlock) {
-+                    //     const buttonsToHide = secondActionBlock.querySelectorAll('button:not(.add-photo-btn)');
-+                    //     buttonsToHide.forEach(button => {
-+                    //         button.style.display = 'none';
-+                    //     });
-+                    // }
-                 }
++            if ($role[0]->role_id != 1) {
++                return response()->json([
++                    'success' => false,
++                    'message' => 'У вас нет прав на обновление комментария!',
++                    'comment' => $comment
++                ], 403);
++            }
  
-                 // Обновляем счетчик заявок, если он есть
--                updateRequestsCount();
-+                // updateRequestsCount();
+             // Обновляем комментарий
+             DB::table('comments')
+@@ -1512,7 +1522,7 @@ public function updateComment($id, Request $request)
  
-             } else {
-                 throw new Error(result.message || 'Ошибка при отмене заявки');
+             return response()->json([
+                 'success' => true,
+-                'message' => 'Комментарий успешно обновлен',
++                'message' => 'Комментарий успешно обновлен!',
+                 'comment' => DB::table('comments')->where('id', $id)->first()
+             ]);
+ 
+diff --git a/public/js/form-handlers.js b/public/js/form-handlers.js
+index b6d5754..60a44fc 100644
+--- a/public/js/form-handlers.js
++++ b/public/js/form-handlers.js
+@@ -568,8 +568,10 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
+ 
+                 const result = await response.json();
+ 
++                console.log(result);
++
+                 // Показываем уведомление об успехе
+-                showAlert('Комментарий успешно обновлен', 'success');
++                showAlert('Комментарий успешно обновлен!!', 'success');
+ 
+                 // Обновляем текст комментария в DOM
+                 commentElement.textContent = newText;
+diff --git a/resources/views/welcome.blade.php b/resources/views/welcome.blade.php
+index a4e5138..79b1034 100644
+--- a/resources/views/welcome.blade.php
++++ b/resources/views/welcome.blade.php
+@@ -1019,7 +1019,7 @@ class="btn btn-sm btn-outline-success add-photo-btn"
+                     </div>
+                 </div>
+ 
+-                <div class="card mt-4">
++                <div class="card mt-4 hide-me">
+                     <div class="card-body">
+                         <h5 class="card-title">Выберите дату в календаре</h5>
+                         <!-- <p class="card-text">Используйте календарь слева для выбора даты.</p> -->

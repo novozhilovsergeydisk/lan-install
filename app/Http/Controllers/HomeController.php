@@ -1495,13 +1495,23 @@ class HomeController extends Controller
                 ], 404);
             }
 
-            // if ($user->role_id != 1) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'У вас нет прав на обновление комментария',
-            //         'comment' => $comment
-            //     ], 403);
-            // }
+            $sql = "SELECT * FROM user_roles WHERE user_id = {$user->id}";
+            $role = DB::select($sql);
+
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => 'Роль пользователя (тестовый режим)',
+            //     'sql' => $sql,
+            //     'role' => $role
+            // ], 200);
+
+            if ($role[0]->role_id != 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'У вас нет прав на обновление комментария!',
+                    'comment' => $comment
+                ], 403);
+            }
 
             // Обновляем комментарий
             DB::table('comments')
@@ -1512,7 +1522,7 @@ class HomeController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Комментарий успешно обновлен',
+                'message' => 'Комментарий успешно обновлен!',
                 'comment' => DB::table('comments')->where('id', $id)->first()
             ]);
 

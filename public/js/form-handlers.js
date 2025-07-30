@@ -568,8 +568,10 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
 
                 const result = await response.json();
 
+                console.log(result);
+
                 // Показываем уведомление об успехе
-                showAlert('Комментарий успешно обновлен', 'success');
+                showAlert('Комментарий успешно обновлен!!', 'success');
 
                 // Обновляем текст комментария в DOM
                 commentElement.textContent = newText;
