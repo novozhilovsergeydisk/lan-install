@@ -322,29 +322,31 @@ function addRequestToTable(result) {
 
     // Формируем содержимое строки
     newRow.innerHTML = `
-        <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">1</td>
+        <!-- Номер заявки -->
+        <td class="col-number">1</td>
+        <!-- Дата заявки -->
         <td>
-            <div>${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate}</div>
-            <div class="text-dark" style="font-size: 0.8rem;">${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>
+            <div class="col-date__date">${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate}</div>
+            <div class="col-date__number">${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>
         </td>
         <!-- Клиент -->
-        <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-            <div class="text-dark"style="font-size: 0.8rem;">${clientOrganization}</div>
-            <small class="text-dark text-truncate_ d-block" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
+        <td class="col-address">
+            <div class="text-dark col-address__organization">${clientOrganization}</div>
+            <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
             ${addressData.city_name && addressData.city_name !== 'Москва' ? `<strong>${addressData.city_name}</strong>, ` : ''}ул. ${addressText}
             </small>
-            <div class="text-dark"style="font-size: 0.8rem;"><i>${clientData.fio || requestData.client_fio}</i></div>
-            <small class="text-truncate_ d-block">
+            <div class="text-dark font-size-0-8rem"><i>${clientData.fio || requestData.client_fio}</i></div>
+            <small class="text-black d-block font-size-0-8rem">
                 <i>${clientData.phone || requestData.client_phone || 'Нет телефона'}</i>
             </small>
         </td>
-        <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
+        <!-- Комментарий -->
+        <td class="col-comment">
             ${extractedComment ? `
                 <div class="comment-preview small text-dark"
                     data-bs-toggle="tooltip"
-                    style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
                     data-bs-original-title="${extractedComment}">
-                    <p class="comment-preview-title" style_="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
+                    <p class="comment-preview-title">Печатный комментарий:</p>
                     <p class="comment-preview-text">${extractedComment}</p>
                 </div>
                 <div class="mt-1">
@@ -362,15 +364,16 @@ function addRequestToTable(result) {
                 </div>
             ` : ''}
         </td>
-        <td>
-            <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
+        <td class="col-brigade">
+            <div data-name="brigadeMembers" class="col-brigade__div">
                 Не назначена
             </div>
         </td>
 
         ${requestData.isAdmin ? `
-        <td class="text-nowrap">
-            <div class="d-flex flex-column gap-1">
+        <!-- Action Buttons Group -->
+        <td class="col-actions text-nowrap">
+            <div class="col-actions__div d-flex flex-column gap-1">
                 <button type="button" 
                         class="btn btn-sm btn-outline-primary assign-team-btn p-1" 
                         data-bs-toggle="tooltip" 
@@ -399,9 +402,9 @@ function addRequestToTable(result) {
             </div>
         </td>
         ` : ''}
-
-        <td class="text-nowrap">
-            <div class="d-flex flex-column gap-1">
+        <!-- Action Buttons -->
+        <td class="col-actions text-nowrap">
+            <div class="col-actions__div d-flex flex-column gap-1">
                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                     Закрыть заявку
                 </button>

@@ -1,5 +1,4 @@
 @php
-    // Заголовки для отключения кэширования
     use App\Helpers\StringHelper;
 @endphp
 <!DOCTYPE html>
@@ -58,6 +57,7 @@
         .comment-preview {
             scrollbar-width: thin;
             scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+            background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;
         }
         
         /* Для WebKit (Chrome, Safari, Edge) */
@@ -295,16 +295,16 @@
                             <table id="requestsTable" class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>
-                                    <th class="line-height-20 font-smaller" style_="width: 1rem;"></th>
-                                    <th class="line-height-20 font-smaller" style_ ="width: auto;">Дата<br> исполнения</th>
-                                    <th class="line-height-20 font-smaller" style_="width: auto;">Адрес<br>Телефон</th>
-                                    <th class="line-height-20 font-smaller" style_="width: auto;">Комментарии</th>
+                                    <th class="line-height-20 font-smaller"></th>
+                                    <th class="line-height-20 font-smaller">Дата<br> исполнения</th>
+                                    <th class="line-height-20 font-smaller">Адрес<br>Телефон</th>
+                                    <th class="line-height-20 font-smaller">Комментарии</th>
 
-                                    <th id="brigadeHeader" class="line-height-20 font-smaller" style_="width: auto;">Бригада <span id="brigadeSortIcon"></span></th>
+                                    <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
                                     @if($user->isAdmin)
-                                    <th class="line-height-20 font-smaller" style_="width: 1rem;" colspan="2">Действия с заявкой</th>
+                                    <th class="line-height-20 font-smaller" colspan="2">Действия с заявкой</th>
                                     @endif
-                                    <th class="line-height-20 font-smaller" style_="width: 2rem;"></th>
+                                    <th class="line-height-20 font-smaller"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -313,11 +313,12 @@
                                         $rowNumber = $loop->iteration; 
                                         // Get the current loop iteration (1-based index)
                                     @endphp
-                                    <tr id="request-{{ $request->id }}" class="align-middle status-row zzzz"
+                                    <tr id="request-{{ $request->id }}" class="align-middle status-row welcome-blade"
                                         style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                         data-request-id="{{ $request->id }}">
+
                                         <!-- Номер заявки -->
-                                        <td class="col-number" style_="max-width: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $rowNumber }}</td>
+                                        <td class="col-number">{{ $rowNumber }}</td>
 
                                         <!-- Дата заявки -->
                                         <td class="col-date">
@@ -326,16 +327,16 @@
                                         </td>
 
                                         <!-- Клиент -->
-                                        <td class="col-address" style_="max-width: 10rem; overflow: hidden; text-overflow: ellipsis;">
+                                        <td class="col-address">
                                             <div class="text-dark col-address__organization">{{ $request->client_organization }}</div>
                                             @if(!empty($request->street))
-                                            <small class="text-dark text-truncate_ d-block col-address__street"
+                                            <small class="text-dark d-block col-address__street"
                                                     data-bs-toggle="tooltip"
                                                     title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
                                                     @if($request->city_name && $request->city_name !== 'Москва')<strong>{{ $request->city_name }}</strong>, @endif ул. {{ $request->street }}, д. {{ $request->houses }}
                                             </small>
                                             @else
-                                            <small class="text-dark text-truncate_ d-block">Адрес не указан</small>
+                                            <small class="text-dark d-block">Адрес не указан</small>
                                             @endif
                                             <div class="text-dark font-size-0-8rem"><i>{{ $request->client_fio }}</i></div>
                                             <small class="text-black d-block font-size-0-8rem">
@@ -344,7 +345,7 @@
                                         </td>
 
                                         <!-- Комментарий -->
-                                        <td class="col-comments" style_="max-width: 50rem; overflow: hidden; text-overflow: ellipsis;">
+                                        <td class="col-comments">
                                             @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
                                                 @php
                                                     $firstComment = $comments_by_request[$request->id][0];
@@ -352,13 +353,10 @@
                                                     $author = $firstComment->author_name;
                                                     $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
                                                 @endphp
-                                                <div class="comment-preview small text-dark" 
-                                                    style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
+                                                <div class="comment-preview small text-dark"
                                                     data-bs-toggle="tooltip" title="{{ $commentText }}">
-                                                    <p class="comment-preview-title" style_="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
-
+                                                    <p class="comment-preview-title">Печатный комментарий:</p>
                                                     <p class="comment-preview-text">{{ $commentText }}</p>
-
                                                 </div>
                                             @endif
                                             @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) >= 1)
@@ -378,17 +376,9 @@
                                             @endif
                                         </td>
 
-                                        <!-- Дата выполнения -->
-                                        <!-- <td>
-                                            <span
-                                                class="brigade-lead-text">{{ $request->operator_name ?? 'Не указан' }}</span><br>
-                                            <span
-                                                class="brigade-lead-text">{{ $request->request_date ? \Carbon\Carbon::parse($request->request_date)->format('d.m.Y') : 'Не указана' }}</span>
-                                        </td> -->
-
                                         <!-- Состав бригады -->
                                         <td class="col-brigade" data-col-brigade-id="{{ $request->brigade_id }}">
-                                            <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
+                                            <div data-name="brigadeMembers" class="col-brigade__div">
                                                 @if($request->brigade_id)
                                                     @php
                                                         $brigadeMembers = collect($brigadeMembersWithDetails)
@@ -397,18 +387,18 @@
                                                     
                                                     @if($brigadeMembers->isNotEmpty())
                                                         @php
-                                                                $leaderName = $brigadeMembers->first()->employee_leader_name;
-                                                                $brigadeName = $brigadeMembers->first()->brigade_name;
-                                                            @endphp
+                                                            $leaderName = $brigadeMembers->first()->employee_leader_name;
+                                                            $brigadeName = $brigadeMembers->first()->brigade_name;
+                                                        @endphp
 
-                                                            @if($leaderName)
-                                                                <div class="mb-1"><i>{{ $brigadeName }}</i></div>
-                                                                <div><strong>{{ StringHelper::shortenName($leaderName) }}</strong>
-                                                                @foreach($brigadeMembers as $member)
-                                                                    , {{ StringHelper::shortenName($member->employee_name) }}
-                                                                @endforeach
-                                                                </div>
-                                                            @endif
+                                                        @if($leaderName)
+                                                            <div class="mb-1"><i>{{ $brigadeName }}</i></div>
+                                                            <div><strong>{{ StringHelper::shortenName($leaderName) }}</strong>
+                                                            @foreach($brigadeMembers as $member)
+                                                                , {{ StringHelper::shortenName($member->employee_name) }}
+                                                            @endforeach
+                                                            </div>
+                                                        @endif
                                                         
                                                     @endif
                                                     <a href="#"
@@ -423,9 +413,9 @@
                                             </div>
                                         </td>
 
-                                        @if($user->isAdmin)
                                         <!-- Action Buttons Group -->
                                         <td class="col-actions text-nowrap">
+                                            @if($user->isAdmin)
                                             <div class="col-actions__div d-flex flex-column gap-1">
                                                 @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
                                                     <button type="button"
@@ -455,12 +445,11 @@
                                                             data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-x-circle"></i>
                                                     </button>
-                                                    
-
                                                 @endif
                                             </div>
+                                            @endif
                                         </td>
-                                        @endif
+
                                         <!-- Action Buttons -->
                                         <td class="col-actions text-nowrap">
                                             <div class="col-actions__div d-flex flex-column gap-1">
