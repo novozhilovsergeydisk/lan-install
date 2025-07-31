@@ -2,6 +2,18 @@
     font-weight: bold;
 }
 
+.line-height-20 {
+    line-height: 20px;
+}
+
+.font-smaller {
+    font-size: smaller;
+}
+
+.font-size-0-8rem {
+    font-size: 0.8rem;
+}   
+
 .max-w-400 {
     max-width: 400px;
 }
@@ -23,7 +35,51 @@
     display: none;
 }
 
-/**/
+/* 1-й столбец Порядковый номер заявки */
+#requestsTable tr td:nth-child(1) {
+    width: 2%;
+}
+
+/* 2-й столбец Дата */
+#requestsTable tr td:nth-child(2) {
+    width: 8%;
+}
+
+/* 3-й столбец Адрес */
+#requestsTable tr td:nth-child(3) {
+    width: 8%;
+}
+
+/* 4-й столбец Комментарии */
+#requestsTable tr td:nth-child(4) {
+    width: 55%;
+}
+
+/* 5-й столбец Бригада */
+#requestsTable tr td:nth-child(5) {
+    width: 17%;
+}
+
+/* 6-й столбец Кнопки действий группы */
+#requestsTable tr td:nth-child(6) {
+    width: 2%;
+}
+
+/* 7-й столбец Кнопки действий */
+#requestsTable tr td:nth-child(7) {
+    width: 8%;
+}
+
+/* TABLE CUSTOM STYLES */
+.col-brigade__div a {
+    color: black;
+    text-decoration: none; font-size: 0.75rem; line-height: 1.2;
+}
+
+.col-brigade__div a:hover {
+    text-decoration: underline;
+}
+/* END TABLE CUSTOM STYLES */
 
 /* Table container styles id="usersTable" */
 #usersTable {

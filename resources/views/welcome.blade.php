@@ -295,16 +295,16 @@
                             <table id="requestsTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>
-                                    <th class_ ="th-col" style_="width: 1rem;"></th>
-                                    <th class_="th-col" style_ ="width: auto;">Дата<br> исполнения</th>
-                                    <th class_="th-col" style_="width: auto;">Адрес<br>Телефон</th>
-                                    <th class_="th-col" style_="width: auto;">Комментарии</th>
+                                    <th class="line-height-20 font-smaller" style_="width: 1rem;"></th>
+                                    <th class="line-height-20 font-smaller" style_ ="width: auto;">Дата<br> исполнения</th>
+                                    <th class="line-height-20 font-smaller" style_="width: auto;">Адрес<br>Телефон</th>
+                                    <th class="line-height-20 font-smaller" style_="width: auto;">Комментарии</th>
 
-                                    <th id="brigadeHeader" class_="th-col" style_="width: auto;">Бригада <span id="brigadeSortIcon"></span></th>
+                                    <th id="brigadeHeader" class="line-height-20 font-smaller" style_="width: auto;">Бригада <span id="brigadeSortIcon"></span></th>
                                     @if($user->isAdmin)
-                                    <th class_="th-col" style_="width: 1rem;" colspan_="2">Действия с заявкой</th>
+                                    <th class="line-height-20 font-smaller" style_="width: 1rem;" colspan="2">Действия с заявкой</th>
                                     @endif
-                                    <th class_="th-col" style_="width: 2rem;"></th>
+                                    <th class="line-height-20 font-smaller" style_="width: 2rem;"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -412,10 +412,7 @@
                                                         
                                                     @endif
                                                     <a href="#"
-                                                    class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
-                                                    style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
-                                                    onmouseover="this.style.textDecoration='underline'"
-                                                    onmouseout="this.style.textDecoration='none'"
+                                                    class="view-brigade-btn"
                                                     data-bs-toggle="modal" data-bs-target="#brigadeModal"
                                                     data-brigade-id="{{ $request->brigade_id }}">
                                                         подробнее...
