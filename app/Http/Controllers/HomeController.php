@@ -317,7 +317,14 @@ class HomeController extends Controller
      */
     public function getEmployees()
     {
-        $employees = DB::select('SELECT * FROM employees where is_deleted = false ORDER BY fio');
+        $employees = DB::select("
+            SELECT e.* 
+            FROM employees e
+            LEFT JOIN positions p ON e.position_id = p.id
+            WHERE e.is_deleted = false 
+            AND p.name != 'оператор'
+            ORDER BY e.fio
+        ");
         return response()->json($employees);
     }
 
