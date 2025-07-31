@@ -321,25 +321,24 @@
 
                                         <!-- Дата заявки -->
                                         <td class="col-date">
-                                            <div class="col-date__date" style_="font-size: 0.8rem;">{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
-                                            <div class="col-date__number" style_="font-size: 0.8rem;">{{ $request->number }}</div>
+                                            <div class="col-date__date">{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
+                                            <div class="col-date__number">{{ $request->number }}</div>
                                         </td>
 
                                         <!-- Клиент -->
                                         <td class="col-address" style_="max-width: 10rem; overflow: hidden; text-overflow: ellipsis;">
-                                            <div class="text-dark col-address__organization"style_="font-size: 0.8rem;">{{ $request->client_organization }}</div>
+                                            <div class="text-dark col-address__organization">{{ $request->client_organization }}</div>
                                             @if(!empty($request->street))
-                                                <small class="text-dark text-truncate_ d-block col-address__street"
-                                                       data-bs-toggle="tooltip"
-                                                       title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
-                                                       @if($request->city_name && $request->city_name !== 'Москва')<strong>{{ $request->city_name }}</strong>, @endif ул. {{ $request->street }}, д. {{ $request->houses }}
-                                                </small>
+                                            <small class="text-dark text-truncate_ d-block col-address__street"
+                                                    data-bs-toggle="tooltip"
+                                                    title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
+                                                    @if($request->city_name && $request->city_name !== 'Москва')<strong>{{ $request->city_name }}</strong>, @endif ул. {{ $request->street }}, д. {{ $request->houses }}
+                                            </small>
                                             @else
-                                                <small class="text-dark text-truncate_ d-block">Адрес не указан</small>
+                                            <small class="text-dark text-truncate_ d-block">Адрес не указан</small>
                                             @endif
-                                            <div class="text-dark" style="font-size: 0.8rem;"><i>{{ $request->client_fio }}</i></div>
-                                            <small style="font-size: 0.8rem;"
-                                                class="@if(isset($request->status_name) && $request->status_name !== 'выполнена_') text-success_ fw-bold_ @else text-black @endif text-truncate_ d-block">
+                                            <div class="text-dark font-size-0-8rem"><i>{{ $request->client_fio }}</i></div>
+                                            <small class="text-black d-block font-size-0-8rem">
                                                     <i>{{ $request->client_phone ?? 'Нет телефона' }}</i>
                                             </small>                              
                                         </td>
@@ -389,42 +388,42 @@
 
                                         <!-- Состав бригады -->
                                         <td class="col-brigade" data-col-brigade-id="{{ $request->brigade_id }}">
-                                            @if($request->brigade_id)
-                                                @php
-                                                    $brigadeMembers = collect($brigadeMembersWithDetails)
-                                                        ->where('brigade_id', $request->brigade_id);
-                                                @endphp
-
-                                                @if($brigadeMembers->isNotEmpty())
-                                                    <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
+                                            <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
+                                                @if($request->brigade_id)
+                                                    @php
+                                                        $brigadeMembers = collect($brigadeMembersWithDetails)
+                                                            ->where('brigade_id', $request->brigade_id);
+                                                    @endphp
+                                                    
+                                                    @if($brigadeMembers->isNotEmpty())
                                                         @php
-                                                            $leaderName = $brigadeMembers->first()->employee_leader_name;
-                                                            $brigadeName = $brigadeMembers->first()->brigade_name;
-                                                        @endphp
+                                                                $leaderName = $brigadeMembers->first()->employee_leader_name;
+                                                                $brigadeName = $brigadeMembers->first()->brigade_name;
+                                                            @endphp
 
-                                                        @if($leaderName)
-                                                            <div class="mb-1"><i>{{ $brigadeName }}</i></div>
-                                                            <div><strong>{{ StringHelper::shortenName($leaderName) }}</strong>
-                                                            @foreach($brigadeMembers as $member)
-                                                                , {{ StringHelper::shortenName($member->employee_name) }}
-                                                            @endforeach
-                                                            </div>
-                                                        @endif
-                                                    </div>
+                                                            @if($leaderName)
+                                                                <div class="mb-1"><i>{{ $brigadeName }}</i></div>
+                                                                <div><strong>{{ StringHelper::shortenName($leaderName) }}</strong>
+                                                                @foreach($brigadeMembers as $member)
+                                                                    , {{ StringHelper::shortenName($member->employee_name) }}
+                                                                @endforeach
+                                                                </div>
+                                                            @endif
+                                                        
+                                                    @endif
+                                                    <a href="#"
+                                                    class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
+                                                    style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
+                                                    onmouseover="this.style.textDecoration='underline'"
+                                                    onmouseout="this.style.textDecoration='none'"
+                                                    data-bs-toggle="modal" data-bs-target="#brigadeModal"
+                                                    data-brigade-id="{{ $request->brigade_id }}">
+                                                        подробнее...
+                                                    </a>
+                                                @else
+                                                    Не назначена
                                                 @endif
-
-                                                <a href="#"
-                                                   class="text-black hover:text-gray-700 hover:underline view-brigade-btn"
-                                                   style="text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
-                                                   onmouseover="this.style.textDecoration='underline'"
-                                                   onmouseout="this.style.textDecoration='none'"
-                                                   data-bs-toggle="modal" data-bs-target="#brigadeModal"
-                                                   data-brigade-id="{{ $request->brigade_id }}">
-                                                    подробнее...
-                                                </a>
-                                            @else
-                                                <small class="text-muted d-block mb-1">Не назначена</small>
-                                            @endif
+                                            </div>
                                         </td>
 
                                         @if($user->isAdmin)

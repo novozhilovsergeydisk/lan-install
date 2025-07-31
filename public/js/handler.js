@@ -400,26 +400,29 @@ function applyFilters() {
                             console.log(request.is_admin);
 
                             row.innerHTML = `
-                            <td style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
+                            <!-- Номер заявки -->
+                            <td class=" col-number" style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
 
-                            <td>
-                                <div>${formattedDate}</div>
-                                <div class="text-dark" style="font-size: 0.8rem;">${requestNumber}</div>
+                            <!-- Дата заявки -->
+                            <td class="col-date">
+                                <div class="col-date__date" style_="font-size: 0.8rem;">${formattedDate}</div>
+                                <div class="col-date__number" style_="font-size: 0.8rem;">${requestNumber}</div>
                             </td>
 
                             <!-- Клиент -->
-                            <td style="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
-                                <div class="text-dark"style="font-size: 0.8rem;">${request.client_organization}</div>
-                                <small class="text-dark text-truncate_ d-block" data-bs-toggle="tooltip" title="${request.address || address}">
+                            <td class="col-address" style_="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                                <div class="text-dark col-address__organization" style_="font-size: 0.8rem;">${request.client_organization}</div>
+                                <small class="text-dark text-truncate_ d-block col-address__street" data-bs-toggle="tooltip" title="${request.address || address}">
                                     ${request.city_name && request.city_name !== 'Москва' ? `<strong>${request.city_name}</strong>, ` : ''}ул. ${request.address || address}
                                 </small>
-                                <div class="text-dark"style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>
-                                <small class="text-success_ fw-bold_ text-truncate_ d-block">
+                                <div class="text-dark font-size-0-8rem"><i>${request.client_fio}</i></div>
+                                <small class="d-block col-address__phone font-size-0-8rem">
                                     <i>${request.phone || request.client_phone || ''}</i>
                                 </small>
                             </td>
 
-                            <td style="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
+                            <!-- Комментарий -->
+                            <td class="col-comments" style_="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
                                 ${(() => {
                                     if (!request.comments) return '---';
 
@@ -474,15 +477,17 @@ function applyFilters() {
                                 </div>
                             </td>
 
-                            <td>
+                            <!-- Состав бригады -->
+                            <td class="col-brigade" data-col-brigade-id="${request.brigade_id}">
                                 <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
                                     ${brigadeMembers}
                                 </div>
                             </td>
 
                             ${request.isAdmin ? `
-                            <td class="text-nowrap">
-                                <div class="d-flex flex-column gap-1">
+                            <!-- Action Buttons Group -->
+                            <td class="col-actions text-nowrap">
+                                <div class="col-actions__div d-flex flex-column gap-1">
                                 ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
                                     <button type="button" 
                                             class="btn btn-sm btn-outline-primary assign-team-btn p-1" 
@@ -513,8 +518,9 @@ function applyFilters() {
                                 </div>
                             </td>
                             ` : ''}
-                            <td class="text-nowrap">
-                                <div class="d-flex flex-column gap-1">
+                            <!-- Action Buttons -->
+                            <td class="col-actions text-nowrap">
+                                <div class="col-actions__div d-flex flex-column gap-1">
                                     ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
                                         <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                             Закрыть заявку
