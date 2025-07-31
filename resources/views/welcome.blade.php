@@ -82,17 +82,17 @@
     </style>
 
     <!-- Bootstrap 5 CSS -->
-    <link href="{{ asset('css/bootstrap.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/bootstrap.css') }}?v={{ time() }}" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <!-- Bootstrap Datepicker CSS -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/table-styles.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/dark-theme.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/mobile-requests.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/app.css') }}?v={{ time() }}" rel="stylesheet">
+    <link href="{{ asset('css/table-styles.css') }}?v={{ time() }}" rel="stylesheet">
+    <link href="{{ asset('css/dark-theme.css') }}?v={{ time() }}" rel="stylesheet">
+    <link href="{{ asset('css/custom.css') }}?v={{ time() }}" rel="stylesheet">
+    <link href="{{ asset('css/mobile-requests.css') }}?v={{ time() }}" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">
 
