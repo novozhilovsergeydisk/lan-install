@@ -10,6 +10,8 @@ import {
 } from './form-handlers.js';
 import { initReportHandlers } from './report-handler.js';
 import { saveEmployeeChangesSystem } from './form-handlers.js';
+import { DateFormated } from './form-handlers.js';
+import { formatDateToDisplay } from './form-handlers.js';
 
 /**
  * Функция для отображения информации о бригадах
@@ -1758,7 +1760,7 @@ function handleTransferRequest(button) {
     const modalElement = document.getElementById('transferRequestModal');
     const modal = new bootstrap.Modal(modalElement);
 
-    // Устанавливаем минимальную дату - гарантированно завтрашний день
+    // Устанавливаем минимальную дату - сегодняшний день
     const dateInput = modalElement.querySelector('#transferDate');
 
     // Получаем текущую дату в локальном формате
@@ -1767,30 +1769,25 @@ function handleTransferRequest(button) {
     const month = today.getMonth();
     const day = today.getDate();
 
-    // Создаем дату на завтра (без времени, только дата)
-    const tomorrow = new Date(year, month, day + 1);
-
     // Форматируем дату в формате YYYY-MM-DD для инпута типа date
-    const tomorrowFormatted = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+    const todayFormatted = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-    // console.log('Текущая дата:', today.toISOString().split('T')[0]);
-    // console.log('Завтрашняя дата:', tomorrowFormatted);
+    // Устанавливаем минимальную дату (сегодня)
+    dateInput.min = todayFormatted;
 
-    // Устанавливаем минимальную дату
-    dateInput.min = tomorrowFormatted;
+    // Устанавливаем сегодняшнюю дату как значение по умолчанию
+    dateInput.value = todayFormatted;
 
-    // Устанавливаем завтрашнюю дату как значение по умолчанию
-    dateInput.value = tomorrowFormatted;
-
-    // Добавляем обработчик изменения даты, чтобы проверить, что выбранная дата не раньше завтрашней
+    // Добавляем обработчик изменения даты, чтобы проверить, что выбранная дата не раньше сегодняшней
     dateInput.addEventListener('change', function() {
         const selectedDate = new Date(this.value);
-        const minDate = new Date(tomorrowFormatted);
+        const minDate = new Date(todayFormatted);
+        minDate.setHours(0, 0, 0, 0);
 
-        // Если выбранная дата раньше минимальной, сбрасываем на минимальную
+        // Если выбранная дата раньше сегодняшней, сбрасываем на сегодняшнюю
         if (selectedDate < minDate) {
-            this.value = tomorrowFormatted;
-            showAlert('Дата переноса не может быть раньше завтрашнего дня', 'warning');
+            this.value = todayFormatted;
+            showAlert('Дата переноса не может быть раньше сегодняшнего дня', 'warning');
         }
     });
 
@@ -1811,11 +1808,11 @@ function handleTransferRequest(button) {
 
         try {
             // Выводим в консоль отправляемые данные для отладки
-            // console.log('Отправка запроса на перенос заявки:', {
-            //     request_id: requestId,
-            //     new_date: selectedDate,
-            //     reason: reason
-            // });
+            console.log('Отправка запроса на перенос заявки:', {
+                request_id: requestId,
+                new_date: selectedDate,
+                reason: reason
+            });
 
             const response = await fetch('/api/requests/transfer', {
                 method: 'POST',
@@ -1873,6 +1870,20 @@ function handleTransferRequest(button) {
                     const statusCell = row.querySelector('.status-badge');
                     if (statusCell) {
                         statusCell.textContent = 'перенесена';
+                    }
+
+                    // const executionDateFormated = DateFormated(result.execution_date);
+
+                    const execDate = new Date(result.execution_date);
+                    const [selDay, selMonth, selYear] = selectedDateState.date.split('.');
+                    const selDate = new Date(selYear, selMonth - 1, selDay);
+
+                    console.log('Дата выполнения:', execDate);
+                    console.log('Выбранная дата:', selDate);
+
+                    if (execDate < selDate) {
+                        row.style.display = 'none';
+                        showAlert('Заявка скрыта!', 'info');
                     }
 
                     // Обновляем блок комментариев в модальном окне

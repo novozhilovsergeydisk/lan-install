@@ -2,7 +2,17 @@
 
 import { showAlert, postData, fetchData } from './utils.js';
 
-// Экспортируемые функции
+// Функция для форматирования даты
+export function DateFormated(date) {
+    return date.split('.').reverse().join('-');
+}
+
+// Функция для преобразования даты из формата YYYY-MM-DD в DD.MM.YYYY
+export function formatDateToDisplay(dateStr) {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}.${month}.${year}`;
+}
 
 // Глобальная переменная для хранения текущей даты
 export const currentDateState = {

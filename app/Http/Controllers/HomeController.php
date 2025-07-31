@@ -232,7 +232,7 @@ class HomeController extends Controller
         try {
             $validated = $request->validate([
                 'request_id' => 'required|integer|exists:requests,id',
-                'new_date' => 'required|date|after:today',
+                'new_date' => 'required|date|after_or_equal:today',
                 'reason' => 'required|string|max:1000'
             ]);
 
