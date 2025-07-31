@@ -292,7 +292,7 @@
                                 </div>
                             @endif
 
-                            <table id="requestsTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
+                            <table id="requestsTable" class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>
                                     <th class="line-height-20 font-smaller" style_="width: 1rem;"></th>
