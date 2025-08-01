@@ -1204,31 +1204,40 @@ class HomeController extends Controller
      */
     public function getComments($requestId)
     {
-        $comments = DB::select("
-            SELECT
-                c.id,
-                c.comment,
-                c.created_at,
-                COALESCE(u.name, 'Система') AS author_name,
-                c.created_at AS formatted_date
-            FROM request_comments rc
-            JOIN comments c ON rc.comment_id = c.id
-            LEFT JOIN users u ON rc.user_id = u.id
-            WHERE rc.request_id = ?
-            ORDER BY c.created_at DESC
-        ", [$requestId]);
+        try {
+            $comments = DB::select("
+                SELECT
+                    c.id,
+                    c.comment,
+                    c.created_at,
+                    COALESCE(u.name, 'Система') AS author_name,
+                    COALESCE(e.fio, '') AS employee_full_name,
+                    c.created_at AS formatted_date
+                FROM request_comments rc
+                JOIN comments c ON rc.comment_id = c.id
+                LEFT JOIN users u ON rc.user_id = u.id
+                LEFT JOIN employees e ON u.id = e.user_id
+                WHERE rc.request_id = ?
+                ORDER BY c.created_at DESC
+            ", [$requestId]);
 
-        // Format the date for each comment
-        foreach ($comments as &$comment) {
-            $date = new \DateTime($comment->created_at);
-            $comment->formatted_date = $date->format('d.m.Y');
-            if ($comment->author_name === 'Система') {
-                $comment->author_name = $comment->formatted_date;
+            // Format the date for each comment
+            foreach ($comments as &$comment) {
+                $date = new \DateTime($comment->created_at);
+                $comment->formatted_date = $date->format('d.m.Y H:i');
+                if ($comment->author_name === 'Система') {
+                    $comment->author_name = 'Система ' . $comment->formatted_date;
+                }
             }
-            unset($comment->formatted_date);
-        }
 
-        return response()->json($comments);
+            return response()->json($comments);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при получении комментариев: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Ошибка при загрузке комментариев',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

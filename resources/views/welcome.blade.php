@@ -1254,7 +1254,7 @@
                                     <div class="list-group-item">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="me-3">
-                                                <h6 class="fw-semibold mb-1" style="color:${color}">${comment.author_name}</h6>
+                                                <h6 class="fw-semibold mb-1" style="color:${color}">${comment.employee_full_name}</h6>
                                                 <p class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">${comment.comment}</p>
                                                 <small class="text-muted">${formattedDate}</small>
                                                 ${index === comments.length - 1 ? `<button class="btn btn-sm btn-outline-primary ms-2 edit-comment-btn">Редактировать</button>` : ''}
