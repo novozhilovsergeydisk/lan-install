@@ -647,29 +647,29 @@ export function saveEmployeeChangesSystem() {
     if (!saveBtn) return;
 
     saveBtn.addEventListener('click', async function() {
-        showAlert('В разработке!', 'info');
+        // showAlert('В разработке!', 'info');
 
-        return;
+        // return;
 
-        const userId = document.getElementById('userIdInputUpdate').value;
-        const login = document.getElementById('loginInputUpdateSystem').value.trim();
+        // const userId = document.getElementById('userIdInputUpdate').value;
+        // const login = document.getElementById('loginInputUpdateSystem').value.trim();
         const password = document.getElementById('passwordInputUpdateSystem').value.trim();
         const employeeId = document.getElementById('employeeIdInputUpdate').value;
 
-        if (!userId) {
-            showAlert('Ошибка: ID пользователя не найден', 'danger');
-            return;
-        }
+        // if (!userId) {
+        //     showAlert('Ошибка: ID пользователя не найден', 'danger');
+        //     return;
+        // }
 
         if (!employeeId) {
             showAlert('Ошибка: ID сотрудника не найден', 'danger');
             return;
         }
 
-        if (!login) {
-            showAlert('Пожалуйста, укажите логин', 'warning');
-            return;
-        }
+        // if (!login) {
+        //     showAlert('Пожалуйста, укажите логин', 'warning');
+        //     return;
+        // }
 
         if (!password) {
             showAlert('Пожалуйста, укажите пароль', 'warning');
@@ -684,7 +684,6 @@ export function saveEmployeeChangesSystem() {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({
-                    login: login,
                     password: password
                 })
             });

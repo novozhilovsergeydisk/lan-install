@@ -2283,12 +2283,12 @@
                         <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Системные данные</h5>
 
                         <div class="row g-3 mt-3">
-                            <div class="col-md-6">
+                            <!-- <div class="col-md-6">
                                 <div class="mb-4">
                                     <label class="form-label">Логин</label>
                                     <input type="text" name="login_update_system" id="loginInputUpdateSystem" class="form-control" required data-field-name="Логин">
                                 </div>
-                            </div>
+                            </div> -->
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Пароль</label>

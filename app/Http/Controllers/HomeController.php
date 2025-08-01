@@ -29,7 +29,6 @@ class HomeController extends Controller
         try {
             // Validate the request
             $validated = $request->validate([
-                'login' => 'required|string|max:255',
                 'password' => 'required|string|min:8',
             ]);
 
@@ -54,26 +53,23 @@ class HomeController extends Controller
 
             // Обновляем email, name и password
             $result = DB::update(
-                'UPDATE users SET email = ?, name = ?, password = ?, updated_at = NOW() WHERE id = ?',
+                'UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?',
                 [
-                    $validated['login'],  // email
-                    $validated['login'],  // name (дублируем для совместимости)
                     Hash::make($validated['password']), 
                     $user_id
                 ]
             );
 
             if ($result === 0) {
-                throw new \Exception('Данные пользователя не были обновлены');
+                throw new \Exception('Пароль не был обновлен');
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Данные для входа успешно обновлены',
+                'message' => 'Пароль успешно обновлен',
                 'data' => [
                     'updated' => true,
-                    'user_id' => $user_id,
-                    'email' => $validated['login']
+                    'user_id' => $user_id
                 ]
             ]);
 
@@ -87,7 +83,7 @@ class HomeController extends Controller
             \Log::error('Error updating user credentials: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при обновлении данных для входа',
+                'message' => 'Ошибка при обновлении пароля',
                 'error' => $e->getMessage()
             ], 500);
         }
