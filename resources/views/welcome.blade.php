@@ -2297,7 +2297,7 @@
                             </div>
                         </div>
 
-                        <button id="saveEmployeeChangesSystem" type="button" class="btn btn-primary">Сохранить</button>
+                        <button id="saveEmployeeChangesSystem" type="button" class="btn btn-primary">Сохранить изменения</button>
                         
                         <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Личные данные</h5>
 
