@@ -296,15 +296,13 @@
                                 <thead class="bg-dark">
                                 <tr>
                                     <th class="line-height-20 font-smaller"></th>
-                                    <th class="line-height-20 font-smaller">Дата<br> исполнения</th>
-                                    <th class="line-height-20 font-smaller">Адрес<br>Телефон</th>
+                                    <th class="line-height-20 font-smaller">Адрес</th>
                                     <th class="line-height-20 font-smaller">Комментарии</th>
 
                                     <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
                                     @if($user->isAdmin)
-                                    <th class="line-height-20 font-smaller" colspan="2">Действия с заявкой</th>
+                                    <th class="line-height-20 font-smaller" colspan="2">Действия</th>
                                     @endif
-                                    <th class="line-height-20 font-smaller"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -319,12 +317,6 @@
 
                                         <!-- Номер заявки -->
                                         <td class="col-number">{{ $rowNumber }}</td>
-
-                                        <!-- Дата заявки -->
-                                        <td class="col-date">
-                                            <div class="col-date__date">{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }}</div>
-                                            <div class="col-date__number">{{ $request->number }}</div>
-                                        </td>
 
                                         <!-- Клиент -->
                                         <td class="col-address">
@@ -346,6 +338,7 @@
 
                                         <!-- Комментарий -->
                                         <td class="col-comments">
+                                            <div class="col-date__date">{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }} | {{ $request->number }}</div>
                                             @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
                                                 @php
                                                     $firstComment = $comments_by_request[$request->id][0];
@@ -367,10 +360,23 @@
                                                             data-bs-target="#commentsModal"
                                                             data-request-id="{{ $request->id }}"
                                                             style="position: relative; z-index: 1;">
-                                                        <i class="bi bi-chat-left-text me-1"></i><span class="text-comment">Все комментарии</span>
+                                                        <i class="bi bi-chat-left-text me-1"></i><span class="text-comment"> </span>
                                                         <span class="badge bg-primary rounded-pill ms-1">
                                                             {{ count($comments_by_request[$request->id]) }}
                                                         </span>
+                                                    </button>
+
+                                                    @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
+                                                        <button data-request-id="{{ $request->id }}" type="button"
+                                                                class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                                                            Закрыть заявку
+                                                        </button>
+                                                    @endif
+
+                                                    <button data-request-id="{{ $request->id }}" type="button"
+                                                        class="btn btn-sm btn-outline-success add-photo-btn"
+                                                        onclick="">
+                                                        <i class="bi bi-camera me-1"></i>
                                                     </button>
                                                 </div>
                                             @endif
@@ -448,23 +454,6 @@
                                                 @endif
                                             </div>
                                             @endif
-                                        </td>
-
-                                        <!-- Action Buttons -->
-                                        <td class="col-actions text-nowrap">
-                                            <div class="col-actions__div d-flex flex-column gap-1">
-                                                @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
-                                                    <button data-request-id="{{ $request->id }}" type="button"
-                                                            class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                                                        Закрыть заявку
-                                                    </button>
-                                                @endif
-                                                <button data-request-id="{{ $request->id }}" type="button"
-                                                        class="btn btn-sm btn-outline-success add-photo-btn"
-                                                        onclick="">
-                                                    <i class="bi bi-camera me-1"></i>Фотоотчет
-                                                </button>
-                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -948,13 +937,13 @@
                             <div class="col-md-4">
                                 <label for="startDate" class="form-label">Дата начала</label>
                                 
-                                <div id="calendar-content" class="max-w-400 p-4">
+                                <div id="calendar-content-2" class="max-w-400 p-4 calendar-content">
                                     <div id="datepicker-reports-start"></div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <label for="endDate" class="form-label">Дата окончания</label>
-                                <div id="calendar-content" class="max-w-400 p-4">
+                                <div id="calendar-content-3" class="max-w-400 p-4 calendar-content">
                                     <div id="datepicker-reports-end"></div>
                                 </div>
                             </div>

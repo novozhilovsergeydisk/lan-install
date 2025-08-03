@@ -40,34 +40,51 @@
     width: 2%;
 }
 
-/* 2-й столбец Дата */
+/* 2-й столбец Адрес */
 #requestsTable tr td:nth-child(2) {
-    width: 8%;
+    width: 22%;
 }
 
-/* 3-й столбец Адрес */
+/* 3-й столбец Комментарии */
 #requestsTable tr td:nth-child(3) {
-    width: 8%;
+    width: 52%;
 }
 
-/* 4-й столбец Комментарии */
+/* 4-й столбец Бригады */
 #requestsTable tr td:nth-child(4) {
-    width: 55%;
+    width: 22%;
 }
 
-/* 5-й столбец Бригада */
+/* 5-й столбец Кнопки действий */
 #requestsTable tr td:nth-child(5) {
-    width: 17%;
-}
-
-/* 6-й столбец Кнопки действий группы */
-#requestsTable tr td:nth-child(6) {
     width: 2%;
 }
 
-/* 7-й столбец Кнопки действий */
-#requestsTable tr td:nth-child(7) {
-    width: 8%;
+/**/
+
+/* 1-й Дата исполнения */
+#requestsReportTable tr td:nth-child(1) {
+    width: 4%;
+}
+
+/* 2-й Адрес */
+#requestsReportTable tr td:nth-child(2) {
+    width: 24%;
+}
+
+/* 3-й Комментарии */
+#requestsReportTable tr td:nth-child(3) {
+    width: 24%;
+}
+
+/* 4-й Бригада */
+#requestsReportTable tr td:nth-child(4) {
+    width: 24%;
+}
+
+/* 5-й Кнопки действий */
+#requestsReportTable tr td:nth-child(5) {
+    width: 24%;
 }
 
 /* TABLE CUSTOM STYLES */

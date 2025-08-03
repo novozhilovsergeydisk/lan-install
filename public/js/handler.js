@@ -404,12 +404,6 @@ function applyFilters() {
                             <!-- Номер заявки -->
                             <td class=" col-number" style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
 
-                            <!-- Дата заявки -->
-                            <td class="col-date">
-                                <div class="col-date__date" style_="font-size: 0.8rem;">${formattedDate}</div>
-                                <div class="col-date__number" style_="font-size: 0.8rem;">${requestNumber}</div>
-                            </td>
-
                             <!-- Клиент -->
                             <td class="col-address" style_="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
                                 <div class="text-dark col-address__organization" style_="font-size: 0.8rem;">${request.client_organization}</div>
@@ -424,6 +418,7 @@ function applyFilters() {
 
                             <!-- Комментарий -->
                             <td class="col-comments" style_="commentsContainer">
+                                <div class="col-date__date">${formattedDate} | ${requestNumber}</div>
                                 ${(() => {
                                     if (!request.comments) return '---';
 
@@ -467,13 +462,21 @@ function applyFilters() {
                                             data-request-id="${request.id}"
                                             style="position: relative; z-index: 1;"
                                             ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ? '' : 'disabled'}>
-                                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                                        <i class="bi bi-chat-left-text me-1"></i>
                                         ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ?
                                     `<span class="badge bg-primary rounded-pill ms-1">
                                                 ${request.comments_count || (request.comments ? request.comments.length : 0)}
                                             </span>` :
                                     ''
                                 }
+                                    </button>
+                                    ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
+                                        <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                                            Закрыть заявку
+                                        </button>
+                                    ` : ''}
+                                    <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
+                                        <i class="bi bi-camera me-1"></i>
                                     </button>
                                 </div>
                             </td>
@@ -519,19 +522,6 @@ function applyFilters() {
                                 </div>
                             </td>
                             ` : ''}
-                            <!-- Action Buttons -->
-                            <td class="col-actions text-nowrap">
-                                <div class="col-actions__div d-flex flex-column gap-1">
-                                    ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
-                                        <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                                            Закрыть заявку
-                                        </button>
-                                    ` : ''}
-                                    <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
-                                        <i class="bi bi-camera me-1"></i>Фотоотчет
-                                    </button>
-                                </div>
-                            </td>
                         `;
 
                             tbody.appendChild(row);

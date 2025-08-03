@@ -1,11 +1,36 @@
 @media (max-width: 768px) {
+   .calendar-content-2, .calendar-content-3 {
+        width: 25rem !important;
+        padding: unset !important;
+    }
+
+    /* 2-й столбец Адрес */
+    #requestsTable tr td:nth-child(2) {
+        width: 25%;
+    }
+
+    /* 3-й столбец Комментарии */
+    #requestsTable tr td:nth-child(3) {
+        width: 25%;
+    }
+
+    /* 4-й столбец Бригады */
+    #requestsTable tr td:nth-child(4) {
+        width: 25%;
+    }
+
+    /* 5-й столбец Кнопки действий */
+    #requestsTable tr td:nth-child(5) {
+        width: 25%;
+    }
+
     .col-number {
-        width: 24px;
+        /* width: 24px;
         min-width: 24px;
         max-width: 24px;
         padding: 0 1px;
         text-align: center;
-        box-sizing: border-box;
+        box-sizing: border-box; */
     }
 }
 
@@ -15,33 +40,23 @@
         width: auto;
     }
 
-    /* 2-й столбец Дата */
+    /* 2-й столбец Адрес */
     #requestsTable tr td:nth-child(2) {
         width: auto;
     }
 
-    /* 3-й столбец Адрес */
+    /* 3-й столбец Комментарии */
     #requestsTable tr td:nth-child(3) {
         width: auto;
     }
 
-    /* 4-й столбец Комментарии */
+    /* 4-й столбец Бригада */
     #requestsTable tr td:nth-child(4) {
         width: auto;
     }
 
-    /* 5-й столбец Бригада */
+    /* 5-й столбец Кнопки действий */
     #requestsTable tr td:nth-child(5) {
-        width: auto;
-    }
-
-    /* 6-й столбец Кнопки действий группы */
-    #requestsTable tr td:nth-child(6) {
-        width: auto;
-    }
-
-    /* 7-й столбец Кнопки действий */
-    #requestsTable tr td:nth-child(7) {
         width: auto;
     }
 }

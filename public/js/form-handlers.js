@@ -324,11 +324,6 @@ function addRequestToTable(result) {
     newRow.innerHTML = `
         <!-- Номер заявки -->
         <td class="col-number">1</td>
-        <!-- Дата заявки -->
-        <td>
-            <div class="col-date__date">${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate}</div>
-            <div class="col-date__number">${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>
-        </td>
         <!-- Клиент -->
         <td class="col-address">
             <div class="text-dark col-address__organization">${clientOrganization}</div>
@@ -342,6 +337,7 @@ function addRequestToTable(result) {
         </td>
         <!-- Комментарий -->
         <td class="col-comment">
+            <div class="col-date__date">${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate} | ${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>
             ${extractedComment ? `
                 <div class="comment-preview small text-dark"
                     data-bs-toggle="tooltip"
@@ -361,6 +357,13 @@ function addRequestToTable(result) {
                             1
                         </span>
                     </button>
+                    <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                    Закрыть заявку
+                </button>
+
+                <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
+                    <i class="bi bi-camera me-1"></i>
+                </button>
                 </div>
             ` : ''}
         </td>
@@ -402,18 +405,6 @@ function addRequestToTable(result) {
             </div>
         </td>
         ` : ''}
-        <!-- Action Buttons -->
-        <td class="col-actions text-nowrap">
-            <div class="col-actions__div d-flex flex-column gap-1">
-                <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                    Закрыть заявку
-                </button>
-
-                <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
-                    <i class="bi bi-camera me-1"></i>Фотоотчет
-                </button>
-            </div>
-        </td>
     `;
 
     // Добавляем строку в начало таблицы
