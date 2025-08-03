@@ -81,15 +81,74 @@ export async function loadAddressesForReport() {
         // Очищаем контейнер перед добавлением нового содержимого
         container.innerHTML = '';
         
+        // Создаем контейнер для селекта и кнопки
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'position-relative mt-2';
+        
         // Создаем выпадающий список
         const select = document.createElement('select');
         select.id = 'report-addresses';
-        select.className = 'form-select mt-2';
+        select.className = 'form-select';
+        select.style.paddingRight = '35px'; // Добавляем отступ справа для кнопки очистки
+        select.style.textOverflow = 'ellipsis'; // Добавляем троеточие для длинного текста
+        select.style.overflow = 'hidden'; // Скрываем текст, который не помещается
+        select.style.whiteSpace = 'nowrap'; // Запрещаем перенос текста
+        
+        // Создаем обертку для кастомного селекта
+        const customSelectWrapper = document.createElement('div');
+        customSelectWrapper.className = 'custom-select-wrapper';
+        customSelectWrapper.id = 'custom-select-wrapper-report-addresses';
         
         const defaultOption = document.createElement('option');
         defaultOption.value = 'all_addresses';
         defaultOption.textContent = 'Все адреса';
         select.appendChild(defaultOption);
+        
+        // Создаем кнопку очистки
+        const clearButton = document.createElement('button');
+        clearButton.className = 'btn btn-link text-secondary';
+        clearButton.type = 'button';
+        clearButton.id = 'clear-address-btn';
+        clearButton.innerHTML = '&times;';
+        clearButton.title = 'Очистить выбор';
+        clearButton.style.position = 'absolute';
+        clearButton.style.right = '8px';
+        clearButton.style.top = '50%';
+        clearButton.style.transform = 'translateY(-50%)';
+        clearButton.style.background = 'none';
+        clearButton.style.border = 'none';
+        clearButton.style.fontSize = '1.5em';
+        clearButton.style.padding = '0 5px';
+        clearButton.style.zIndex = '5';
+        clearButton.style.lineHeight = '1';
+        clearButton.style.textDecoration = 'none';
+        
+        // Добавляем обработчик для кнопки очистки
+        clearButton.addEventListener('click', function() {
+            select.value = 'all_addresses';
+            // Триггерим событие change для обновления связанных обработчиков
+            const event = new Event('change');
+            select.dispatchEvent(event);
+        });
+        
+        // Добавляем элементы в контейнер
+        customSelectWrapper.appendChild(select);
+        inputGroup.appendChild(customSelectWrapper);
+        
+        // Добавляем кнопку очистки
+        const clearButtonWrapper = document.createElement('div');
+        clearButtonWrapper.style.position = 'absolute';
+        clearButtonWrapper.style.right = '10px';
+        clearButtonWrapper.style.top = '50%';
+        clearButtonWrapper.style.transform = 'translateY(-50%)';
+        clearButtonWrapper.style.zIndex = '10';
+        clearButtonWrapper.style.pointerEvents = 'none';
+        
+        clearButtonWrapper.appendChild(clearButton);
+        customSelectWrapper.appendChild(clearButtonWrapper);
+        
+        // Разрешаем клики по кнопке
+        clearButton.style.pointerEvents = 'auto';
         
         // Заполняем выпадающий список адресами
         data.forEach(address => {
@@ -104,12 +163,51 @@ export async function loadAddressesForReport() {
             select.appendChild(option);
         });
         
-        // Добавляем select в контейнер
-        container.appendChild(select);
+        // Добавляем контейнер с селектом на страницу
+        container.appendChild(inputGroup);
         
         // Инициализируем кастомный селект, если функция доступна
         if (typeof window.initCustomSelect === 'function') {
-            window.initCustomSelect('report-addresses', 'Выберите адрес из списка');
+            window.initCustomSelect('report-addresses', 'Выберите из списка');
+            
+            // Добавляем обработчик для кнопки очистки после инициализации кастомного селекта
+            setTimeout(() => {
+                const customSelectInput = document.querySelector('#custom-select-wrapper-report-addresses .custom-select-input');
+                if (customSelectInput) {
+                    clearButton.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        
+                        // Сбрасываем значение селекта
+                        select.selectedIndex = -1;
+                        
+                        // Обновляем отображение кастомного селекта
+                        if (customSelectInput) {
+                            customSelectInput.value = '';
+                            customSelectInput.placeholder = 'Выберите из списка';
+                            
+                            // Сбрасываем стили выбранного элемента
+                            const dropdown = customSelectInput.closest('.custom-select-wrapper');
+                            if (dropdown) {
+                                const options = dropdown.querySelectorAll('.custom-select-options li');
+                                options.forEach(option => {
+                                    option.classList.remove('active');
+                                });
+                                
+                                // Скрываем выпадающий список, если открыт
+                                const optionsList = dropdown.querySelector('.custom-select-options');
+                                if (optionsList) {
+                                    optionsList.style.display = 'none';
+                                }
+                            }
+                        }
+                        
+                        // Триггерим событие change для обновления связанного функционала
+                        const event = new Event('change', { bubbles: true });
+                        select.dispatchEvent(event);
+                    });
+                }
+            }, 100);
         } else {
             // Если функция initCustomSelect недоступна, просто показываем обычный select
             select.classList.remove('d-none');
@@ -138,28 +236,42 @@ export async function loadReport() {
     // console.log(addressSelect.value);
     // console.log(allPeriod.checked);
 
-    // Отчет за весь период
+    // Сначала проверяем все случаи с allPeriod.checked
     if (allPeriod.checked) {
         startDate = null;
         endDate = null;
-        url = '/reports/requests/all-period';
+        
+        // Отчет за ВЕСЬ ПЕРИОД по сотруднику
+        if (employeeSelect.value > 0 && (addressSelect.value === 'all_addresses' || addressSelect.value === '')) {
+            url = '/reports/requests/by-employee-all-period';
+        } 
+        // Отчет за ВЕСЬ ПЕРИОД по адресу
+        else if (addressSelect.value > 0 && employeeSelect.value === 'all_employees') {
+            url = '/reports/requests/by-address-all-period';
+        }
+        // Отчет за ВЕСЬ ПЕРИОД по сотруднику и адресу
+        else if (employeeSelect.value > 0 && addressSelect.value > 0) {
+            url = '/reports/requests/by-employee-address-all-period';
+        }
+        // Просто отчет за весь период (без фильтров)
+        else {
+            url = '/reports/requests/all-period';
+        }
     }
-
-    if (startDate && endDate && employeeSelect.value === 'all_employees' && addressSelect.value === 'all_addresses') {
-        url = '/reports/requests/by-date';
-    }
-
-    if (startDate && endDate && employeeSelect.value > 0 && addressSelect.value === 'all_addresses') {
-        url = '/reports/requests/by-employee-date';
-    } 
-    
-    if (startDate && endDate && addressSelect.value > 0 && employeeSelect.value === 'all_employees') {
-        url = '/reports/requests/by-address-date';
-    }
-
-    // Отчет за ВЕСЬ ПЕРИОД по сотруднику +
-    if (!startDate && !endDate &&  employeeSelect.value > 0 && addressSelect.value === 'all_addresses' && allPeriod.checked) {
-        url = '/reports/requests/by-employee-all-period';
+    // Затем проверяем случаи с выбранным диапазоном дат
+    else if (startDate && endDate) {
+        if (employeeSelect.value === 'all_employees' && addressSelect.value === 'all_addresses') {
+            url = '/reports/requests/by-date';
+        }
+        else if (employeeSelect.value > 0 && (addressSelect.value === 'all_addresses' || addressSelect.value === '')) {
+            url = '/reports/requests/by-employee-date';
+        } 
+        else if (addressSelect.value > 0 && employeeSelect.value === 'all_employees') {
+            url = '/reports/requests/by-address-date';
+        }
+        else if (employeeSelect.value > 0 && addressSelect.value > 0) {
+            url = '/reports/requests/by-employee-address-date';
+        }
     }
     
     // Отчет за ВЕСЬ ПЕРИОД по адресу
@@ -169,21 +281,32 @@ export async function loadReport() {
 
     // Отчет за ВЕСЬ ПЕРИОД по сотруднику и адресу
     if (!startDate && !endDate &&  employeeSelect.value > 0 && addressSelect.value > 0 && allPeriod.checked) {
-        url = '/reports/requests/by-employee-and-address-all-period';
+        url = '/reports/requests/by-employee-address-all-period';
     }
 
     // Отчет за ПЕРИОД по сотруднику и адресу
     if (startDate && endDate &&  employeeSelect.value > 0 && addressSelect.value > 0 && !allPeriod.checked) {
-        url = '/reports/requests/by-employee-and-address-date';
+        url = '/reports/requests/by-employee-address-date';
     }
     
     console.log('Request URL:', url);
 
-    console.log('Request data:', { startDate, endDate, employeeId: employeeSelect.value, addressId: addressSelect.value, allPeriod: allPeriod.checked });
-
+    // Формируем данные для запроса
+    const requestData = { 
+        startDate, 
+        endDate, 
+        employeeId: employeeSelect.value === 'all_employees' ? '' : employeeSelect.value,
+        allPeriod: allPeriod.checked 
+    };
     
-
-    const result = await postData(url, { startDate, endDate, employeeId: employeeSelect.value, addressId: addressSelect.value, allPeriod: allPeriod.checked });
+    // Добавляем addressId только если он выбран
+    if (addressSelect.value && addressSelect.value !== 'all_addresses') {
+        requestData.addressId = addressSelect.value;
+    }
+    
+    console.log('Request data:', requestData);
+    
+    const result = await postData(url, requestData);
 
     console.log('Result:', result); 
 
