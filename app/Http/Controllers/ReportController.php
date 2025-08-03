@@ -8,6 +8,59 @@ use Illuminate\Support\Facades\DB;
 class ReportController extends Controller
 {
 
+    function getAllPeriodByAddress(Request $request)
+    {
+        $brigadeMembersWithDetails = $this->getBrigadeMembersWithDetails();
+        $commentsByRequest = $this->getCommentsByRequest();
+
+        $addressId = $request->input('addressId');
+
+        $sql = '
+            SELECT
+                r.*,
+                c.fio AS client_fio,
+                c.phone AS client_phone,
+                c.organization AS client_organization,
+                rs.name AS status_name,
+                rs.color AS status_color,
+                b.name AS brigade_name,
+                e.fio AS brigade_lead,
+                op.fio AS operator_name,
+                addr.street,
+                addr.houses,
+                addr.district,
+                addr.city_id,
+                ct.name AS city_name,
+                ct.postal_code AS city_postal_code
+            FROM requests r
+            LEFT JOIN clients c ON r.client_id = c.id
+            LEFT JOIN request_statuses rs ON r.status_id = rs.id
+            LEFT JOIN brigades b ON r.brigade_id = b.id
+            LEFT JOIN employees e ON b.leader_id = e.id
+            LEFT JOIN employees op ON r.operator_id = op.id
+            LEFT JOIN request_addresses ra ON r.id = ra.request_id
+            LEFT JOIN addresses addr ON ra.address_id = addr.id
+            LEFT JOIN cities ct ON addr.city_id = ct.id
+            WHERE (b.is_deleted = false OR b.id IS NULL)
+            AND addr.id = ?
+            ORDER BY r.execution_date DESC, r.id DESC
+        ';
+
+        $requestsByAddressAndDateRange = DB::select($sql, [$addressId]);
+
+        $data = [
+            'success' => true,
+            'debug' => false,
+            'message' => 'Заявки успешно получены',
+            'requestsByAddressAndDateRange' => $requestsByAddressAndDateRange,
+            'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+            'commentsByRequest' => $commentsByRequest
+        ];
+
+        return response()->json($data);
+    }
+
+
     /**
      * Поиск заявок за период по датам и адресу
      */

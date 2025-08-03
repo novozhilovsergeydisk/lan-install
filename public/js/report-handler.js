@@ -157,7 +157,7 @@ export async function loadReport() {
         url = '/reports/requests/by-address-date';
     }
 
-    // Отчет за ВЕСЬ ПЕРИОД по сотруднику
+    // Отчет за ВЕСЬ ПЕРИОД по сотруднику +
     if (!startDate && !endDate &&  employeeSelect.value > 0 && addressSelect.value === 'all_addresses' && allPeriod.checked) {
         url = '/reports/requests/by-employee-all-period';
     }
