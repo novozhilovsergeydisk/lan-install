@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 class ReportController extends Controller
 {
 
+    /**
+     * Поиск заявок за период по датам и адресу
+     */
     function getRequestsByAddressAndDateRange(Request $request)
     {
         // Комплексный запрос для получения информации о членах бригад с данными о бригадах
@@ -133,7 +136,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Get addresses list for reports
+     * Получение списка адресов для отчетов
      */
     public function getAddresses()
     {
@@ -159,7 +162,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Get employees list for reports
+     * Получение списка сотрудников для отчетов
      */
     public function getEmployees()
     {
@@ -167,6 +170,104 @@ class ReportController extends Controller
         return response()->json($employees);
     }
 
+    /**
+     * Поиск заявок за весь период по сотруднику
+     */
+    public function getAllPeriodByEmployee(Request $request)
+    {
+        // Тест
+        // $data = [
+        //     'success' => true,
+        //     'debug' => false,
+        //     'message' => 'getAllPeriodByEmployee',
+        //     'request-all' => $request->all(),
+        // ];
+
+        // return response()->json($data);
+
+        $validated = $request->validate([
+            'employeeId' => 'required|exists:employees,id',
+            'allPeriod' => 'required|boolean|in:1,true',
+        ]);
+        
+        $employeeId = $validated['employeeId'];
+        $allPeriod = $validated['allPeriod'] === true || $validated['allPeriod'] === '1' || $validated['allPeriod'] === 1;
+
+        $query = DB::table('requests as r')
+            ->selectRaw("
+                r.*,
+                c.fio AS client_fio,
+                c.phone AS client_phone,
+                c.organization AS client_organization,
+                rs.name AS status_name,
+                rs.color AS status_color,
+                b.name AS brigade_name,
+                e.fio AS brigade_lead,
+                op.fio AS operator_name,
+                addr.street,
+                addr.houses,
+                addr.district,
+                addr.city_id,
+                ct.name AS city_name,
+                ct.postal_code AS city_postal_code,
+                STRING_AGG(em.fio, ', ') AS brigade_members
+            ")
+            ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
+            ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+            ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
+            ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
+            ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
+            ->leftJoin('request_addresses AS ra', 'r.id', '=', 'ra.request_id')
+            ->leftJoin('addresses AS addr', 'ra.address_id', '=', 'addr.id')
+            ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
+            ->leftJoin('brigade_members AS bm', 'b.id', '=', 'bm.brigade_id')
+            ->leftJoin('employees AS em', 'bm.employee_id', '=', 'em.id')
+            ->where(function ($query) {
+                $query->where('b.is_deleted', false)
+                    ->orWhereNull('b.id');
+            })
+            ->where(function ($query) use ($employeeId) {
+                $query->whereExists(function ($q) use ($employeeId) {
+                    $q->select(DB::raw(1))
+                        ->from('brigade_members as bm2')
+                        ->whereColumn('bm2.brigade_id', 'b.id')
+                        ->where('bm2.employee_id', $employeeId);
+                })->orWhere('b.leader_id', $employeeId); // ✅ упрощено и точно
+            })
+            ->groupBy(
+                'r.id', 'c.id', 'rs.id', 'b.id', 'e.id',
+                'op.id', 'addr.id', 'ct.id'
+            )
+            ->orderByDesc('r.execution_date')
+            ->orderByDesc('r.id');
+
+        $requestsAllPeriodByEmployee = $query->get();
+        
+        // Логируем SQL-запрос для отладки
+        \Log::info('SQL Query in getAllPeriodByEmployee:', [
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings(),
+            'employeeId' => $employeeId
+        ]);
+        
+        $brigadeMembersWithDetails = $this->getBrigadeMembersWithDetails();
+        $commentsByRequest = $this->getCommentsByRequest();
+
+        $data = [
+            'success' => true,
+            'debug' => false,
+            'message' => 'Заявки успешно получены',
+            'requestsAllPeriodByEmployee' => $requestsAllPeriodByEmployee,
+            'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+            'commentsByRequest' => $commentsByRequest
+        ];
+
+        return response()->json($data);
+    }
+
+    /**
+     * Поиск заявок за весь период
+     */
     public function getAllPeriod(Request $request)
     {
         // Тест
@@ -475,70 +576,74 @@ class ReportController extends Controller
         // Преобразуем коллекцию в массив для передачи в представление
         $comments_by_request = $commentsByRequest->toArray();
 
+        // Валидация входных данных
+        $validated = $request->validate([
+            'employeeId' => 'required|exists:employees,id',
+            'startDate' => 'required|date_format:d.m.Y',
+            'endDate' => 'required|date_format:d.m.Y|after_or_equal:startDate',
+        ]);
+
         // Преобразуем даты из формата дд.мм.гггг в гггг-мм-дд для PostgreSQL
-        $startDate = \DateTime::createFromFormat('d.m.Y', $request->input('startDate'))->format('Y-m-d');
-        $endDate = \DateTime::createFromFormat('d.m.Y', $request->input('endDate'))->format('Y-m-d');
-        $employeeId = $request->input('employeeId');
+        $startDate = \DateTime::createFromFormat('d.m.Y', $validated['startDate'])->format('Y-m-d');
+        $endDate = \DateTime::createFromFormat('d.m.Y', $validated['endDate'])->format('Y-m-d');
+        $employeeId = $validated['employeeId'];
 
         $query = DB::table('requests as r')
-    ->selectRaw("
-        r.*,
-        c.fio AS client_fio,
-        c.phone AS client_phone,
-        c.organization AS client_organization,
-        rs.name AS status_name,
-        rs.color AS status_color,
-        b.name AS brigade_name,
-        e.fio AS brigade_lead,
-        op.fio AS operator_name,
-        addr.street,
-        addr.houses,
-        addr.district,
-        addr.city_id,
-        ct.name AS city_name,
-        ct.postal_code AS city_postal_code,
-        STRING_AGG(em.fio, ', ') AS brigade_members
-    ")
-    ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
-    ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
-    ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
-    ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
-    ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
-    ->leftJoin('request_addresses AS ra', 'r.id', '=', 'ra.request_id')
-    ->leftJoin('addresses AS addr', 'ra.address_id', '=', 'addr.id')
-    ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
-    ->leftJoin('brigade_members AS bm', 'b.id', '=', 'bm.brigade_id')
-    ->leftJoin('employees AS em', 'bm.employee_id', '=', 'em.id')
-    ->where(function ($query) {
-        $query->where('b.is_deleted', false)
-            ->orWhereNull('b.id');
-    })
-    ->where(function ($query) use ($employeeId) {
-        $query->whereExists(function ($q) use ($employeeId) {
-            $q->select(DB::raw(1))
-                ->from('brigade_members as bm2')
-                ->whereColumn('bm2.brigade_id', 'b.id')
-                ->where('bm2.employee_id', $employeeId);
-        })->orWhere('b.leader_id', $employeeId); // ✅ упрощено и точно
-    })
-    ->groupBy(
-        'r.id', 'c.id', 'rs.id', 'b.id', 'e.id',
-        'op.id', 'addr.id', 'ct.id'
-    )
-    ->orderByDesc('r.execution_date')
-    ->orderByDesc('r.id');
+            ->selectRaw("
+                r.*,
+                c.fio AS client_fio,
+                c.phone AS client_phone,
+                c.organization AS client_organization,
+                rs.name AS status_name,
+                rs.color AS status_color,
+                b.name AS brigade_name,
+                e.fio AS brigade_lead,
+                op.fio AS operator_name,
+                addr.street,
+                addr.houses,
+                addr.district,
+                addr.city_id,
+                ct.name AS city_name,
+                ct.postal_code AS city_postal_code,
+                STRING_AGG(em.fio, ', ') AS brigade_members
+            ")
+            ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
+            ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+            ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
+            ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
+            ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
+            ->leftJoin('request_addresses AS ra', 'r.id', '=', 'ra.request_id')
+            ->leftJoin('addresses AS addr', 'ra.address_id', '=', 'addr.id')
+            ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
+            ->leftJoin('brigade_members AS bm', 'b.id', '=', 'bm.brigade_id')
+            ->leftJoin('employees AS em', 'bm.employee_id', '=', 'em.id')
+            ->where(function ($query) {
+                $query->where('b.is_deleted', false)
+                    ->orWhereNull('b.id');
+            })
+            ->where(function ($query) use ($employeeId) {
+                $query->whereExists(function ($q) use ($employeeId) {
+                    $q->select(DB::raw(1))
+                        ->from('brigade_members as bm2')
+                        ->whereColumn('bm2.brigade_id', 'b.id')
+                        ->where('bm2.employee_id', $employeeId);
+                })->orWhere('b.leader_id', $employeeId);
+            })
+            ->whereDate('r.execution_date', '>=', $startDate)
+            ->whereDate('r.execution_date', '<=', $endDate)
+            ->groupBy(
+                'r.id', 'c.id', 'rs.id', 'b.id', 'e.id',
+                'op.id', 'addr.id', 'ct.id'
+            )
+            ->orderByDesc('r.execution_date')
+            ->orderByDesc('r.id');
 
-        // Изменяем фильтрацию дат
-        $query->whereDate('r.execution_date', '>=', $startDate)
-              ->whereDate('r.execution_date', '<=', $endDate);
+        $requestsByEmployeeAndDateRange = $query->get();
 
-        // Логируем SQL-запрос и привязки
         \Log::info('SQL Query:', [
             'sql' => $query->toSql(),
             'bindings' => $query->getBindings()
         ]);
-
-        $requestsByEmployeeAndDateRange = $query->get();
 
         $data = [
             'success' => true,
@@ -551,4 +656,69 @@ class ReportController extends Controller
 
         return response()->json($data);
     }
+
+    public function getBrigadeMembersWithDetails() {
+        $brigadeMembersWithDetails = DB::select(
+            'SELECT
+                bm.*,
+                b.name as brigade_name,
+                b.leader_id,
+                e.fio as employee_name,
+                e.phone as employee_phone,
+                e.group_role as employee_group_role,
+                e.sip as employee_sip,
+                e.position_id as employee_position_id,
+                el.fio as employee_leader_name,
+                el.phone as employee_leader_phone,
+                el.group_role as employee_leader_group_role,
+                el.sip as employee_leader_sip,
+                el.position_id as employee_leader_position_id
+            FROM brigade_members bm
+            JOIN brigades b ON bm.brigade_id = b.id
+            LEFT JOIN employees e ON bm.employee_id = e.id
+            LEFT JOIN employees el ON b.leader_id = el.id'
+        );
+    
+        return $brigadeMembersWithDetails;
+    }
+
+    public function getCommentsByRequest() {
+        $requestComments = DB::select("
+            SELECT
+                rc.request_id,
+                c.id as comment_id,
+                c.comment,
+                c.created_at,
+                CASE 
+                    WHEN e.fio IS NOT NULL THEN e.fio
+                    WHEN u.name IS NOT NULL THEN u.name
+                    WHEN u.email IS NOT NULL THEN u.email
+                    ELSE 'Система'
+                END as author_name
+            FROM request_comments rc
+            JOIN comments c ON rc.comment_id = c.id
+            LEFT JOIN users u ON rc.user_id = u.id
+            LEFT JOIN employees e ON u.id = e.user_id
+            ORDER BY rc.request_id, c.created_at
+        ");
+
+        $commentsByRequest = collect($requestComments)
+            ->groupBy('request_id')
+            ->map(function ($comments) {
+                return collect($comments)->map(function ($comment) {
+                    return (object) [
+                        'id' => $comment->comment_id,
+                        'comment' => $comment->comment,
+                        'created_at' => $comment->created_at,
+                        'author_name' => $comment->author_name
+                    ];
+                })->toArray();
+            });
+
+        $comments_by_request = $commentsByRequest->toArray();
+
+        return $comments_by_request;
+    }
 }
+
+

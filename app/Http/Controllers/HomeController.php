@@ -2080,4 +2080,143 @@ class HomeController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Загружает фотоотчет для заявки
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadPhotoReport(Request $request)
+    {
+        try {
+            // Валидация входящих данных
+            $validated = $request->validate([
+                'request_id' => 'required|integer|exists:requests,id',
+                'photos.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // до 10MB
+                'comment' => 'nullable|string|max:1000'
+            ]);
+
+            $requestId = $validated['request_id'];
+            $comment = $validated['comment'] ?? null;
+            $userId = auth()->id();
+            $now = now();
+
+            // Начинаем транзакцию
+            DB::beginTransaction();
+
+            // Создаем комментарий, если он есть
+            $commentId = null;
+            if ($comment) {
+                $commentId = DB::table('comments')->insertGetId([
+                    'comment' => $comment,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+
+                // Связываем комментарий с заявкой
+                DB::table('request_comments')->insert([
+                    'request_id' => $requestId,
+                    'comment_id' => $commentId,
+                    'user_id' => $userId,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+
+            // Обрабатываем загруженные фотографии
+            $uploadedPhotos = [];
+            if ($request->hasFile('photos')) {
+                foreach ($request->file('photos') as $photo) {
+                    // Сохраняем файл в хранилище
+                    \Log::info('Попытка сохранить файл', [
+                        'original_name' => $photo->getClientOriginalName(),
+                        'size' => $photo->getSize(),
+                        'mime' => $photo->getMimeType(),
+                        'storage_path' => storage_path('app/public/images')
+                    ]);
+                    
+                    $path = $photo->store('public/images');
+                    \Log::info('Файл сохранен', ['path' => $path, 'exists' => \Storage::exists($path)]);
+                    
+                    // Получаем метаданные файла
+                    $originalName = $photo->getClientOriginalName();
+                    $fileSize = $photo->getSize();
+                    $mimeType = $photo->getMimeType();
+                    
+                    \Log::info('Получаем размеры изображения');
+                    list($width, $height) = getimagesize($photo->getRealPath());
+                    \Log::info('Размеры изображения', ['width' => $width, 'height' => $height]);
+                    
+                    // Сохраняем информацию о фото в базу данных
+                    $photoId = DB::table('photos')->insertGetId([
+                        'path' => $path,
+                        'original_name' => $originalName,
+                        'file_size' => $fileSize,
+                        'mime_type' => $mimeType,
+                        'width' => $width,
+                        'height' => $height,
+                        'created_by' => $userId,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+
+                    // Связываем фото с заявкой
+                    DB::table('request_photos')->insert([
+                        'request_id' => $requestId,
+                        'photo_id' => $photoId,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+
+                    $uploadedPhotos[] = [
+                        'id' => $photoId,
+                        'url' => asset(str_replace('public/', 'storage/', $path)),
+                        'path' => $path
+                    ];
+                }
+            }
+
+            // Фиксируем изменения
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Фотоотчет успешно загружен',
+                'data' => [
+                    'photos' => $uploadedPhotos,
+                    'comment' => $comment ? [
+                        'id' => $commentId,
+                        'text' => $comment
+                    ] : null
+                ]
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при загрузке фотоотчета:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при загрузке фотоотчета: ' . $e->getMessage(),
+                'error' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
+        }
+    }
 }

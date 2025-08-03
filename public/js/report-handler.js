@@ -138,7 +138,7 @@ export async function loadReport() {
     // console.log(addressSelect.value);
     // console.log(allPeriod.checked);
 
-    // If 'all period' is checked, we can ignore the date range
+    // Отчет за весь период
     if (allPeriod.checked) {
         startDate = null;
         endDate = null;
@@ -156,10 +156,32 @@ export async function loadReport() {
     if (startDate && endDate && addressSelect.value > 0 && employeeSelect.value === 'all_employees') {
         url = '/reports/requests/by-address-date';
     }
+
+    // Отчет за ВЕСЬ ПЕРИОД по сотруднику
+    if (!startDate && !endDate &&  employeeSelect.value > 0 && addressSelect.value === 'all_addresses' && allPeriod.checked) {
+        url = '/reports/requests/by-employee-all-period';
+    }
+    
+    // Отчет за ВЕСЬ ПЕРИОД по адресу
+    if (!startDate && !endDate && addressSelect.value > 0 && employeeSelect.value === 'all_employees' && allPeriod.checked) {
+        url = '/reports/requests/by-address-all-period';
+    }
+
+    // Отчет за ВЕСЬ ПЕРИОД по сотруднику и адресу
+    if (!startDate && !endDate &&  employeeSelect.value > 0 && addressSelect.value > 0 && allPeriod.checked) {
+        url = '/reports/requests/by-employee-and-address-all-period';
+    }
+
+    // Отчет за ПЕРИОД по сотруднику и адресу
+    if (startDate && endDate &&  employeeSelect.value > 0 && addressSelect.value > 0 && !allPeriod.checked) {
+        url = '/reports/requests/by-employee-and-address-date';
+    }
     
     console.log('Request URL:', url);
 
     console.log('Request data:', { startDate, endDate, employeeId: employeeSelect.value, addressId: addressSelect.value, allPeriod: allPeriod.checked });
+
+    
 
     const result = await postData(url, { startDate, endDate, employeeId: employeeSelect.value, addressId: addressSelect.value, allPeriod: allPeriod.checked });
 
@@ -167,7 +189,7 @@ export async function loadReport() {
 
     if (result.success) {
         renderReportTable({
-            requests: result.requestsByDateRange || result.requestsByEmployeeAndDateRange || result.requestsAllPeriod || result.requestsByAddressAndDateRange || [],
+            requests: result.requestsByDateRange || result.requestsByEmployeeAndDateRange || result.requestsAllPeriodByEmployee || result.requestsAllPeriod || result.requestsByAddressAndDateRange || [],
             brigadeMembers: result.brigadeMembersWithDetails || [],
             comments_by_request: result.comments_by_request || {}
         });
@@ -480,26 +502,26 @@ export async function initReportHandlers() {
 
                   // Сбрасываем выбор адреса на "Все адреса"
                   if (addressSelect) {
-                      addressSelect.value = 'all_addresses';
+                    //   addressSelect.value = 'all_addresses';
                       
-                      // Очищаем кастомный инпут для адреса, если он существует
-                      const customAddressInput = document.querySelector('#custom-select-wrapper-report-addresses .custom-select-input');
-                      if (customAddressInput) {
-                          customAddressInput.value = '';
-                          customAddressInput.placeholder = 'Выберите адрес из списка';
-                      }
+                    //   // Очищаем кастомный инпут для адреса, если он существует
+                    //   const customAddressInput = document.querySelector('#custom-select-wrapper-report-addresses .custom-select-input');
+                    //   if (customAddressInput) {
+                    //       customAddressInput.value = '';
+                    //       customAddressInput.placeholder = 'Выберите адрес из списка';
+                    //   }
                   }
 
                   // Сбрасываем выбор сотрудника на "Все сотрудники"
                   if (employeeSelect) {
-                      employeeSelect.value = 'all_employees';
+                    //   employeeSelect.value = 'all_employees';
                       
-                      // Очищаем кастомный инпут для сотрудника, если он существует
-                      const customEmployeeInput = document.querySelector('#custom-select-wrapper-report-employees .custom-select-input');
-                      if (customEmployeeInput) {
-                          customEmployeeInput.value = '';
-                          customEmployeeInput.placeholder = 'Выберите сотрудника из списка';
-                      }
+                    //   // Очищаем кастомный инпут для сотрудника, если он существует
+                    //   const customEmployeeInput = document.querySelector('#custom-select-wrapper-report-employees .custom-select-input');
+                    //   if (customEmployeeInput) {
+                    //       customEmployeeInput.value = '';
+                    //       customEmployeeInput.placeholder = 'Выберите сотрудника из списка';
+                    //   }
                   }
                 } else {
                   console.log('All period checkbox is not checked');
@@ -514,19 +536,19 @@ export async function initReportHandlers() {
                 
                 // Сбрасываем выбор адреса на "Все адреса"
                 if (addressSelect) {
-                    addressSelect.value = 'all_addresses';
+                    // addressSelect.value = 'all_addresses';
                     
-                    // Находим и очищаем кастомный инпут для адреса, если он существует
-                    const customAddressInput = document.querySelector('#custom-select-wrapper-report-addresses .custom-select-input');
-                    if (customAddressInput) {
-                        customAddressInput.value = '';
-                        customAddressInput.placeholder = 'Выберите адрес из списка';
-                    }
+                    // // Находим и очищаем кастомный инпут для адреса, если он существует
+                    // const customAddressInput = document.querySelector('#custom-select-wrapper-report-addresses .custom-select-input');
+                    // if (customAddressInput) {
+                    //     customAddressInput.value = '';
+                    //     customAddressInput.placeholder = 'Выберите адрес из списка';
+                    // }
                 }   
 
                 // Сбрасываем чекбокс "За весь период"
                 if (allPeriodCheckbox) {
-                    allPeriodCheckbox.checked = false;
+                    // allPeriodCheckbox.checked = false;
                 }
             });
         }
@@ -538,19 +560,19 @@ export async function initReportHandlers() {
                 
                 // Сбрасываем выбор сотрудника на "Все сотрудники"
                 if (employeeSelect) {
-                    employeeSelect.value = 'all_employees';
+                    // employeeSelect.value = 'all_employees';
                     
-                    // Находим и очищаем кастомный инпут для сотрудника, если он существует
-                    const customEmployeeInput = document.querySelector('#custom-select-wrapper-report-employees .custom-select-input');
-                    if (customEmployeeInput) {
-                        customEmployeeInput.value = '';
-                        customEmployeeInput.placeholder = 'Выберите сотрудника из списка';
-                    }
+                    // // Находим и очищаем кастомный инпут для сотрудника, если он существует
+                    // const customEmployeeInput = document.querySelector('#custom-select-wrapper-report-employees .custom-select-input');
+                    // if (customEmployeeInput) {
+                    //     customEmployeeInput.value = '';
+                    //     customEmployeeInput.placeholder = 'Выберите сотрудника из списка';
+                    // }
                 }
                 
                 // Сбрасываем чекбокс "За весь период"
                 if (allPeriodCheckbox) {
-                    allPeriodCheckbox.checked = false;
+                    // allPeriodCheckbox.checked = false;
                 }
                 
                 // Дополнительная логика фильтрации, если нужна

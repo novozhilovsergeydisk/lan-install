@@ -642,6 +642,35 @@ function closeModalProperly() {
 
 // ************* 1. Назначение обработчиков событий ************ //
 
+// обработчик для кнопки Добавить фотоотчет
+export function initAddPhotoReport() {
+    const addPhotoBtns = document.querySelectorAll('.add-photo-btn');
+    if (!addPhotoBtns.length) return;
+
+    addPhotoBtns.forEach(button => {
+        button.addEventListener('click', function() {
+            // Удаляем класс active со всех кнопок
+            document.querySelectorAll('.add-photo-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Добавляем класс active к текущей кнопке
+            this.classList.add('active');
+            
+            // Получаем ID заявки
+            const requestId = this.getAttribute('data-request-id');
+            console.log('Открытие фотоотчета для заявки:', requestId);
+            
+            // Открываем модальное окно
+            const modalElement = document.getElementById('addPhotoModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        });
+    });
+}
+
 export function saveEmployeeChangesSystem() {
     const saveBtn = document.getElementById('saveEmployeeChangesSystem');
     if (!saveBtn) return;

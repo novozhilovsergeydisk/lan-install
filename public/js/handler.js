@@ -12,6 +12,7 @@ import { initReportHandlers } from './report-handler.js';
 import { saveEmployeeChangesSystem } from './form-handlers.js';
 import { DateFormated } from './form-handlers.js';
 import { formatDateToDisplay } from './form-handlers.js';
+import { initAddPhotoReport } from './form-handlers.js';
 
 /**
  * Функция для отображения информации о бригадах
@@ -422,7 +423,7 @@ function applyFilters() {
                             </td>
 
                             <!-- Комментарий -->
-                            <td class="col-comments" style_="width: 20rem; max-width: 20rem; overflow: hidden; text-overflow: ellipsis;">
+                            <td class="col-comments" style_="commentsContainer">
                                 ${(() => {
                                     if (!request.comments) return '---';
 
@@ -3708,6 +3709,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initDeleteMember();
     initTooltips();
     saveEmployeeChangesSystem();
+    initAddPhotoReport();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {

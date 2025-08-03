@@ -2882,6 +2882,50 @@
     }); 
 </script>
 
+<!-- Модальное окно для загрузки фотоотчета -->
+<div class="modal fade" id="addPhotoModal" tabindex="-1" aria-labelledby="addPhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPhotoModalLabel">Добавление фотоотчета</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <form id="photoReportForm">
+                    @csrf
+                    <input type="hidden" id="photoRequestId" name="request_id">
+                    
+                    <div class="mb-3">
+                        <label for="photoUpload" class="form-label">Выберите фотографии</label>
+                        <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept="image/*" required>
+                        <div class="form-text">Можно выбрать несколько файлов. Поддерживаются форматы: JPG, PNG, GIF.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="photoComment" class="form-label">Комментарий к фотоотчету</label>
+                        <textarea class="form-control" id="photoComment" name="comment" rows="3" 
+                                  placeholder="Введите комментарий к фотоотчету (необязательно)"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Предпросмотр фотографий:</label>
+                        <div id="photoPreview" class="row g-2">
+                            <div class="col-12 text-muted">Здесь будет предпросмотр выбранных фотографий</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" form="photoReportForm" class="btn btn-primary">Загрузить фотоотчет</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Подключаем скрипт для работы с модальными окнами -->
+<script type="module" src="{{ asset('js/modals.js') }}"></script>
+
 </body>
 
 </html>

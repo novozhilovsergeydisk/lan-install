@@ -44,6 +44,9 @@ Route::post('/api/requests/transfer', [HomeController::class, 'transferRequest']
 // Маршруты для работы с заявками
 Route::post('/requests/cancel', [HomeController::class, 'cancelRequest'])->name('requests.cancel')->middleware('auth');
 
+// Маршрут для загрузки фотоотчетов
+Route::post('/api/requests/photo-report', [HomeController::class, 'uploadPhotoReport'])->name('requests.photo-report')->middleware('auth');
+
 // Маршруты для работы со статусами заявок
 Route::prefix('statuses')->middleware('auth')->group(function () {
     Route::get('/', [StatusController::class, 'index']);
@@ -94,6 +97,8 @@ Route::prefix('api/requests')->middleware('auth')->group(function () {
     Route::post('/update-brigade', [\App\Http\Controllers\ControllerRequestModification::class, 'updateRequestBrigade']);
 });
 
+
+
 // API Route for getting all statuses
 Route::get('/api/request-statuses/all', [RequestFilterController::class, 'getStatuses'])
     ->middleware('auth')
@@ -121,13 +126,21 @@ Route::prefix('api/users')->middleware('auth')->group(function () {
 
 // Report Routes    
 Route::prefix('reports')->middleware('auth')->group(function () {
+    // Address and employee data
     Route::get('/addresses', [ReportController::class, 'getAddresses'])->name('reports.addresses');
     Route::get('/employees', [ReportController::class, 'getEmployees'])->name('reports.employees');
-    Route::post('requests/all-period', [ReportController::class, 'getAllPeriod'])->name('reports.all-period');
+    
+    // All period reports
+    Route::post('requests/all-period', [ReportController::class, 'getAllPeriod'])->name('reports.requests.all-period');
+    Route::post('requests/by-employee-all-period', [ReportController::class, 'getAllPeriodByEmployee'])->name('reports.requests.by-employee-all-period');
+    Route::post('requests/by-address-all-period', [ReportController::class, 'getAllPeriodByAddress'])->name('reports.requests.by-address-all-period');
+    Route::post('requests/by-employee-address-all-period', [ReportController::class, 'getAllPeriodByEmployeeAndAddress'])->name('reports.requests.by-employee-address-all-period');
+    
+    // Date range reports
     Route::post('requests/by-date', [ReportController::class, 'getRequestsByDateRange'])->name('reports.requests.by-date');
     Route::post('requests/by-employee-date', [ReportController::class, 'getRequestsByEmployeeAndDateRange'])->name('reports.requests.by-employee-date');
     Route::post('requests/by-address-date', [ReportController::class, 'getRequestsByAddressAndDateRange'])->name('reports.requests.by-address-date');
-    Route::post('requests/by-address-and-date', [ReportController::class, 'getRequestsByAddressAndDateRange'])->name('reports.requests.by-address-and-date');
+    Route::post('requests/by-employee-address-date', [ReportController::class, 'getRequestsByEmployeeAddressAndDateRange'])->name('reports.requests.by-employee-address-date');
 });
 
 // API Routes for request management
