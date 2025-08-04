@@ -1138,7 +1138,8 @@
 
                 // Устанавливаем номер заявки в заголовок
                 const requestRow = button.closest('tr');
-                const requestNumber = requestRow.querySelector('td:nth-child(2) div:last-child').textContent.trim();
+                const requestNumberElement = requestRow.querySelector('td:nth-child(2) div:last-child');
+                const requestNumber = requestNumberElement ? requestNumberElement.textContent.trim() : `#${requestId}`;
                 requestIdSpan.textContent = requestNumber;
                 commentRequestId.value = requestId;
 

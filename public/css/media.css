@@ -1,5 +1,5 @@
 @media (max-width: 768px) {
-   .calendar-content-2, .calendar-content-3 {
+   .calendar-content {
         width: 25rem !important;
         padding: unset !important;
     }
