@@ -352,7 +352,7 @@ function addRequestToTable(result) {
                             data-bs-target="#commentsModal"
                             data-request-id="${requestData.id}"
                             style="position: relative; z-index: 1;">
-                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                        <i class="bi bi-chat-left-text me-1"></i>
                         <span class="badge bg-primary rounded-pill ms-1">
                             1
                         </span>

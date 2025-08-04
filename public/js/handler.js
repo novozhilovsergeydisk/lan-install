@@ -451,7 +451,29 @@ function applyFilters() {
                                             title="${escapedComment}">
                                             <p class="comment-preview-title" style_="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
                                             <p class="comment-preview-text">${displayText}</p>
-                                        </div>`;
+                                        </div>
+                                        ${request.comments && request.comments.length > 1 ? `
+                                            <div class="mb-0">
+                                                ${(() => {
+                                                    const lastComment = request.comments[request.comments.length - 1];
+                                                    const commentText = lastComment.comment || lastComment.text || lastComment.content || '';
+                                                    const commentDate = lastComment.created_at ? new Date(lastComment.created_at).toLocaleString('ru-RU', {
+                                                        day: '2-digit',
+                                                        month: '2-digit',
+                                                        year: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        hour12: false
+                                                    }).replace(',', '') : '';
+                                                    
+                                                    const truncatedComment = commentText.length > 30 
+                                                        ? commentText.substring(0, 27) + '...' 
+                                                        : commentText;
+                                                        
+                                                    return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[${commentDate}] ${truncatedComment}</p>`;
+                                                })()}
+                                            </div>` : ''}
+                                        `;
                                 })()}
                                 <!-- Кнопка комментариев -->
                                 <div class="mt-1">

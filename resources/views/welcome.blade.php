@@ -351,6 +351,17 @@
                                                     <p class="comment-preview-title">Печатный комментарий:</p>
                                                     <p class="comment-preview-text">{{ $commentText }}</p>
                                                 </div>
+                                                <div class="mb-0">  
+                                                    @php
+                                                        $countComments = count($comments_by_request[$request->id]);
+                                                        $lastComment = $comments_by_request[$request->id][$countComments - 1]->comment;
+                                                        $lastCommentDate = \Carbon\Carbon::parse($comments_by_request[$request->id][$countComments - 1]->created_at)->format('d.m.Y H:i');
+                                                    @endphp
+
+                                                    @if($countComments > 1)
+                                                        <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[{{ $lastCommentDate }}] {{ Str::limit($lastComment, 30, '...') }}</p>
+                                                    @endif
+                                                </div>
                                             @endif
                                             @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) >= 1)
                                                 <div class="mt-1">
@@ -374,8 +385,7 @@
                                                     @endif
 
                                                     <button data-request-id="{{ $request->id }}" type="button"
-                                                        class="btn btn-sm btn-outline-success add-photo-btn"
-                                                        onclick="">
+                                                        class="btn btn-sm btn-outline-success add-photo-btn">
                                                         <i class="bi bi-camera me-1"></i>
                                                     </button>
                                                 </div>
