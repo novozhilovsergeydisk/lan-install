@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', function () {
             .filter(row => !row.id.includes('no-requests-row'));
 
         rows.sort((a, b) => {
-            const aText = a.querySelectorAll('td')[4].innerText.trim();
-            const bText = b.querySelectorAll('td')[4].innerText.trim();
+            const aText = a.querySelectorAll('td')[3].innerText.trim();
+            const bText = b.querySelectorAll('td')[3].innerText.trim();
 
             const aAssigned = aText && !aText.includes('Не назначена');
             const bAssigned = bText && !bText.includes('Не назначена');
