@@ -466,8 +466,9 @@ function applyFilters() {
                                                         hour12: false
                                                     }).replace(',', '') : '';
                                                     
-                                                    const truncatedComment = commentText.length > 30 
-                                                        ? commentText.substring(0, 27) + '...' 
+                                                    const words = commentText.split(' ');
+                                                    const truncatedComment = words.length > 4 
+                                                        ? words.slice(0, 4).join(' ') + '...'
                                                         : commentText;
                                                         
                                                     return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[${commentDate}] ${truncatedComment}</p>`;
