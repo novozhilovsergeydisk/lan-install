@@ -962,30 +962,51 @@ export function initEmployeeFilter() {
     if (employeeFilter) {
         employeeFilter.addEventListener('change', function() {
             const selectedEmployeeId = this.value;
-            // handleEmployeeFilterChange(selectedEmployeeId);
+            handleEmployeeFilterChange(selectedEmployeeId);
         });
     }
 }
 
 async function handleEmployeeFilterChange(selectedEmployeeId) {
-    // Конвертация даты в формат YYYY-MM-DD
-    const date = selectedDateState.date.split('.').reverse().join('-');
-
-    const data = {
-        employee_id: selectedEmployeeId,
-        date: date
-    };
-
-    console.log('Отправка данных на сервер:', data);
-
-    const result = await postData('/employee/filter', data);
-
-    console.log('Ответ от сервера:', result);   
+    // Получаем выбранный вариант из селекта
+    const select = document.getElementById('employeeFilter');
+    const selectedOption = select ? select.options[select.selectedIndex] : null;
+    const employeeName = selectedOption ? selectedOption.text.trim() : '';
     
-    if (result.success) {
-        showAlert('Сотрудник успешно отфильтрован', 'success');
-    } else {
-        showAlert('Ошибка при фильтрации сотрудника', 'danger');
+    // Если выбран "Все сотрудники" или пустое значение
+    if (!selectedEmployeeId || !employeeName) {
+        document.querySelectorAll('#requestsTable tbody tr').forEach(row => {
+            row.style.display = '';
+        });
+        return;
+    }
+
+    // Иначе фильтруем по фамилии и первой букве имени в ячейке бригады
+    const rows = document.querySelectorAll('#requestsTable tbody tr');
+    
+    // Получаем фамилию и первую букву имени (например, "Абдуганиев Н.")
+    const nameParts = employeeName.split(' ');
+    const searchPattern = `${nameParts[0]} ${nameParts[1].charAt(0)}.`;
+    
+    rows.forEach(row => {
+        const brigadeCell = row.querySelector('.col-brigade__div');
+        if (brigadeCell) {
+            // Получаем весь текст из ячейки бригады
+            const brigadeText = brigadeCell.textContent || '';
+            
+            // Проверяем, содержит ли текст фамилию и первую букву имени
+            const hasEmployee = brigadeText.includes(searchPattern);
+            row.style.display = hasEmployee ? '' : 'none';
+        } else {
+            // Если ячейка бригады не найдена, скрываем строку
+            row.style.display = 'none';
+        }
+    });
+    
+    // Прокручиваем к первой видимой строке
+    const firstVisibleRow = document.querySelector('#requestsTable tbody tr[style=""]');
+    if (firstVisibleRow) {
+        firstVisibleRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
 
