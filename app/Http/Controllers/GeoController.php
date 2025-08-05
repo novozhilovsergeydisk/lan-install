@@ -7,6 +7,69 @@ use Illuminate\Support\Facades\DB;
 
 class GeoController extends Controller
 {
+    public function getAddress($id)
+    {
+        $address = DB::selectOne("
+            SELECT 
+                a.id, 
+                a.street, 
+                a.houses, 
+                a.district, 
+                a.responsible_person,
+                a.comments,
+                c.name as city_name,
+                c.id as city_id,
+                r.id as region_id
+            FROM addresses a
+            JOIN cities c ON a.city_id = c.id
+            LEFT JOIN regions r ON c.region_id = r.id
+            WHERE a.id = ?
+        ", [$id]);
+
+        if (!$address) {
+            return response()->json(['success' => false, 'message' => 'Address not found'], 404);
+        }
+
+        return response()->json(['success' => true, 'data' => $address]);
+    }
+
+    public function getAddressesPaginated(Request $request)
+    {
+        $perPage = $request->input('per_page', 30);
+        $page = $request->input('page', 1);
+        $offset = ($page - 1) * $perPage;
+
+        // Get total count
+        $total = DB::selectOne('SELECT COUNT(*) as count FROM addresses')->count;
+
+        // Get paginated data
+        $data = DB::select("
+            SELECT 
+                a.id, 
+                a.street, 
+                a.houses, 
+                a.district, 
+                a.responsible_person,
+                a.comments,
+                c.name as city_name,
+                c.id as city_id,
+                r.id as region_id
+            FROM addresses a
+            JOIN cities c ON a.city_id = c.id
+            LEFT JOIN regions r ON c.region_id = r.id
+            ORDER BY c.name, a.street, a.houses
+            LIMIT ? OFFSET ?
+        ", [$perPage, $offset]);
+
+        return response()->json([
+            'data' => $data,
+            'total' => $total,
+            'per_page' => (int)$perPage,
+            'current_page' => (int)$page,
+            'last_page' => ceil($total / $perPage)
+        ]);
+    }
+
     public function getAddresses()
     {
         $data = DB::select("
@@ -38,6 +101,60 @@ class GeoController extends Controller
     {
         $regions = DB::select('SELECT id, name FROM regions ORDER BY name');
         return response()->json($regions);
+    }
+
+    public function updateAddress(Request $request, $id)
+    {
+        $request->validate([
+            'street' => 'required|string|max:255',
+            'houses' => 'required|string|max:255',
+            'district' => 'required|string|max:255',
+            'city_id' => 'required|exists:cities,id',
+            'responsible_person' => 'nullable|string|max:100',
+            'comments' => 'nullable|string',
+        ]);
+
+        $updated = DB::update(
+            'UPDATE addresses SET 
+                street = :street,
+                houses = :houses,
+                district = :district,
+                city_id = :city_id,
+                responsible_person = :responsible_person,
+                comments = :comments,
+                updated_at = NOW()
+            WHERE id = :id',
+            [
+                'id' => $id,
+                'street' => $request->street,
+                'houses' => $request->houses,
+                'district' => $request->district,
+                'city_id' => $request->city_id,
+                'responsible_person' => $request->responsible_person,
+                'comments' => $request->comments,
+            ]
+        );
+
+        if ($updated) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Адрес успешно обновлен',
+                'data' => [
+                    'id' => $id,
+                    'street' => $request->street,
+                    'houses' => $request->houses,
+                    'district' => $request->district,
+                    'city_id' => $request->city_id,
+                    'responsible_person' => $request->responsible_person,
+                    'comments' => $request->comments,
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Не удалось обновить адрес'
+        ], 500);
     }
 
     public function addAddress(Request $request)

@@ -83,10 +83,13 @@ Route::get('/api/requests/by-status', [RequestFilterController::class, 'filterBy
     ->middleware('auth')
     ->name('api.requests.filter-statuses');
 
-// Добавление нового адреса
-Route::post('/address/add', [GeoController::class, 'addAddress'])
-    ->middleware('auth')
-    ->name('address.add');
+// Работа с адресами
+Route::prefix('api/addresses')->middleware('auth')->group(function () {
+    Route::get('/paginated', [GeoController::class, 'getAddressesPaginated'])->name('api.addresses.paginated');
+    Route::get('/{id}', [GeoController::class, 'getAddress'])->name('api.addresses.show');
+    Route::post('/add', [GeoController::class, 'addAddress'])->name('address.add');
+    Route::put('/{id}', [GeoController::class, 'updateAddress'])->name('api.addresses.update');
+});
 
 // API Routes for request modification
 Route::prefix('api/requests')->middleware('auth')->group(function () {
@@ -145,6 +148,8 @@ Route::prefix('reports')->middleware('auth')->group(function () {
 
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {
+    
+
     // Get addresses for select
     Route::get('/addresses', [HomeController::class, 'getAddresses'])->name('api.addresses');
     

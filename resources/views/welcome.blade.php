@@ -614,7 +614,12 @@
                                 </div>
 
                                 <div id="AllAddressesList">
-                                    <!-- Здесь будет список всех адресов с пагинацией -->
+                                    <!-- Таблица будет сгенерирована и заполнена через JavaScript -->
+                                    <div class="d-flex justify-content-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Загрузка...</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                             </div>
@@ -2983,6 +2988,7 @@
 
 <!-- Подключаем скрипт для работы с модальными окнами -->
 <script type="module" src="{{ asset('js/modals.js') }}"></script>
+<script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
 
 </body>
 

@@ -633,6 +633,108 @@ function closeModalProperly() {
 
 // ************* 1. Назначение обработчиков событий ************ //
 
+export function initAddressEditHandlers() {
+    // Используем делегирование событий для работы с динамически добавляемыми элементами
+    document.addEventListener('click', async function(event) {
+        // Проверяем, был ли клик по кнопке редактирования или её дочерним элементам
+        const editButton = event.target.closest('.edit-address-btn');
+        
+        if (editButton) {
+            event.preventDefault();
+            const addressId = editButton.getAttribute('data-address-id');
+            
+            console.log('Нажата кнопка редактирования, ID адреса:', addressId);
+            
+            // Открыть модальное окно
+            const modal = new bootstrap.Modal(document.getElementById('editAddressModal'));
+            
+            // Загружаем данные адреса с сервера
+            fetch(`/api/addresses/${addressId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const address = data.data;
+                        // Заполняем форму данными
+                        document.getElementById('addressId').value = address.id;
+                        document.getElementById('city').value = address.city_name || '';
+                        document.getElementById('district').value = address.district || '';
+                        document.getElementById('street').value = address.street || '';
+                        document.getElementById('houses').value = address.houses || '';
+                        document.getElementById('responsible_person').value = address.responsible_person || '';
+                        document.getElementById('comments').value = address.comments || '';
+                        
+                        // Показываем модальное окно
+                        modal.show();
+                    } else {
+                        alert('Ошибка при загрузке данных адреса');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert('Произошла ошибка при загрузке данных');
+                });
+        }
+    });
+
+    // Обработчик для кнопки сохранения адреса
+    document.addEventListener('click', async function(event) {
+        if (event.target && event.target.id === 'saveAddressBtn') {
+            const form = document.getElementById('editAddressForm');
+            if (!form) {
+                console.error('Форма редактирования адреса не найдена');
+                showAlert('Ошибка: форма не найдена', 'danger');
+                return;
+            }
+
+            const formData = new FormData(form);
+            const addressId = formData.get('id');
+
+            try {
+                // Показываем индикатор загрузки
+                const saveButton = document.getElementById('saveAddressBtn');
+                const originalText = saveButton.innerHTML;
+                saveButton.disabled = true;
+                saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+
+                const response = await fetch(`/api/addresses/${addressId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Ошибка при сохранении адреса');
+                }
+
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
+                if (modal) modal.hide();
+
+                // Обновляем таблицу адресов
+                if (typeof loadAddressesPaginated === 'function') {
+                    loadAddressesPaginated();
+                }
+
+                showAlert('Адрес успешно обновлен', 'success');
+
+            } catch (error) {
+                console.error('Ошибка при сохранении адреса:', error);
+                showAlert(error.message || 'Произошла ошибка при сохранении адреса', 'danger');
+            } finally {
+                // Восстанавливаем кнопку сохранения
+                if (saveButton) {
+                    saveButton.disabled = false;
+                    saveButton.innerHTML = originalText;
+                }
+            }
+        }
+    });
+}
+
 // обработчик для кнопки Добавить фотоотчет
 export function initAddPhotoReport() {
     const addPhotoBtns = document.querySelectorAll('.add-photo-btn');
