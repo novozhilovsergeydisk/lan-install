@@ -1,6 +1,7 @@
 // form-handlers.js
 
 import { showAlert, postData, fetchData } from './utils.js';
+import { loadAddressesPaginated } from './handler.js';
 
 // Функция для форматирования даты
 export function DateFormated(date) {
@@ -632,6 +633,63 @@ function closeModalProperly() {
 }
 
 // ************* 1. Назначение обработчиков событий ************ //
+
+export function initDeleteAddressHandlers() {
+    document.addEventListener('click', async function(event) {
+        const deleteButton = event.target.closest('.delete-address-btn');
+        
+        if (deleteButton) {
+            event.preventDefault();
+            const addressId = deleteButton.getAttribute('data-address-id');
+            
+            if (!confirm('Вы уверены, что хотите удалить этот адрес?')) {
+                return;
+            }
+
+            if (!addressId) {
+                showAlert('Ошибка: ID адреса не найден', 'danger');
+                return;
+            } else {
+                try {   
+                    const response = await fetch(`/api/addresses/${addressId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    showAlert('Удаление адреса...', 'info');
+
+                    console.log('result', result);
+
+                    if (result.success) {
+                        showAlert('Адрес успешно удален', 'success');
+
+                        // Обновляем таблицу адресов
+                        console.log('Проверка функции loadAddressesPaginated:', typeof loadAddressesPaginated);
+                        if (typeof loadAddressesPaginated === 'function') {
+                            console.log('Вызов loadAddressesPaginated');
+                            await loadAddressesPaginated();
+                            console.log('Функция loadAddressesPaginated выполнена');
+                        } else {
+                            console.warn('Функция loadAddressesPaginated не найдена');
+                        }
+                    } else {
+                        showAlert(result.message || 'Произошла ошибка при удалении адреса', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Ошибка при удалении адреса:', error);
+                    showAlert('Произошла ошибка при удалении адреса. Пожалуйста, попробуйте снова.', 'danger');
+                }
+            }
+            
+            console.log('Нажата кнопка удаления, ID адреса:', addressId);
+        }
+    });
+}
 
 export function initAddressEditHandlers() {
     // Используем делегирование событий для работы с динамически добавляемыми элементами

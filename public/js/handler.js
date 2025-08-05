@@ -9,7 +9,7 @@ window.postData = postData;
  * @param {number} page - номер страницы
  * @param {number} perPage - количество элементов на странице
  */
-async function loadAddressesPaginated(page = 1, perPage = 30) {
+export async function loadAddressesPaginated(page = 1, perPage = 30) {
     const container = document.getElementById('AllAddressesList');
     if (!container) return;
 
@@ -74,11 +74,11 @@ async function loadAddressesPaginated(page = 1, perPage = 30) {
             <table id="AllAddressesList" class="table table-hover align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th style="width: 5%; cursor: pointer;"> </th>
+                        <th style="width: 10%; cursor: pointer;"> </th>
                         <th style="width: 10%; cursor: pointer;" onclick="sortTable(1)">Город <i class="bi"></i></th>
                         <th style="width: 27%; cursor: pointer;" onclick="sortTable(2)">Район <i class="bi"></i></th>
                         <th style="width: 30%; cursor: pointer;" onclick="sortTable(3)">Улица <i class="bi"></i></th>
-                        <th style="width: 28%; cursor: pointer;">Дом <i class="bi"></i></th>
+                        <th style="width: 23%; cursor: pointer;">Дом <i class="bi"></i></th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -98,6 +98,9 @@ async function loadAddressesPaginated(page = 1, perPage = 30) {
                     <td>
                         <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-address-btn me-1" data-address-id="${address.id}">
                             <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-2 delete-address-btn me-1" data-address-id="${address.id}">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                     <td>${address.city_name || '-'}</td>

@@ -226,5 +226,55 @@ class GeoController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Регион добавлен']);
     }
+
+    public function deleteAddress($id)
+    {
+        try {
+            // Проверяем существование адреса
+            $address = DB::table('addresses')->where('id', $id)->first();
+            
+            if (!$address) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Адрес не найден'
+                ], 404);
+            }
+
+            // Проверяем, есть ли ссылки на этот адрес в request_addresses
+            $hasReferences = DB::table('request_addresses')
+                ->where('address_id', $id)
+                ->exists();
+
+            if ($hasReferences) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Невозможно удалить адрес: существуют связанные заявки'
+                ], 400);
+            }
+
+            // Удаляем адрес
+            $deleted = DB::table('addresses')->where('id', $id)->delete();
+
+            if ($deleted) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Адрес успешно удален'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Не удалось удалить адрес'
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при удалении адреса: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при удалении адреса: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
 

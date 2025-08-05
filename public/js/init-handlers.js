@@ -1,17 +1,18 @@
 import { showAlert, postData } from './utils.js';
+import { initReportHandlers } from './report-handler.js';
 import { 
     initFormHandlers, 
     initEmployeeEditHandlers, 
     initSaveEmployeeChanges, 
-    initEmployeeFilter, 
+    initEmployeeFilter,     
     initDeleteEmployee, 
     initDeleteMember,
-    currentDateState
+    currentDateState,
+    initAddPhotoReport,
+    initAddressEditHandlers,
+    initDeleteAddressHandlers,
+    saveEmployeeChangesSystem
 } from './form-handlers.js';
-import { initReportHandlers } from './report-handler.js';
-import { saveEmployeeChangesSystem } from './form-handlers.js';
-import { initAddPhotoReport } from './form-handlers.js';
-import { initAddressEditHandlers } from './form-handlers.js';
 import { 
     initializePage, 
     initTooltips, 
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
     saveEmployeeChangesSystem();
     initAddPhotoReport();
     initAddressEditHandlers();
+    initDeleteAddressHandlers();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {

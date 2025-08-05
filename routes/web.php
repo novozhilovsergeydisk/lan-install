@@ -89,6 +89,7 @@ Route::prefix('api/addresses')->middleware('auth')->group(function () {
     Route::get('/{id}', [GeoController::class, 'getAddress'])->name('api.addresses.show');
     Route::post('/add', [GeoController::class, 'addAddress'])->name('address.add');
     Route::put('/{id}', [GeoController::class, 'updateAddress'])->name('api.addresses.update');
+    Route::delete('/{id}', [GeoController::class, 'deleteAddress'])->name('api.addresses.delete');
 });
 
 // API Routes for request modification
