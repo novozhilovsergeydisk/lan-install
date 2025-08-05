@@ -613,7 +613,7 @@ class HomeController extends Controller
                         c.phone AS client_phone,
                         c.organization AS client_organization,
                         rs.name AS status_name,
-                        rs.color AS status_colo,r
+                        rs.color AS status_color,
                         b.name AS brigade_name,
                         e.fio AS brigade_lead,
                         op.fio AS operator_name,
