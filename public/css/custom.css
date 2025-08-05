@@ -232,6 +232,36 @@
     border-bottom: 1px solid #2c3034 !important;
 }
 
+/* Styles for AllAddressesList table */
+#AllAddressesList .table {
+    color: inherit !important;
+}
+
+/* Dark theme styles for AllAddressesList table */
+[data-bs-theme="dark"] #AllAddressesList .table {
+    --bs-table-color: #ccc;
+    --bs-table-bg: transparent;
+}
+
+[data-bs-theme="dark"] #AllAddressesList .table thead tr th {
+    background-color: #3563c2!important;
+    color: #ccc !important;
+}
+
+[data-bs-theme="dark"] #AllAddressesList .table td {
+    color: #ccc !important;
+}
+
+[data-bs-theme="dark"] #AllAddressesList .table-hover tbody tr:hover td {
+    color: #ccc !important;
+}
+
+[data-bs-theme="dark"] #AllAddressesList .table-hover tbody tr:hover td .btn,
+[data-bs-theme="dark"] #AllAddressesList .table-hover tbody tr:hover td .btn * {
+    color: inherit !important;
+}
+
+/**/
 [data-bs-theme="dark"] .bg-light-2 h5,
 [data-bs-theme="dark"] .bg-light-2 .text-dark {
     color: #ffffff !important;
@@ -337,4 +367,14 @@ body.dark-mode .custom-select-options li:hover {
 
 [data-bs-theme="dark"] .users-table thead th {
     border-bottom-color: #6c757d;
+}
+
+/**/
+
+/* Стили для светлой темы */
+:root:not([data-bs-theme="dark"]) .table thead th {
+    --bs-table-bg: #f8f9fa;
+    --bs-table-color: #212529;
+    background-color: var(--bs-table-bg);
+    color: var(--bs-table-color);
 }

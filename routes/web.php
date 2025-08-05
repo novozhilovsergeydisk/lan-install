@@ -147,6 +147,9 @@ Route::prefix('reports')->middleware('auth')->group(function () {
 Route::prefix('api')->middleware('auth')->group(function () {
     // Get addresses for select
     Route::get('/addresses', [HomeController::class, 'getAddresses'])->name('api.addresses');
+    
+    // Get paginated addresses
+    Route::get('/addresses/paginated', [HomeController::class, 'getAddressesPaginated'])->name('api.addresses.paginated');
 
     // Get requests by date
     Route::get('/requests/date/{date}', [HomeController::class, 'getRequestsByDate'])->name('api.requests.by-date');

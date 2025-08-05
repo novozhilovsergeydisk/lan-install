@@ -350,6 +350,57 @@ class HomeController extends Controller
     }
 
     /**
+     * Get paginated list of addresses
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAddressesPaginated(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $offset = ($page - 1) * $perPage;
+
+        // Общее количество записей
+        $total = DB::table('addresses')->count();
+
+        // Получаем данные с пагинацией
+        $sql = "
+            SELECT
+                a.id,
+                a.street,
+                a.houses,
+                a.district,
+                a.doc,
+                a.comments,
+                a.responsible_person,
+                c.created_at,
+                c.updated_at,
+                c.id as city_id,
+                c.name as city_name,
+                c.region_id,
+                c.postal_code,
+                ht.name as house_type_name,
+                ht.description as house_type_description
+            FROM addresses a
+            JOIN cities c ON a.city_id = c.id
+            LEFT JOIN house_types ht ON a.house_type_id = ht.id
+            ORDER BY c.name, a.street, a.houses
+            LIMIT ? OFFSET ?
+        ";
+
+        $addresses = DB::select($sql, [$perPage, $offset]);
+
+        return response()->json([
+            'data' => $addresses,
+            'total' => $total,
+            'per_page' => (int)$perPage,
+            'current_page' => (int)$page,
+            'last_page' => ceil($total / $perPage)
+        ]);
+    }
+
+    /**
      * Получить список текущих бригад
      *
      * @return \Illuminate\Http\JsonResponse
@@ -525,14 +576,14 @@ class HomeController extends Controller
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
+                op.user_id AS operator_user_id,
+                role_data.role_name AS operator_role,
                 addr.street,
                 addr.houses,
                 addr.district,
                 addr.city_id,
                 ct.name AS city_name,
-                ct.postal_code AS city_postal_code,
-                rs.name AS status_name,
-                rs.color AS status_color
+                ct.postal_code AS city_postal_code
             FROM requests r
             LEFT JOIN clients c ON r.client_id = c.id
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -542,6 +593,13 @@ class HomeController extends Controller
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
             LEFT JOIN cities ct ON addr.city_id = ct.id
+            LEFT JOIN LATERAL (
+                SELECT r.name AS role_name
+                FROM user_roles ur
+                JOIN roles r ON ur.role_id = r.id
+                WHERE ur.user_id = op.user_id
+                LIMIT 1
+            ) AS role_data ON true
             WHERE r.execution_date::date = CURRENT_DATE 
             AND (b.is_deleted = false OR b.id IS NULL) 
             AND rs.name != 'отменена'
@@ -555,7 +613,7 @@ class HomeController extends Controller
                         c.phone AS client_phone,
                         c.organization AS client_organization,
                         rs.name AS status_name,
-                        rs.color AS status_color,
+                        rs.color AS status_colo,r
                         b.name AS brigade_name,
                         e.fio AS brigade_lead,
                         op.fio AS operator_name,

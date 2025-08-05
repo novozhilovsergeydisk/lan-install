@@ -13,6 +13,169 @@ import { saveEmployeeChangesSystem } from './form-handlers.js';
 import { DateFormated } from './form-handlers.js';
 import { formatDateToDisplay } from './form-handlers.js';
 import { initAddPhotoReport } from './form-handlers.js';
+// import { initAddressEditHandlers } from './form-handlers.js';
+
+/**
+ * Функция для загрузки и отображения списка адресов с пагинацией
+ * @param {number} page - номер страницы
+ * @param {number} perPage - количество элементов на странице
+ */
+async function loadAddressesPaginated(page = 1, perPage = 30) {
+    const container = document.getElementById('AllAddressesList');
+    if (!container) return;
+
+    try {
+        // Показываем индикатор загрузки
+        container.innerHTML = `
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+            </div>`;
+
+        // Загружаем данные с сервера
+        const response = await fetch(`/api/addresses/paginated?page=${page}&per_page=${perPage}`);
+        
+        if (!response.ok) {
+            throw new Error('Ошибка загрузки списка адресов');
+        }
+        
+        const data = await response.json();
+        
+        // Делаем функцию глобально доступной
+        window.sortTable = (columnIndex, isNumeric = false) => {
+            const table = document.querySelector('#AllAddressesList table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            // Определяем направление сортировки
+            const currentDir = table.getAttribute('data-sort-dir') === 'asc' ? 'desc' : 'asc';
+            table.setAttribute('data-sort-dir', currentDir);
+            table.setAttribute('data-sort-col', columnIndex);
+            
+            // Сортируем строки
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].textContent.trim().toLowerCase();
+                const bText = b.cells[columnIndex].textContent.trim().toLowerCase();
+                
+                if (isNumeric) {
+                    const aNum = parseFloat(aText) || 0;
+                    const bNum = parseFloat(bText) || 0;
+                    return currentDir === 'asc' ? aNum - bNum : bNum - aNum;
+                }
+                
+                return currentDir === 'asc' 
+                    ? aText.localeCompare(bText)
+                    : bText.localeCompare(aText);
+            });
+            
+            // Обновляем иконки сортировки
+            document.querySelectorAll('th i.bi').forEach(icon => icon.remove());
+            const sortIcon = document.createElement('i');
+            sortIcon.className = `bi bi-arrow-${currentDir === 'asc' ? 'up' : 'down'}-short ms-1`;
+            table.querySelector(`th:nth-child(${columnIndex + 1})`).appendChild(sortIcon);
+            
+            // Обновляем таблицу
+            rows.forEach(row => tbody.appendChild(row));
+        };
+        
+        // Формируем HTML для таблицы адресов
+        let html = `
+        <div class="table-responsive">
+            <table id="AllAddressesList" class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 5%; cursor: pointer;"> </th>
+                        <th style="width: 10%; cursor: pointer;" onclick="sortTable(1)">Город <i class="bi"></i></th>
+                        <th style="width: 10%; cursor: pointer;" onclick="sortTable(2)">Район <i class="bi"></i></th>
+                        <th style="width: 75%; cursor: pointer;" onclick="sortTable(3)">Улица <i class="bi"></i></th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        // Добавляем строки с адресами
+        data.data.forEach(address => {
+            const createdAt = new Date(address.created_at).toLocaleDateString('ru-RU');
+            const updatedAt = new Date(address.updated_at).toLocaleDateString('ru-RU');
+            
+            // Обрезаем длинные комментарии, чтобы не ломали таблицу
+            const shortComments = address.comments && address.comments.length > 30 
+                ? address.comments.substring(0, 30) + '...' 
+                : address.comments || '-';
+                
+            html += `
+                <tr data-address-id="${address.id}">
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-address-btn me-1" data-address-id="${address.id}">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                    </td>
+                    <td>${address.city_name || '-'}</td>
+                    <td>${address.district || '-'}</td>
+                    <td>${address.street || '-'}</td>
+                </tr>`;
+        });
+
+        // Закрываем таблицу
+        html += `
+                </tbody>
+            </table>
+        </div>`;
+
+        // Добавляем пагинацию
+        if (data.last_page > 1) {
+            html += `
+            <nav aria-label="Навигация по страницам">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item ${data.current_page === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${data.current_page - 1}" ${data.current_page === 1 ? 'tabindex="-1" aria-disabled="true"' : ''}>Назад</a>
+                    </li>`;
+
+            // Показываем не более 5 страниц
+            let startPage = Math.max(1, data.current_page - 2);
+            let endPage = Math.min(data.last_page, startPage + 4);
+            
+            if (endPage - startPage < 4 && startPage > 1) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `
+                    <li class="page-item ${i === data.current_page ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>`;
+            }
+
+            html += `
+                    <li class="page-item ${data.current_page === data.last_page ? 'disabled' : ''}">
+                        <a class="page-link" href="#" data-page="${data.current_page + 1}" ${data.current_page === data.last_page ? 'tabindex="-1" aria-disabled="true"' : ''}>Вперед</a>
+                    </li>
+                </ul>
+            </nav>`;
+        }
+
+        // Обновляем содержимое контейнера
+        container.innerHTML = html;
+
+        // Добавляем обработчики событий для пагинации
+        container.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = parseInt(link.dataset.page);
+                if (!isNaN(page) && page !== data.current_page) {
+                    loadAddressesPaginated(page, perPage);
+                }
+            });
+        });
+
+    } catch (error) {
+        console.error('Ошибка при загрузке адресов:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                Не удалось загрузить список адресов. ${error.message}
+            </div>`;
+    }
+}
 
 /**
  * Функция для отображения информации о бригадах
@@ -1065,8 +1228,11 @@ function initializePage() {
     // Загружаем кнопки статусов
     loadStatusButtons();
 
-    // Загружаем список адресов
+    // Загружаем список адресов для выпадающего списка
     loadAddresses();
+    
+    // Загружаем список адресов с пагинацией в таблицу
+    loadAddressesPaginated();
 
     // Обработчик кнопки выхода
     const logoutButton = document.getElementById(FILTER_IDS.LOGOUT_BUTTON);
@@ -3723,6 +3889,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initTooltips();
     saveEmployeeChangesSystem();
     initAddPhotoReport();
+    // initAddressEditHandlers();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {

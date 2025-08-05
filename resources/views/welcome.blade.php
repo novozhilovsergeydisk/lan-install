@@ -608,8 +608,13 @@
                                 </div>
 
                                 <!-- Список всех адресов -->
+
                                 <div id="addressesList">
-                                    <!-- Здесь будет список всех адресов -->
+
+                                </div>
+
+                                <div id="AllAddressesList">
+                                    <!-- Здесь будет список всех адресов с пагинацией -->
                                 </div>
 
                             </div>
@@ -2747,7 +2752,7 @@
                                     <p><strong>Улица:</strong> ${selectedAddress.street || '-'}</p>
                                     <p><strong>Дом:</strong> ${selectedAddress.houses || '-'}</p>
                                     <p><strong>Ответственное лицо:</strong> ${selectedAddress.responsible_person || 'не указано'}</p>
-                                    <p><strong>Комментарий:</strong> ${selectedAddress.comments || 'нет комментариев'}</p>
+                                    <p><strong>Комментарий:</strong> ${selectedAddress.comments || 'нет комментария'}</p>
                                     <p class="text-muted"><small>Идентификатор адреса: ${selectedAddress.id}</small></p>
                                 </div>
                             </div>
@@ -2918,6 +2923,59 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 <button type="submit" form="photoReportForm" class="btn btn-primary">Загрузить фотоотчет</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования адреса -->
+<div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAddressModalLabel">Редактирование адреса</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAddressForm">
+                    <input type="hidden" id="addressId" name="id" value="">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="city" class="form-label">Город</label>
+                            <input type="text" class="form-control" id="city" name="city_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="district" class="form-label">Район</label>
+                            <input type="text" class="form-control" id="district" name="district">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="street" class="form-label">Улица</label>
+                        <input type="text" class="form-control" id="street" name="street" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="houses" class="form-label">Дома</label>
+                        <input type="text" class="form-control" id="houses" name="houses" 
+                               placeholder="Например: 1, 3, 5-7, 9к1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="responsible_person" class="form-label">Ответственный</label>
+                        <input type="text" class="form-control" id="responsible_person" name="responsible_person">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comments" class="form-label">Комментарии</label>
+                        <textarea class="form-control" id="comments" name="comments" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveAddressBtn">Сохранить</button>
             </div>
         </div>
     </div>
