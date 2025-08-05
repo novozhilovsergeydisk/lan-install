@@ -656,6 +656,7 @@ export function initAddressEditHandlers() {
                         const address = data.data;
                         // Заполняем форму данными
                         document.getElementById('addressId').value = address.id;
+                        document.getElementById('city_id').value = address.city_id || '';
                         document.getElementById('city').value = address.city_name || '';
                         document.getElementById('district').value = address.district || '';
                         document.getElementById('street').value = address.street || '';
@@ -676,9 +677,11 @@ export function initAddressEditHandlers() {
         }
     });
 
-    // Обработчик для кнопки сохранения адреса
+    // Обработчик для кнопки сохранения адреса (редактирование)
     document.addEventListener('click', async function(event) {
-        if (event.target && event.target.id === 'saveAddressBtn') {
+        if (event.target && event.target.id === 'saveEditAddressBtn') {
+            console.log('--- Нажата кнопка сохранения адреса ---');
+            
             const form = document.getElementById('editAddressForm');
             if (!form) {
                 console.error('Форма редактирования адреса не найдена');
@@ -687,27 +690,64 @@ export function initAddressEditHandlers() {
             }
 
             const formData = new FormData(form);
-            const addressId = formData.get('id');
+            const addressId = document.getElementById('addressId').value;
+            
+            // Выводим все данные формы для отладки
+            console.log('Данные формы перед отправкой:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
+            console.log('ID адреса из поля ввода:', addressId);
+            
+            if (!addressId) {
+                console.error('ID адреса не найден');
+                showAlert('Ошибка: не удалось определить адрес для обновления', 'danger');
+                return;
+            }
+
+            // Показываем индикатор загрузки
+            const saveButton = event.target;
+            const originalText = saveButton.innerHTML;
+            saveButton.disabled = true;
+            saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
 
             try {
-                // Показываем индикатор загрузки
-                const saveButton = document.getElementById('saveAddressBtn');
-                const originalText = saveButton.innerHTML;
-                saveButton.disabled = true;
-                saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+                // Преобразуем FormData в объект
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
 
+                console.log('Отправляемые данные:', JSON.stringify(data, null, 2));
+                console.log('URL запроса:', `/api/addresses/${addressId}`);
+
+                console.log('Отправка запроса на сервер...');
                 const response = await fetch(`/api/addresses/${addressId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
-                    body: JSON.stringify(Object.fromEntries(formData))
+                    body: JSON.stringify(data)
                 });
 
+                console.log('Получен ответ от сервера. Статус:', response.status);
+                
+                let responseData;
+                try {
+                    responseData = await response.json();
+                    console.log('Данные ответа:', JSON.stringify(responseData, null, 2));
+                } catch (e) {
+                    console.error('Ошибка при разборе JSON ответа:', e);
+                    responseData = {};
+                }
+
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || 'Ошибка при сохранении адреса');
+                    console.error('Ошибка сервера:', response.status, response.statusText);
+                    throw new Error(responseData.message || `Ошибка сервера: ${response.status} ${response.statusText}`);
                 }
 
                 // Закрываем модальное окно
@@ -716,7 +756,7 @@ export function initAddressEditHandlers() {
 
                 // Обновляем таблицу адресов
                 if (typeof loadAddressesPaginated === 'function') {
-                    loadAddressesPaginated();
+                    await loadAddressesPaginated();
                 }
 
                 showAlert('Адрес успешно обновлен', 'success');

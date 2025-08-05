@@ -2805,6 +2805,12 @@
         const submitBtn = this;
         const originalBtnText = submitBtn.innerHTML;
         
+        // Проверяем валидность формы
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+        
         // Проверка валидности формы
         let isValid = validateAddressForm(form);
         if (!isValid) {
@@ -2818,15 +2824,28 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
             
-            const response = await fetch('/address/add', {
+            // Преобразуем FormData в объект
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            // Отправляем запрос на API (используем существующий маршрут /api/addresses/add)
+            const response = await fetch('/api/addresses/add', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
                 },
-                body: formData
+                body: JSON.stringify(data)
             });
 
             const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.message || 'Ошибка сервера');
+            }
 
             if (result.success) {
                 // Закрываем модальное окно
@@ -2944,6 +2963,7 @@
             <div class="modal-body">
                 <form id="editAddressForm">
                     <input type="hidden" id="addressId" name="id" value="">
+                    <input type="hidden" id="city_id" name="city_id" value="">
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -2980,7 +3000,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary" id="saveAddressBtn">Сохранить</button>
+                <button type="button" class="btn btn-primary" id="saveEditAddressBtn">Сохранить</button>
             </div>
         </div>
     </div>
