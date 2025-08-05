@@ -27,6 +27,19 @@ document.addEventListener('DOMContentLoaded', function() {
     initPhotoReportModal();
 });
 
+// Инициализация модального окна для редактирования адреса
+function initAddressEditModal() {
+    console.log('Инициализация модального окна для редактирования адреса');
+
+    
+    const editAddressModal = document.getElementById('editAddressModal');
+    console.log('Найдено модальное окно:', !!editAddressModal);
+    if (!editAddressModal) {
+        console.error('Модальное окно editAddressModal не найдено в DOM');
+        return;
+    }
+}
+
 /**
  * Инициализирует модальное окно для загрузки фотоотчета
  */

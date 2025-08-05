@@ -826,32 +826,32 @@
                                                 <table id="employeesTable" class="table table-hover users-table mb-0">
                                                     <thead>
                                                         <tr class="smaller">
-                                                            <th>Имя</th>
-                                                            <th>Телефон</th>
-                                                            <th>Должность</th>
-                                                            <th>Дата / место рождения</th>
-                                                            <th>Паспорт / дата выдачи</th>
-                                                            <th>Марка машины</th>
-                                                            <th>Госномер</th>
+                                                            <th style="width: 30%">Имя</th>
+                                                            <th style="width: 15%">Телефон</th>
+                                                            <th style="width: 10%">Должность</th>
+                                                            <th style="width: 10%">Дата рожд.</th>
+                                                            <th style="width: 25%">Паспорт</th>
+                                                            <th style="width: 10%">Машина</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                     @foreach($employees as $employee)
                                                         <tr class="small">
                                                             <td>
-                                                                <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn me-1" 
-                                                                        data-employee-id="{{ $employee->id }}" 
-                                                                        data-employee-name="{{ $employee->fio }}">
-                                                                    <i class="bi bi-pencil-square"></i>
-                                                                </button> 
+                                                                <div>{{ $employee->fio }} <br> {{ $employee->user_email }}</div>
+                                                                <div class="mt-2">
+                                                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn me-1" 
+                                                                            data-employee-id="{{ $employee->id }}" 
+                                                                            data-employee-name="{{ $employee->fio }}">
+                                                                        <i class="bi bi-pencil-square"></i>
+                                                                    </button> 
 
-                                                                <button type="button" class="btn btn-sm btn-outline-danger ms-2  delete-employee-btn me-1" 
-                                                                        data-employee-id="{{ $employee->id }}" 
-                                                                        data-employee-name="{{ $employee->fio }}">
-                                                                    <i class="bi bi-trash"></i>
-                                                                </button>
-
-                                                                {{ $employee->fio }} | {{ $employee->user_email }}
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2  delete-employee-btn me-1" 
+                                                                            data-employee-id="{{ $employee->id }}" 
+                                                                            data-employee-name="{{ $employee->fio }}">
+                                                                        <i class="bi bi-trash"></i>
+                                                                    </button>
+                                                                </div>
                                                             </td>
                                                             <td>{{ $employee->phone }}</td>
                                                             <td>{{ $employee->position }}</td>
@@ -864,8 +864,7 @@
                                                                     {{ $employee->department_code }}
                                                                 </div>
                                                             </td>
-                                                            <td>{{ $employee->car_brand }}</td>
-                                                            <td>{{ $employee->car_plate }}</td>
+                                                            <td>{{ $employee->car_brand }} <br> {{ $employee->car_plate }}</td>
                                                         </tr>
                                                     @endforeach
                                                     </tbody>
