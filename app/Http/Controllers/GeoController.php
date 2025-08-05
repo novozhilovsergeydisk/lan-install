@@ -121,8 +121,7 @@ class GeoController extends Controller
                 district = :district,
                 city_id = :city_id,
                 responsible_person = :responsible_person,
-                comments = :comments,
-                updated_at = NOW()
+                comments = :comments
             WHERE id = :id',
             [
                 'id' => $id,

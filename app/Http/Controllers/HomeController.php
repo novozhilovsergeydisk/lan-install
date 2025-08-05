@@ -670,6 +670,9 @@ class HomeController extends Controller
             'on_hold' => 'on_hold',
         ];
 
+        // Получаем список городов для выпадающего списка
+        $cities = DB::table('cities')->orderBy('name')->get();
+
         // Собираем все переменные для передачи в представление
         $viewData = [
             'user' => $user,
@@ -689,6 +692,7 @@ class HomeController extends Controller
             'flags' => $flags,
             'positions' => $positions,
             'roles' => $roles,
+            'cities' => $cities, // Добавляем список городов
             'isAdmin' => $user->isAdmin ?? false,
             'isUser' => $user->isUser ?? false,
             'isFitter' => $user->isFitter ?? false,

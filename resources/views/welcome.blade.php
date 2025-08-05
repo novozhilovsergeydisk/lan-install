@@ -2968,7 +2968,14 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="city" class="form-label">Город</label>
-                            <input type="text" class="form-control" id="city" name="city_name" required>
+                            <select class="form-select" id="city" name="city_name" required>
+                                <option value="">Выберите город</option>
+                                @if(isset($cities) && count($cities) > 0)
+                                    @foreach($cities as $city)
+                                        <option value="{{ $city->id }}" data-city-name="{{ $city->name }}">{{ $city->name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label for="district" class="form-label">Район</label>

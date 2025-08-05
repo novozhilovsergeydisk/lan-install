@@ -657,7 +657,19 @@ export function initAddressEditHandlers() {
                         // Заполняем форму данными
                         document.getElementById('addressId').value = address.id;
                         document.getElementById('city_id').value = address.city_id || '';
-                        document.getElementById('city').value = address.city_name || '';
+                        
+                        // Устанавливаем выбранный город в выпадающем списке
+                        const citySelect = document.getElementById('city');
+                        if (citySelect) {
+                            // Находим опцию с нужным city_id
+                            for (let i = 0; i < citySelect.options.length; i++) {
+                                if (citySelect.options[i].value == address.city_id) {
+                                    citySelect.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
                         document.getElementById('district').value = address.district || '';
                         document.getElementById('street').value = address.street || '';
                         document.getElementById('houses').value = address.houses || '';
@@ -691,6 +703,18 @@ export function initAddressEditHandlers() {
 
             const formData = new FormData(form);
             const addressId = document.getElementById('addressId').value;
+            
+            // Добавляем city_id в formData, так как select вернет только значение value (id города)
+            const citySelect = document.getElementById('city');
+            if (citySelect) {
+                const cityId = citySelect.value;
+                formData.set('city_id', cityId);
+                
+                // Получаем название города для отладки
+                const selectedOption = citySelect.options[citySelect.selectedIndex];
+                const cityName = selectedOption ? selectedOption.textContent : '';
+                formData.set('city_name', cityName);
+            }
             
             // Выводим все данные формы для отладки
             console.log('Данные формы перед отправкой:');
