@@ -375,7 +375,7 @@ function applyFilters() {
             .then(async response => {
                 const data = await response.json().catch(() => ({}));
 
-                console.log(data);
+                // console.log(data);
 
                 // Логи ответов отключены
 
@@ -557,9 +557,9 @@ function applyFilters() {
                             // Добавляем счетчик для нумерации строк (начинаем с 1)
                             const rowNumber = index + 1;
 
-                            console.log({ request });
+                            // console.log({ request });
 
-                            console.log(request.is_admin);
+                            // console.log(request.is_admin);
 
                             row.innerHTML = `
                             <!-- Номер заявки -->
@@ -1095,7 +1095,7 @@ function loadAddresses() {
         })
         .then(addresses => {
             // Очищаем список и добавляем заглушку
-            selectElement.innerHTML = '<option value="" disabled selected>Выберите адрес</option>';
+            selectElement.innerHTML = '<option value="" disabled selected>Выберите адрес!</option>';
 
             // Добавляем адреса в выпадающий список
             addresses.forEach(address => {
@@ -1135,6 +1135,112 @@ function loadAddresses() {
             selectElement.innerHTML = originalInnerHTML;
             showAlert('Ошибка при загрузке списка адресов', 'danger');
         });
+}
+
+// Функция для загрузки списка адресов для заявок на планирование
+export async function loadAddressesForPlanning() {
+    const selectElement = document.getElementById('addressesPlanningRequest');
+    if (!selectElement) {
+        console.error('Элемент addressesPlanningRequest не найден');
+        return;
+    }
+
+    // Показываем индикатор загрузки
+    const originalInnerHTML = selectElement.innerHTML;
+    selectElement.innerHTML = '<option value="" disabled selected>Загрузка адресов...</option>';
+
+    try {
+        const response = await fetch('/api/addresses');
+        
+        if (!response.ok) {
+            throw new Error('Ошибка загрузки адресов');
+        }
+
+        const data = await response.json();
+        // console.log('Получены данные с сервера:', data);
+        
+        // Проверяем структуру ответа
+        let addresses = [];
+        if (Array.isArray(data)) {
+            // Если пришел массив, используем его как есть
+            addresses = data;
+            // console.log('Используем массив адресов из корня ответа');
+        } else if (data.addresses && Array.isArray(data.addresses)) {
+            // Если адреса в свойстве addresses
+            addresses = data.addresses;
+            // console.log('Используем массив адресов из свойства addresses');
+        } else if (data.data && Array.isArray(data.data)) {
+            // Если адреса в свойстве data (типично для пагинации)
+            addresses = data.data;
+            // console.log('Используем массив адресов из свойства data');
+        } else {
+            console.warn('Не удалось найти массив адресов в ответе сервера');
+        }
+        
+        // console.log('Обработанные адреса:', addresses);
+
+        // Очищаем список и добавляем заглушку
+        selectElement.innerHTML = '<option value="" disabled selected>Выберите адрес</option>';
+
+        // Добавляем адреса в выпадающий список
+        addresses.forEach(address => {
+            const option = document.createElement('option');
+            option.value = address.id;
+            // Формируем читаемый адрес
+            const addressParts = [
+                address.street,
+                address.house_number,
+                address.building ? `к${address.building}` : '',
+                address.district ? `[${address.district}]` : '',
+                address.city ? `[${address.city}]` : ''
+            ].filter(Boolean).join(' ');
+            
+            option.textContent = addressParts;
+            selectElement.appendChild(option);
+        });
+
+        // console.log(selectElement);
+
+        // Обновляем кастомный селект, если он уже был инициализирован
+        if (selectElement.classList.contains('custom-select-initialized')) {
+            // Находим кастомный инпут и список опций
+            const customInput = document.querySelector('#custom-select-wrapper-addressesPlanningRequest .custom-select-input');
+            const customOptions = document.querySelector('#custom-select-wrapper-addressesPlanningRequest .custom-select-options');
+            
+            if (customInput && customOptions) {
+                // Очищаем список опций
+                customOptions.innerHTML = '';
+                
+                // Добавляем опции в кастомный селект
+                const options = selectElement.querySelectorAll('option');
+                options.forEach(option => {
+                    const li = document.createElement('li');
+                    li.textContent = option.textContent;
+                    li.dataset.value = option.value;
+                    li.addEventListener('click', () => {
+                        selectElement.value = option.value;
+                        customInput.value = option.textContent;
+                        customOptions.style.display = 'none';
+                    });
+                    customOptions.appendChild(li);
+                });
+                
+                // Обновляем плейсхолдер
+                if (customInput.placeholder !== 'Выберите адрес из списка') {
+                    customInput.placeholder = 'Выберите адрес из списка';
+                }
+            }
+        } else if (typeof window.initCustomSelect === 'function') {
+            // Инициализируем кастомный селект, если он еще не инициализирован
+            window.initCustomSelect('addressesPlanningRequest', 'Выберите адрес из списка');
+            selectElement.classList.add('custom-select-initialized');
+        }
+
+    } catch (error) {
+        console.error('Ошибка при загрузке адресов:', error);
+        selectElement.innerHTML = originalInnerHTML;
+        showAlert('Не удалось загрузить список адресов', 'danger');
+    }
 }
 
 // Функция для обновления скрытого поля с данными о составе бригады
@@ -2532,6 +2638,12 @@ export function initAllCustomSelects() {
     const addressesId = document.getElementById('addresses_id');
     if (addressesId && !addressesId.classList.contains('custom-select-initialized')) {
         initCustomSelect("addresses_id", "Выберите адрес из списка");
+    }
+
+    // Инициализируем селект с адресами для планирования, если он еще не инициализирован
+    const addressesPlanningRequest = document.getElementById('addressesPlanningRequest');
+    if (addressesPlanningRequest && !addressesPlanningRequest.classList.contains('custom-select-initialized')) {
+        initCustomSelect("addressesPlanningRequest", "Выберите адрес из списка");
     }
 
     // Здесь можно добавить инициализацию других селектов

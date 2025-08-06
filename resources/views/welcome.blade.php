@@ -1003,10 +1003,10 @@
                             <table id="requestsReportTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
                                 <thead class="bg-dark">
                                 <tr>
-                                <th style="width: 1rem;"></th>
+                                    <th style="width: 1rem;"></th>
                                     <th style="width: 10rem;">Дата исполнения</th>
-                                    <th style="width: 15rem;">Адрес/Телефон</th>
-                                    <th style="width: 15rem;">Комментарий</th>
+                                    <th style="width: 15rem;">Адрес</th>
+                                    <th style="width: 15rem;">Комментарии</th>
                                     <th id="brigadeHeader" style="width: 20rem;">Бригада <span id="brigadeSortIcon"></span></th>
                                 </tr>
                                 </thead>
@@ -1019,11 +1019,32 @@
                     <div id="planning" class="tab-pane fade" role="tabpanel">
                         <h4>Планирование</h4>
 
+                        @if($user->isAdmin)
                         <div id="planning-content" class="mb-3">
                             <button type="button" class="btn btn-primary" id="new-planning-request-button" data-bs-toggle="modal" data-bs-target="#newPlanningRequestModal">
                                 <i class="bi bi-plus-circle me-1"></i>Новая заявка
                             </button>
                         </div>
+
+                        <div class="table-responsive t-custom">
+                            <table id="requestsTable" class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
+                                <thead class="bg-dark">
+                                <tr>
+                                    <th class="line-height-20 font-smaller"></th>
+                                    <th class="line-height-20 font-smaller">Адрес</th>
+                                    <th class="line-height-20 font-smaller">Комментарии</th>
+
+                                    <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
+                                    
+                                    <th class="line-height-20 font-smaller" colspan="2">Действия</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Заполнение таблицы происходит динамически -->
+                                </tbody>
+                            </table>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -1636,15 +1657,14 @@
                     </div> -->
 
                     <div class="mb-3">
-                        <h6>Адрес</h6>
+                        <h6>Адрес <span class="text-danger">*</span></h6>
+                        <div class="invalid-feedback">
+                            Пожалуйста, выберите адрес из списка
+                        </div>
                         <div class="mb-3">
                             <select class="form-select" id="addressesPlanningRequest" name="addresses_planning_request_id" required>
                                 <option value="" disabled selected>Выберите адрес</option>
-                                <!-- Will be populated by JavaScript -->
                             </select>
-                            <div class="invalid-feedback">
-                                Пожалуйста, выберите адрес из списка
-                            </div>
                         </div>
                     </div>
 

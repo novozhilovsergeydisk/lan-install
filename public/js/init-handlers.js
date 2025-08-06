@@ -11,7 +11,8 @@ import {
     initAddPhotoReport,
     initAddressEditHandlers,
     initDeleteAddressHandlers,
-    saveEmployeeChangesSystem
+    saveEmployeeChangesSystem,
+    initPlanningRequestFormHandlers 
 } from './form-handlers.js';
 import { 
     initializePage, 
@@ -40,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initAddPhotoReport();
     initAddressEditHandlers();
     initDeleteAddressHandlers();
+    initPlanningRequestFormHandlers();
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {

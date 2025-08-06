@@ -372,7 +372,7 @@ function renderReportTable(data) {
     else if (Array.isArray(responseData.requests)) {
         requests = responseData.requests || [];
         brigadeMembers = responseData.brigadeMembers || [];
-        comments_by_request = responseData.comments_by_request || {};
+        comments_by_request = responseData.comments_by_request || responseData.commentsByRequest || {};
     } 
     // Неизвестный формат
     else {
@@ -395,9 +395,9 @@ function renderReportTable(data) {
         return;
     }
 
-    console.log('Обработка запросов:', requests);
-    console.log('Данные бригад:', brigadeMembers);
-    console.log('Комментарии:', comments_by_request);
+    // console.log('Обработка запросов:', requests);
+    // console.log('Данные бригад:', brigadeMembers);
+    // console.log('Комментарии:', comments_by_request);
 
     // Add a row for each request   
     requests.forEach((request, index) => {
@@ -405,7 +405,7 @@ function renderReportTable(data) {
         row.id = `request-${request.id}`;
         row.className = 'align-middle status-row';
 
-        console.log('Обработка запроса:', request);
+        // console.log('Обработка запроса:', request);
         
         // Устанавливаем цвет статуса через CSS-переменную
         if (request.status_color) {

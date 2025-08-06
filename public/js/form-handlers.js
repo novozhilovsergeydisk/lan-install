@@ -2,6 +2,7 @@
 
 import { showAlert, postData, fetchData } from './utils.js';
 import { loadAddressesPaginated } from './handler.js';
+import { loadAddressesForPlanning } from './handler.js';
 
 // Функция для форматирования даты
 export function DateFormated(date) {
@@ -632,7 +633,85 @@ function closeModalProperly() {
     }
 }
 
-// ************* 1. Назначение обработчиков событий ************ //
+// ************* Назначение обработчиков событий ************ //
+
+export function initPlanningRequestFormHandlers() {
+    const submitButton = document.getElementById('submitPlanningRequest');
+    
+    if (!submitButton) {
+        console.error('Кнопка submitPlanningRequest не найдена');
+        return;
+    }
+
+    // Загружаем адреса
+    loadAddressesForPlanning();
+
+    // Инициализируем кастомный селект, если функция доступна
+    if (typeof window.initCustomSelect === 'function') {
+        // console.log('Инициализация кастомного селекта для выбора адреса в форме');
+        window.initCustomSelect("addressesPlanningRequest", "Выберите адрес из списка");
+    } else {
+        console.log('Функция initCustomSelect не найдена для addressesPlanningRequest');
+    }
+
+    submitButton.addEventListener('click', async function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const form = document.getElementById('planningRequestForm');
+        const formData = new FormData(form);
+        const addressId = formData.get('addresses_planning_request_id');
+        console.log('addressId', addressId); // для тестирования
+        console.log('formData', formData); // для тестирования
+        return;
+        
+        if (!addressId) {
+            showAlert('Пожалуйста, выберите адрес', 'danger');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/planning-requests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    address_id: addressId,
+                    comment: formData.get('planning_request_comment'),
+                    client_name: formData.get('client_name_planning_request'),
+                    client_phone: formData.get('client_phone_planning_request'),
+                    client_organization: formData.get('client_organization_planning_request')
+                }),
+                credentials: 'same-origin'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showAlert('Заявка успешно создана', 'success');
+                console.log('Заявка успешно создана, ID:', result.id);
+                
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newPlanningRequestModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Очищаем форму
+                form.reset();
+                
+            } else {
+                throw new Error(result.message || 'Ошибка при создании заявки');
+            }
+        } catch (error) {
+            console.error('Ошибка при создании заявки:', error);
+            showAlert(error.message || 'Произошла ошибка при создании заявки', 'danger');
+        }
+    });
+}
 
 export function initDeleteAddressHandlers() {
     // Используем делегирование событий для динамически созданных кнопок

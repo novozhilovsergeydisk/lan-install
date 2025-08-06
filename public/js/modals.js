@@ -1,6 +1,6 @@
 // Здесь будет окно для добавления фотоотчета, которое будет отображаться при нажатии на кнопку "Добавить фотоотчет"
 
-console.log('modals.js загружен');
+// console.log('modals.js загружен');
 
 // Функция-заглушка на случай ошибки импорта
 let showAlert = function(message, type = 'success') {
@@ -12,7 +12,7 @@ let showAlert = function(message, type = 'success') {
 import('./utils.js')
     .then(module => {
         showAlert = module.showAlert;
-        console.log('utils.js успешно загружен');
+        // console.log('utils.js успешно загружен');
     })
     .catch(error => {
         console.error('Ошибка при загрузке utils.js:', error);
@@ -29,11 +29,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Инициализация модального окна для редактирования адреса
 function initAddressEditModal() {
-    console.log('Инициализация модального окна для редактирования адреса');
+    // console.log('Инициализация модального окна для редактирования адреса');
 
     
     const editAddressModal = document.getElementById('editAddressModal');
-    console.log('Найдено модальное окно:', !!editAddressModal);
+    // console.log('Найдено модальное окно:', !!editAddressModal);
     if (!editAddressModal) {
         console.error('Модальное окно editAddressModal не найдено в DOM');
         return;
@@ -44,9 +44,9 @@ function initAddressEditModal() {
  * Инициализирует модальное окно для загрузки фотоотчета
  */
 function initPhotoReportModal() {
-    console.log('Инициализация модального окна для фотоотчетов');
+    // console.log('Инициализация модального окна для фотоотчетов');
     const photoModal = document.getElementById('addPhotoModal');
-    console.log('Найдено модальное окно:', !!photoModal);
+    // console.log('Найдено модальное окно:', !!photoModal);
     if (!photoModal) {
         console.error('Модальное окно addPhotoModal не найдено в DOM');
         return;
@@ -137,10 +137,10 @@ function initPhotoReportModal() {
     
     // Обработчик отправки формы
     const photoForm = photoModal.querySelector('#photoReportForm');
-    console.log('Найдена форма photoReportForm:', !!photoForm);
+    // console.log('Найдена форма photoReportForm:', !!photoForm);
     
     if (photoForm) {
-        console.log('Добавление обработчика submit для формы');
+        // console.log('Добавление обработчика submit для формы');
         photoForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -165,11 +165,11 @@ function initPhotoReportModal() {
             const fileInput = photoModal.querySelector('#photoUpload');
             const previewContainer = photoModal.querySelector('#photoPreview');
             
-            console.log('Найден input для загрузки файлов:', !!fileInput);
-            console.log('Найден контейнер для превью:', !!previewContainer);
+            // console.log('Найден input для загрузки файлов:', !!fileInput);
+            // console.log('Найден контейнер для превью:', !!previewContainer);
             
             if (!fileInput || fileInput.files.length === 0) {
-                console.log('Файлы не выбраны');
+                // console.log('Файлы не выбраны');
                 showAlert('Пожалуйста, выберите хотя бы одно фото для загрузки', 'warning');
                 return;
             }
@@ -186,7 +186,7 @@ function initPhotoReportModal() {
             
             try {
                 // Отправка данных на сервер
-                console.log('Отправка запроса на загрузку фотоотчета...');
+                // console.log('Отправка запроса на загрузку фотоотчета...');
                 const response = await fetch('/api/requests/photo-report', {
                     method: 'POST',
                     headers: {
@@ -196,14 +196,14 @@ function initPhotoReportModal() {
                     body: formData
                 });
                 
-                console.log('Получен ответ от сервера:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: Object.fromEntries(response.headers.entries())
-                });
+                // console.log('Получен ответ от сервера:', {
+                //     status: response.status,
+                //     statusText: response.statusText,
+                //     headers: Object.fromEntries(response.headers.entries())
+                // });
                 
                 const data = await response.json();
-                console.log('Тело ответа:', data);
+                // console.log('Тело ответа:', data);
                 
                 if (!response.ok) {
                     throw new Error(data.message || `Ошибка сервера: ${response.status}`);
@@ -232,7 +232,7 @@ function initPhotoReportModal() {
                     throw new Error(data.message || 'Произошла ошибка при загрузке фотоотчета');
                 }
             } catch (error) {
-                console.error('Ошибка при загрузке фотоотчета:', error);
+                // console.error('Ошибка при загрузке фотоотчета:', error);
                 showAlert(error.message || 'Произошла ошибка при загрузке фотоотчета', 'danger');
             } finally {
                 // Восстанавливаем кнопку
