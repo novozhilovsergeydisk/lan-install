@@ -635,11 +635,15 @@ function closeModalProperly() {
 // ************* 1. Назначение обработчиков событий ************ //
 
 export function initDeleteAddressHandlers() {
+    // Используем делегирование событий для динамически созданных кнопок
     document.addEventListener('click', async function(event) {
+        // Проверяем, был ли клик по кнопке удаления или её дочерним элементам
         const deleteButton = event.target.closest('.delete-address-btn');
         
         if (deleteButton) {
             event.preventDefault();
+            event.stopPropagation();
+            
             const addressId = deleteButton.getAttribute('data-address-id');
             
             if (!confirm('Вы уверены, что хотите удалить этот адрес?')) {
@@ -649,44 +653,39 @@ export function initDeleteAddressHandlers() {
             if (!addressId) {
                 showAlert('Ошибка: ID адреса не найден', 'danger');
                 return;
-            } else {
-                try {   
-                    const response = await fetch(`/api/addresses/${addressId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        }
-                    });
-
-                    const result = await response.json();
-
-                    showAlert('Удаление адреса...', 'info');
-
-                    console.log('result', result);
-
-                    if (result.success) {
-                        showAlert('Адрес успешно удален', 'success');
-
-                        // Обновляем таблицу адресов
-                        console.log('Проверка функции loadAddressesPaginated:', typeof loadAddressesPaginated);
-                        if (typeof loadAddressesPaginated === 'function') {
-                            console.log('Вызов loadAddressesPaginated');
-                            await loadAddressesPaginated();
-                            console.log('Функция loadAddressesPaginated выполнена');
-                        } else {
-                            console.warn('Функция loadAddressesPaginated не найдена');
-                        }
-                    } else {
-                        showAlert(result.message || 'Произошла ошибка при удалении адреса', 'danger');
-                    }
-                } catch (error) {
-                    console.error('Ошибка при удалении адреса:', error);
-                    showAlert('Произошла ошибка при удалении адреса. Пожалуйста, попробуйте снова.', 'danger');
-                }
             }
-            
-            console.log('Нажата кнопка удаления, ID адреса:', addressId);
+
+            try {   
+                const response = await fetch(`/api/addresses/${addressId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Адрес успешно удален', 'success');
+                    console.log('Адрес успешно удален, ID:', addressId);
+                    
+                    // Обновляем таблицу адресов
+                    if (typeof loadAddressesPaginated === 'function') {
+                        await loadAddressesPaginated();
+                    } else {
+                        console.warn('Функция loadAddressesPaginated не найдена, перезагружаем страницу');
+                        window.location.reload();
+                    }
+                } else {
+                    throw new Error(result.message || 'Неизвестная ошибка при удалении адреса');
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении адреса:', error);
+                showAlert(`${error.message}.`, 'danger');
+            }
         }
     });
 }

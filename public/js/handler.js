@@ -10,8 +10,12 @@ window.postData = postData;
  * @param {number} perPage - количество элементов на странице
  */
 export async function loadAddressesPaginated(page = 1, perPage = 30) {
+    // Находим контейнер для таблицы адресов
     const container = document.getElementById('AllAddressesList');
-    if (!container) return;
+    if (!container) {
+        console.error('Контейнер для таблицы адресов не найден');
+        return;
+    }
 
     try {
         // Показываем индикатор загрузки
@@ -68,10 +72,11 @@ export async function loadAddressesPaginated(page = 1, perPage = 30) {
             rows.forEach(row => tbody.appendChild(row));
         };
         
+        // Контейнер уже объявлен в начале функции
+
         // Формируем HTML для таблицы адресов
         let html = `
-        <div class="table-responsive">
-            <table id="AllAddressesList" class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
                         <th style="width: 10%; cursor: pointer;"> </th>
@@ -113,8 +118,7 @@ export async function loadAddressesPaginated(page = 1, perPage = 30) {
         // Закрываем таблицу
         html += `
                 </tbody>
-            </table>
-        </div>`;
+            </table>`;
 
         // Добавляем пагинацию
         if (data.last_page > 1) {

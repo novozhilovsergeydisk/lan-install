@@ -613,7 +613,7 @@
 
                                 </div>
 
-                                <div id="AllAddressesList">
+                                <div id="AllAddressesList" class="table-responsive">
                                     <!-- Таблица будет сгенерирована и заполнена через JavaScript -->
                                     <div class="d-flex justify-content-center">
                                         <div class="spinner-border text-primary" role="status">
