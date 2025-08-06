@@ -304,7 +304,7 @@ export async function loadReport() {
         requestData.addressId = addressSelect.value;
     }
     
-    console.log('Request data:', requestData);
+    console.log('Данные для запроса:', requestData);
     
     const result = await postData(url, requestData);
 
@@ -314,7 +314,7 @@ export async function loadReport() {
         renderReportTable({
             requests: result.requestsByDateRange || result.requestsByEmployeeAndDateRange || result.requestsAllPeriodByEmployee || result.requestsAllPeriod || result.requestsByAddressAndDateRange || [],
             brigadeMembers: result.brigadeMembersWithDetails || [],
-            comments_by_request: result.comments_by_request || {}
+            comments_by_request: result.comments_by_request || result.commentsByRequest || {}
         });
     } else {
         renderReportTable({
@@ -343,7 +343,7 @@ function shortenName(fullName) {
  * @param {Array} data - Array of request objects
  */
 function renderReportTable(data) {
-    console.log('Полученные данные в renderReportTable:', data);
+    console.log('Полученные данные в data:', data);
     
     const tbody = document.querySelector('#requestsReportTable tbody');
     if (!tbody) {
@@ -356,6 +356,8 @@ function renderReportTable(data) {
 
     // Определяем, пришёл ли массив или объект
     const responseData = Array.isArray(data) ? data[0] : data;
+
+    console.log('Полученные данные в responseData:', responseData);
     
     // Проверяем данные (поддерживаем оба формата ответа)
     let requests, brigadeMembers, comments_by_request;
@@ -364,7 +366,7 @@ function renderReportTable(data) {
     if (responseData.requestsByDateRange && Array.isArray(responseData.requestsByDateRange)) {
         requests = responseData.requestsByDateRange || [];
         brigadeMembers = responseData.brigadeMembersWithDetails || [];
-        comments_by_request = responseData.comments_by_request || {};
+        comments_by_request = responseData.comments_by_request || responseData.commentsByRequest || {};
     } 
     // Старый формат ответа
     else if (Array.isArray(responseData.requests)) {

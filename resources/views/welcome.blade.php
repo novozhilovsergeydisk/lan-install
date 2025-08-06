@@ -203,6 +203,11 @@
                                 type="button" role="tab">Отчеты
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="planning-tab" data-bs-toggle="tab" data-bs-target="#planning"
+                                type="button" role="tab">Планирование
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="tab-content" id="mainTabsContent">
@@ -1010,6 +1015,16 @@
                             </table>
                         </div>
                     </div>
+
+                    <div id="planning" class="tab-pane fade" role="tabpanel">
+                        <h4>Планирование</h4>
+
+                        <div id="planning-content" class="mb-3">
+                            <button type="button" class="btn btn-primary" id="new-planning-request-button" data-bs-toggle="modal" data-bs-target="#newPlanningRequestModal">
+                                <i class="bi bi-plus-circle me-1"></i>Новая заявка
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card mt-4 hide-me">
@@ -1570,6 +1585,86 @@
             </div>
             <div class="modal-footer">
                 
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Planning Request Modal -->
+<div class="modal fade" id="newPlanningRequestModal" tabindex="-1" aria-labelledby="newPlanningRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newPlanningRequestModalLabel">Новая заявка на планирование</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="planningRequestForm">
+                @csrf
+                    <div class="mb-3">
+                        <!-- <h6>Информация о клиенте на планирование</h6> -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="clientNamePlanningRequest" class="form-label">Контактное лицо <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="clientNamePlanningRequest" name="client_name_planning_request">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="clientPhonePlanningRequest" class="form-label">Телефон <span
+                                        class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="clientPhonePlanningRequest" name="client_phone_planning_request">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="clientOrganizationPlanningRequest" class="form-label">Организация</label>
+                                <input type="text" class="form-control" id="clientOrganizationPlanningRequest" name="client_organization_planning_request">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- <div class="mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="executionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="executionDate" name="execution_date"
+                                       required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="executionTime" class="form-label">Время выполнения</label>
+                                <input type="time" class="form-control" id="executionTime" name="execution_time">
+                            </div>
+                        </div>
+                    </div> -->
+
+                    <div class="mb-3">
+                        <h6>Адрес</h6>
+                        <div class="mb-3">
+                            <select class="form-select" id="addressesPlanningRequest" name="addresses_planning_request_id" required>
+                                <option value="" disabled selected>Выберите адрес</option>
+                                <!-- Will be populated by JavaScript -->
+                            </select>
+                            <div class="invalid-feedback">
+                                Пожалуйста, выберите адрес из списка
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Комментарий к заявке</h6>
+                        <div class="mb-3">
+                            <textarea class="form-control" id="planningRequestComment" name="planning_request_comment" rows="3"
+                                      placeholder="Введите комментарий к заявке" required minlength="3"
+                                      maxlength="1000"></textarea>
+                            <div class="invalid-feedback">
+                                Пожалуйста, введите комментарий (от 3 до 1000 символов)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" id="submitPlanningRequest">Создать заявку</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
