@@ -2603,22 +2603,22 @@
                             <option value="1" selected>Москва</option>
                             <!-- Остальные города будут загружены динамически -->
                         </select>
-                        <div class="invalid-feedback">Пожалуйста, выберите город</div>
+                        <div class="invalid-feedback d-none">Пожалуйста, выберите город</div>
                     </div>
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Район <span class="text-danger">*</span></label>
                         <input type="text" name="district" class="form-control" placeholder="Район" data-required="true">
-                        <div class="invalid-feedback">Пожалуйста, укажите район</div>
+                        <div class="invalid-feedback d-none">Пожалуйста, укажите район</div>
                     </div>
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Улица <span class="text-danger">*</span></label>
                         <input type="text" name="street" class="form-control" placeholder="Улица" data-required="true">
-                        <div class="invalid-feedback">Пожалуйста, укажите улицу</div>
+                        <div class="invalid-feedback d-none">Пожалуйста, укажите улицу</div>
                     </div>
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Дом <span class="text-danger">*</span></label>
                         <input type="text" name="houses" class="form-control" placeholder="Дом" data-required="true">
-                        <div class="invalid-feedback">Пожалуйста, укажите номер дома</div>
+                        <div class="invalid-feedback d-none">Пожалуйста, укажите номер дома</div>
                     </div>
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Ответственное лицо</label>
