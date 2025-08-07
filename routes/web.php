@@ -7,7 +7,8 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BrigadeController;
 use App\Http\Controllers\RequestFilterController;
 use App\Http\Controllers\RequestTeamFilterController;
-use App\Http\Controllers\GeoController; 
+use App\Http\Controllers\GeoController;
+use App\Http\Controllers\PlanningRequestController; 
 use App\Http\Controllers\EmployeeUserController;
 use App\Http\Controllers\EmployeesUserPositionPassportController;
 use App\Http\Controllers\ReportController;
@@ -233,6 +234,11 @@ Route::post('/employee/delete', [EmployeeUserController::class, 'deleteEmployee'
 // Delete brigade member
 Route::post('/brigade/delete/{id}', [BrigadeController::class, 'deleteBrigade'])
 ->name('brigade.delete')
+->middleware('auth');
+
+
+Route::post('/planning-requests', [PlanningRequestController::class, 'store'])
+->name('planning-requests.store')
 ->middleware('auth');
 
 

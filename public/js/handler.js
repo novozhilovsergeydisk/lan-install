@@ -1584,7 +1584,7 @@ export function initializePage() {
                 todayHighlight: true
             })
             .on('changeDate', function (e) {
-                console.log('Изменение даты в календаре:', e.format('dd.mm.yyyy'));
+                // console.log('Изменение даты в календаре:', e.format('dd.mm.yyyy'));
 
                 const selectedDate = e.format('dd.mm.yyyy');
                 filterState.date = selectedDate;
@@ -1595,7 +1595,7 @@ export function initializePage() {
                 } else if (window.selectedDateState) {
                     // Запасной вариант, если метод updateDate не доступен
                     window.selectedDateState.date = selectedDate;
-                    console.log('Выбрана дата в календаре (handler.js):', window.selectedDateState.date);
+                    // console.log('Выбрана дата в календаре (handler.js):', window.selectedDateState.date);
                 }
 
                 console.log('Выбрана дата в календаре (handler.js):', selectedDate);

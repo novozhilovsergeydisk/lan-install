@@ -1017,7 +1017,7 @@
                     </div>
 
                     <div id="planning" class="tab-pane fade" role="tabpanel">
-                        <h4>Планирование</h4>
+                        <h4>Список запланированных заявок</h4>
 
                         @if($user->isAdmin)
                         <div id="planning-content" class="mb-3">
@@ -1616,14 +1616,14 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="newPlanningRequestModalLabel">Новая заявка на планирование</h5>
+                <h5 class="modal-title" id="newPlanningRequestModalLabel">Создание запланированной заявки</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="planningRequestForm">
                 @csrf
                     <div class="mb-3">
-                        <!-- <h6>Информация о клиенте на планирование</h6> -->
+                        <!-- <h6>Информация о клиенте для запланированной заявки</h6> -->
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="clientNamePlanningRequest" class="form-label">Контактное лицо <span

@@ -654,16 +654,22 @@ export function initPlanningRequestFormHandlers() {
         console.log('Функция initCustomSelect не найдена для addressesPlanningRequest');
     }
 
+    // Обработчик отправки формы
     submitButton.addEventListener('click', async function(event) {
         event.preventDefault();
         event.stopPropagation();
         
+        // Получаем данные формы
         const form = document.getElementById('planningRequestForm');
         const formData = new FormData(form);
         const addressId = formData.get('addresses_planning_request_id');
-        console.log('addressId', addressId); // для тестирования
-        console.log('formData', formData); // для тестирования
-        return;
+        
+        // Детальное логирование данных формы
+        console.log('=== Form Data ===');
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ':', pair[1]);
+        }
+        console.log('=================');
         
         if (!addressId) {
             showAlert('Пожалуйста, выберите адрес', 'danger');
@@ -671,20 +677,25 @@ export function initPlanningRequestFormHandlers() {
         }
 
         try {
-            const response = await fetch('/api/planning-requests', {
+            const formDataObj = {
+                address_id: addressId,
+                comment: formData.get('planning_request_comment'),
+                client_name: formData.get('client_name_planning_request'),
+                client_phone: formData.get('client_phone_planning_request'),
+                client_organization: formData.get('client_organization_planning_request')
+            };
+
+            console.log('Отправка данных на сервер:', formDataObj);
+
+            const response = await fetch('/planning-requests', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({
-                    address_id: addressId,
-                    comment: formData.get('planning_request_comment'),
-                    client_name: formData.get('client_name_planning_request'),
-                    client_phone: formData.get('client_phone_planning_request'),
-                    client_organization: formData.get('client_organization_planning_request')
-                }),
+                body: JSON.stringify(formDataObj),
                 credentials: 'same-origin'
             });
 
@@ -1148,7 +1159,7 @@ export function initDeleteMember() {
                         }
                     }
                     
-                    console.log('Всего найдено участников бригады:', brigadeMembersData.length, brigadeMembersData);
+                    // console.log('Всего найдено участников бригады:', brigadeMembersData.length, brigadeMembersData);
                     
                     // 3. Восстанавливаем всех участников в выпадающем списке
                     brigadeMembersData.forEach((member, index) => {
@@ -1166,7 +1177,7 @@ export function initDeleteMember() {
                             });
                             
                             const option = employeesSelect?.querySelector(`option[value="${memberId}"]`);
-                            console.log('Найдена опция в select:', !!option, option);
+                            // console.log('Найдена опция в select:', !!option, option);
                             
                             if (option) {
                                 option.disabled = false;
