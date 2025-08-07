@@ -830,6 +830,10 @@ export function initPlanningRequestFormHandlers() {
     submitButton.addEventListener('click', async function(event) {
         event.preventDefault();
         event.stopPropagation();
+
+        showAlert('Функционал в разработке', 'info');
+
+        return;
         
         // Получаем данные формы
         const form = document.getElementById('planningRequestForm');
@@ -839,6 +843,7 @@ export function initPlanningRequestFormHandlers() {
         const clientName = formData.get('client_name_planning_request');
         const clientPhone = formData.get('client_phone_planning_request');
         const clientOrganization = formData.get('client_organization_planning_request');
+        const _token = formData.get('_token');
         
         // Детальное логирование данных формы
         console.log('=== Form Data ===');
@@ -880,10 +885,11 @@ export function initPlanningRequestFormHandlers() {
                 planning_request_comment: comment,
                 client_name_planning_request: clientName,
                 client_phone_planning_request: clientPhone,
-                client_organization_planning_request: clientOrganization
+                client_organization_planning_request: clientOrganization,
+                _token: _token
             };
 
-            console.log('Отправка данных на сервер:', formDataObj);
+            console.log('Отправляемые данные:', formDataObj);
 
             const response = await fetch('/planning-requests', {
                 method: 'POST',
@@ -898,6 +904,8 @@ export function initPlanningRequestFormHandlers() {
             });
 
             const result = await response.json();
+
+            console.log('Ответ сервера result:', result);
 
             if (result.success) {
                 showAlert('Заявка успешно создана', 'success');
@@ -1803,32 +1811,6 @@ async function submitRequestForm(event) {
 
         submitBtn.disabled = false;
         submitBtn.textContent = 'Создать заявку';
-        return;
-
-        // Используем стандартную валидацию Bootstrap для оригинального селекта
-        const addressSelect = document.getElementById('addresses_id');
-        if (addressSelect) {
-            // Добавляем класс is-invalid к оригинальному селекту
-            addressSelect.classList.add('is-invalid');
-        }
-
-        // Находим кастомный селект для addresses_id и применяем к нему валидацию с подсветкой
-        const customSelects = document.querySelectorAll('.custom-select-wrapper');
-        for (const wrapper of customSelects) {
-            // Проверяем, относится ли этот wrapper к нашему селекту addresses_id
-            const input = wrapper.querySelector('.custom-select-input');
-            if (input && input.placeholder === 'Выберите адрес из списка') {
-                // Если у wrapper есть метод validate, вызываем его с параметром true для подсветки
-                if (wrapper.validate && typeof wrapper.validate === 'function') {
-                    wrapper.validate(true);
-                } else {
-                    // Если метода нет, добавляем класс is-invalid напрямую
-                    input.classList.add('is-invalid');
-                }
-                break;
-            }
-        }
-
         return;
     }
 
