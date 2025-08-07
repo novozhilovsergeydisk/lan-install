@@ -1579,9 +1579,9 @@
                                 <option value="" disabled selected>Выберите адрес</option>
                                 <!-- Will be populated by JavaScript -->
                             </select>
-                            <div class="invalid-feedback">
-                                Пожалуйста, выберите адрес из списка
-                            </div>
+                        </div>
+                        <div id="addresses_id_error" class="invalid-feedback d-none">
+                            Пожалуйста, выберите адрес из списка
                         </div>
                     </div>
 
@@ -1591,10 +1591,10 @@
                             <textarea class="form-control" id="comment" name="comment" rows="3"
                                       placeholder="Введите комментарий к заявке" required minlength="3"
                                       maxlength="1000"></textarea>
-                            <div class="invalid-feedback">
+                        </div>
+                        <div class="invalid-feedback d-none">
                                 Пожалуйста, введите комментарий (от 3 до 1000 символов)
                             </div>
-                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -1621,61 +1621,42 @@
             </div>
             <div class="modal-body">
                 <form id="planningRequestForm">
-                @csrf
+                    @csrf
                     <div class="mb-3">
                         <!-- <h6>Информация о клиенте для запланированной заявки</h6> -->
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="clientNamePlanningRequest" class="form-label">Контактное лицо <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="clientNamePlanningRequest" name="client_name_planning_request">
+                            <div class="col-md-12">
+                                <label for="clientNamePlanningRequest" class="form-label">Контактное лицо </label>
+                                <input type="text" class="form-control" id="clientNamePlanningRequest" name="client_name_planning_request" required>
                             </div>
-                            <div class="col-md-6">
-                                <label for="clientPhonePlanningRequest" class="form-label">Телефон <span
-                                        class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="clientPhonePlanningRequest" name="client_phone_planning_request">
+                            <div class="col-md-12">
+                                <label for="clientPhonePlanningRequest" class="form-label">Телефон </label>
+                                <input type="tel" class="form-control" id="clientPhonePlanningRequest" name="client_phone_planning_request" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label for="clientOrganizationPlanningRequest" class="form-label">Организация</label>
                                 <input type="text" class="form-control" id="clientOrganizationPlanningRequest" name="client_organization_planning_request">
                             </div>
                         </div>
                     </div>
 
-                    <!-- <div class="mb-3">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="executionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="executionDate" name="execution_date"
-                                       required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="executionTime" class="form-label">Время выполнения</label>
-                                <input type="time" class="form-control" id="executionTime" name="execution_time">
-                            </div>
-                        </div>
-                    </div> -->
-
                     <div class="mb-3">
                         <h6>Адрес <span class="text-danger">*</span></h6>
-                        <div class="invalid-feedback">
-                            Пожалуйста, выберите адрес из списка
-                        </div>
                         <div class="mb-3">
                             <select class="form-select" id="addressesPlanningRequest" name="addresses_planning_request_id" required>
                                 <option value="" disabled selected>Выберите адрес</option>
                             </select>
+                            <div class="form-text">Пожалуйста, выберите адрес из списка</div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <h6>Комментарий к заявке</h6>
-                        <div class="mb-3">
-                            <textarea class="form-control" id="planningRequestComment" name="planning_request_comment" rows="3"
-                                      placeholder="Введите комментарий к заявке" required minlength="3"
-                                      maxlength="1000"></textarea>
-                            <div class="invalid-feedback">
-                                Пожалуйста, введите комментарий (от 3 до 1000 символов)
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <h6>Комментарий к заявке <span class="text-danger">*</span></h6>
+                            <div class="mb-3">
+                                <textarea class="form-control" id="planningRequestComment" name="planning_request_comment" rows="3"
+                                              placeholder="Введите комментарий к заявке" required minlength="3"
+                                              maxlength="1000"></textarea>
                             </div>
                         </div>
                     </div>

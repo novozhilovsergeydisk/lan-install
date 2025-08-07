@@ -19,10 +19,10 @@ class PlanningRequestController extends Controller
         // Валидация входящих данных
         $validator = Validator::make($request->all(), [
             'address_id' => 'required|exists:addresses,id',
-            'client_name' => 'required|string|max:255',
-            'client_phone' => 'required|string|max:20',
-            'client_organization' => 'nullable|string|max:255',
-            'comment' => 'nullable|string',
+            'client_name_planning_request' => 'required|string|max:255',
+            'client_phone_planning_request' => 'required|string|max:20',
+            'client_organization_planning_request' => 'nullable|string|max:255',
+            'planning_request_comment' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -39,8 +39,8 @@ class PlanningRequestController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => 'Заявка успешно создана',
-                'id' => 1 // Временный ID, замените на реальный после сохранения в БД
+                'message' => 'Заявка успешно создана в тестовом режиме',
+                'id' => 42 // Временный ID, замените на реальный после сохранения в БД
             ]);
             
         } catch (\Exception $e) {

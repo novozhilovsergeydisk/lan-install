@@ -616,7 +616,129 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
 
 // ************* Common functions ************* //
 
-// Функция для корректного закрытия модального окна (вынесена на уровень модуля для доступности из разных функций)
+/**
+ * Marks a form field as invalid and shows an error message
+ * @param {string} fieldName - The name attribute of the field
+ * @param {string} message - The error message to display
+ */
+function markFieldAsInvalid(fieldName, message) {
+    const field = document.querySelector(`[name="${fieldName}"]`);
+    if (!field) return;
+    
+    // Add invalid class to the field
+    field.classList.add('is-invalid');
+    
+    // Create error message element if it doesn't exist
+    let errorElement = field.nextElementSibling;
+    if (!errorElement || !errorElement.classList.contains('invalid-feedback')) {
+        errorElement = document.createElement('div');
+        errorElement.className = 'invalid-feedback';
+        field.parentNode.insertBefore(errorElement, field.nextSibling);
+    }
+    
+    // Set error message
+    errorElement.textContent = message;
+    
+    // If this is a select2 element, we need to add the class to the select2 container
+    if (field.classList.contains('select2-hidden-accessible')) {
+        const select2Container = field.nextElementSibling;
+        if (select2Container && select2Container.classList.contains('select2-container')) {
+            select2Container.classList.add('is-invalid');
+        }
+    }
+}
+
+// Функция для валидации поля
+function validateField(field, isInitialLoad = false) {
+    if (!field) return true;
+    
+    const value = field.value.trim();
+    const fieldName = field.name;
+    
+    // Сбрасываем предыдущие состояния
+    field.classList.remove('is-valid', 'is-invalid');
+    const existingFeedback = field.nextElementSibling;
+    if (existingFeedback && (existingFeedback.classList.contains('valid-feedback') || 
+                           existingFeedback.classList.contains('invalid-feedback'))) {
+        existingFeedback.remove();
+    }
+    
+    // Пропускаем валидацию при первом открытии формы
+    if (isInitialLoad) {
+        return true;
+    }
+    
+    // Проверяем обязательные поля
+    if (field.required && !value) {
+        return false;
+    }
+    
+    // Если поле прошло валидацию и было изменено
+    if (value) {
+        field.classList.add('is-valid');
+        const validFeedback = document.createElement('div');
+        validFeedback.className = 'valid-feedback';
+        validFeedback.innerHTML = '✓';
+        field.parentNode.insertBefore(validFeedback, field.nextSibling);
+    }
+    
+    return true;
+}
+
+// Функция для очистки полей формы
+function clearPlanningRequestForm() {
+    const form = document.getElementById('planningRequestForm');
+    if (!form) return;
+    
+    // Очищаем все поля ввода
+    form.querySelectorAll('input[type="text"], input[type="tel"], textarea').forEach(input => {
+        input.value = '';
+        input.classList.remove('is-valid', 'is-invalid');
+    });
+    
+    // Сбрасываем select2, если используется
+    if (typeof $.fn.select2 !== 'undefined' && $('.select2').length > 0) {
+        $('.select2').val(null).trigger('change');
+    }
+    
+    // Удаляем сообщения об ошибках и успешной валидации
+    form.querySelectorAll('.invalid-feedback, .valid-feedback').forEach(el => el.remove());
+    
+    // Сбрасываем состояние валидации
+    form.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
+        el.classList.remove('is-invalid', 'is-valid');
+    });
+}
+
+// Функция для добавления стилей валидации
+function addValidationStyles() {
+    if (document.getElementById('form-validation-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'form-validation-styles';
+    style.textContent = `
+        .is-valid { 
+            border: 1px solid #198754 !important; 
+            box-shadow: none !important; 
+            outline: none !important; 
+            padding-right: 2.25rem; 
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e"); 
+            background-repeat: no-repeat; 
+            background-position: right 0.6rem center; 
+            background-size: 1.2rem 1.2rem; 
+        }
+        .valid-feedback { display: block; color: #198754; font-size: 0.875rem; margin-top: 0.25rem; }
+        .is-invalid { border-color: var(--bs-form-invalid-color) !important; }
+        .invalid-feedback { 
+            display: block; 
+            color: var(--bs-form-invalid-color); 
+            font-size: 0.875rem; 
+            margin-top: 0.25rem; 
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 function closeModalProperly() {
     const modalElement = document.getElementById('editEmployeeModal');
     const bsModal = bootstrap.Modal.getInstance(modalElement);
@@ -653,7 +775,57 @@ export function initPlanningRequestFormHandlers() {
     } else {
         console.log('Функция initCustomSelect не найдена для addressesPlanningRequest');
     }
-
+    
+    // Добавляем стили валидации
+    addValidationStyles();
+    
+    // Добавляем обработчик закрытия модального окна
+    const modalElement = document.getElementById('newPlanningRequestModal');
+    if (modalElement) {
+        modalElement.addEventListener('hidden.bs.modal', clearPlanningRequestForm);
+    }
+    
+    // Добавляем обработчики событий для полей формы
+    const form = document.getElementById('planningRequestForm');
+    const formFields = form.querySelectorAll('input[required], textarea[required], select[required]');
+    
+    // Обработчик для селекта адреса
+    const addressSelect = document.getElementById('addressesPlanningRequest');
+    if (addressSelect) {
+        addressSelect.addEventListener('change', function() {
+            if (this.value) {
+                // Удаляем класс is-invalid и сообщение об ошибке
+                this.classList.remove('is-invalid');
+                const feedback = this.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.remove();
+                }
+                // Добавляем класс is-valid при выборе значения
+                this.classList.add('is-valid');
+            }
+        });
+    }
+    
+    formFields.forEach(field => {
+        // Валидация при уходе с поля
+        field.addEventListener('blur', () => {
+            if (field.value.trim() !== '') {
+                validateField(field);
+            }
+        });
+        
+        // Валидация при вводе (с задержкой)
+        let timeout;
+        field.addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                if (field.value.trim() !== '') {
+                    validateField(field);
+                }
+            }, 500);
+        });
+    });
+    
     // Обработчик отправки формы
     submitButton.addEventListener('click', async function(event) {
         event.preventDefault();
@@ -663,6 +835,10 @@ export function initPlanningRequestFormHandlers() {
         const form = document.getElementById('planningRequestForm');
         const formData = new FormData(form);
         const addressId = formData.get('addresses_planning_request_id');
+        const comment = formData.get('planning_request_comment');
+        const clientName = formData.get('client_name_planning_request');
+        const clientPhone = formData.get('client_phone_planning_request');
+        const clientOrganization = formData.get('client_organization_planning_request');
         
         // Детальное логирование данных формы
         console.log('=== Form Data ===');
@@ -671,18 +847,40 @@ export function initPlanningRequestFormHandlers() {
         }
         console.log('=================');
         
+        // Сбрасываем предыдущие ошибки и валидацию
+        document.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
+            el.classList.remove('is-invalid', 'is-valid');
+        });
+        document.querySelectorAll('.invalid-feedback, .valid-feedback').forEach(el => el.remove());
+        
+        let hasErrors = false;
+        
         if (!addressId) {
-            showAlert('Пожалуйста, выберите адрес', 'danger');
+            markFieldAsInvalid('addresses_planning_request_id', 'Пожалуйста, выберите адрес');
+            hasErrors = true;
+        }
+        
+        if (!comment) {
+            markFieldAsInvalid('planning_request_comment', 'Пожалуйста, введите комментарий');
+            hasErrors = true;
+        }
+        
+        if (hasErrors) {
+            // Прокручиваем к первой ошибке
+            const firstError = document.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
             return;
         }
 
         try {
             const formDataObj = {
                 address_id: addressId,
-                comment: formData.get('planning_request_comment'),
-                client_name: formData.get('client_name_planning_request'),
-                client_phone: formData.get('client_phone_planning_request'),
-                client_organization: formData.get('client_organization_planning_request')
+                planning_request_comment: comment,
+                client_name_planning_request: clientName,
+                client_phone_planning_request: clientPhone,
+                client_organization_planning_request: clientOrganization
             };
 
             console.log('Отправка данных на сервер:', formDataObj);
@@ -1522,41 +1720,90 @@ function initExecutionDateField() {
 /**
  * Обрабатывает отправку формы новой заявки
  */
-async function submitRequestForm() {
+async function submitRequestForm(event) {
+    // Prevent default form submission
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    console.log('Начало функции submitRequestForm');
+    
     const form = document.getElementById('newRequestForm');
     const submitBtn = document.getElementById('submitRequest');
+    const commentField = document.getElementById('comment');
+    const commentError = commentField ? commentField.nextElementSibling : null;
 
-    if (!form.checkValidity()) {
+    console.log('Форма:', form);
+    console.log('Кнопка отправки:', submitBtn);
+    
+    if (!form) {
+        console.error('Форма newRequestForm не найдена в DOM');
+        return false;
+    }
+    
+    if (!submitBtn) {
+        console.error('Кнопка submitRequest не найдена в DOM');
+        return false;
+    }
+
+    // Get the address error element once at the beginning
+    const addressError = document.getElementById('addresses_id_error');
+    
+    // Reset all error states
+    form.classList.remove('was-validated');
+    if (commentField) commentField.classList.remove('is-invalid');
+    if (commentError) commentError.classList.add('d-none');
+    if (addressError) addressError.classList.add('d-none');
+
+    // Validate form
+    const isValid = form.checkValidity();
+    console.log('Валидация формы:', isValid);
+
+    if (!isValid) {
         form.classList.add('was-validated');
 
-        // Проверяем поле комментария отдельно
-        const commentField = document.getElementById('comment');
-        if (commentField && commentField.validity && !commentField.validity.valid) {
-            // Если поле комментария невалидно, добавляем класс is-invalid
-            commentField.classList.add('is-invalid');
-
-            console.log('Форма создания новой заявки для поля комментария невалидна');
-
-            // Показываем сообщение об ошибке
-            // Закомментировано, так как есть подсказка под полем ввода и подсветка рамки
-            // if (commentField.value.length < 3) {
-            //     showAlert('Пожалуйста, введите комментарий (от 3 до 1000 символов)', 'danger');
-            // }
-        } else {
-            commentField.classList.remove('is-invalid');
-            console.log('Форма создания новой заявки для поля комментария валидна');
+        // Validate comment field
+        if (commentField) {
+            const isCommentValid = commentField.validity.valid;
+            console.log('Валидность комментария:', isCommentValid);
+            
+            if (!isCommentValid) {
+                commentField.classList.add('is-invalid');
+                if (commentError) commentError.classList.remove('d-none');
+                console.log('Поле комментария невалидно');
+                return; // Прерываем выполнение, если комментарий невалиден
+            } else {
+                commentField.classList.remove('is-invalid');
+                if (commentError) commentError.classList.add('d-none');
+                console.log('Поле комментария валидно');
+            }
         }
-
-        return;
     }
 
     const addressId = document.getElementById('addresses_id').value;
 
+    console.log('Находим элемент addresses_id:', document.getElementById('addresses_id'));
+    console.log('Значение элемента addresses_id:', document.getElementById('addresses_id').value);
+
     // Проверяем, выбран ли адрес из списка
     if (!addressId) {
-        showAlert('Пожалуйста, выберите адрес из списка', 'danger');
+        console.log('Находим элемент addresses_id_error:', document.getElementById('addresses_id_error'));
+        
+        if (addressError) {
+            addressError.textContent = 'Пожалуйста, выберите адрес из списка';
+            addressError.classList.remove('d-none');
+            
+            // Add is-invalid class to the custom select input
+            const customSelectInput = document.querySelector('.custom-select-input');
+            if (customSelectInput) {
+                customSelectInput.classList.add('is-invalid');
+            }
+        }
+
         submitBtn.disabled = false;
         submitBtn.textContent = 'Создать заявку';
+        return;
 
         // Используем стандартную валидацию Bootstrap для оригинального селекта
         const addressSelect = document.getElementById('addresses_id');
@@ -1669,6 +1916,13 @@ async function submitRequestForm() {
 
             // Reset the form
             form.reset();
+            if (addressError) addressError.classList.add('d-none');
+            
+            // Remove is-invalid class from custom select input
+            const customSelectInput = document.querySelector('.custom-select-input');
+            if (customSelectInput) {
+                customSelectInput.classList.remove('is-invalid');
+            }
 
             // Восстанавливаем дату после сброса формы
             const dateInput = document.getElementById('executionDate');
