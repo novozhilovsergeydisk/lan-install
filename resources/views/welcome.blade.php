@@ -791,9 +791,9 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="d-flex gap-2 mt-3 mb-3">
+                                                    <div class="d-flex gap-2 mt-3 mb-3 hide-me">
                                                         <button id="autoFillBtn" type="button" class="btn btn-outline-secondary" 
-                                                            data-bs-toggle="tooltip" title="Заполнить случайными тестовыми данными">
+                                                            data-bs-toggle="tooltip">
                                                             Автозаполнение
                                                         </button>
 

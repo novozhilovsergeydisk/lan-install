@@ -104,7 +104,7 @@ export async function loadPlanningRequests() {
                 </td>
                 <td style="width: 10%">
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary request-in-work" title="В работу" data-request-id="${request.id}">
+                        <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
                             <i class="bi bi-pencil-square"></i> В работу
                         </button>
                     </div>
@@ -765,10 +765,8 @@ function applyFilters() {
                                     // const displayText = commentText.length > 50 ? commentText.substring(0, 50) + '...' : commentText;
 
                                     return `
-                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip"
-                                            style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;"
-                                            title="${escapedComment}">
-                                            <p class="comment-preview-title" style_="font-weight: bold; margin-bottom: 2px;">Печатный комментарий:</p>
+                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
+                                            <p class="comment-preview-title">Печатный комментарий:</p>
                                             <p class="comment-preview-text">${displayText}</p>
                                         </div>
                                         ${request.comments && request.comments.length > 1 ? `

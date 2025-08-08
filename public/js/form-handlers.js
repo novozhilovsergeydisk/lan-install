@@ -341,9 +341,7 @@ function addRequestToTable(result) {
         <td class="col-comment">
             <div class="col-date__date">${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate} | ${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>
             ${extractedComment ? `
-                <div class="comment-preview small text-dark"
-                    data-bs-toggle="tooltip"
-                    data-bs-original-title="${extractedComment}">
+                <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                     <p class="comment-preview-title">Печатный комментарий:</p>
                     <p class="comment-preview-text">${extractedComment}</p>
                 </div>
@@ -760,7 +758,7 @@ function closeModalProperly() {
 
 // request-in-work
 export function initRequestInWorkHandlers() {
-    const buttons = document.querySelectorAll('.request-in-work button');
+    const buttons = document.querySelectorAll('button.request-in-work');
     buttons.forEach(button => {
         button.addEventListener('click', (e) => {
             // Останавливаем всплытие события, чтобы избежать множественных срабатываний
