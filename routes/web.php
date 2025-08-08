@@ -150,8 +150,6 @@ Route::prefix('reports')->middleware('auth')->group(function () {
 
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {
-    
-
     // Get addresses for select
     Route::get('/addresses', [HomeController::class, 'getAddresses'])->name('api.addresses');
     

@@ -103,8 +103,8 @@ export async function loadPlanningRequests() {
                     </div>
                 </td>
                 <td style="width: 10%">
-                    <div class="btn-group btn-group-sm request-in-work" role="group">
-                        <button type="button" class="btn btn-outline-primary" title="В работу" data-request-id="${request.id}">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary request-in-work" title="В работу" data-request-id="${request.id}">
                             <i class="bi bi-pencil-square"></i> В работу
                         </button>
                     </div>
@@ -1346,9 +1346,7 @@ export async function loadAddressesForPlanning() {
             option.value = address.id;
             // Формируем читаемый адрес
             const addressParts = [
-                address.street,
-                address.house_number,
-                address.building ? `к${address.building}` : '',
+                address.street + ', ' + address.houses,
                 address.district ? `[${address.district}]` : '',
                 address.city ? `[${address.city}]` : ''
             ].filter(Boolean).join(' ');
