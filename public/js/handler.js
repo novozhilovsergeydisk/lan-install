@@ -12,7 +12,7 @@ export async function loadPlanningRequests() {
         return;
     }
 
-    console.log('Запланированные заявки загружены test');
+    // console.log('Запланированные заявки загружены test');
 
     try {
         // Показываем индикатор загрузки
@@ -97,12 +97,8 @@ export async function loadPlanningRequests() {
                     </div>
                 </td>
                 <td style="width: 45%">
-                    <div class="comment-preview" data-bs-toggle="tooltip" data-bs-html="true" 
-                         title="${formattedComments}">
-                        ${comments.length > 0 
-                            ? `${comments[0].comment.substring(0, 50)}${comments[0].comment.length > 50 ? '...' : ''}`
-                            : 'Нет комментариев'}
-                        ${comments.length > 1 ? ` <span class="badge bg-secondary">+${comments.length - 1}</span>` : ''}
+                    <div class="comment-preview" data-bs-toggle="tooltip" data-bs-html="true">
+                        ${comments.length > 0 ? `${comments[0].comment}` : 'Нет комментариев'}
                     </div>
                 </td>
                 <td style="width: 10%">

@@ -1648,7 +1648,6 @@
                             <select class="form-select" id="addressesPlanningRequest" name="addresses_planning_request_id" required>
                                 <option value="" disabled selected>Выберите адрес</option>
                             </select>
-                            <div class="form-text">Пожалуйста, выберите адрес из списка</div>
                         </div>
                     </div>
 
