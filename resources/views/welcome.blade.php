@@ -1027,16 +1027,18 @@
                         </div>
 
                         <div class="table-responsive t-custom">
-                            <table id="requestsTable" class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
+                            <div id="planning-container">
+
+                            </div>
+
+                            <table id="requestsPlanningTable" class="table table-hover align-middle mb-0" style="">
                                 <thead class="bg-dark">
                                 <tr>
                                     <th class="line-height-20 font-smaller"></th>
+                                    <th class="line-height-20 font-smaller">Дата заявки</th>
                                     <th class="line-height-20 font-smaller">Адрес</th>
                                     <th class="line-height-20 font-smaller">Комментарии</th>
-
-                                    <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
-                                    
-                                    <th class="line-height-20 font-smaller" colspan="2">Действия</th>
+                                    <th class="line-height-20 font-smaller">Действия</th>
                                 </tr>
                                 </thead>
                                 <tbody>

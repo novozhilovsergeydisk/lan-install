@@ -11,6 +11,77 @@ use Illuminate\Support\Facades\Log;
 
 class PlanningRequestController extends Controller
 {
+    public function getPlanningRequests()
+    {
+
+        
+
+        $sql = "
+            SELECT
+                r.id,
+                TO_CHAR(r.request_date, 'DD.MM.YYYY') AS request_date,
+                r.number,
+                '#' || r.id || ', ' || r.number || ', создана ' || TO_CHAR(r.request_date, 'DD.MM.YYYY') AS request,
+                c.fio || ', ' || c.phone || ', ' || c.organization AS client,
+                ct.name || '. ' || addr.district || '. ' || addr.street || '. ' || addr.houses AS address,
+                ct.name city,
+                addr.district district,
+                addr.street street,
+                addr.houses houses,
+                c.fio,
+                c.phone,
+                c.organization,
+                rs.color,
+                jsonb_agg(
+                    jsonb_build_object(
+                        'comment', co.comment,
+                        'created_at', TO_CHAR(co.created_at, 'DD.MM.YYYY HH24:MI'),
+                        'author_name', u.name,
+                        'author_fio', emp.fio,
+                        'author_user_id', rc.user_id
+                    ) ORDER BY co.created_at DESC
+                ) FILTER (WHERE co.id IS NOT NULL) AS comments
+            FROM requests r
+            LEFT JOIN clients c ON r.client_id = c.id
+            LEFT JOIN request_statuses rs ON r.status_id = rs.id
+            LEFT JOIN employees op ON r.operator_id = op.id
+            LEFT JOIN request_addresses ra ON r.id = ra.request_id
+            LEFT JOIN addresses addr ON ra.address_id = addr.id
+            LEFT JOIN cities ct ON addr.city_id = ct.id
+            LEFT JOIN request_comments rc ON r.id = rc.request_id
+            LEFT JOIN comments co ON rc.comment_id = co.id
+            LEFT JOIN users u ON rc.user_id = u.id
+            LEFT JOIN employees emp ON u.id = emp.user_id
+            WHERE 1=1
+                AND (rs.name = 'планирование')
+            GROUP BY
+                r.id, r.number, r.request_date,
+                c.fio, c.phone, c.organization,
+                op.fio,
+                ct.name, addr.district, addr.street, addr.houses,
+                rs.name,
+                rs.color    
+            ORDER BY r.id DESC";
+
+        // Тестовый ответ
+        // return response()->json([
+        //     'success' => true,
+        //     'data' => [
+        //         'planningRequests' => ['test'],
+        //         'sql' => $sql
+        //     ]
+        // ]);
+
+        $result = DB::select($sql);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'planningRequests' => $result
+            ]
+        ]);
+    }
+
     /**
      * Store a newly created planning request in storage.
      *
@@ -235,12 +306,14 @@ class PlanningRequestController extends Controller
             $validationData['address_id'] = $input['address_id'] ?? null;
             $validationData['request_type_id'] = 1;
             $validationData['status_id'] = 6;
-            $validationData['comment'] = $input['comment'] ?? null;
+            $validationData['comment'] = $input['planning_request_comment'] ?? null; // Исправлено на правильное имя поля
             $validationData['execution_date'] = $input['execution_date'] ?? null;
             $validationData['execution_time'] = $input['execution_time'] ?? null;
             $validationData['user_id'] = $userId;
             $validationData['operator_id'] = $employeeId;
-            $validationData['address_id'] = $input['address_id'] ?? null;
+            $validationData['client_name'] = $input['client_name_planning_request'] ?? null;
+            $validationData['client_phone'] = $input['client_phone_planning_request'] ?? null;
+            $validationData['client_organization'] = $input['client_organization_planning_request'] ?? null;
 
             \Log::info('Используем для заявки operator_id:', [
                 'user_id' => $userId,
@@ -414,7 +487,7 @@ class PlanningRequestController extends Controller
                     $clientId,
                     $validated['request_type_id'],
                     $validated['status_id'],
-                    $validated['execution_date'],
+                    null,
                     $validated['execution_time'] ?? null,
                     $validated['brigade_id'] ?? null,
                     $employeeId,
@@ -437,6 +510,13 @@ class PlanningRequestController extends Controller
             // 4. Создаем комментарий, только если он не пустой
             $commentText = trim($validated['comment'] ?? '');
             $newCommentId = null;
+            
+            // Логируем данные комментария для отладки
+            \Log::info('Данные комментария перед созданием:', [
+                'comment_text' => $commentText,
+                'is_empty' => empty($commentText),
+                'validated_data' => $validated
+            ]);
 
             if (!empty($commentText)) {
                 try {

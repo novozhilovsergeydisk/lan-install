@@ -1,7 +1,7 @@
 // form-handlers.js
 
 import { showAlert, postData, fetchData } from './utils.js';
-import { loadAddressesPaginated } from './handler.js';
+import { loadAddressesPaginated, loadPlanningRequests } from './handler.js';
 import { loadAddressesForPlanning } from './handler.js';
 
 // Функция для форматирования даты
@@ -765,6 +765,9 @@ export function initPlanningRequestFormHandlers() {
         return;
     }
 
+    // Загружаем запланированные заявки
+    loadPlanningRequests();
+
     // Загружаем адреса
     loadAddressesForPlanning();
 
@@ -830,10 +833,6 @@ export function initPlanningRequestFormHandlers() {
     submitButton.addEventListener('click', async function(event) {
         event.preventDefault();
         event.stopPropagation();
-
-        showAlert('Функционал в разработке', 'info');
-
-        return;
         
         // Получаем данные формы
         const form = document.getElementById('planningRequestForm');

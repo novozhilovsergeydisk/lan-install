@@ -4,6 +4,164 @@ import { postData } from './utils.js';
 // Делаем postData доступной глобально для обратной совместимости
 window.postData = postData;
 
+// Загружаем запланированные заявки
+export async function loadPlanningRequests() {
+    const container = document.getElementById('planning-container');
+    if (!container) {
+        console.error('Контейнер для таблицы запланированных заявок не найден');
+        return;
+    }
+
+    console.log('Запланированные заявки загружены test');
+
+    try {
+        // Показываем индикатор загрузки
+        // container.innerHTML = `
+        //     <div class="d-flex justify-content-center">
+        //         <div class="spinner-border text-primary" role="status">
+        //             <span class="visually-hidden">Загрузка...</span>
+        //         </div>
+        //     </div>
+        //     `;
+
+        // Загружаем данные с сервера
+        const response = await fetch('/get-planning-requests', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Ответ сервера result:', result);
+
+        if (!result.success) {
+            throw new Error(result.message || 'Ошибка при загрузке запланированных заявок');
+        }
+        
+        // Находим таблицу и её тело
+        const table = container.closest('.table-responsive').querySelector('table');
+        const tbody = table.querySelector('tbody');
+        
+        // Очищаем таблицу, кроме заголовка
+        tbody.innerHTML = '';
+        
+        // Добавляем строки для каждой заявки
+        result.data.planningRequests.forEach((request, index) => {
+            // Парсим комментарии, если они есть
+            let comments = [];
+            try {
+                comments = JSON.parse(request.comments || '[]');
+            } catch (e) {
+                console.error('Ошибка парсинга комментариев:', e);
+            }
+            
+            // Форматируем комментарии для отображения
+            const formattedComments = comments.length > 0 
+                ? comments.map(c => `${c.author_fio || 'Неизвестный'}: ${c.comment || ''}`).join('<br>')
+                : 'Нет комментариев';
+            
+            // Создаем строку таблицы
+            const row = document.createElement('tr');
+            row.setAttribute('data-request-id', request.id);
+            // Применяем стили для переопределения Bootstrap
+            row.style.setProperty('--bs-table-bg', request.color, 'important');
+            row.style.backgroundColor = request.color;
+            row.style.color = '#000000'; // Устанавливаем черный цвет текста
+            row.innerHTML = `
+                <td style="width: 5%">
+                    <div class="form-check">
+                        ${index + 1}
+                    </div>
+                </td>
+                <td style="width: 15%">
+                    <div class="d-flex flex-column">
+                        <span>${request.request_date}</span>
+                        <div class="text-dark font-size-0-8rem">${request.number}</div>
+                    </div>
+                </td>
+                <td style="width: 25%">
+                    <div class="d-flex flex-column">
+                       <div class="text-dark col-address__organization">${request.organization || 'Не указан'}</div>
+                       <small class="d-block">${request.address || 'Не указан'}</small>
+                       <div class="text-dark font-size-0-8rem"><i>${request.fio}</i></div>
+                       <small class="text-black d-block font-size-0-8rem">
+                            <i>${request.phone ?? 'Нет телефона'}</i>
+                       </small>                              
+                    </div>
+                </td>
+                <td style="width: 45%">
+                    <div class="comment-preview" data-bs-toggle="tooltip" data-bs-html="true" 
+                         title="${formattedComments}">
+                        ${comments.length > 0 
+                            ? `${comments[0].comment.substring(0, 50)}${comments[0].comment.length > 50 ? '...' : ''}`
+                            : 'Нет комментариев'}
+                        ${comments.length > 1 ? ` <span class="badge bg-secondary">+${comments.length - 1}</span>` : ''}
+                    </div>
+                </td>
+                <td style="width: 10%">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" title="В работу">
+                            <i class="bi bi-pencil-square"></i> В работу
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+        
+        // Инициализируем тултипы для комментариев
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    //     container.innerHTML += `
+    //         <table class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
+    //             <thead class="bg-dark">
+    //                 <tr>
+    //                     <th>Заявка</th>
+    //                     <th>Клиент</th>
+    //                     <th>Адрес</th>
+    //                     <th>Комментарии</th>
+    //                     <th>Бригада</th>
+    //                     <th>Действия</th>
+    //                 </tr>
+    //             </thead>
+    //             <tbody>
+    //                 <!-- Заполнение таблицы происходит динамически -->
+    //             </tbody>
+    //         </table>`;
+
+    //     // Заполняем таблицу данными
+    //     const tbody = container.querySelector('tbody');
+    //     data.forEach(request => {
+    //         const row = document.createElement('tr');
+    //         row.innerHTML = `
+    //             <td>${request.request}</td>
+    //             <td>${request.client}</td>
+    //             <td>${request.address}</td>
+    //             <td>${request.comments}</td>
+    //             <td>${request.brigade}</td>
+    //             <td>
+    //                 <button type="button" class="btn btn-primary btn-sm">Просмотр</button>
+    //             </td>
+    //         `;
+    //         tbody.appendChild(row);
+    //     });
+    } catch (error) {
+        console.error('Ошибка при загрузке запланированных заявок:', error);
+        showAlert('Ошибка при загрузке запланированных заявок', 'danger');
+    }
+}
+ 
+
 /**
  * Функция для загрузки и отображения списка адресов с пагинацией
  * @param {number} page - номер страницы
@@ -568,7 +726,7 @@ function applyFilters() {
                             <!-- Клиент -->
                             <td class="col-address" style_="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
                                 <div class="text-dark col-address__organization" style_="font-size: 0.8rem;">${request.client_organization}</div>
-                                <small class="text-dark text-truncate_ d-block col-address__street" data-bs-toggle="tooltip" title="${request.address || address}">
+                                <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" title="${request.address || address}">
                                     ${request.city_name && request.city_name !== 'Москва' ? `<strong>${request.city_name}</strong>, ` : ''}ул. ${request.address || address}
                                 </small>
                                 <div class="text-dark font-size-0-8rem"><i>${request.client_fio}</i></div>

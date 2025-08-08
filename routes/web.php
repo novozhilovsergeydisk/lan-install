@@ -241,4 +241,8 @@ Route::post('/planning-requests', [PlanningRequestController::class, 'store'])
 ->name('planning-requests.store')
 ->middleware('auth');
 
+Route::post('/get-planning-requests', [PlanningRequestController::class, 'getPlanningRequests'])
+->name('get-planning-requests')
+->middleware('auth');
+
 
