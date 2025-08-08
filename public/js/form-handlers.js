@@ -1012,6 +1012,9 @@ export function initPlanningRequestFormHandlers() {
                 
                 // Очищаем форму
                 form.reset();
+
+                // Загружаем запланированные заявки
+                loadPlanningRequests();
                 
             } else {
                 throw new Error(result.message || 'Ошибка при создании заявки');
