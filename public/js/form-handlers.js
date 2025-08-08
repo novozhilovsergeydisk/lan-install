@@ -757,6 +757,102 @@ function closeModalProperly() {
 
 // ************* Назначение обработчиков событий ************ //
 
+
+// request-in-work
+export function initRequestInWorkHandlers() {
+    const buttons = document.querySelectorAll('.request-in-work button');
+    buttons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            // Останавливаем всплытие события, чтобы избежать множественных срабатываний
+            e.stopPropagation();
+            e.preventDefault();
+            const requestId = button.getAttribute('data-request-id');
+            console.log('Нажата кнопка "В работу" для заявки:', requestId);
+            
+            // Устанавливаем ID заявки в скрытое поле
+            const requestIdInput = document.getElementById('requestId');
+            if (requestIdInput) {
+                requestIdInput.value = requestId;
+            }
+
+            // Инициализируем и показываем модальное окно
+            const modalElement = document.getElementById('changePlanningRequestStatusModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                
+                // Устанавливаем ID заявки в скрытое поле
+                const requestIdInput = document.getElementById('planningRequestId');
+                if (requestIdInput) {
+                    requestIdInput.value = requestId;
+                }
+
+                // Устанавливаем минимальную дату (сегодня) и дату по умолчанию (завтра) при открытии модального окна
+                modalElement.addEventListener('shown.bs.modal', function () {
+                    const dateInput = document.getElementById('planningExecutionDate');
+                    if (dateInput) {
+                        const today = new Date();
+                        const tomorrow = new Date(today);
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        
+                        // Устанавливаем минимальную дату (сегодня)
+                        dateInput.min = today.toISOString().split('T')[0];
+                        
+                        // Устанавливаем дату по умолчанию (завтра)
+                        dateInput.value = tomorrow.toISOString().split('T')[0];
+                    }
+                });
+                
+                modal.show();
+            } else {
+                console.error('Элемент модального окна не найден');
+            }
+        });
+    });
+
+    savePlanningRequestStatusBtn.addEventListener('click', async function () {
+        const form = document.getElementById('changeRequestStatusForm');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('changePlanningRequestStatusModal'));
+        
+        try {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            console.log('data', data);
+
+            const response = await fetch('/change-planning-request-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            console.log('Ответ от сервера:', result);
+            
+            if (result.success) {
+                // Показываем уведомление об успехе
+                showAlert('success', 'Статус заявки успешно обновлен');
+                
+                // Закрываем модальное окно
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Обновляем таблицу с заявками
+                await loadPlanningRequests();
+            } else {
+                showAlert('danger', result.message || 'Произошла ошибка при обновлении статуса');
+            }
+            
+        } catch (error) {
+            console.error('Ошибка при отправке формы:', error);
+            showAlert('danger', 'Произошла ошибка при отправке формы');
+        }
+    });
+}
+
 export function initPlanningRequestFormHandlers() {
     const submitButton = document.getElementById('submitPlanningRequest');
     

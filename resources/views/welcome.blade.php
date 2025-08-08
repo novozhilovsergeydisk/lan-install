@@ -3007,6 +3007,32 @@
     }); 
 </script>
 
+<!-- Модальное окно для изменения даты и статуса запланированной заявки на значение "новая" -->
+<div class="modal fade" id="changePlanningRequestStatusModal" tabindex="-1" aria-labelledby="changePlanningRequestStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePlanningRequestStatusModalLabel">Изменение статуса заявки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changeRequestStatusForm">
+                    @csrf
+                    <input type="hidden" id="planningRequestId" name="planning_request_id">
+                    <div class="mb-3">
+                        <label for="planningExecutionDate" class="form-label">Дата выполнения:</label>
+                        <input type="date" class="form-control" id="planningExecutionDate" name="planning_execution_date" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="savePlanningRequestStatusBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Модальное окно для загрузки фотоотчета -->
 <div class="modal fade" id="addPhotoModal" tabindex="-1" aria-labelledby="addPhotoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">

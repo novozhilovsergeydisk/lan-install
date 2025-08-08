@@ -1,5 +1,6 @@
 // Импорт необходимых функций из utils.js
 import { postData } from './utils.js';
+import { initRequestInWorkHandlers } from './form-handlers.js';
 
 // Делаем postData доступной глобально для обратной совместимости
 window.postData = postData;
@@ -102,8 +103,8 @@ export async function loadPlanningRequests() {
                     </div>
                 </td>
                 <td style="width: 10%">
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary" title="В работу">
+                    <div class="btn-group btn-group-sm request-in-work" role="group">
+                        <button type="button" class="btn btn-outline-primary" title="В работу" data-request-id="${request.id}">
                             <i class="bi bi-pencil-square"></i> В работу
                         </button>
                     </div>
@@ -112,6 +113,9 @@ export async function loadPlanningRequests() {
             
             tbody.appendChild(row);
         });
+        
+        // Инициализируем обработчики для кнопок "В работу" после загрузки заявок
+        initRequestInWorkHandlers();
         
         // Инициализируем тултипы для комментариев
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));

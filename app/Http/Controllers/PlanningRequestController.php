@@ -11,11 +11,108 @@ use Illuminate\Support\Facades\Log;
 
 class PlanningRequestController extends Controller
 {
+
+    public function changePlanningRequestStatus(Request $request)
+    {
+        // response для тестирования 
+        // $response = [
+        //     'success' => true,
+        //     'message' => 'Статус заявки успешно изменен  - режим тестирования',
+        //     'data' => $request->all()
+        // ];
+
+        // return response()->json($response);
+
+        // Validate request data
+        $validator = Validator::make($request->all(), [
+            'planning_request_id' => 'required|exists:requests,id',
+            'planning_execution_date' => 'required|date'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $requestId = $request->input('planning_request_id');
+        $planningExecutionDate = $request->input('planning_execution_date');
+
+        $sql_update = "UPDATE requests SET status_id = 6, execution_date = ? WHERE id = ?";
+
+        // Начинаем транзакцию
+        DB::beginTransaction();
+        
+        try {
+            // Получаем текущие данные заявки
+            $currentRequest = DB::table('requests')->find($requestId);
+            \Log::info('Before update:', [
+                'request' => $currentRequest,
+                'request_id' => $requestId,
+                'execution_date' => $planningExecutionDate
+            ]);
+            
+            // Выполняем обновление с помощью прямого SQL
+            $sql = "UPDATE requests SET status_id = 1, execution_date = ? WHERE id = ?";
+            $bindings = [$planningExecutionDate, $requestId];
+            
+            // Логируем SQL-запрос для отладки
+            $fullSql = \Illuminate\Support\Str::replaceArray('?', array_map(function($param) {
+                return is_string($param) ? "'$param'" : $param;
+            }, $bindings), $sql);
+            
+            \Log::info('Executing SQL:', ['sql' => $fullSql]);
+            
+            $result = DB::update($sql, $bindings);
+            
+            // Принудительно получаем обновленные данные
+            $updatedRequest = DB::selectOne("SELECT * FROM requests WHERE id = ?", [$requestId]);
+            
+            // Проверяем, изменился ли статус
+            $statusChanged = $updatedRequest && $currentRequest && 
+                           $updatedRequest->status_id == 1;
+            
+            if ($statusChanged) {
+                // Фиксируем изменения, если статус изменился
+                DB::commit();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Статус заявки успешно изменен',
+                    'status_changed' => true,
+                    'new_status_id' => $updatedRequest->status_id,
+                    'fullSql' => $fullSql
+                ]);
+            } else {
+                // Откатываем, если статус не изменился
+                DB::rollBack();
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Не удалось изменить статус заявки. Возможно, неверный ID заявки или проблема с правами доступа.',
+                    'status_changed' => false
+                ], 400);
+            }
+            
+        } catch (\Exception $e) {
+            // Откатываем изменения в случае ошибки
+            DB::rollBack();
+            \Log::error('Update error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обновлении заявки: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function getPlanningRequests()
     {
-
-        
-
         $sql = "
             SELECT
                 r.id,
@@ -63,15 +160,6 @@ class PlanningRequestController extends Controller
                 rs.color    
             ORDER BY r.id DESC";
 
-        // Тестовый ответ
-        // return response()->json([
-        //     'success' => true,
-        //     'data' => [
-        //         'planningRequests' => ['test'],
-        //         'sql' => $sql
-        //     ]
-        // ]);
-
         $result = DB::select($sql);
 
         return response()->json([
@@ -93,10 +181,10 @@ class PlanningRequestController extends Controller
         // Валидация входящих данных
         $validationRules = [
             'address_id' => 'required|exists:addresses,id',
-            'client_name_planning_request' => 'required|string|max:255',
-            'client_phone_planning_request' => 'required|string|max:20',
+            'client_name_planning_request' => 'nullable|string|max:255',
+            'client_phone_planning_request' => 'nullable|string|max:20',
             'client_organization_planning_request' => 'nullable|string|max:255',
-            'planning_request_comment' => 'nullable|string',
+            'planning_request_comment' => 'required|string',
             'request_type_id' => 'required|exists:request_types,id',
             'status_id' => 'required|exists:request_statuses,id',
             'execution_time' => 'nullable|date_format:H:i',
@@ -117,10 +205,10 @@ class PlanningRequestController extends Controller
         
         // Валидируем входные данные
         $validator = Validator::make($input, [
-            'client_name_planning_request' => 'required|string|max:255',
-            'client_phone_planning_request' => 'required|string|max:20',
+            'client_name_planning_request' => 'nullable|string|max:255',
+            'client_phone_planning_request' => 'nullable|string|max:20',
             'client_organization_planning_request' => 'nullable|string|max:255',
-            'planning_request_comment' => 'nullable|string',
+            'planning_request_comment' => 'required|string',
             'addresses_planning_request_id' => 'required|exists:addresses,id',
             'address_id' => 'sometimes|exists:addresses,id'
         ]);
@@ -200,10 +288,10 @@ class PlanningRequestController extends Controller
         
         // Валидируем подготовленные данные
         $validator = Validator::make($validationData, [
-            'client_name' => 'required|string|max:255',
-            'client_phone' => 'required|string|max:20',
+            'client_name' => 'nullable|string|max:255',
+            'client_phone' => 'nullable|string|max:20',
             'client_organization' => 'nullable|string|max:255',
-            'comment' => 'nullable|string',
+            'comment' => 'required|string',
             'address_id' => 'required|exists:addresses,id',
             'request_type_id' => 'required|exists:request_types,id',
             'status_id' => 'required|exists:request_statuses,id',

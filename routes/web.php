@@ -245,4 +245,9 @@ Route::post('/get-planning-requests', [PlanningRequestController::class, 'getPla
 ->name('get-planning-requests')
 ->middleware('auth');
 
+Route::post('/change-planning-request-status', [PlanningRequestController::class, 'changePlanningRequestStatus'])
+->name('change-planning-request-status')
+->middleware('auth');
+
+
 
