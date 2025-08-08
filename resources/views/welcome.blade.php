@@ -351,8 +351,7 @@
                                                     $author = $firstComment->author_name;
                                                     $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
                                                 @endphp
-                                                <div class="comment-preview small text-dark"
-                                                    data-bs-toggle="tooltip" title="{{ $commentText }}">
+                                                <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                                                     <p class="comment-preview-title">Печатный комментарий:</p>
                                                     <p class="comment-preview-text">{{ $commentText }}</p>
                                                 </div>
