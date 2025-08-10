@@ -1785,8 +1785,61 @@ export function initFormHandlers() {
         newRequestModal.addEventListener('show.bs.modal', function() {
             // При открытии модального окна обновляем минимальную дату
             initExecutionDateField();
+            refreshAddresses();
         });
     }
+}
+
+// Функция для обновления списка адресов
+function refreshAddresses() {
+    const selectElement = document.getElementById('addresses_id');
+    if (!selectElement) return;
+
+    // Показываем индикатор загрузки
+    const originalInnerHTML = selectElement.innerHTML;
+    selectElement.innerHTML = '<option value="" disabled selected>Загрузка адресов...</option>';
+
+    // Загружаем адреса с сервера
+    fetch('/api/addresses')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки адресов');
+            }
+            return response.json();
+        })
+        .then(addresses => {
+            // Очищаем список и добавляем заглушку
+            selectElement.innerHTML = '<option value="" disabled selected>Выберите адрес</option>';
+
+            // Добавляем адреса в выпадающий список
+            addresses.forEach(address => {
+                const option = document.createElement('option');
+                option.value = address.id;
+                option.textContent = [
+                    address.street + (address.houses ? `, ${address.houses}` : ''),
+                    address.district ? `[${address.district}]` : '',
+                    address.city ? `[${address.city}]` : ''
+                ].filter(Boolean).join(' ');
+                
+                // Добавляем дополнительные данные для удобства
+                option.dataset.street = address.street || '';
+                option.dataset.houses = address.houses || '';
+                option.dataset.city = address.city || '';
+                option.dataset.district = address.district || '';
+
+                selectElement.appendChild(option);
+            });
+
+            // Инициализируем кастомный селект, если функция доступна
+            if (window.initCustomSelect) {
+                window.initCustomSelect('addresses_id', 'Выберите адрес из списка');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке адресов:', error);
+            selectElement.innerHTML = originalInnerHTML;
+            showAlert('Ошибка при загрузке списка адресов', 'danger');
+        });
 }
 
 /**

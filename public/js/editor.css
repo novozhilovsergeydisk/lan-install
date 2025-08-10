@@ -1,0 +1,60 @@
+/* css/editor.css */
+
+/* Базовые отступы */
+.my-wysiwyg { max-width: 100%; }
+
+/* Тулбар */
+.wysiwyg-toolbar .btn {
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Активная кнопка */
+.wysiwyg-toolbar .btn.active {
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15);
+  transform: translateY(1px);
+}
+
+/* Редактор (визуальный) */
+.wysiwyg-editor {
+  min-height: 120px;
+  overflow-y: auto;
+  background-clip: padding-box;
+  caret-color: var(--bs-primary);
+}
+
+/* Кодовый редактор textarea */
+.wysiwyg-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  tab-size: 2;
+}
+
+/* Light theme overrides — ожидается, что тема задаётся классом .theme-light на <body> */
+/* По умолчанию считается dark, поэтому задаём обе ветки для надежности */
+body.theme-light .wysiwyg-toolbar .btn {
+  border-color: rgba(0,0,0,0.125);
+}
+body.theme-light .wysiwyg-editor {
+  background: #ffffff;
+  color: #212529;
+}
+body:not(.theme-light) .wysiwyg-editor {
+  background: #1f2937; /* тёмный фон */
+  color: #e6eef8;
+}
+
+/* Аккуратные стили ссылок внутри редактора */
+.wysiwyg-editor a {
+  text-decoration: underline;
+  color: var(--bs-info);
+}
+
+/* Плавное переключение (для красоты) */
+.wysiwyg-editor, .wysiwyg-code {
+  transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
