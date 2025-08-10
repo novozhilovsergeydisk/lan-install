@@ -353,7 +353,7 @@
                                                 @endphp
                                                 <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                                                     <p class="comment-preview-title">Печатный комментарий:</p>
-                                                    <p class="comment-preview-text">{{ $commentText }}</p>
+                                                    <p class="comment-preview-text">{!! htmlspecialchars_decode($commentText) !!}</p>
                                                 </div>
                                                 <div class="mb-0">  
                                                     @php
