@@ -736,6 +736,50 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
  * @param {HTMLElement} editor - Элемент редактора
  */
 function initEditorToolbar(toolbar, editor) {
+    // Создаем кнопку переключения HTML/Визуальный режим
+    const toggleButton = document.createElement('button');
+    toggleButton.type = 'button';
+    toggleButton.className = 'btn btn-sm btn-outline-secondary ms-2';
+    toggleButton.setAttribute('data-cmd', 'toggleHtml');
+    toggleButton.setAttribute('title', 'Режим HTML/Визуальный');
+    toggleButton.textContent = 'HTML';
+    
+    // Добавляем кнопку в тулбар
+    toolbar.appendChild(toggleButton);
+    
+    // Создаем textarea для HTML-редактирования
+    const htmlTextarea = document.createElement('textarea');
+    htmlTextarea.className = 'form-control d-none mt-2';
+    htmlTextarea.style.minHeight = '100px';
+    htmlTextarea.style.fontFamily = 'monospace';
+    toolbar.parentNode.insertBefore(htmlTextarea, toolbar.nextSibling);
+    
+    // Флаг для отслеживания режима
+    let isHtmlMode = false;
+    
+    // Функция переключения между режимами
+    function toggleHtmlMode() {
+        isHtmlMode = !isHtmlMode;
+        
+        if (isHtmlMode) {
+            // Переключаемся в HTML-режим
+            const html = editor.innerHTML;
+            htmlTextarea.value = html;
+            editor.style.display = 'none';
+            htmlTextarea.classList.remove('d-none');
+            toggleButton.classList.add('active');
+            htmlTextarea.focus();
+        } else {
+            // Возвращаемся в визуальный режим
+            const html = htmlTextarea.value;
+            editor.innerHTML = html;
+            htmlTextarea.classList.add('d-none');
+            editor.style.display = 'block';
+            toggleButton.classList.remove('active');
+            editor.focus();
+        }
+    }
+    
     // Обработчики для кнопок тулбара
     toolbar.addEventListener('mousedown', function(e) {
         e.preventDefault(); // Предотвращаем потерю фокуса
@@ -747,6 +791,15 @@ function initEditorToolbar(toolbar, editor) {
         
         e.preventDefault();
         const cmd = button.getAttribute('data-cmd');
+        
+        // Обработка переключения HTML-режима
+        if (cmd === 'toggleHtml') {
+            toggleHtmlMode();
+            return;
+        }
+        
+        // Выходим, если в режиме HTML
+        if (isHtmlMode) return;
         
         // Сохраняем выделение
         const selection = window.getSelection();
@@ -762,7 +815,7 @@ function initEditorToolbar(toolbar, editor) {
                 // Если текст не выделен, вставляем URL как текст
                 if (selection.toString().trim() === '') {
                     document.execCommand('insertHTML', false, 
-                        `<a href="${url}" target="_blank">${url}</a>`);
+                        `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
                 } else {
                     document.execCommand('createLink', false, url);
                 }

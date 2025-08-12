@@ -52,26 +52,50 @@ function initWysiwygEditor() {
     frag.innerHTML = html;
 
     function clean(node) {
-      // Пройти рекурсивно
+      // Проверяем, что узел всё ещё находится в DOM
+      if (!node || !node.parentNode) return;
+      
+      // Пройти рекурсивно по копии коллекции дочерних узлов
+      // чтобы избежать проблем при изменении DOM во время итерации
       const children = Array.from(node.childNodes);
       for (const ch of children) {
+        // Пропускаем текстовые узлы
         if (ch.nodeType === Node.TEXT_NODE) {
           continue;
         }
+        
+        // Обрабатываем только элементы
         if (ch.nodeType === Node.ELEMENT_NODE) {
+          // Проверяем, что узел всё ещё в DOM
+          if (!ch.parentNode) continue;
+          
           const tag = ch.tagName.toUpperCase();
+          
+          // Если тег не в списке разрешённых
           if (!allowedTags.includes(tag)) {
-            // Заменяем элемент на его содержимое (удаляем сам тег)
+            // Создаём фрагмент с содержимым тега
             const inner = document.createDocumentFragment();
-            while (ch.firstChild) inner.appendChild(ch.firstChild);
-            node.replaceChild(inner, ch);
-            // продолжим с теми узлами что вставили
-            clean(node);
-            continue;
+            while (ch.firstChild) {
+              inner.appendChild(ch.firstChild);
+            }
+            
+            // Заменяем тег на его содержимое
+            try {
+              if (ch.parentNode) {
+                ch.parentNode.replaceChild(inner, ch);
+                // Продолжаем с родительского узла, так как DOM изменился
+                clean(node);
+                break;
+              }
+            } catch (e) {
+              console.error('Ошибка при замене тега:', e);
+              continue;
+            }
           } else {
-            // разрешённый тег — очистим атрибуты кроме href у <a>
+            // Разрешённый тег - очищаем атрибуты
             const attrs = Array.from(ch.attributes || []);
             for (const at of attrs) {
+              // Для ссылок оставляем только безопасные атрибуты
               if (ch.tagName.toUpperCase() === 'A') {
                 if (at.name !== 'href' && at.name !== 'target' && at.name !== 'rel') {
                   ch.removeAttribute(at.name);
@@ -80,23 +104,30 @@ function initWysiwygEditor() {
                 ch.removeAttribute(at.name);
               }
             }
-            // для ссылок — безопасный href (удаляем javascript:)
+            
+            // Обработка ссылок
             if (ch.tagName.toUpperCase() === 'A') {
               const href = ch.getAttribute('href') || '';
               if (/^\s*javascript:/i.test(href)) {
                 ch.removeAttribute('href');
               } else {
-                // optional: привести к относительным/https — оставим как есть
                 ch.setAttribute('rel', 'noopener noreferrer');
                 ch.setAttribute('target', '_blank');
               }
             }
-            // рекурсивно внутри
-            clean(ch);
+            
+            // Рекурсивная очистка дочерних элементов
+            if (ch.childNodes.length > 0) {
+              clean(ch);
+            }
           }
-        } else {
-          // другие типы узлов — удаляем
-          node.removeChild(ch);
+        } else if (ch.parentNode) {
+          // Удаляем другие типы узлов, если они всё ещё в DOM
+          try {
+            ch.parentNode.removeChild(ch);
+          } catch (e) {
+            console.error('Ошибка при удалении узла:', e);
+          }
         }
       }
     }
@@ -272,6 +303,55 @@ function initWysiwygEditor() {
     updateToolbarState();
   });
 
+  // Обработка вставки в режиме кода
+  codeArea.addEventListener('paste', function (e) {
+    e.preventDefault();
+    
+    // Получаем данные из буфера обмена
+    const clipboard = (e.clipboardData || window.clipboardData || {});
+    if (!clipboard) return;
+    
+    // Пробуем получить текст в формате plain/text
+    let text = '';
+    try {
+      text = clipboard.getData('text/plain');
+      
+      // Если не удалось получить как plain/text, пробуем text
+      if (!text) {
+        text = clipboard.getData('text');
+      }
+      
+      // Если все еще нет текста, выходим
+      if (!text) {
+        console.warn('Не удалось получить текст из буфера обмена');
+        return;
+      }
+      
+      // Сохраняем текущее выделение
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      const currentValue = this.value;
+      
+      // Вставляем текст в текущую позицию курсора
+      this.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+      
+      // Устанавливаем курсор после вставленного текста
+      const newCursorPos = start + text.length;
+      this.setSelectionRange(newCursorPos, newCursorPos);
+      
+      // Триггерим событие input для обновления состояния
+      const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+      this.dispatchEvent(inputEvent);
+      
+      // Также триггерим change на случай, если есть подписчики на это событие
+      const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+      this.dispatchEvent(changeEvent);
+      
+    } catch (error) {
+      console.error('Ошибка при вставке текста:', error);
+    }
+  });
+  
   // При смене фокуса в код-редакторе — можно обновлять превью (опционально)
   codeArea.addEventListener('input', function () {
     // не менять сразу editor, только при переключении обратно (чтобы не ломать код-редактирование)
