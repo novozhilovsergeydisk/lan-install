@@ -3,7 +3,7 @@
    Требует Bootstrap 5 (для классов кнопок).
 */
 
-(function () {
+function initWysiwygEditor() {
   // Настройки
   const allowedTags = ['B','STRONG','I','EM','A','BR','P','DIV','SPAN']; // разрешаем только базовые теги
   const editorId = 'comment_editor';
@@ -17,10 +17,20 @@
   const toggleBtn = document.getElementById(toggleHtmlBtnId);
   const toolbar = document.querySelector('.wysiwyg-toolbar');
 
-  if (!editor || !textarea || !toolbar) {
-    console.warn('WYSIWYG: не найден один из обязательных элементов.');
+  if (!editor) {
+    console.error('WYSIWYG: не найден элемент редактора с id', editorId);
     return;
   }
+  if (!textarea) {
+    console.error('WYSIWYG: не найден textarea с id', textareaId);
+    return;
+  }
+  if (!toolbar) {
+    console.error('WYSIWYG: не найдена панель инструментов с классом wysiwyg-toolbar');
+    return;
+  }
+  
+  console.log('WYSIWYG: редактор инициализирован', { editor, textarea, toolbar });
 
   // Инициализация: заполнить редактор содержимым textarea (если есть)
   editor.innerHTML = textarea.value || '';
@@ -141,15 +151,22 @@
 
   // Вставить HTML в текущую позицию курсора (вставляем sanitized html)
   function insertHTMLAtCursor(html) {
+    console.log('WYSIWYG: вставка HTML', { before: editor.innerHTML, html });
     // modern: use execCommand as simple reliable way
     document.execCommand('insertHTML', false, html);
+    console.log('WYSIWYG: после вставки', { after: editor.innerHTML });
   }
 
   // --- Обработчики тулбара ---
   toolbar.addEventListener('click', function (e) {
+    console.log('WYSIWYG: клик по тулбару', e.target);
     const btn = e.target.closest('button[data-cmd]');
-    if (!btn) return;
+    if (!btn) {
+      console.log('WYSIWYG: клик не по кнопке с data-cmd');
+      return;
+    }
     const cmd = btn.getAttribute('data-cmd');
+    console.log('WYSIWYG: выполнение команды', cmd);
 
     if (cmd === 'createLink') {
       let url = prompt('Введите URL (например https://example.com):', 'https://');
@@ -163,7 +180,14 @@
       document.execCommand('unlink', false, null);
     } else {
       // bold/italic - toggle
+      console.log('WYSIWYG: выполнение команды форматирования', cmd);
+      const beforeHTML = editor.innerHTML;
       document.execCommand(cmd, false, null);
+      console.log('WYSIWYG: результат форматирования', { 
+        command: cmd, 
+        before: beforeHTML, 
+        after: editor.innerHTML 
+      });
     }
 
     // обновить state кнопок
@@ -172,10 +196,22 @@
   });
 
   // Обновлять активные состояния кнопок при изменении выделения/курсор-перемещении
-  editor.addEventListener('keyup', updateToolbarState);
-  editor.addEventListener('mouseup', updateToolbarState);
-  editor.addEventListener('focus', updateToolbarState);
-  editor.addEventListener('blur', updateToolbarState);
+  console.log('WYSIWYG: добавление обработчиков событий для редактора');
+  editor.addEventListener('keyup', function(e) {
+    console.log('WYSIWYG: keyup в редакторе');
+    updateToolbarState();
+  });
+  editor.addEventListener('mouseup', function(e) {
+    console.log('WYSIWYG: mouseup в редакторе');
+    updateToolbarState();
+  });
+  editor.addEventListener('focus', function(e) {
+    console.log('WYSIWYG: редактор получил фокус');
+    updateToolbarState();
+  });
+  editor.addEventListener('blur', function(e) {
+    console.log('WYSIWYG: редактор потерял фокус');
+  });
 
   // --- Paste handling: sanitize, respect code-mode ---
   editor.addEventListener('paste', function (e) {
@@ -268,30 +304,25 @@
   // Если кто-то прямо меняет textarea (не должно), синхронизировать:
   const observer = new MutationObserver(() => {
     // если textarea.value изменили извне, обновим визуальный редактор
-    const val = textarea.value || '';
-    if (val && val !== editor.innerHTML) {
-      editor.innerHTML = sanitizeHTML(val);
+    if (textarea.value !== editor.innerHTML) {
+      editor.innerHTML = textarea.value || '';
     }
   });
-  observer.observe(textarea, {attributes: true, attributeFilter: ['value'], subtree: false});
 
-  // --- Клавиатурные шорткаты ---
-  editor.addEventListener('keydown', function (e) {
-    if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
-      if (e.key.toLowerCase() === 'b') {
-        e.preventDefault();
-        document.execCommand('bold', false, null);
-        updateToolbarState();
-      } else if (e.key.toLowerCase() === 'i') {
-        e.preventDefault();
-        document.execCommand('italic', false, null);
-        updateToolbarState();
-      }
-    }
-  });
+  observer.observe(textarea, { attributes: true, childList: true, characterData: true });
 
   // Инициализация — очистка потенциально опасного HTML в textarea при старте
   textarea.value = sanitizeHTML(textarea.value || '');
+  
+  // Возвращаем методы для управления редактором
+  return {
+    updateToolbarState: updateToolbarState,
+    destroy: function() {
+      observer.disconnect();
+      // Здесь можно добавить отписку от других событий при необходимости
+    }
+  };
+}
 
-})();
-
+// Экспортируем функцию для использования в других скриптах
+window.initWysiwygEditor = initWysiwygEditor;

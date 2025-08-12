@@ -8,6 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система управления заявками</title>
+    <link href="{{ asset('js/editor.css') }}" rel="stylesheet">
     <style>
         /* Стили для выпадающего списка адресов */
         
@@ -353,7 +354,7 @@
                                                 @endphp
                                                 <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                                                     <p class="comment-preview-title">Печатный комментарий:</p>
-                                                    <p class="comment-preview-text">{!! htmlspecialchars_decode($commentText) !!}</p>
+                                                    <div data-comment-request-id="{{ $request->id }}" class="comment-preview-text">{!! htmlspecialchars_decode($commentText) !!}</div>
                                                 </div>
                                                 <div class="mb-0">  
                                                     @php
@@ -1061,6 +1062,9 @@
     </div>
 </div>
 
+<!-- Подключение WYSIWYG редактора -->
+<script src="{{ asset('js/editor.js') }}"></script>
+
 <style>
     /* Custom styles for the switch toggle */
     .form-check-input:checked {
@@ -1282,7 +1286,7 @@
                             // Смещаем оттенок к зелёной гамме: 120–180°
                             return `hsl(${120 + (hash % 60)},65%,40%)`;
                         }
-                        let html = '<div class="list-group list-group-flush">';
+                        let html = '<div id="commentUpdateContainer" class="list-group list-group-flush">';
                         console.log('Количество комментариев:', comments.length);
 
                         comments.forEach((comment, index) => {
@@ -1301,7 +1305,7 @@
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="me-3">
                                                 <h6 class="fw-semibold mb-1" style="color:${color}">${comment.employee_full_name}</h6>
-                                                <p class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">${comment.comment}</p>
+                                                <div class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">${comment.content || comment.comment || ''}</div>
                                                 <small class="text-muted">${formattedDate}</small>
                                                 ${index === comments.length - 1 ? `<button class="btn btn-sm btn-outline-primary ms-2 edit-comment-btn">Редактировать</button>` : ''}
                                             </div>
@@ -1317,11 +1321,14 @@
                         editButtons.forEach(button => {
                             button.addEventListener('click', function(e) {
                                 e.preventDefault();
-                                const commentElement = this.closest('.list-group-item').querySelector('p[data-comment-number]');
+                                const commentElement = this.closest('.list-group-item').querySelector('div[data-comment-number]');
                                 const commentNumber = commentElement.getAttribute('data-comment-number');
                                 const commentId = commentElement.getAttribute('data-comment-id');
+                                const commentHtml = commentElement.innerHTML;
 
-                                handleCommentEdit(commentElement, commentId, commentNumber, this);
+                                // console.log('commentElement.innerHTML', commentElement.innerHTML);
+
+                                handleCommentEdit(commentElement, commentHtml, commentId, commentNumber, this, requestId);
                             });
                         });
                         
@@ -1589,18 +1596,42 @@
                     <div class="mb-3">
                         <h6>Комментарий к заявке</h6>
                         <div class="mb-3">
-                            <textarea class="form-control" id="comment" name="comment" rows="3"
-                                      placeholder="Введите комментарий к заявке" required minlength="3"
-                                      maxlength="1000"></textarea>
-                        </div>
-                        <div class="invalid-feedback d-none">
-                                Пожалуйста, введите комментарий (от 3 до 1000 символов)
+                            <!-- Начало блока WYSIWYG -->
+                            <div class="my-wysiwyg">
+                                <!-- Панель кнопок -->
+                                <div class="wysiwyg-toolbar btn-group mb-2" role="group" aria-label="Editor toolbar">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="bold" title="Жирный"><strong>B</strong></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="italic" title="Курсив"><em>I</em></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="createLink" title="Вставить ссылку">link</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="unlink" title="Убрать ссылку">unlink</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="toggle-code" title="HTML">HTML</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="show-help" title="Справка">
+                                        <i class="bi bi-question-circle"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Визуальный редактор -->
+                                <div class="wysiwyg-editor border rounded p-2" contenteditable="true" id="comment_editor"></div>
+
+                                <!-- Редактор HTML-кода -->
+                                <textarea class="wysiwyg-code form-control mt-2" id="comment_code" rows="6" style="display:none;"></textarea>
+
+                                <!-- Оригинальный textarea (скрытый) -->
+                                <textarea class="form-control" id="comment" name="comment" rows="3"
+                                        placeholder="Введите комментарий к заявке" required minlength="3"
+                                        maxlength="1000" style="display:none;"></textarea>
+                                <!-- Сообщение об ошибке -->
+                                <div id="comment_error" class="invalid-feedback d-none">
+                                    Пожалуйста, введите комментарий (от 3 до 1000 символов)
+                                </div>
+                                </div>
+                                <!-- Конец блока WYSIWYG -->
                             </div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <!-- <button type="button" class="btn btn-info mb-3" id="fillMockDataBtn" style="margin-top: 14px;">Автозаполнение</button> -->
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <div class="mb-3 px-3">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Отмена</button>
                         <button type="button" class="btn btn-primary" id="submitRequest">Создать заявку</button>
                     </div>
                 </form>

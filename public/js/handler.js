@@ -767,7 +767,7 @@ function applyFilters() {
                                     return `
                                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                                             <p class="comment-preview-title">Печатный комментарий:</p>
-                                            <p class="comment-preview-text">${displayText}</p>
+                                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${displayText}</div>
                                         </div>
                                         ${request.comments && request.comments.length > 1 ? `
                                             <div class="mb-0">

@@ -343,7 +343,7 @@ function addRequestToTable(result) {
             ${extractedComment ? `
                 <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                     <p class="comment-preview-title">Печатный комментарий:</p>
-                    <p class="comment-preview-text">${extractedComment}</p>
+                    <div data-comment-request-id="${requestData.id}" class="comment-preview-text">${extractedComment}</div>
                 </div>
                 <div class="mt-1">
                     <button type="button"
@@ -485,61 +485,145 @@ window.initCommentValidation = initCommentValidation;
  * @param {HTMLElement} editButton - Кнопка редактирования
  * @returns {void}
  */
-async function handleCommentEdit(commentElement, commentId, commentNumber, editButton) {
-    // Получаем текущий текст комментария
-    const commentText = commentElement.textContent;
+async function handleCommentEdit(commentElement, contentHtml, commentId, commentNumber, editButton, requestId) {
 
-    // Создаем поле для редактирования
-    const inputElement = document.createElement('textarea');
-    inputElement.className = 'form-control mb-2';
-    inputElement.style.width = '730px';
-    inputElement.style.minHeight = '60px';
-    inputElement.value = commentText;
+    console.log('commentElement', commentElement);
+    console.log('contentHtml', contentHtml);
+    console.log('commentId', commentId);
+    console.log('commentNumber', commentNumber);
+    console.log('editButton', editButton);
+    console.log('requestId', requestId);
 
-    // Создаем кнопки Сохранить/Отмена
-    const saveButton = document.createElement('button');
-    saveButton.className = 'btn btn-sm btn-success me-2';
-    saveButton.textContent = 'Сохранить';
-
-    const cancelButton = document.createElement('button');
-    cancelButton.className = 'btn btn-sm btn-secondary';
-    cancelButton.textContent = 'Отмена';
-
-    // Создаем контейнер для поля ввода
-    const inputContainer = document.createElement('div');
-    inputContainer.className = 'mb-2';
-    inputContainer.style.width = '100%';
-
-    // Создаем контейнер для кнопок
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'mb-2';
+    // Получаем текущий HTML комментария
+    let commentHtml = contentHtml.trim();
+    
+    // Если содержимое пустое, пробуем получить текст из textContent
+    // if (!commentHtml) {
+    //     commentHtml = commentElement.textContent.trim();
+    // }
+    
+    console.log('Original comment HTML:', commentHtml);
+    
+    // Показываем элемент комментария, если он скрыт
+    commentElement.style.display = 'block';
 
     // Создаем общий контейнер для редактирования
     const editContainer = document.createElement('div');
     editContainer.className = 'edit-comment-container';
     editContainer.setAttribute('data-comment-number', commentNumber);
     editContainer.setAttribute('data-comment-id', commentId);
-    editContainer.style.width = '730px';
+    editContainer.style.width = '100%';
+    editContainer.style.maxWidth = '730px';
 
-    // Добавляем поле ввода в контейнер
-    inputContainer.appendChild(inputElement);
-    editContainer.appendChild(inputContainer);
+    // Создаем контейнер для редактора
+    const editorContainer = document.createElement('div');
+    editorContainer.className = 'mb-3';
+    
+    // Создаем тулбар редактора
+    const toolbar = document.createElement('div');
+    toolbar.className = 'wysiwyg-toolbar btn-group mb-2';
+    toolbar.setAttribute('role', 'group');
+    toolbar.setAttribute('aria-label', 'Editor toolbar');
+    
+    // Кнопки тулбара
+    const buttons = [
+        { cmd: 'bold', title: 'Жирный', content: '<strong>B</strong>' },
+        { cmd: 'italic', title: 'Курсив', content: '<em>I</em>' },
+        { cmd: 'createLink', title: 'Вставить ссылку', content: 'link' },
+        { cmd: 'unlink', title: 'Убрать ссылку', content: 'unlink' }
+    ];
+    
+    // Добавляем кнопки в тулбар
+    buttons.forEach(btn => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-sm btn-outline-secondary';
+        button.setAttribute('data-cmd', btn.cmd);
+        button.setAttribute('title', btn.title);
+        button.innerHTML = btn.content;
+        toolbar.appendChild(button);
+    });
+    
+    // Создаем редактор
+    const editor = document.createElement('div');
+    editor.className = 'wysiwyg-editor border rounded p-2';
+    editor.setAttribute('contenteditable', 'true');
+    editor.style.minHeight = '100px';
 
-    // Добавляем кнопки в контейнер
+    // console.log('Comment HTML before setting to editor:', commentHtml);
+
+    // return;
+
+    // Устанавливаем HTML в редактор, только если есть содержимое
+    if (commentHtml) {
+        editor.innerHTML = commentHtml;
+        // console.log('Comment HTML after setting to editor:', editor.innerHTML);
+    } else {
+        // console.warn('Comment content is empty');
+    }
+
+    // Создаем скрытое поле для формы
+    const hiddenInput = document.createElement('textarea');
+    hiddenInput.name = 'comment';
+    hiddenInput.style.display = 'none';
+    
+    // Создаем контейнер для кнопок
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'd-flex justify-content-start gap-2 mt-2';
+    
+    // Создаем кнопки Сохранить/Отмена
+    const saveButton = document.createElement('button');
+    saveButton.type = 'button';
+    saveButton.className = 'btn btn-sm btn-success';
+    saveButton.setAttribute('data-comment-id', commentId);
+    saveButton.setAttribute('data-comment-number', commentNumber);
+    saveButton.setAttribute('data-request-id', requestId);
+    saveButton.textContent = 'Сохранить';
+    // const requestId = this.getAttribute('data-request-id');
+    console.log('requestId', requestId);
+    
+    const cancelButton = document.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.className = 'btn btn-sm btn-secondary';
+    cancelButton.textContent = 'Отмена';
+
+    // Собираем все вместе
     buttonContainer.appendChild(saveButton);
-    buttonContainer.appendChild(cancelButton);
+    buttonContainer.appendChild(cancelButton);  
+    
+    // Добавляем элементы в контейнеры
+    editorContainer.appendChild(toolbar);
+    editorContainer.appendChild(editor);
+    editorContainer.appendChild(hiddenInput);
+    
+    editContainer.appendChild(editorContainer);
     editContainer.appendChild(buttonContainer);
 
-    // Скрываем параграф и вставляем наш контейнер после него
-    commentElement.style.display = 'none';
-    commentElement.parentNode.insertBefore(editContainer, commentElement.nextSibling);
+    // Сохраняем ссылку на родительский элемент и сам элемент комментария
+    const parentElement = commentElement.parentNode;
+    
+    // Сохраняем ссылку на элемент комментария, чтобы вернуть его позже
+    window.currentEditedComment = {
+        element: commentElement,
+        parent: parentElement
+    };
+    
+    // Заменяем элемент комментария на контейнер редактирования
+    parentElement.replaceChild(editContainer, commentElement);
+    
+    // Показываем родительский элемент, если он был скрыт
+    parentElement.style.display = 'block';
 
     // Скрываем кнопку редактирования
     editButton.style.display = 'none';
+    
+    // Инициализация обработчиков для тулбара редактора
+    initEditorToolbar(toolbar, editor);
 
     // Обработчик кнопки Сохранить
     saveButton.addEventListener('click', async function() {
-        const newText = inputElement.value.trim();
+        // Получаем HTML содержимое редактора
+        const newText = editor.innerHTML.trim();
 
         // console.log('newText', newText);
 
@@ -553,6 +637,8 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
 
                 // Отправляем запрос на сервер
                 const url = `/api/comments/${commentId}`;
+
+                // console.log('url', url);
 
                 const response = await fetch(url, {
                     method: 'PUT',
@@ -572,18 +658,50 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
 
                 const result = await response.json();
 
-                console.log(result);
+                // console.log(result);
 
                 // Показываем уведомление об успехе
-                showAlert('Комментарий успешно обновлен!!', 'success');
+                showAlert('Комментарий успешно обновлен', 'success');
 
-                // Обновляем текст комментария в DOM
-                commentElement.textContent = newText;
-                commentElement.style.display = '';
+                // console.log('Before update - commentElement:', commentElement);
+                // console.log('newText to set:', newText);
+                
+                // Обновляем содержимое существующего элемента комментария
+                const { element: savedComment, parent } = window.currentEditedComment || {};
+                
+                if (savedComment && parent) {
+                    savedComment.innerHTML = newText;
+                    savedComment.style.display = 'block';
+                    savedComment.style.wordBreak = 'normal';
+                    savedComment.style.overflowWrap = 'break-word';
+                    savedComment.style.whiteSpace = 'pre-wrap';
+                    
+                    // Заменяем редактор обратно на обновленный комментарий
+                    if (editContainer && editContainer.parentNode) {
+                        parent.replaceChild(savedComment, editContainer);
+                    }
+                    
+                    // Очищаем сохраненную ссылку
+                    delete window.currentEditedComment;
+
+                    // Находим и обновляем соответствующий элемент комментария в таблице заявок
+                    const commentInTable = document.querySelector(`[data-comment-request-id="${requestId}"]`);
+                    if (commentInTable) {
+                        commentInTable.innerHTML = newText;
+                        commentInTable.style.wordBreak = 'normal';
+                        commentInTable.style.overflowWrap = 'break-word';
+                        commentInTable.style.whiteSpace = 'pre-wrap';
+                    }
+                } else {
+                    console.error('Не удалось восстановить комментарий после редактирования');
+                }
+                
+                // console.log('Comment element updated:', commentElement);
+                
+                // console.log('Comment updated successfully');
+                
+                // Показываем кнопку редактирования
                 editButton.style.display = 'inline-block';
-
-                // Удаляем контейнер редактирования
-                editContainer.remove();
 
             } catch (error) {
                 console.error('Ошибка при сохранении комментария:', error);
@@ -608,9 +726,132 @@ async function handleCommentEdit(commentElement, commentId, commentNumber, editB
         editContainer.remove();
     });
 
-    // Фокус на поле ввода
-    inputElement.focus();
+    // Фокус на редактор
+    editor.focus();
 }
+
+/**
+ * Инициализирует тулбар редактора редактирования комментария
+ * @param {HTMLElement} toolbar - Элемент тулбара
+ * @param {HTMLElement} editor - Элемент редактора
+ */
+function initEditorToolbar(toolbar, editor) {
+    // Обработчики для кнопок тулбара
+    toolbar.addEventListener('mousedown', function(e) {
+        e.preventDefault(); // Предотвращаем потерю фокуса
+    });
+    
+    toolbar.addEventListener('click', function(e) {
+        const button = e.target.closest('button[data-cmd]');
+        if (!button) return;
+        
+        e.preventDefault();
+        const cmd = button.getAttribute('data-cmd');
+        
+        // Сохраняем выделение
+        const selection = window.getSelection();
+        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        
+        // Выполняем команду
+        if (cmd === 'bold' || cmd === 'italic') {
+            document.execCommand(cmd, false, null);
+        } 
+        else if (cmd === 'createLink') {
+            const url = prompt('Введите URL (например, https://example.com):', 'https://');
+            if (url) {
+                // Если текст не выделен, вставляем URL как текст
+                if (selection.toString().trim() === '') {
+                    document.execCommand('insertHTML', false, 
+                        `<a href="${url}" target="_blank">${url}</a>`);
+                } else {
+                    document.execCommand('createLink', false, url);
+                }
+            }
+        } 
+        else if (cmd === 'unlink') {
+            // Находим родительскую ссылку, если курсор внутри неё
+            const link = editor.querySelector('a[href]');
+            if (link) {
+                // Заменяем ссылку на её текстовое содержимое
+                const text = document.createTextNode(link.textContent);
+                link.parentNode.replaceChild(text, link);
+            } else {
+                document.execCommand('unlink', false, null);
+            }
+        }
+        
+        // Восстанавливаем фокус на редактор
+        editor.focus();
+    });
+}
+
+// Обработчик для кнопки переключения HTML/Визуальный
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleButton = document.getElementById('toggle-code');
+    if (toggleButton) {
+        toggleButton.addEventListener('click', function() {
+            if (this.textContent === 'HTML') {
+                this.textContent = 'Код';
+            } else {
+                this.textContent = 'HTML';
+            }
+        });
+    }
+
+    // Обработчик для кнопки справки
+    const helpButton = document.getElementById('show-help');
+    if (helpButton) {
+        helpButton.addEventListener('click', function() {
+            // Создаем модальное окно справки, если его еще нет
+            let helpModal = document.getElementById('editor-help-modal');
+            
+            if (!helpModal) {
+                helpModal = document.createElement('div');
+                helpModal.id = 'editor-help-modal';
+                helpModal.className = 'modal fade';
+                helpModal.tabIndex = '-1';
+                helpModal.setAttribute('aria-hidden', 'true');
+                
+                helpModal.innerHTML = `
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Справка по работе с редактором</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                            </div>
+                            <div class="modal-body">
+                                <h6>Основные возможности редактора:</h6>
+                                <ul class="mb-4">
+                                    <li><strong>B</strong> - Сделать выделенный текст <strong>жирным</strong></li>
+                                    <li><em>I</em> - Сделать выделенный текст <em>курсивом</em></li>
+                                    <li><strong>link</strong> - Вставить ссылку (предварительно выделите текст)</li>
+                                    <li><strong>unlink</strong> - Удалить ссылку (установите курсор на ссылку)</li>
+                                    <li><strong>HTML/Код</strong> - Переключение между визуальным редактором и HTML-кодом</li>
+                                </ul>
+                                
+                                <h6>Советы по форматированию:</h6>
+                                <ul>
+                                    <li>Выделите текст, чтобы применить к нему форматирование</li>
+                                    <li>Для вставки ссылки выделите текст и нажмите кнопку "link"</li>
+                                    <li>Используйте режим "Код" для ручного редактирования HTML</li>
+                                </ul>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(helpModal);
+            }
+            
+            // Инициализируем и показываем модальное окно
+            const modal = new bootstrap.Modal(helpModal);
+            modal.show();
+        });
+    }
+});
 
 // ************* Common functions ************* //
 
@@ -1774,18 +2015,49 @@ export function initFormHandlers() {
         submitBtn.addEventListener('click', submitRequestForm);
     }
 
-    // ----- Дополнительная логика ----- //
-
     // Инициализация поля даты исполнения
     initExecutionDateField();
 
     // Добавляем обработчик события для модального окна создания заявки
     const newRequestModal = document.getElementById('newRequestModal');
     if (newRequestModal) {
+        // Переменная для хранения экземпляра редактора
+        let editorInstance = null;
+        
         newRequestModal.addEventListener('show.bs.modal', function() {
             // При открытии модального окна обновляем минимальную дату
             initExecutionDateField();
             refreshAddresses();
+            
+            // Инициализируем WYSIWYG редактор, если он не был инициализирован
+            if (window.initWysiwygEditor && !editorInstance) {
+                try {
+                    editorInstance = window.initWysiwygEditor();
+                    console.log('WYSIWYG редактор инициализирован');
+                } catch (error) {
+                    console.error('Ошибка при инициализации WYSIWYG редактора:', error);
+                }
+            }
+        });
+        
+        // Очищаем редактор при скрытии модального окна
+        newRequestModal.addEventListener('hidden.bs.modal', function() {
+            const editor = document.getElementById('comment_editor');
+            if (editor) {
+                editor.innerHTML = '';
+            }
+            
+            // Очищаем скрытое поле comment
+            const commentField = document.getElementById('comment');
+            if (commentField) {
+                commentField.value = '';
+            }
+            
+            // Уничтожаем экземпляр редактора
+            if (editorInstance && typeof editorInstance.destroy === 'function') {
+                editorInstance.destroy();
+                editorInstance = null;
+            }
         });
     }
 }
@@ -1906,6 +2178,7 @@ async function submitRequestForm(event) {
 
     // Get the address error element once at the beginning
     const addressError = document.getElementById('addresses_id_error');
+    const addressId = document.getElementById('addresses_id')?.value;
     
     // Reset all error states
     form.classList.remove('was-validated');
@@ -1913,55 +2186,64 @@ async function submitRequestForm(event) {
     if (commentError) commentError.classList.add('d-none');
     if (addressError) addressError.classList.add('d-none');
 
-    // Validate form
-    const isValid = form.checkValidity();
-    console.log('Валидация формы:', isValid);
-
-    if (!isValid) {
-        form.classList.add('was-validated');
-
-        // Validate comment field
-        if (commentField) {
-            const isCommentValid = commentField.validity.valid;
-            console.log('Валидность комментария:', isCommentValid);
-            
-            if (!isCommentValid) {
-                commentField.classList.add('is-invalid');
-                if (commentError) commentError.classList.remove('d-none');
-                console.log('Поле комментария невалидно');
-                return; // Прерываем выполнение, если комментарий невалиден
-            } else {
-                commentField.classList.remove('is-invalid');
-                if (commentError) commentError.classList.add('d-none');
-                console.log('Поле комментария валидно');
-            }
-        }
-    }
-
-    const addressId = document.getElementById('addresses_id').value;
-
-    console.log('Находим элемент addresses_id:', document.getElementById('addresses_id'));
-    console.log('Значение элемента addresses_id:', document.getElementById('addresses_id').value);
-
-    // Проверяем, выбран ли адрес из списка
+    // Validate required fields
+    let isValid = true;
+    
+    // Validate address
     if (!addressId) {
-        console.log('Находим элемент addresses_id_error:', document.getElementById('addresses_id_error'));
-        
         if (addressError) {
             addressError.textContent = 'Пожалуйста, выберите адрес из списка';
             addressError.classList.remove('d-none');
-            
-            // Add is-invalid class to the custom select input
             const customSelectInput = document.querySelector('.custom-select-input');
-            if (customSelectInput) {
-                customSelectInput.classList.add('is-invalid');
+            if (customSelectInput) customSelectInput.classList.add('is-invalid');
+        }
+        isValid = false;
+    }
+    
+    // Валидация комментария
+    if (commentField) {
+        const editor = document.getElementById('comment_editor');
+        const editorContent = editor ? editor.innerHTML.trim() : '';
+        const isCommentEmpty = editorContent === '' || editorContent === '<br>';
+        
+        // Всегда синхронизируем содержимое редактора со скрытым полем
+        commentField.value = editorContent;
+        
+        // Проверяем валидность при каждой отправке формы
+        if (isCommentEmpty) {
+            // Показываем сообщение об ошибке
+            if (commentError) {
+                commentError.classList.remove('d-none');
+                commentError.textContent = 'Пожалуйста, введите комментарий';
+            }
+            // Добавляем класс is-invalid для стилизации
+            const editorContainer = document.querySelector('.wysiwyg-editor');
+            if (editorContainer) {
+                editorContainer.classList.add('is-invalid');
+            }
+            isValid = false;
+        } else {
+            // Скрываем сообщение об ошибке, если поле валидно
+            if (commentError) {
+                commentError.classList.add('d-none');
+            }
+            // Убираем класс is-invalid
+            const editorContainer = document.querySelector('.wysiwyg-editor');
+            if (editorContainer) {
+                editorContainer.classList.remove('is-invalid');
             }
         }
-
+    }
+    
+    if (!isValid) {
+        form.classList.add('was-validated');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Создать заявку';
         return;
     }
+
+    console.log('Находим элемент addresses_id:', document.getElementById('addresses_id'));
+    console.log('Значение элемента addresses_id:', addressId);
 
     // Блокируем кнопку отправки и меняем её текст на индикатор загрузки
     submitBtn.disabled = true;
@@ -2045,15 +2327,23 @@ async function submitRequestForm(event) {
             // Сохраняем текущую дату перед сбросом формы
             const currentDate = document.getElementById('executionDate').value;
 
-            // Reset the form
+            // Clear the editor content
+            const editor = document.getElementById('comment_editor');
+            if (editor) editor.innerHTML = '';
+            
+            // Reset the form but preserve the date
+            const formData = new FormData(form);
             form.reset();
+            
+            // Reset validation states
+            form.classList.remove('was-validated');
+            if (commentField) commentField.classList.remove('is-invalid');
+            if (commentError) commentError.classList.add('d-none');
             if (addressError) addressError.classList.add('d-none');
             
             // Remove is-invalid class from custom select input
             const customSelectInput = document.querySelector('.custom-select-input');
-            if (customSelectInput) {
-                customSelectInput.classList.remove('is-invalid');
-            }
+            if (customSelectInput) customSelectInput.classList.remove('is-invalid');
 
             // Восстанавливаем дату после сброса формы
             const dateInput = document.getElementById('executionDate');
