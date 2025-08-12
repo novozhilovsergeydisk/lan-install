@@ -38,13 +38,18 @@
 body.theme-light .wysiwyg-toolbar .btn {
   border-color: rgba(0,0,0,0.125);
 }
+/* Стили для светлой темы */
+[data-bs-theme=light] .wysiwyg-editor,
 body.theme-light .wysiwyg-editor {
-  background: #ffffff;
-  color: #212529;
+  background: var(--bs-body-bg, #ffffff);
+  color: var(--bs-body-color, #212529);
 }
+
+/* Стили для темной темы */
+[data-bs-theme=dark] .wysiwyg-editor,
 body:not(.theme-light) .wysiwyg-editor {
-  background: #1f2937; /* тёмный фон */
-  color: #e6eef8;
+  background: var(--bs-dark-bg-subtle, #1f2937);
+  color: var(--bs-body-color, #e6eef8);
 }
 
 /* Аккуратные стили ссылок внутри редактора */
