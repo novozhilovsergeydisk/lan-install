@@ -7,13 +7,13 @@
         flex-direction: column;
         margin-bottom: 0.5rem;
     }
-    
+
     /* Стили для метки фильтра */
     .d-flex.justify-content-start .form-label {
         margin-bottom: 0.25rem;
         font-size: 0.875rem;
     }
-    
+
     /* Стили для выпадающего списка */
     .d-flex.justify-content-start .form-select {
         width: 100% !important;
@@ -39,7 +39,7 @@
 
 #requestsTable .col-address {
     /* width: 15rem;
-    max-width: 15rem; */    
+    max-width: 15rem; */
 }
 
 #requestsTable .col-comments {
@@ -73,7 +73,9 @@
 }
 
 .comment-preview-text {
-    word-break: break-all;
+    word-break: break-word;  /* Строгий перенос по словам */
+    overflow-wrap: break-word; /* Поддержка для старых браузеров */
+    white-space: normal;     /* Стандартное поведение переноса */
     margin-bottom: 2px;
 }
 
@@ -98,11 +100,11 @@
     #employeeFilter {
         margin-top: 1rem !important;
     }
-    
+
     .comment-preview-title {
         font-size: smaller;
     }
-    
+
     .comment-preview-text {
         font-size: smaller;
     }
@@ -114,7 +116,7 @@
     #requestsTable thead th:first-child {
         display: none;
     }
-    
+
     .view-comments-btn i {
         display: none;
     }
