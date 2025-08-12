@@ -2285,28 +2285,30 @@ function handleTransferRequest(button) {
 
             // console.log(result);
 
-            // Проверяем дату выполнения из ответа сервера
-            if (result.execution_date) {
-                const serverDate = new Date(result.execution_date);
-                const currentDate = new Date();
+            if (!result.isPlanning) {
+                // Проверяем дату выполнения из ответа сервера
+                if (result.execution_date) {
+                    const serverDate = new Date(result.execution_date);
+                    const currentDate = new Date();
 
-                // Сбрасываем время для корректного сравнения только дат
-                serverDate.setHours(0, 0, 0, 0);
-                currentDate.setHours(0, 0, 0, 0);
+                    // Сбрасываем время для корректного сравнения только дат
+                    serverDate.setHours(0, 0, 0, 0);
+                    currentDate.setHours(0, 0, 0, 0);
 
-                // console.log('Дата выполнения от сервера:', serverDate);
-                // console.log('Текущая дата:', currentDate);
+                    // console.log('Дата выполнения от сервера:', serverDate);
+                    // console.log('Текущая дата:', currentDate);
 
-                if (serverDate < currentDate) {
-                    showAlert('Внимание: Дата выполнения заявки уже прошла!', 'error');
-                } else if (serverDate.getTime() === currentDate.getTime()) {
-                    showAlert('Заявка запланирована на сегодня', 'info');
-                } else {
-                    // скрыть заявку, если она запланирована на будущее
-                    showAlert('Заявка запланирована на будущее', 'info');
-                    const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
-                    if (row) {
-                        row.style.display = 'none';
+                    if (serverDate < currentDate) {
+                        showAlert('Внимание: Дата выполнения заявки уже прошла!', 'error');
+                    } else if (serverDate.getTime() === currentDate.getTime()) {
+                        showAlert('Заявка запланирована на сегодня', 'info');
+                    } else {
+                        // скрыть заявку, если она запланирована на будущее
+                        showAlert('Заявка запланирована на будущее', 'info');
+                        const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+                        if (row) {
+                            row.style.display = 'none';
+                        }
                     }
                 }
             }
@@ -2319,6 +2321,7 @@ function handleTransferRequest(button) {
                     // row.style.setProperty('--status-color', '#BBDEFB');
                     // Полностью удаляем строку из DOM
                     row.remove();
+                    showAlert('Заявка перенесена в раздел запланированных заявок', 'info');
                     loadPlanningRequests();
                 } else {
                     // loadRequests();
