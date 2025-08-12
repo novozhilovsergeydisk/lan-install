@@ -40,7 +40,7 @@ export async function loadPlanningRequests() {
         }
 
         const result = await response.json();
-        console.log('Ответ сервера result:', result);
+        // console.log('Ответ сервера списка запланированных заявок:', result);
 
         if (!result.success) {
             throw new Error(result.message || 'Ошибка при загрузке запланированных заявок');
@@ -2188,6 +2188,10 @@ function handleTransferRequest(button) {
                             <label for="transferReason" class="form-label">Причина переноса:</label>
                             <textarea class="form-control" id="transferReason" rows="3"></textarea>
                         </div>
+                        <div class="mb-3">
+                            <input type="checkbox" id="transferToPlanning" name="transferToPlanning" class="form-check-input">
+                            <label for="transferToPlanning" class="form-check-label">Перенести заявку в планирование</label>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
@@ -2239,6 +2243,7 @@ function handleTransferRequest(button) {
     modalElement.querySelector('#confirmTransfer').addEventListener('click', async () => {
         const selectedDate = dateInput.value;
         const reason = document.getElementById('transferReason').value.trim();
+        const transferToPlanning = document.getElementById('transferToPlanning').checked;
 
         if (!selectedDate) {
             showAlert('Пожалуйста, выберите дату для переноса', 'info');
@@ -2255,7 +2260,8 @@ function handleTransferRequest(button) {
             console.log('Отправка запроса на перенос заявки:', {
                 request_id: requestId,
                 new_date: selectedDate,
-                reason: reason
+                reason: reason,
+                transfer_to_planning: transferToPlanning
             });
 
             const response = await fetch('/api/requests/transfer', {
@@ -2267,14 +2273,15 @@ function handleTransferRequest(button) {
                 body: JSON.stringify({
                     request_id: requestId,
                     new_date: selectedDate,
-                    reason: reason
+                    reason: reason,
+                    transfer_to_planning: transferToPlanning
                 })
             });
 
             const result = await response.json();
 
             // Выводим ответ сервера в консоль
-            // console.log('Ответ сервера при переносе заявки:', result);
+            console.log('Ответ сервера при переносе заявки:', result);
 
             // console.log(result);
 
@@ -2305,61 +2312,74 @@ function handleTransferRequest(button) {
             }
 
             if (response.ok) {
-                showAlert('Заявка успешно перенесена', 'success');
-                // Обновляем цвет строки без перезагрузки
+                const isPlanning = result.isPlanning;
                 const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
-                if (row) {
-                    row.style.setProperty('--status-color', '#BBDEFB');
-                    // Обновляем текст статуса, если он отображается
-                    const statusCell = row.querySelector('.status-badge');
-                    if (statusCell) {
-                        statusCell.textContent = 'перенесена';
-                    }
 
-                    // const executionDateFormated = DateFormated(result.execution_date);
+                if (isPlanning) {
+                    // row.style.setProperty('--status-color', '#BBDEFB');
+                    // Полностью удаляем строку из DOM
+                    row.remove();
+                    loadPlanningRequests();
+                } else {
+                    // loadRequests();
 
-                    const execDate = new Date(result.execution_date);
-                    const [selDay, selMonth, selYear] = selectedDateState.date.split('.');
-                    const selDate = new Date(selYear, selMonth - 1, selDay);
+                    showAlert('Заявка успешно перенесена', 'success');
+                    // Обновляем цвет строки без перезагрузки
+                    
+                    if (row) {
+                        row.style.setProperty('--status-color', '#BBDEFB');
+                        // Обновляем текст статуса, если он отображается
+                        const statusCell = row.querySelector('.status-badge');
+                        if (statusCell) {
+                            statusCell.textContent = 'перенесена';
+                        }
 
-                    console.log('Дата выполнения:', execDate);
-                    console.log('Выбранная дата:', selDate);
+                        // const executionDateFormated = DateFormated(result.execution_date);
 
-                    if (execDate < selDate) {
-                        row.style.display = 'none';
-                        showAlert('Заявка скрыта!', 'info');
-                    }
+                        const execDate = new Date(result.execution_date);
+                        const [selDay, selMonth, selYear] = selectedDateState.date.split('.');
+                        const selDate = new Date(selYear, selMonth - 1, selDay);
 
-                    // Обновляем блок комментариев в модальном окне
-                    const commentsContainer = row.querySelector('.comment-preview').parentElement;
-                    if (commentsContainer) {
-                        const existingButton = commentsContainer.querySelector('.view-comments-btn');
-                        const commentsCount = result.comments_count || 1; // Используем переданное количество или 1 по умолчанию
+                        console.log('Дата выполнения:', execDate);
+                        console.log('Выбранная дата:', selDate);
 
-                        if (!existingButton) {
-                            // Создаем новую кнопку, если её нет
-                            const buttonHtml = `
-                                <div class="mt-1">
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#commentsModal"
-                                            data-request-id="${requestId}"
-                                            style="position: relative; z-index: 1;">
-                                        <i class="bi bi-chat-left-text me-1"></i>Все комментарии
-                                        <span class="badge bg-primary rounded-pill ms-1">${commentsCount}</span>
-                                    </button>
-                                </div>`;
-                            commentsContainer.insertAdjacentHTML('beforeend', buttonHtml);
+                        if (execDate < selDate) {
+                            row.remove();
+                            showAlert('Заявка скрыта!', 'info');
+                        }
 
-                            // Инициализируем tooltip для новой кнопки
-                            const tooltipTriggerList = [].slice.call(commentsContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                                return new bootstrap.Tooltip(tooltipTriggerEl);
-                            });
+                        // Обновляем блок комментариев в модальном окне
+                        const commentsContainer = row.querySelector('.comment-preview').parentElement;
+                        if (commentsContainer) {
+                            const existingButton = commentsContainer.querySelector('.view-comments-btn');
+                            const commentsCount = result.comments_count || 1; // Используем переданное количество или 1 по умолчанию
+
+                            if (!existingButton) {
+                                // Создаем новую кнопку, если её нет
+                                const buttonHtml = `
+                                    <div class="mt-1">
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#commentsModal"
+                                                data-request-id="${requestId}"
+                                                style="position: relative; z-index: 1;">
+                                            <i class="bi bi-chat-left-text me-1"></i>Все комментарии
+                                            <span class="badge bg-primary rounded-pill ms-1">${commentsCount}</span>
+                                        </button>
+                                    </div>`;
+                                commentsContainer.insertAdjacentHTML('beforeend', buttonHtml);
+
+                                // Инициализируем tooltip для новой кнопки
+                                const tooltipTriggerList = [].slice.call(commentsContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                                });
+                            }
                         }
                     }
                 }
+                
                 // Закрываем модальное окно
                 modal.hide();
                 // Удаляем модальное окно из DOM

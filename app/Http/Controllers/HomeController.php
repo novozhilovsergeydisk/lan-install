@@ -229,7 +229,8 @@ class HomeController extends Controller
             $validated = $request->validate([
                 'request_id' => 'required|integer|exists:requests,id',
                 'new_date' => 'required|date|after_or_equal:today',
-                'reason' => 'required|string|max:1000'
+                'reason' => 'required|string|max:1000',
+                'transfer_to_planning' => 'required|boolean'
             ]);
 
             // Begin transaction
@@ -266,7 +267,7 @@ class HomeController extends Controller
                 ->where('id', $validated['request_id'])
                 ->update([
                     'execution_date' => $validated['new_date'],
-                    'status_id' => 3 // ID статуса 'перенесена'
+                    'status_id' => $validated['transfer_to_planning'] ? 6 : 3 // ID статуса 'перенесена'
                 ]);
 
             // Get comments count (including the one we just added)
@@ -282,7 +283,8 @@ class HomeController extends Controller
                 'success' => true,
                 'message' => 'Заявка успешно перенесена',
                 'execution_date' => $validated['new_date'],
-                'comments_count' => $commentsCount
+                'comments_count' => $commentsCount,
+                'isPlanning' => $validated['transfer_to_planning']
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
