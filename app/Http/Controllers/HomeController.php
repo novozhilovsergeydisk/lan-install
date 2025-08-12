@@ -605,6 +605,7 @@ class HomeController extends Controller
             WHERE r.execution_date::date = CURRENT_DATE 
             AND (b.is_deleted = false OR b.id IS NULL) 
             AND rs.name != 'отменена'
+            AND rs.name != 'планирование'   
             ORDER BY r.id DESC";
 
             if ($user->isFitter) {
@@ -639,6 +640,7 @@ class HomeController extends Controller
                     WHERE r.execution_date::date = CURRENT_DATE 
                     AND (b.is_deleted = false OR b.id IS NULL)
                     AND rs.name != 'отменена'
+                    AND rs.name != 'планирование'
                     AND (
                         EXISTS (
                             SELECT 1
