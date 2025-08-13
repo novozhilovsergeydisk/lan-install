@@ -101,7 +101,7 @@ export async function loadPlanningRequests() {
                             <p class="comment-preview-title">Печатный комментарий:</p>
                             <div class="comment-preview-text">${comments[comments.length - 1].comment}</div>
                         </div>
-                        ${comments.length > 1 ? `
+                        ${comments.length >= 1 ? `
                             <div class="mb-0">
                                 <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">
                                     ${comments[0].created_at} | ${comments[0].author_fio}<br>
@@ -126,11 +126,13 @@ export async function loadPlanningRequests() {
                         ` : ''}
                     ` : '<div class="text-muted small">Нет комментариев</div>'}
                 </td>
-                <td style="width: 10%">
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
-                            <i class="bi bi-pencil-square"></i> В работу
-                        </button>
+                <td style="width: 10%; vertical-align: top">
+                    <div class="d-flex align-items-start mt-4">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
+                                <i class="bi bi-pencil-square"></i> В работу
+                            </button>
+                        </div>
                     </div>
                 </td>
             `;
