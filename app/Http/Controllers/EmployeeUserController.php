@@ -434,6 +434,10 @@ class EmployeeUserController extends Controller
 
             $sqlEmployee = "select user_id from employees where id = $employee_id";
 
+            $sqlPosition = "SELECT p.name AS position_name FROM employees e LEFT JOIN positions p ON e.position_id = p.id WHERE e.id = $employee_id";
+
+            $position = DB::selectOne($sqlPosition);
+
             $sqlUpdateRole = "UPDATE user_roles SET role_id = $request->role_id_update WHERE user_id = ($sqlEmployee)";
 
             // $request->sql = $sql;
@@ -550,6 +554,7 @@ class EmployeeUserController extends Controller
                         'employee' => $employee,
                         'passport' => $passport,
                         'car' => $car,
+                        'position' => $position,
                     ],
                 ], 200);
             }

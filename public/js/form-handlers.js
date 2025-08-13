@@ -1923,7 +1923,16 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
 
 export function initEmployeeEditHandlers() {
     // Инициализация модального окна
-    const editEmployeeModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+    const editEmployeeModalEl = document.getElementById('editEmployeeModal');
+    const editEmployeeModal = new bootstrap.Modal(editEmployeeModalEl);
+    
+    // Сброс селекта ролей при закрытии модального окна
+    editEmployeeModalEl.addEventListener('hidden.bs.modal', function () {
+        const roleSelect = document.getElementById('roleSelectUpdate');
+        if (roleSelect) {
+            roleSelect.selectedIndex = 0; // Сбрасываем на первое значение (обычно 'Выберите роль')
+        }
+    });
 
     // Обработчик кнопок редактирования
     document.querySelectorAll('.edit-employee-btn').forEach(button => {
