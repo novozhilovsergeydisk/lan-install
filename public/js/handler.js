@@ -3197,7 +3197,7 @@ async function handleEmployeeFormSubmit(e) {
 
             // Отправляем форму на сервер используя postData
             const data = await postData(url, formDataObj);
-            console.log('Ответ сервера:', data);
+            console.log('Ответ сервера по созданию/обновлению сотрудника:', data);
 
             // Проверяем наличие ошибок валидации
             if (data.errors) {

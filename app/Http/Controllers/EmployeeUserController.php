@@ -543,7 +543,7 @@ class EmployeeUserController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Данные сотрудника успешно обновлены.',
-                    'user_id' => $request->user_id,
+                    'user_id' => $user_id,
                     'sqlUpdateRole' => $sqlUpdateRole,
                     'sqlEmployee' => $sqlEmployee,
                     'data' => [

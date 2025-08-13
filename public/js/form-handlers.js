@@ -1938,7 +1938,7 @@ export function initEmployeeEditHandlers() {
             document.getElementById('editEmployeeModalLabel').textContent = `Редактирование сотрудника: ${employeeName}`;
 
             // Устанавливаем ID пользователя в скрытое поле формы
-            document.getElementById('userIdInputUpdate').value = employeeId;
+            // document.getElementById('userIdInputUpdate').value = employeeId;
             // Устанавливаем ID сотрудника в скрытое поле формы
             document.getElementById('employeeIdInputUpdate').value = employeeId;
             console.log('Установлен ID пользователя и сотрудника в форме:', employeeId);
@@ -2039,20 +2039,24 @@ export function initEmployeeEditHandlers() {
  * Инициализирует обработчик события для формы редактирования сотрудника
  */
 export function initSaveEmployeeChanges() {
-    // Проверяем существование элемента перед добавлением обработчика
+    // Находим кнопку сохранения изменений
     const saveButton = document.getElementById('saveEmployeeChanges');
-    if (saveButton) {
-        saveButton.addEventListener('click', function() {
+    const form = document.getElementById('employeeFormUpdate');
+
+    if (saveButton && form) {
+        // Добавляем обработчик события отправки формы
+        form.addEventListener('submit', function(event) {
             console.log('Сохранение изменений сотрудника');
-            // Здесь будет логика сохранения изменений
-
-            handleSaveEmployeeChanges();
-
-            // Закрытие модального окна после сохранения
-            closeModalProperly();
+            handleSaveEmployeeChanges(event);
+        });
+        
+        // Для совместимости оставляем и клик по кнопке
+        saveButton.addEventListener('click', function(event) {
+            console.log('Клик по кнопке сохранения');
+            handleSaveEmployeeChanges(event);
         });
     } else {
-        console.error('Элемент с ID "saveEmployeeChanges" не найден');
+        console.error('Элементы с ID "saveEmployeeChanges" или "employeeFormUpdate" не найдены');
     }
 }
 
@@ -2452,13 +2456,37 @@ async function submitRequestForm(event) {
 
 //************* 2. Обработчики событий форм ************//
 
-async function handleSaveEmployeeChanges() {
+async function handleSaveEmployeeChanges(event) {
     try {
+        // Предотвращаем стандартное поведение формы
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        // Получаем форму
         const form = document.getElementById('employeeFormUpdate');
+        if (!form) {
+            throw new Error('Форма обновления сотрудника не найдена');
+        }
+
+        // Получаем select с ролью
+        const roleSelect = document.getElementById('roleSelectUpdate');
+        if (!roleSelect) {
+            throw new Error('Не найден элемент выбора роли');
+        }
+
+        // Проверяем, что роль выбрана
+        if (!roleSelect.value) {
+            showAlert('Пожалуйста, выберите системную роль', 'warning');
+            // Используем setTimeout для корректного фокуса после отрисовки модального окна
+            setTimeout(() => {
+                roleSelect.focus();
+            }, 100);
+            return false;
+        }
 
         const formData = new FormData(form);
-
-        console.log('formData', formData);
 
         const data = {};
 
@@ -2476,23 +2504,18 @@ async function handleSaveEmployeeChanges() {
             }
         });
 
-        console.log('data', data);
-
-        // Формируем данные для отправки
-        // Проверяем наличие position_id_update и выводим предупреждение, если оно отсутствует
-        console.log('position_id_update:', data.position_id_update);
-
         // Проверяем, что поле должности заполнено
-        const positionValue = data.position_id_update || document.getElementById('positionSelectUpdate').value;
+        const positionValue = data.position_id_update || document.getElementById('positionSelectUpdate')?.value;
         if (!positionValue) {
             showAlert('Поле "Должность" обязательно для выбора', 'danger');
-            return; // Прерываем выполнение функции
+            return false; // Прерываем выполнение функции
         }
 
+        // Формируем данные для отправки
         const requestData = {
             _token: data._token,
             user_id: data.user_id_update,
-            role_id_update: data.role_id_update,
+            role_id_update: roleSelect.value,
             fio: data.fio_update,
             position_id: positionValue,
             employee_id: data.employee_id_update,
@@ -2511,15 +2534,187 @@ async function handleSaveEmployeeChanges() {
 
         const result = await postData('/employee/update', requestData);
 
-        console.log('Ответ от сервера:', result);
+        console.log('Входные данные для обновления сотрудника:', requestData);
 
-        console.log('requestData', requestData);
+        console.log('Ответ от сервера при обновлении сотрудника:', result);
+
+        if (result.success) {
+            showAlert(`Сотрудник <b>${result.data.employee.fio}</b> успешно обновлен`, 'success');
+            closeModalProperly();
+
+            // Обновляем только измененную строку в таблице
+            const { employee, passport, car } = result.data;
+            const row = document.querySelector(`tr[data-employee-id="${employee.id}"]`);
+            console.log('Найденная строка:', row);
+            
+            if (row) {
+                console.log('Строка найдена, обновляем данные...');
+                const cells = row.getElementsByTagName('td');
+                
+                // Обновляем ФИО и email (первая ячейка)
+                if (cells[0]) {
+                    const email = employee.user_email || cells[0].querySelector('div:first-child')?.textContent.split('\n')[1]?.trim() || '';
+                    cells[0].querySelector('div:first-child').innerHTML = `${employee.fio || ''} <br> ${email}`;
+                }
+                
+                // Обновляем телефон (вторая ячейка)
+                if (cells[1]) cells[1].textContent = employee.phone || '';
+                
+                // Обновляем должность (третья ячейка)
+                // if (cells[2]) cells[2].textContent = employee.position_name || '';
+                
+                // Обновляем дату рождения (четвертая ячейка)
+                if (cells[3] && employee.birth_date) {
+                    cells[3].textContent = employee.birth_date;
+                }
+                
+                // Обновляем паспортные данные (пятая ячейка)
+                if (cells[4] && passport) {
+                    cells[4].innerHTML = `
+                        ${passport.series_number || ''} <br>
+                        ${passport.issued_at || ''} <br>
+                        ${passport.issued_by || ''} <br>
+                        ${passport.department_code || ''}
+                    `;
+                }
+                
+                // Обновляем данные автомобиля (шестая ячейка)
+                if (cells[5] && car) {
+                    cells[5].innerHTML = `${car.brand || ''} <br> ${car.license_plate || ''}`;
+                }
+                
+                // Обновляем атрибуты кнопок
+                const editBtn = row.querySelector('.edit-employee-btn');
+                const deleteBtn = row.querySelector('.delete-employee-btn');
+                
+                if (editBtn) {
+                    editBtn.setAttribute('data-employee-id', employee.id);
+                    editBtn.setAttribute('data-employee-name', employee.fio || '');
+                }
+                
+                if (deleteBtn) {
+                    deleteBtn.setAttribute('data-employee-id', employee.id);
+                    deleteBtn.setAttribute('data-employee-name', employee.fio || '');
+                }
+            }
+        } else {
+            showAlert(result.message || 'Произошла ошибка при обновлении сотрудника', 'danger');
+        }
     } catch (error) {
-        console.error('Ошибка при сохранении изменений сотрудника:', error);
+        console.error('Ошибка при обновления сотрудника:', error);
         showAlert(`Ошибка: ${error.message}`, 'danger');
     }
 }
 
+// Функция для обновления таблицы сотрудников
+// async function refreshEmployeesTable() {
+//     try {
+//         const response = await fetch('/api/employees');
+//         if (!response.ok) {
+//             throw new Error('Ошибка при загрузке данных сотрудников');
+//         }
+        
+//         const employees = await response.json();
+//         const tbody = document.querySelector('#employeesTable tbody');
+        
+//         if (!tbody) return;
+        
+//         // Очищаем текущее содержимое таблицы
+//         tbody.innerHTML = '';
+        
+//         // Заполняем таблицу новыми данными
+//         employees.forEach(employee => {
+//             const row = document.createElement('tr');
+//             row.className = 'small';
+            
+//             // Форматируем дату рождения, если она есть
+//             const birthDate = employee.birth_date ? new Date(employee.birth_date).toLocaleDateString('ru-RU') : '';
+            
+//             row.innerHTML = `
+//                 <td>
+//                     <div>${employee.fio || ''} <br> ${employee.user_email || ''}</div>
+//                     <div class="mt-2">
+//                         <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn me-1" 
+//                                 data-employee-id="${employee.id}" 
+//                                 data-employee-name="${employee.fio || ''}">
+//                             <i class="bi bi-pencil-square"></i>
+//                         </button> 
+//                         <button type="button" class="btn btn-sm btn-outline-danger ms-2 delete-employee-btn me-1" 
+//                                 data-employee-id="${employee.id}" 
+//                                 data-employee-name="${employee.fio || ''}">
+//                             <i class="bi bi-trash"></i>
+//                         </button>
+//                     </div>
+//                 </td>
+//                 <td>${employee.phone || ''}</td>
+//                 <td>${employee.position || ''}</td>
+//                 <td>${birthDate}</td>
+//                 <td>
+//                     <div>
+//                         ${employee.series_number || ''} <br> 
+//                         ${employee.passport_issued_at || ''} <br> 
+//                         ${employee.passport_issued_by || ''} <br> 
+//                         ${employee.department_code || ''}
+//                     </div>
+//                 </td>
+//                 <td>${employee.car_brand || ''} <br> ${employee.car_plate || ''}</td>
+//             `;
+            
+//             tbody.appendChild(row);
+//         });
+        
+//         // Инициализируем обработчики для новых кнопок редактирования/удаления
+//         initEmployeeButtons();
+        
+//     } catch (error) {
+//         console.error('Ошибка при обновлении таблицы сотрудников:', error);
+//         showAlert('Не удалось обновить список сотрудников', 'danger');
+//     }
+// }
+
+// Функция для инициализации обработчиков кнопок сотрудников
+function initEmployeeButtons() {
+    // Обработчики для кнопок редактирования
+    document.querySelectorAll('.edit-employee-btn').forEach(btn => {
+        if (!btn.hasAttribute('data-listener-added')) {
+            btn.addEventListener('click', function() {
+                const employeeId = this.getAttribute('data-employee-id');
+                // Здесь можно добавить логику для открытия модального окна редактирования
+                // или использовать существующий обработчик, если он уже есть
+                console.log('Edit employee:', employeeId);
+            });
+            btn.setAttribute('data-listener-added', 'true');
+        }
+    });
+    
+    // Обработчики для кнопок удаления
+    document.querySelectorAll('.delete-employee-btn').forEach(btn => {
+        if (!btn.hasAttribute('data-listener-added')) {
+            btn.addEventListener('click', function() {
+                const employeeId = this.getAttribute('data-employee-id');
+                const employeeName = this.getAttribute('data-employee-name');
+                
+                if (confirm(`Вы уверены, что хотите удалить сотрудника ${employeeName}?`)) {
+                    // Здесь можно добавить логику для удаления сотрудника
+                    console.log('Delete employee:', employeeId);
+                }
+            });
+            btn.setAttribute('data-listener-added', 'true');
+        }
+    });
+}
+
+// Инициализируем кнопки при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    initEmployeeButtons();
+});
 
 // Экспортируем функции для использования в других модулях
-export { submitRequestForm, displayEmployeeInfo, updateRowNumbers, addRequestToTable, handleCommentEdit };
+export { 
+    submitRequestForm, 
+    displayEmployeeInfo, 
+    updateRowNumbers, 
+    addRequestToTable, 
+    handleCommentEdit,
+    initEmployeeButtons
+};

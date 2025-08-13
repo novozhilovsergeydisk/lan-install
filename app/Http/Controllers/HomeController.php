@@ -994,6 +994,7 @@ class HomeController extends Controller
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
                     WHERE DATE(r.execution_date) = ?
+                    AND r.status_id != 6
                     AND (b.is_deleted = false OR b.id IS NULL)
                     AND (
                         EXISTS (
@@ -1042,6 +1043,7 @@ class HomeController extends Controller
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
                     WHERE DATE(r.execution_date) = ? AND (b.is_deleted = false OR b.id IS NULL)
+                    AND r.status_id != 6
                     ORDER BY r.id DESC
                 ";
             }

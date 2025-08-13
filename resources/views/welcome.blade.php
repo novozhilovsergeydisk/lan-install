@@ -841,7 +841,7 @@
                                                     </thead>
                                                     <tbody>
                                                     @foreach($employees as $employee)
-                                                        <tr class="small">
+                                                        <tr class="small" data-employee-id="{{ $employee->id }}">
                                                             <td>
                                                                 <div>{{ $employee->fio }} <br> {{ $employee->user_email }}</div>
                                                                 <div class="mt-2">
@@ -1064,6 +1064,16 @@
 
 <!-- Подключение WYSIWYG редактора -->
 <script src="{{ asset('js/editor.js') }}"></script>
+
+<!-- Импортируем необходимые функции из form-handlers.js -->
+<script type="module">
+    import { initEmployeeButtons } from "{{ asset('js/form-handlers.js') }}";
+    
+    // Инициализируем кнопки при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        initEmployeeButtons();
+    });
+</script>
 
 <style>
     /* Custom styles for the switch toggle */
@@ -2413,7 +2423,7 @@
                     <form id="employeeFormUpdate" action="{{ route('employee.update') }}" method="POST" class="needs-validation" novalidate>
                         @csrf
 
-                        <input type="hidden" name="user_id_update" id="userIdInputUpdate" value="">
+                        <!-- <input type="hidden" name="user_id_update" id="userIdInputUpdate" value=""> -->
                         <input type="hidden" name="employee_id_update" id="employeeIdInputUpdate" value="">
 
                         <h5 class="mb-3 mt-4 p-2 bg-primary bg-opacity-10 rounded-2 border-bottom">Системные данные</h5>
