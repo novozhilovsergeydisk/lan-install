@@ -1035,10 +1035,8 @@
                                 <thead class="bg-dark">
                                 <tr>
                                     <th class="line-height-20 font-smaller"></th>
-                                    <th class="line-height-20 font-smaller">Дата заявки</th>
                                     <th class="line-height-20 font-smaller">Адрес</th>
                                     <th class="line-height-20 font-smaller">Комментарии</th>
-                                    <th class="line-height-20 font-smaller">Действия</th>
                                 </tr>
                                 </thead>
                                 <tbody>

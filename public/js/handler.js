@@ -68,6 +68,9 @@ export async function loadPlanningRequests() {
                 ? comments.map(c => `${c.author_fio || 'Неизвестный'}: ${c.comment || ''}`).join('<br>')
                 : 'Нет комментариев';
             
+            console.log('Комментарии:', comments);
+            console.log('Комментарии форматированные:', formattedComments);
+
             // Создаем строку таблицы
             const row = document.createElement('tr');
             row.setAttribute('data-request-id', request.id);
@@ -81,13 +84,7 @@ export async function loadPlanningRequests() {
                         ${index + 1}
                     </div>
                 </td>
-                <td style="width: 15%">
-                    <div class="d-flex flex-column">
-                        <span>${request.request_date}</span>
-                        <div class="text-dark font-size-0-8rem">${request.number}</div>
-                    </div>
-                </td>
-                <td style="width: 25%">
+                <td style="width: 35%">
                     <div class="d-flex flex-column">
                        <div class="text-dark col-address__organization">${request.organization || 'Не указан'}</div>
                        <small class="d-block">${request.address || 'Не указан'}</small>
@@ -97,12 +94,23 @@ export async function loadPlanningRequests() {
                        </small>                              
                     </div>
                 </td>
-                <td style="width: 45%">
-                    <div class="comment-preview" data-bs-toggle="tooltip" data-bs-html="true">
-                        ${comments.length > 0 ? `${comments[0].comment}` : 'Нет комментариев'}
-                    </div>
-                </td>
-                <td style="width: 10%">
+                <td style="width: 60%">
+                    <div class="col-date__date">${request.request_date} | ${request.number}</div>
+                    ${comments.length > 0 ? `
+                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
+                            <p class="comment-preview-title">Печатный комментарий:</p>
+                            <div class="comment-preview-text">${formattedComments}</div>
+                        </div>
+                        ${comments.length > 1 ? `
+                            <div class="mb-0">
+                                <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">
+                                    ${comments[comments.length - 1].created_at} | ${comments[comments.length - 1].author_fio}<br>
+                                    ${comments[comments.length - 1].comment.split(' ').slice(0, 5).join(' ')}
+                                    ${comments[comments.length - 1].comment.split(' ').length > 5 ? '...' : ''}
+                                </p>
+                            </div>
+                        ` : ''}
+                    ` : '<div class="text-muted small">Нет комментариев</div>'}
                     <div class="btn-group btn-group-sm" role="group">
                         <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
                             <i class="bi bi-pencil-square"></i> В работу
@@ -703,7 +711,7 @@ function applyFilters() {
 
                             // Создаем HTML строки таблицы
                             const row = document.createElement('tr');
-                            row.className = 'align-middle status-row xxx-5';
+                            row.className = 'align-middle status-row class-handler';
                             row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
                             // Отладочный вывод
                             // Логи данных запроса отключены
