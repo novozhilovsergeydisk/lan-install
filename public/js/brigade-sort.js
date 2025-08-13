@@ -3,7 +3,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!brigadeHeader) return;
     
     const sortIcon = document.getElementById('brigadeSortIcon');
-    const tbody = document.querySelector('#requestsTable tbody');
+    const table = document.getElementById('requestsTable');
+    if (!table) return;
+    
+    // Используем первый tbody в таблице
+    const tbody = table.tBodies[0];
     if (!tbody) return;
 
     let sortAscending = true;
