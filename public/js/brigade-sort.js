@@ -8,24 +8,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let sortAscending = true;
 
+    // Function to extract brigade name from cell
+    function getBrigadeName(cell) {
+        if (!cell) return '';
+        const div = cell.querySelector('.col-brigade__div');
+        if (!div) return '';
+        const nameEl = div.querySelector('div > i');
+        return nameEl ? nameEl.textContent.trim() : '';
+    }
+
+    brigadeHeader.style.cursor = 'pointer';
+    brigadeHeader.title = 'Нажмите для сортировки по бригаде';
+
     brigadeHeader.addEventListener('click', () => {
-        const rows = Array.from(tbody.querySelectorAll('tr:not(#no-requests-row)'));
+        // Only select rows that have a valid request ID (starts with 'request-')
+        const rows = Array.from(tbody.querySelectorAll('tr[id^="request-"]'));
         
         rows.sort((a, b) => {
-            const aCell = a.querySelector('td.col-brigade');
-            const bCell = b.querySelector('td.col-brigade');
+            const aName = getBrigadeName(a.querySelector('td.col-brigade'));
+            const bName = getBrigadeName(b.querySelector('td.col-brigade'));
             
-            const aText = aCell ? aCell.textContent.trim() : '';
-            const bText = bCell ? bCell.textContent.trim() : '';
-
-            const aAssigned = aText && !aText.includes('Не назначена');
-            const bAssigned = bText && !bText.includes('Не назначена');
-
-            if (aAssigned && bAssigned) {
-                return sortAscending ? aText.localeCompare(bText) : bText.localeCompare(aText);
-            }
-            if (!aAssigned && bAssigned) return sortAscending ? 1 : -1;
-            if (aAssigned && !bAssigned) return sortAscending ? -1 : 1;
+            if (!aName && !bName) return 0;
+            if (!aName) return sortAscending ? 1 : -1;
+            if (!bName) return sortAscending ? -1 : 1;
+            
+            return sortAscending 
+                ? aName.localeCompare(bName, 'ru')
+                : bName.localeCompare(aName, 'ru');
+            
+            // Keep original order if comparison is equal
             return 0;
         });
 
@@ -35,8 +46,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // Update sort icon
         if (sortIcon) {
             sortIcon.textContent = sortAscending ? '▼' : '▲';
+            sortIcon.setAttribute('title', sortAscending ? 'Сортировка по убыванию' : 'Сортировка по возрастанию');
         }
         
+        // Toggle sort direction for next click
         sortAscending = !sortAscending;
     });
 });
