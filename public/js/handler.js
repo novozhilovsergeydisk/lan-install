@@ -68,8 +68,8 @@ export async function loadPlanningRequests() {
                 ? comments.map(c => `${c.author_fio || 'Неизвестный'}: ${c.comment || ''}`).join('<br>')
                 : 'Нет комментариев';
             
-            console.log('Комментарии:', comments);
-            console.log('Комментарии форматированные:', formattedComments);
+            // console.log('Комментарии:', comments);
+            // console.log('Комментарии форматированные:', formattedComments);
 
             // Создаем строку таблицы
             const row = document.createElement('tr');
@@ -105,8 +105,8 @@ export async function loadPlanningRequests() {
                             <div class="mb-0">
                                 <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">
                                     ${comments[0].created_at} | ${comments[0].author_fio}<br>
-                                    ${comments[0].comment.split(' ').slice(0, 5).join(' ')}
-                                    ${comments[0].comment.split(' ').length > 5 ? '...' : ''}
+                                    ${comments[0].comment.split(' ').slice(0, 4).join(' ')}
+                                    ${comments[0].comment.split(' ').length > 4 ? '...' : ''}
                                 </p>
                             </div>
                             <div class="mt-1">
