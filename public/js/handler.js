@@ -99,14 +99,14 @@ export async function loadPlanningRequests() {
                     ${comments.length > 0 ? `
                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                             <p class="comment-preview-title">Печатный комментарий:</p>
-                            <div class="comment-preview-text">${comments[0].comment}</div>
+                            <div class="comment-preview-text">${comments[comments.length - 1].comment}</div>
                         </div>
                         ${comments.length > 1 ? `
                             <div class="mb-0">
                                 <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">
-                                    ${comments[comments.length - 1].created_at} | ${comments[comments.length - 1].author_fio}<br>
-                                    ${comments[comments.length - 1].comment.split(' ').slice(0, 5).join(' ')}
-                                    ${comments[comments.length - 1].comment.split(' ').length > 5 ? '...' : ''}
+                                    ${comments[0].created_at} | ${comments[0].author_fio}<br>
+                                    ${comments[0].comment.split(' ').slice(0, 5).join(' ')}
+                                    ${comments[0].comment.split(' ').length > 5 ? '...' : ''}
                                 </p>
                             </div>
                         ` : ''}
