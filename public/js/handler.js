@@ -99,7 +99,7 @@ export async function loadPlanningRequests() {
                     ${comments.length > 0 ? `
                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                             <p class="comment-preview-title">Печатный комментарий:</p>
-                            <div class="comment-preview-text">${comments[comments.length - 1].comment}</div>
+                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${comments[comments.length - 1].comment}</div>
                         </div>
                         ${comments.length >= 1 ? `
                             <div class="mb-0">

@@ -573,6 +573,7 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
     
     // Создаем кнопки Сохранить/Отмена
     const saveButton = document.createElement('button');
+    saveButton.id = 'saveCommentBtn';
     saveButton.type = 'button';
     saveButton.className = 'btn btn-sm btn-success';
     saveButton.setAttribute('data-comment-id', commentId);
