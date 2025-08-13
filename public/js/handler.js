@@ -94,7 +94,7 @@ export async function loadPlanningRequests() {
                        </small>                              
                     </div>
                 </td>
-                <td style="width: 60%">
+                <td style="width: 50%">
                     <div class="col-date__date">${request.request_date} | ${request.number}</div>
                     ${comments.length > 0 ? `
                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
@@ -109,8 +109,24 @@ export async function loadPlanningRequests() {
                                     ${comments[0].comment.split(' ').length > 5 ? '...' : ''}
                                 </p>
                             </div>
+                            <div class="mt-1">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#commentsModal"
+                                        data-request-id="${request.id}"
+                                        style="position: relative; z-index: 1;">
+                                    <i class="bi bi-chat-left-text me-1"></i><span class="text-comment"> </span>
+                                    Все комментарии
+                                    <span class="badge bg-primary rounded-pill ms-1">
+                                        ${comments.length}
+                                    </span>
+                                </button>
+                            </div>
                         ` : ''}
                     ` : '<div class="text-muted small">Нет комментариев</div>'}
+                </td>
+                <td style="width: 10%">
                     <div class="btn-group btn-group-sm" role="group">
                         <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
                             <i class="bi bi-pencil-square"></i> В работу
