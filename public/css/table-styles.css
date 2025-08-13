@@ -72,3 +72,30 @@ tr:hover .request-checkbox {
     --bs-table-bg: var(--status-color);
     background-color: var(--status-color);
 }
+
+/* Employees Table in Dark Theme */
+[data-bs-theme="dark"] #employeesTable,
+[data-bs-theme="dark"] #employeesTable *:not(.btn):not(.btn *) {
+    color: #ccc !important;
+}
+
+[data-bs-theme="dark"] #employeesTable thead tr th {
+    background-color: #3563c2 !important;
+    color: #ccc !important;
+}
+
+[data-bs-theme="dark"] #employeesTable tbody tr {
+    --bs-table-bg: transparent !important;
+    /* background-color: inherit !important; */
+}
+
+[data-bs-theme="dark"] #employeesTable .btn {
+    color: var(--bs-btn-color) !important;
+    border-color: var(--bs-btn-border-color);
+}
+
+[data-bs-theme="dark"] #employeesTable .btn:hover {
+    color: var(--bs-btn-hover-color) !important;
+    background-color: var(--bs-btn-hover-bg);
+    border-color: var(--bs-btn-hover-border-color);
+}

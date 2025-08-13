@@ -828,7 +828,7 @@
                                     <div class="card-body p-0">
                                         <div class="table-responsive">
                                             <div class="table-container">
-                                                <table id="employeesTable" class="table table-hover users-table mb-0">
+                                                <table id="employeesTable" class="table table-hover align-middle mb-0">
                                                     <thead>
                                                         <tr class="smaller">
                                                             <th style="width: 30%">Имя</th>
