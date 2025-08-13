@@ -2552,9 +2552,10 @@ async function handleSaveEmployeeChanges(event) {
             closeModalProperly();
 
             // Обновляем только измененную строку в таблице
-            const { employee, passport, car } = result.data;
+            const { employee, passport, car, position } = result.data;
             const row = document.querySelector(`tr[data-employee-id="${employee.id}"]`);
             console.log('Найденная строка:', row);
+            console.log('Позиция:', position.position_name);
             
             if (row) {
                 console.log('Строка найдена, обновляем данные...');
@@ -2570,7 +2571,7 @@ async function handleSaveEmployeeChanges(event) {
                 if (cells[1]) cells[1].textContent = employee.phone || '';
                 
                 // Обновляем должность (третья ячейка)
-                // if (cells[2]) cells[2].textContent = employee.position_name || '';
+                if (cells[2]) cells[2].textContent = position.position_name || '';
                 
                 // Обновляем дату рождения (четвертая ячейка)
                 if (cells[3] && employee.birth_date) {
