@@ -12,7 +12,8 @@ import {
     initAddressEditHandlers,
     initDeleteAddressHandlers,
     saveEmployeeChangesSystem,
-    initPlanningRequestFormHandlers
+    initPlanningRequestFormHandlers,
+    initAddressEditButton
 } from './form-handlers.js';
 import { 
     initializePage, 
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initEmployeeFilter();
     initDeleteEmployee();
     initReportHandlers();
+    initAddressEditButton();
     initDeleteMember();
     initTooltips();
     saveEmployeeChangesSystem();

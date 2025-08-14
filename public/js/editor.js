@@ -407,5 +407,89 @@ function initWysiwygEditor() {
   };
 }
 
-// Экспортируем функцию для использования в других скриптах
-window.initWysiwygEditor = initWysiwygEditor;
+// Глобальная переменная для хранения экземпляра редактора
+let wysiwygEditorInstance = null;
+
+// Функция для сброса редактора
+function resetWysiwygEditor() {
+  const container = document.querySelector('.my-wysiwyg');
+  if (!container) {
+    console.error('WYSIWYG: контейнер редактора не найден');
+    return null;
+  }
+  
+  // Сохраняем HTML контейнера
+  const containerHTML = `
+    <!-- Начало блока WYSIWYG -->
+    <div class="my-wysiwyg">
+      <!-- Панель кнопок -->
+      <div class="wysiwyg-toolbar btn-group mb-2" role="group" aria-label="Editor toolbar">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="bold" title="Жирный"><strong>B</strong></button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="italic" title="Курсив"><em>I</em></button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="createLink" title="Вставить ссылку">link</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="unlink" title="Убрать ссылку">unlink</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="toggle-code" title="HTML">HTML</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="show-help" title="Справка">
+          <i class="bi bi-question-circle"></i>
+        </button>
+      </div>
+
+      <!-- Визуальный редактор -->
+      <div class="wysiwyg-editor border rounded p-2" contenteditable="true" id="comment_editor"></div>
+
+      <!-- Редактор HTML-кода -->
+      <textarea class="wysiwyg-code form-control mt-2" id="comment_code" rows="6" style="display:none;"></textarea>
+
+      <!-- Оригинальный textarea (скрытый) -->
+      <textarea class="form-control" id="comment" name="comment" rows="3" 
+                placeholder="Введите комментарий к заявке" required minlength="3"
+                maxlength="1000" style="display:none;"></textarea>
+      <!-- Сообщение об ошибке -->
+      <div id="comment_error" class="invalid-feedback d-none">
+        Пожалуйста, введите комментарий (от 3 до 1000 символов)
+      </div>
+    </div>
+  `;
+  
+  // Полностью заменяем содержимое контейнера
+  container.outerHTML = containerHTML;
+  
+  console.log('WYSIWYG: редактор полностью пересоздан');
+  
+  // Возвращаем новый элемент редактора
+  return document.getElementById('comment_editor');
+}
+
+// Функция для уничтожения редактора
+function destroyWysiwygEditor() {
+  // Уничтожаем экземпляр редактора, если он существует
+  if (wysiwygEditorInstance) {
+    if (typeof wysiwygEditorInstance.destroy === 'function') {
+      wysiwygEditorInstance.destroy();
+    }
+    wysiwygEditorInstance = null;
+  }
+  
+  // Полностью пересоздаем редактор
+  const newEditor = resetWysiwygEditor();
+  
+  console.log('WYSIWYG: редактор уничтожен и пересоздан');
+  
+  // Возвращаем новый элемент редактора
+  return newEditor;
+}
+
+// Модифицируем initWysiwygEditor для возврата методов управления
+const originalInitWysiwygEditor = initWysiwygEditor;
+window.initWysiwygEditor = function() {
+  // Если редактор уже инициализирован, сначала уничтожаем его
+  destroyWysiwygEditor();
+  
+  // Инициализируем новый экземпляр редактора
+  wysiwygEditorInstance = originalInitWysiwygEditor();
+  return wysiwygEditorInstance;
+};
+
+// Добавляем глобальные методы для управления редактором
+window.resetWysiwygEditor = resetWysiwygEditor;
+window.destroyWysiwygEditor = destroyWysiwygEditor;

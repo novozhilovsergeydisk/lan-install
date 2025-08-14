@@ -2822,7 +2822,7 @@
             let html = `
                 <div class="form-group mb-3">
                     <label for="addressSelect" class="form-label">Выберите адрес:</label>
-                    <select id="addressSelect" class="form-select">
+                    <select id="addressSelect" class="form-select welcome-blade-php">
                         <option value="" selected disabled>Выберите адрес из списка</option>
             `;
             
@@ -2842,11 +2842,14 @@
             
             html += `
                     </select>
-                    <div class="form-text">Всего адресов: ${addresses.length}</div>
+                    <div class="form-text d-flex justify-content-between align-items-center">
+                        <span>Всего адресов: ${addresses.length}</span>
+                    </div>
                 </div>
             `;
             
             addressesList.innerHTML = html;
+        
             
             // Добавляем обработчик события для выбора адреса
             const addressSelect = document.getElementById('addressSelect');
@@ -2877,6 +2880,19 @@
                     // Находим выбранный адрес
                     const selectedAddress = addresses.find(addr => addr.id == selectedAddressId);
                     if (!selectedAddress) return;
+
+                    console.log(selectedAddress);
+
+                    /*
+                    city: "Москва"
+                    comments: null
+                    district: "Академический"
+                    houses: "3"
+                    id: 91
+                    region: "Москва"
+                    responsible_person: null
+                    street: "Новочерёмушкинская"
+                    */
                     
                     // Отображаем информацию о выбранном адресе
                     const addressInfoBlock = document.getElementById('addressInfo');
@@ -2886,14 +2902,24 @@
                                 <div class="card-header bg-primary text-white">
                                     <strong>Выбранный адрес</strong>
                                 </div>
-                                <div class="card-body">
-                                    <p><strong>Город:</strong> ${selectedAddress.city || '-'}</p>
-                                    <p><strong>Район:</strong> ${selectedAddress.district || '-'}</p>
-                                    <p><strong>Улица:</strong> ${selectedAddress.street || '-'}</p>
-                                    <p><strong>Дом:</strong> ${selectedAddress.houses || '-'}</p>
-                                    <p><strong>Ответственное лицо:</strong> ${selectedAddress.responsible_person || 'не указано'}</p>
-                                    <p><strong>Комментарий:</strong> ${selectedAddress.comments || 'нет комментария'}</p>
-                                    <p class="text-muted"><small>Идентификатор адреса: ${selectedAddress.id}</small></p>
+                                <div id="addressInfoBlock" class="card-body" data-update-address-id="${selectedAddress.id}">
+                                    <p data-update-city><strong>Город:</strong> ${selectedAddress.city || '-'}</p>
+                                    <p data-update-district><strong>Район:</strong> ${selectedAddress.district || '-'}</p>
+                                    <p data-update-street><strong>Улица:</strong> ${selectedAddress.street || '-'}</p>
+                                    <p data-update-houses><strong>Дом:</strong> ${selectedAddress.houses || '-'}</p>
+                                    <p data-update-responsible-person><strong>Ответственное лицо:</strong> ${selectedAddress.responsible_person || 'не указано'}</p>
+                                    <p data-update-comments><strong>Комментарий:</strong> ${selectedAddress.comments || 'нет комментария'}</p>
+                                    <div class="address-info">
+                                        <p class="text-muted mb-2"><small>Идентификатор адреса: <span class="address-id">${selectedAddress.id}</span></small></p>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" id="editAddressBtn">
+                                                <i class="bi bi-pencil"></i> Редактировать
+                                            </button>
+                                            <!-- <button type="button" class="btn btn-sm btn-outline-danger" id="deleteAddressBtn">
+                                                <i class="bi bi-trash"></i> Удалить
+                                            </button> -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         `;

@@ -464,10 +464,152 @@ function initCommentValidation() {
     }
 }
 
-// Вызываем функцию инициализации при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
+// Функция для инициализации обработчиков комментариев
+export function initCommentHandlers() {
     initCommentValidation();
-});
+}
+
+// Функция для инициализации обработчика кнопки редактирования адреса
+export function initAddressEditButton() {
+    // console.log('Инициализация обработчика кнопки редактирования адреса');
+    
+    // Используем делегирование событий, так как кнопка создается динамически
+    document.addEventListener('click', function(event) {
+        // Проверяем, что клик был по кнопке редактирования адреса или её дочерним элементам
+        const editButton = event.target.closest('#editAddressBtn');
+        
+        if (editButton) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Находим родительский блок с информацией об адресе
+            const addressInfoBlock = editButton.closest('.card-body');
+            if (!addressInfoBlock) {
+                console.error('Не удалось найти блок с информацией об адресе');
+                return;
+            }
+            
+            // Получаем ID адреса из атрибута data-update-address-id
+            const addressId = addressInfoBlock.getAttribute('data-update-address-id');
+            
+            // console.log('Нажата кнопка редактирования, ID адреса:', addressId);
+
+            if (!addressId) {
+                console.error('ID адреса не найден');
+                return;
+            }
+            
+            // Открыть модальное окно
+            const modal = new bootstrap.Modal(document.getElementById('editAddressModal'));
+            
+            // Загружаем данные адреса с сервера
+            fetch(`/api/addresses/${addressId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const address = data.data;
+                        // Заполняем форму данными
+                        document.getElementById('addressId').value = address.id;
+                        document.getElementById('city_id').value = address.city_id || '';
+                        
+                        // Устанавливаем выбранный город в выпадающем списке
+                        const citySelect = document.getElementById('city');
+                        if (citySelect) {
+                            // Находим опцию с нужным city_id
+                            for (let i = 0; i < citySelect.options.length; i++) {
+                                if (citySelect.options[i].value == address.city_id) {
+                                    citySelect.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        document.getElementById('district').value = address.district || '';
+                        document.getElementById('street').value = address.street || '';
+                        document.getElementById('houses').value = address.houses || '';
+                        document.getElementById('responsible_person').value = address.responsible_person || '';
+                        document.getElementById('comments').value = address.comments || '';
+                        
+                        // Показываем модальное окно
+                        modal.show();
+                    } else {
+                        alert('Ошибка при загрузке данных адреса');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert('Произошла ошибка при загрузке данных');
+                });
+        }
+    });
+}
+
+// Функция для сохранения изменений адреса
+function saveAddressChanges() {
+    const form = document.getElementById('editAddressForm');
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    const addressId = formData.get('id');
+    
+    // Показываем индикатор загрузки
+    const saveButton = document.getElementById('saveEditAddressBtn');
+    const originalButtonText = saveButton.innerHTML;
+    saveButton.disabled = true;
+    saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+    
+    // Отправляем запрос на сервер
+    fetch('/api/addresses/' + addressId, {
+        method: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(Object.fromEntries(formData))
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editAddressModal'));
+            if (modal) modal.hide();
+            
+            // Показываем уведомление об успехе
+            showAlert('Адрес успешно обновлен', 'success');
+            
+            // Обновляем список адресов
+            loadAddresses();
+        } else {
+            throw new Error(data.message || 'Произошла ошибка при обновлении адреса');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при обновлении адреса:', error);
+        showAlert(error.message || 'Произошла ошибка при обновлении адреса', 'danger');
+    })
+    .finally(() => {
+        // Восстанавливаем кнопку
+        saveButton.disabled = false;
+        saveButton.innerHTML = originalButtonText;
+    });
+}
+
+// Инициализация обработчика кнопки сохранения
+function initSaveAddressChanges() {
+    const saveButton = document.getElementById('saveEditAddressBtn');
+    if (saveButton) {
+        // Удаляем предыдущие обработчики, чтобы избежать дублирования
+        const newSaveButton = saveButton.cloneNode(true);
+        saveButton.parentNode.replaceChild(newSaveButton, saveButton);
+        
+        // Добавляем новый обработчик
+        newSaveButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            saveAddressChanges();
+        });
+    }
+}
 
 // Делаем функции доступными глобально
 window.submitRequestForm = submitRequestForm;
@@ -2088,30 +2230,32 @@ export function initFormHandlers() {
     // Добавляем обработчик события для модального окна создания заявки
     const newRequestModal = document.getElementById('newRequestModal');
     if (newRequestModal) {
-        // Переменная для хранения экземпляра редактора
-        let editorInstance = null;
+        // Удаляем существующие обработчики, чтобы избежать дублирования
+        newRequestModal.removeEventListener('show.bs.modal', handleModalShow);
+        newRequestModal.removeEventListener('hidden.bs.modal', handleModalHide);
         
-        newRequestModal.addEventListener('show.bs.modal', function() {
+        // Обработчик открытия модального окна
+        function handleModalShow() {
             // При открытии модального окна обновляем минимальную дату
             initExecutionDateField();
             refreshAddresses();
             
-            // Инициализируем WYSIWYG редактор, если он не был инициализирован
-            if (window.initWysiwygEditor && !editorInstance) {
+            // Инициализируем WYSIWYG редактор
+            if (window.initWysiwygEditor) {
                 try {
-                    editorInstance = window.initWysiwygEditor();
+                    window.initWysiwygEditor();
                     console.log('WYSIWYG редактор инициализирован');
                 } catch (error) {
                     console.error('Ошибка при инициализации WYSIWYG редактора:', error);
                 }
             }
-        });
+        }
         
-        // Очищаем редактор при скрытии модального окна
-        newRequestModal.addEventListener('hidden.bs.modal', function() {
-            const editor = document.getElementById('comment_editor');
-            if (editor) {
-                editor.innerHTML = '';
+        // Обработчик закрытия модального окна
+        function handleModalHide() {
+            // Уничтожаем редактор при скрытии модального окна
+            if (window.destroyWysiwygEditor) {
+                window.destroyWysiwygEditor();
             }
             
             // Очищаем скрытое поле comment
@@ -2119,13 +2263,11 @@ export function initFormHandlers() {
             if (commentField) {
                 commentField.value = '';
             }
-            
-            // Уничтожаем экземпляр редактора
-            if (editorInstance && typeof editorInstance.destroy === 'function') {
-                editorInstance.destroy();
-                editorInstance = null;
-            }
-        });
+        }
+        
+        // Добавляем обработчики событий
+        newRequestModal.addEventListener('show.bs.modal', handleModalShow);
+        newRequestModal.addEventListener('hidden.bs.modal', handleModalHide);
     }
 }
 
