@@ -244,63 +244,67 @@ function initWysiwygEditor() {
     console.log('WYSIWYG: редактор потерял фокус');
   });
 
-// Добавляем флаг для отслеживания обработки вставки
-let isPasteProcessing = false;
-
-editor.addEventListener('paste', function (e) {
-    // Если уже обрабатываем вставку, выходим
-    if (isPasteProcessing) {
-        e.preventDefault();
-        return;
-    }
-    
+  // --- Paste handling: sanitize, respect code-mode ---
+  editor.addEventListener('paste', function (e) {
     e.preventDefault();
-    
-    try {
-        isPasteProcessing = true;
-        const clipboard = (e.clipboardData || window.clipboardData);
-        if (!clipboard) return;
 
-        if (codeArea.style.display !== 'none') {
-            const text = clipboard.getData('text/plain');
-            document.execCommand('insertText', false, text);
-            return;
-        }
+    console.log('WYSIWYG: вставка');
+    console.log(e.clipboardData);
+    console.log(window.clipboardData);
+    console.log('-----------------------------------');
 
-        // rich mode
-        const html = clipboard.getData('text/html');
-        const text = clipboard.getData('text/plain');
+    const clipboard = (e.clipboardData || window.clipboardData);
+    if (!clipboard) return;
 
-        if (html) {
-            const safe = sanitizeHTML(html);
-            insertHTMLAtCursor(safe);
-        } else if (text) {
-            const safeText = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/\r\n|\r|\n/g, '<br>');
-            insertHTMLAtCursor(safeText);
-        } else {
-            const fallback = clipboard.getData('text');
-            document.execCommand('insertText', false, fallback || '');
-        }
-
-        // Очищаем буфер обмена
-        if (window.clipboardData) {
-            window.clipboardData.clearData();
-        } else if (e.clipboardData) {
-            e.clipboardData.clearData();
-        }
-    } catch (error) {
-        console.error('Ошибка при вставке:', error);
-    } finally {
-        // Сбрасываем флаг после завершения обработки
-        isPasteProcessing = false;
+    if (codeArea.style.display !== 'none') {
+      // В режиме кода вставляем как текст
+      const text = clipboard.getData('text/plain');
+      document.execCommand('insertText', false, text);
+      return;
     }
 
+    // rich mode
+    const html = clipboard.getData('text/html');
+    const text = clipboard.getData('text/plain');
+
+    if (html) {
+      // сохраним только разрешенные теги
+      const safe = sanitizeHTML(html);
+      insertHTMLAtCursor(safe);
+    } else if (text) {
+      // вставим plain text, переводя переносы в <br>
+      insertHTMLAtCursor(text);
+    } else {
+      // fallback
+      const fallback = clipboard.getData('text');
+      document.execCommand('insertText', false, fallback || '');
+    }
+
+    // обновим state
     updateToolbarState();
-}, true); // Используем capture phase для более надежного перехвата
+  });
+
+  // --- Toggle HTML view / code view ---
+  toggleBtn.addEventListener('click', function () {
+    if (codeArea.style.display === 'none') {
+      // переключаемся в код-режим: показать HTML
+      codeArea.value = editor.innerHTML;
+      editor.style.display = 'none';
+      codeArea.style.display = 'block';
+      codeArea.focus();
+      toggleBtn.classList.add('active');
+    } else {
+      // из кода обратно — санитизируем HTML и покажем
+      const edited = codeArea.value || '';
+      const safe = sanitizeHTML(edited);
+      editor.innerHTML = safe;
+      codeArea.style.display = 'none';
+      editor.style.display = 'block';
+      editor.focus();
+      toggleBtn.classList.remove('active');
+    }
+    updateToolbarState();
+  });
 
   // Обработка вставки в режиме кода
   codeArea.addEventListener('paste', function (e) {
