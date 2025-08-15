@@ -119,6 +119,7 @@ class EmployeeUserController extends Controller
             $employee = DB::table('employees')
                 ->select(
                     'employees.id as employee_id',
+                    'employees.user_id',
                     'employees.fio',
                     'employees.phone',
                     'employees.birth_date',
@@ -170,12 +171,24 @@ class EmployeeUserController extends Controller
                 ];
             }
 
+            $user_id = $employee->user_id;
+
+            $sqlRole = "
+                SELECT ur.role_id, r.name, u.email user_email  
+                FROM user_roles ur
+                JOIN roles r ON ur.role_id = r.id 
+                JOIN users u ON u.id = ur.user_id 
+                WHERE ur.user_id = ($user_id)";
+
+            $role = DB::selectOne($sqlRole);
+
             return response()->json([
                 'success' => true,
                 'data' => [
                     'employee' => $employee,
                     'passport' => $passport,
-                    'car' => $car
+                    'car' => $car,
+                    'role' => $role
                 ]
             ]);
 
@@ -440,6 +453,17 @@ class EmployeeUserController extends Controller
 
             $sqlUpdateRole = "UPDATE user_roles SET role_id = $request->role_id_update WHERE user_id = ($sqlEmployee)";
 
+            $sqlRole_1 = "SELECT ur.role_id, r.name AS role_name FROM user_roles ur LEFT JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = ($sqlEmployee)";
+            
+            $sqlRole = "
+                SELECT ur.role_id, r.name AS role_name, u.email user_email  
+                FROM user_roles ur
+                JOIN roles r ON ur.role_id = r.id 
+                JOIN users u ON u.id = ur.user_id 
+                WHERE ur.user_id = ($sqlEmployee)";
+
+            $role = DB::selectOne($sqlRole);
+
             // $request->sql = $sql;
 
             // return $request->all();
@@ -555,6 +579,7 @@ class EmployeeUserController extends Controller
                         'passport' => $passport,
                         'car' => $car,
                         'position' => $position,
+                        'role' => $role,
                     ],
                 ], 200);
             }

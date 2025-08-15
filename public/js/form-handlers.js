@@ -2119,11 +2119,16 @@ export function initEmployeeEditHandlers() {
 
                 const data = await response.json();
 
+                console.log('Полученные данные сотрудника:', data);
+
                 if (data.success) {
                     // Заполняем форму данными сотрудника
                     const employee = data.data.employee;
                     const passport = data.data.passport;
                     const car = data.data.car;
+                    const role = data.data.role;
+
+                    console.log(role);
 
                     // document.getElementById('loginInputUpdate').value = employee.login || '';
                     // document.getElementById('passwordInputUpdate').value = employee.password || '';
@@ -2169,6 +2174,24 @@ export function initEmployeeEditHandlers() {
                         document.getElementById('carLicensePlateInputUpdate').value = car.license_plate || '';
                         // Поля для года и цвета автомобиля отсутствуют в форме
                     }
+
+                    /*
+                    <select name="role_id_update" id="roleSelectUpdate" class="form-select mb-4" required="" data-field-name="Системная роль">
+                        <option value="">Выберите системную роль</option>    
+                        <option value="1">admin</option>
+                        <option value="2">user</option>
+                        <option value="3">fitter</option>     
+                    </select>
+                    */
+
+                    const roleSelectUpdate = document.getElementById('roleSelectUpdate');
+                    // roleSelectUpdate.value = role.role_id;
+                    const option = roleSelectUpdate.options[0];
+                    option.value = role.role_id;
+                    option.innerText = role.name;
+
+                    console.log(option);
+                    console.log(roleSelectUpdate);
 
                     console.log('Данные сотрудника успешно загружены');
                 } else {
@@ -2698,6 +2721,8 @@ async function handleSaveEmployeeChanges(event) {
 
         console.log('Ответ от сервера при обновлении сотрудника:', result);
 
+        const role = result.data.role;
+
         if (result.success) {
             showAlert(`Сотрудник <b>${result.data.employee.fio}</b> успешно обновлен`, 'success');
             closeModalProperly();
@@ -2714,7 +2739,8 @@ async function handleSaveEmployeeChanges(event) {
                 
                 // Обновляем ФИО и email (первая ячейка)
                 if (cells[0]) {
-                    const email = employee.user_email || cells[0].querySelector('div:first-child')?.textContent.split('\n')[1]?.trim() || '';
+                    const email = role.user_email;
+                    // || cells[0].querySelector('div:first-child')?.textContent.split('\n')[1]?.trim() || '';
                     cells[0].querySelector('div:first-child').innerHTML = `${employee.fio || ''} <br> ${email}`;
                 }
                 
@@ -2836,17 +2862,17 @@ async function handleSaveEmployeeChanges(event) {
 // Функция для инициализации обработчиков кнопок сотрудников
 function initEmployeeButtons() {
     // Обработчики для кнопок редактирования
-    document.querySelectorAll('.edit-employee-btn').forEach(btn => {
-        if (!btn.hasAttribute('data-listener-added')) {
-            btn.addEventListener('click', function() {
-                const employeeId = this.getAttribute('data-employee-id');
-                // Здесь можно добавить логику для открытия модального окна редактирования
-                // или использовать существующий обработчик, если он уже есть
-                console.log('Edit employee:', employeeId);
-            });
-            btn.setAttribute('data-listener-added', 'true');
-        }
-    });
+    // document.querySelectorAll('.edit-employee-btn').forEach(btn => {
+    //     if (!btn.hasAttribute('data-listener-added')) {
+    //         btn.addEventListener('click', function() {
+    //             const employeeId = this.getAttribute('data-employee-id');
+    //             // Здесь можно добавить логику для открытия модального окна редактирования
+    //             // или использовать существующий обработчик, если он уже есть
+    //             console.log('Edit employee:', employeeId);
+    //         });
+    //         btn.setAttribute('data-listener-added', 'true');
+    //     }
+    // });
     
     // Обработчики для кнопок удаления
     document.querySelectorAll('.delete-employee-btn').forEach(btn => {
