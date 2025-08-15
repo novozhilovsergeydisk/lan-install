@@ -2881,7 +2881,7 @@
                     const selectedAddress = addresses.find(addr => addr.id == selectedAddressId);
                     if (!selectedAddress) return;
 
-                    console.log(selectedAddress);
+                    console.log({ selectedAddress });
 
                     /*
                     city: "Москва"

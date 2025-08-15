@@ -1669,7 +1669,15 @@ export function initAddressEditHandlers() {
                     await loadAddressesPaginated();
                 }
 
-                showAlert('Адрес успешно обновлен', 'success');
+                console.log('Адрес успешно обновлен.');
+
+                // Здесь нужно обновить блок с id=addressInfo
+
+                document.getElementById('addressInfo').innerHTML = '';
+
+                loadAddresses();
+
+                showAlert('Адрес успешно обновлен.', 'success');
 
             } catch (error) {
                 console.error('Ошибка при сохранении адреса:', error);
