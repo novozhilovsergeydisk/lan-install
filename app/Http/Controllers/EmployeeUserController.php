@@ -410,9 +410,6 @@ class EmployeeUserController extends Controller
         ]);
 
         try {
-
-// return $request->all();
-
             DB::beginTransaction();
 
             // Продолжаем выполнение обновления данных
@@ -473,92 +470,84 @@ class EmployeeUserController extends Controller
                 $sqlUpdateRole
             );
 
-            // Обновление или создание паспорта
-            // Проверяем наличие обязательного поля series_number
-            if ($request->passport_series) {
-                $passportData = [
-                    'series_number' => $request->passport_series,
-                    'issued_by' => $request->passport_issued_by,
-                    'issued_at' => $request->passport_issued_at,
-                    'department_code' => $request->passport_department_code,
-                    'updated_at' => now()
-                ];
+            // Проверяем наличие существующей записи паспорта
+            $passportExists = DB::selectOne("SELECT id FROM passports WHERE employee_id = ?", [$employeeId]);
 
-                $passportExists = DB::selectOne(
-                    "SELECT id FROM passports WHERE employee_id = ? LIMIT 1",
-                    [$employeeId]
+            // Обновление или создание паспортных данных
+            if ($passportExists) {
+                // Обновляем существующий паспорт
+                DB::update(
+                    "UPDATE passports SET
+                        series_number = ?,
+                        issued_by = ?,
+                        issued_at = ?,
+                        department_code = ?,
+                        updated_at = ?
+                    WHERE employee_id = ?",
+                    [
+                        $request->passport_series,
+                        $request->passport_issued_by,
+                        $request->passport_issued_at,
+                        $request->passport_department_code,
+                        now(),
+                        $employeeId
+                    ]
                 );
-
-                if ($passportExists) {
-                    DB::update(
-                        "UPDATE passports SET
-                            series_number = ?,
-                            issued_by = ?,
-                            issued_at = ?,
-                            department_code = ?,
-                            updated_at = ?
-                        WHERE employee_id = ?",
-                        [
-                            $request->passport_series,
-                            $request->passport_issued_by,
-                            $request->passport_issued_at,
-                            $request->passport_department_code,
-                            now(),
-                            $employeeId
-                        ]
-                    );
-                } else {
-                    DB::insert(
-                        "INSERT INTO passports
-                            (employee_id, series_number, issued_by, issued_at, department_code, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)",
-                        [
-                            $employeeId,
-                            $request->passport_series,
-                            $request->passport_issued_by,
-                            $request->passport_issued_at,
-                            $request->passport_department_code,
-                            now(),
-                            now()
-                        ]
-                    );
-                }
+            } else {
+                // Создаем новую запись паспорта
+                DB::insert(
+                    "INSERT INTO passports
+                        (employee_id, series_number, issued_by, issued_at, department_code, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    [
+                        $employeeId,
+                        $request->passport_series,
+                        $request->passport_issued_by,
+                        $request->passport_issued_at,
+                        $request->passport_department_code,
+                        now(),
+                        now()
+                    ]
+                );
             }
 
-            // Обновление или создание данных об автомобиле
-            if ($request->car_brand || $request->car_plate || $request->car_registered_at) {
-                $carExists = DB::selectOne(
-                    "SELECT id FROM cars WHERE employee_id = ? LIMIT 1",
-                    [$employeeId]
-                );
+            $sqlTestUpdateCars = "";
+            $sqlTestInsertCars = "";
 
-                if ($carExists) {
-                    DB::update(
-                        "UPDATE cars SET
-                            brand = ?,
-                            license_plate = ?,
-                            registered_at = ?
-                        WHERE employee_id = ?",
-                        [
-                            $request->car_brand,
-                            $request->car_plate,
-                            $request->car_registered_at,
-                            $employeeId
-                        ]
-                    );
-                } else {
-                    DB::insert(
-                        "INSERT INTO cars
-                            (employee_id, brand, license_plate, registered_at)
-                        VALUES (?, ?, ?, ?)",
-                        [
-                            $employeeId,
-                            $request->car_brand,
-                            $request->car_plate,
-                            $request->car_registered_at
-                        ]
-                    );
-                }
+            // Проверяем наличие существующей записи автомобиля
+            $carExists = DB::selectOne("SELECT id FROM cars WHERE employee_id = ? LIMIT 1", [$employeeId]);
+
+            // Обновление или создание данных об автомобиле
+            if ($carExists) {
+                $sqlTestUpdateCars = "UPDATE cars SET brand = $request->car_brand, license_plate = $request->car_plate, registered_at = $request->car_registered_at WHERE employee_id = $employeeId";
+
+                DB::update(
+                    "UPDATE cars SET
+                        brand = ?,
+                        license_plate = ?,
+                        registered_at = ?
+                    WHERE employee_id = ?",
+                    [
+                        $request->car_brand,
+                        $request->car_plate,
+                        $request->car_registered_at,
+                        $employeeId
+                    ]
+                );
+            } else {                    
+                $sqlTestInsertCars = "INSERT INTO cars (employee_id, brand, license_plate, registered_at) VALUES ($employeeId, $request->car_brand, $request->car_plate, $request->car_registered_at)";
+
+                DB::insert(
+                    "INSERT INTO cars
+                        (employee_id, brand, license_plate, registered_at)
+                    VALUES (?, ?, ?, ?)",
+                    [
+                        $employeeId,
+                        $request->car_brand,
+                        $request->car_plate,
+                        $request->car_registered_at
+                    ]
+                );
             }
 
             DB::commit();
@@ -574,6 +563,9 @@ class EmployeeUserController extends Controller
                     'user_id' => $user_id,
                     'sqlUpdateRole' => $sqlUpdateRole,
                     'sqlEmployee' => $sqlEmployee,
+                    'request' => $request->all(),
+                    'sqlTestUpdateCars' => $sqlTestUpdateCars,
+                    'sqlTestInsertCars' => $sqlTestInsertCars,
                     'data' => [
                         'employee' => $employee,
                         'passport' => $passport,

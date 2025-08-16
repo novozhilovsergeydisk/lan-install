@@ -2752,7 +2752,9 @@ async function handleSaveEmployeeChanges(event) {
                 
                 // Обновляем дату рождения (четвертая ячейка)
                 if (cells[3] && employee.birth_date) {
-                    cells[3].textContent = employee.birth_date;
+                    // Форматируем дату из YYYY-MM-DD в DD-MM-YYYY
+                    const [year, month, day] = employee.birth_date.split('-');
+                    cells[3].textContent = `${day}-${month}-${year}`; // Форматируем дату рождения
                 }
                 
                 // Обновляем паспортные данные (пятая ячейка)

@@ -860,7 +860,7 @@
                                                             </td>
                                                             <td>{{ $employee->phone }}</td>
                                                             <td>{{ $employee->position }}</td>
-                                                            <td>{{ $employee->birth_date }}</td>
+                                                            <td>{{ $employee->birth_date ? \Carbon\Carbon::parse($employee->birth_date)->format('d-m-Y') : '' }}</td>
                                                             <td>
                                                                 <div>
                                                                     {{ $employee->series_number }} <br> 
@@ -2410,6 +2410,21 @@
 
 <!-- Модальное окно для редактирования сотрудника -->
 <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel">
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const editEmployeeModal = document.getElementById('editEmployeeModal');
+            if (editEmployeeModal) {
+                editEmployeeModal.addEventListener('hidden.bs.modal', function () {
+                    const form = document.getElementById('employeeFormUpdate');
+                    if (form) {
+                        form.reset();
+                    }
+                });
+            }
+        });
+    </script>
+    @endpush
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
