@@ -1353,10 +1353,10 @@ class HomeController extends Controller
             }
 
             // Роль fitter может закрывать заявки только свои
-            if ($employee_role === 'fitter') {
+            if ($employee_role === 'fitter' && !$isBrigadeMember) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'У вас нет прав закрыть заявку',
+                    'message' => 'Вы не можете закрыть заявку, так как она создана другим сотрудником',
                     'RequestID' => $id,
                     'User' => $user,
                     'Employee' => $employee,
