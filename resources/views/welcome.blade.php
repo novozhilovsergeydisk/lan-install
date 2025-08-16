@@ -97,6 +97,24 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">
 
+    <script>
+        // Экспортируем роль и флаги ролей в JS
+        window.App = window.App || {};
+        window.App.user = {
+            roles: @json($user->roles ?? []),
+            isAdmin: @json($user->isAdmin ?? false),
+            isUser: @json($user->isUser ?? false),
+            isFitter: @json($user->isFitter ?? false)
+        };
+        window.App.role = (window.App.user.isAdmin && 'admin')
+            || (window.App.user.isFitter && 'fitter')
+            || (window.App.user.isUser && 'user')
+            || 'guest';
+
+        // console.log(window.App);
+        console.log('Current role:', window.App.role);
+    </script>
+
     <style>
         
     </style>
@@ -1179,12 +1197,12 @@
                     if (data.success) {
                         location.reload();
                     } else {
-                        alert('Ошибка при закрытии заявки: ' + (data.message || 'Неизвестная ошибка'));
+                        alert('#' + requestId + 'Ошибка при закрытии заявки: ' + (data.message || 'Неизвестная ошибка'));
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Произошла ошибка при отправке запроса');
+                    alert('#' + requestId + 'Произошла ошибка при отправке запроса');
                 });
         }
     }
@@ -2382,23 +2400,27 @@
 
                 const result = await response.json();
 
+                console.log(result);
+
                 if (response.ok && result.success) {
                     showAlert('Заявка успешно закрыта', 'success');
-                    // Закрываем модальное окно
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('closeRequestModal'));
-                    modal.hide();
-
-
-                    console.log(result);
 
                     // Обновляем страницу
                     setTimeout(() => location.reload(), 2000);
                 } else {
+                    // Закрываем модальное окно
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('closeRequestModal'));
+                    modal.hide();
+
                     throw new Error(result.message || 'Неизвестная ошибка при закрытии заявки');
                 }
+
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('closeRequestModal'));
+                modal.hide();
             } catch (error) {
-                console.error('Ошибка при закрытии заявки:', error);
-                showAlert(`Ошибка при закрытии заявки: ${error.message}`, 'danger');
+                console.error('Ошибка при закрытии заявки  #${requestId}:', error);
+                showAlert(`Ошибка при закрытии заявки #${requestId} : ${error.message}`, 'danger');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;

@@ -29,6 +29,9 @@ import {
 // Инициализация страницы при загрузке DOM
 document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM полностью загружен');
+    // Определяем роль пользователя из Blade -> window.App
+    const role = (window.App && window.App.role) ? window.App.role : 'guest';
+    const canManageBrigades = role !== 'user' && role !== 'fitter'; // админ/монтажник и т.п.
     initializePage();
     initFormHandlers();
     initEmployeeEditHandlers();

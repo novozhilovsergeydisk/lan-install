@@ -37,7 +37,7 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['auth', 'roles']);
 
 // Close request
-Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth');
+Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth')->middleware(['auth', 'roles']);;
 
 // Transfer request
 Route::post('/api/requests/transfer', [HomeController::class, 'transferRequest'])->name('requests.transfer')->middleware('auth');

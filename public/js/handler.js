@@ -9,7 +9,7 @@ window.postData = postData;
 export async function loadPlanningRequests() {
     const container = document.getElementById('planning-container');
     if (!container) {
-        console.error('Контейнер для таблицы запланированных заявок не найден');
+        console.debug('Контейнер для таблицы запланированных заявок не найден (возможно, страница/роль без планирования)');
         return;
     }
 
@@ -1499,7 +1499,9 @@ function validateBrigadeMembers() {
             : 'В бригаде должно быть минимум 2 участника, включая бригадира';
     }
 
-    const submitButton = document.querySelector('button[type="submit"]');
+    // Скоупим выбор кнопки отправки только к формам/модалкам бригад,
+    // чтобы не затрагивать кнопку выхода и другие submit-кнопки на странице
+    const submitButton = document.querySelector('#brigadeModal button[type="submit"], #brigadeDetails button[type="submit"]');
     if (submitButton) {
         submitButton.disabled = !isValid;
     }

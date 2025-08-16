@@ -1317,13 +1317,67 @@ class HomeController extends Controller
     public function closeRequest($id, Request $request)
     {
         try {
-            // Для отладки
+            $user = auth()->user();
+            $user->method = 'HomeController::closeRequest';
+            $employee = $user->employee;
+            $employee_role = $user->roles[0];
+
+            $sql = "select * from requests where id = ?";
+            $result = DB::select($sql, [$id]);
+            $operator_id = $result[0]->operator_id;
+            $employee_id = $employee->id;
+
+            // Проверяем, был ли текущий сотрудник членом бригады, выполнявшей данную заявку
+            $sql = "select exists (
+                        select 1
+                        from requests r
+                        join brigade_members bm on bm.brigade_id = r.brigade_id
+                        where r.id = ? and bm.employee_id = ?
+                    ) as is_member";
+            $memberRow = DB::selectOne($sql, [$id, $employee_id]);
+            $isBrigadeMember = (bool) ($memberRow->is_member ?? false);
+
+            // Роль user может закрывать заявки только заявки, где он раработал в составе бригады
+
+            if ($employee_role === 'user' && !$isBrigadeMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Вы не можете закрыть заявку, так как она создана другим сотрудником',
+                    'RequestID' => $id,
+                    'User' => $user,
+                    'Employee' => $employee,
+                    'operator_id' => $operator_id,
+                    'employee_id' => $employee_id,
+                    'role' => $employee_role,
+                ], 403);
+            }
+
+            // Роль fitter может закрывать заявки только свои
+            if ($employee_role === 'fitter') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'У вас нет прав закрыть заявку',
+                    'RequestID' => $id,
+                    'User' => $user,
+                    'Employee' => $employee,
+                    'operator_id' => $operator_id,
+                    'employee_id' => $employee_id,
+                    'role' => $employee_role,
+                ], 403);
+            }
+
+            // тест
             // return response()->json([
             //     'success' => true,
-            //     'message' => 'Заявка успешно закрыта (test)',
+            //     'message' => 'Заявка успешно закрыта (режим тестирования)',
             //     'RequestID' => $id,
             //     'RequestComment' => $request->input('comment'),
-            //     'RequestUncompletedWorks' => $request->input('uncompleted_works')
+            //     'User' => $user,
+            //     'Employee' => $employee,
+            //     'operator_id' => $operator_id,
+            //     'employee_id' => $employee_id,
+            //     'role' => $employee_role,
+            //     'is_brigade_member' => $isBrigadeMember,
             // ]);
 
             // Начинаем транзакцию

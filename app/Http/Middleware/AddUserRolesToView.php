@@ -27,6 +27,21 @@ class AddUserRolesToView
                 'user_id' => $user->id,
                 'email' => $user->email
             ]);
+
+            if (!isset($user->employee)) {
+                \Log::info('AddUserRolesToView: Связанный сотрудник не найден');
+                
+                $employee = DB::table('employees')
+                    ->where('user_id', $user->id)
+                    ->first();
+                
+                if ($employee) {
+                    $user->employee = $employee;
+                    \Log::info('AddUserRolesToView: Поиск связанного сотрудника завершен');
+                } else {
+                    \Log::warning('AddUserRolesToView: Пользователь не имеет связанного сотрудника');
+                }
+            }
             
             // Загружаем роли, если они еще не загружены
             if (!isset($user->roles)) {
@@ -48,6 +63,8 @@ class AddUserRolesToView
                 $user->isAdmin = in_array('admin', $roles);
                 $user->isUser = in_array('user', $roles);
                 $user->isFitter = in_array('fitter', $roles);
+                $user->employee = $employee;
+                $user->test = 'proxima';
                 
                 \Log::info('AddUserRolesToView: Установлены флаги ролей', [
                     'user_id' => $user->id,

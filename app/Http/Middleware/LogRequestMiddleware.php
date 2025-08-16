@@ -28,18 +28,18 @@ class LogRequestMiddleware
 
         try {
             // Записываем информацию о запросе в базу данных
-//            DB::table('request_logs')->insert([
-//                'method' => $request->method(),
-//                'url' => $request->fullUrl(),
-//                'ip_address' => $request->ip(),
-//                'user_agent' => $request->userAgent(),
-//                'request_headers' => json_encode($request->headers->all()),
-//                'request_body' => $request->getContent() ? json_encode($request->all()) : null,
-//                'response_status' => $response->getStatusCode(),
-//                'execution_time' => $executionTime,
-//                'created_at' => now(),
-//                'updated_at' => now(),
-//            ]);
+               DB::table('request_logs')->insert([
+                   'method' => $request->method(),
+                   'url' => $request->fullUrl(),
+                   'ip_address' => $request->ip(),
+                   'user_agent' => $request->userAgent(),
+                   'request_headers' => json_encode($request->headers->all()),
+                   'request_body' => $request->getContent() ? json_encode($request->all()) : null,
+                   'response_status' => $response->getStatusCode(),
+                   'execution_time' => $executionTime,
+                   'created_at' => now(),
+                   'updated_at' => now(),
+               ]);
 
             // Дополнительно логируем в файл (опционально)
             // Log::info('Request logged to database', [
