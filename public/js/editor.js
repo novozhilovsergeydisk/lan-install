@@ -137,6 +137,31 @@ function initWysiwygEditor() {
     return frag.innerHTML;
   }
 
+  // Экранировать HTML-спецсимволы в тексте
+  function escapeHTML(str) {
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Преобразовать URL в <a> ссылки (http/https и www.*)
+  function linkify(text) {
+    if (!text) return '';
+    const urlRegex = /((https?:\/\/)[^\s<]+)|(\bwww\.[^\s<]+)/gi;
+    return text.replace(urlRegex, (match) => {
+      let href = match;
+      if (!/^https?:\/\//i.test(href)) {
+        href = 'https://' + href; // нормализуем www.*
+      }
+      const safeHref = href; // href уже из текста, без HTML
+      const safeLabel = match; // показываем как есть (экранировано заранее)
+      return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${safeLabel}</a>`;
+    });
+  }
+
   // Возвращает plain text (видимый текст) из editor
   function getEditorPlainText() {
     return editor.innerText.replace(/\u00A0/g, ' ').trim();
@@ -272,9 +297,10 @@ function initWysiwygEditor() {
       const safe = sanitizeHTML(html);
       insertHTMLAtCursor(safe);
     } else if (text) {
-      // Вставим plain text, переводя переводы строк в <br>
-      // Учитываем и Windows-формат \r\n
-      const withBreaks = text.replace(/\r?\n/g, '<br>');
+      // Вставим plain text: экранируем, превращаем URL в ссылки, переводы строк в <br>
+      const escaped = escapeHTML(text);
+      const linked = linkify(escaped);
+      const withBreaks = linked.replace(/\r?\n/g, '<br>');
       insertHTMLAtCursor(withBreaks);
     } else {
       // fallback
