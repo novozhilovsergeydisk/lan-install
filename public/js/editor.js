@@ -272,8 +272,10 @@ function initWysiwygEditor() {
       const safe = sanitizeHTML(html);
       insertHTMLAtCursor(safe);
     } else if (text) {
-      // вставим plain text, переводя переносы в <br>
-      insertHTMLAtCursor(text);
+      // Вставим plain text, переводя переводы строк в <br>
+      // Учитываем и Windows-формат \r\n
+      const withBreaks = text.replace(/\r?\n/g, '<br>');
+      insertHTMLAtCursor(withBreaks);
     } else {
       // fallback
       const fallback = clipboard.getData('text');
@@ -293,6 +295,9 @@ function initWysiwygEditor() {
       codeArea.style.display = 'block';
       codeArea.focus();
       toggleBtn.classList.add('active');
+      // Меняем текст и title кнопки в режиме кода
+      toggleBtn.textContent = 'Код';
+      toggleBtn.title = 'Код';
     } else {
       // из кода обратно — санитизируем HTML и покажем
       const edited = codeArea.value || '';
@@ -302,6 +307,9 @@ function initWysiwygEditor() {
       editor.style.display = 'block';
       editor.focus();
       toggleBtn.classList.remove('active');
+      // Возвращаем текст и title для визуального режима
+      toggleBtn.textContent = 'HTML';
+      toggleBtn.title = 'HTML';
     }
     updateToolbarState();
   });
