@@ -1328,12 +1328,18 @@ class HomeController extends Controller
             $employee_id = $employee->id;
 
             // Проверяем, был ли текущий сотрудник членом бригады, выполнявшей данную заявку
-            $sql = "select exists (
-                        select 1
-                        from requests r
-                        join brigade_members bm on bm.brigade_id = r.brigade_id
-                        where r.id = ? and bm.employee_id = ?
-                    ) as is_member";
+            $sql = "SELECT EXISTS (
+                SELECT 1
+                FROM requests r
+                JOIN brigades b ON b.id = r.brigade_id
+                LEFT JOIN brigade_members bm ON bm.brigade_id = r.brigade_id
+                WHERE r.id = :request_id
+                AND (
+                        bm.employee_id = :employee_id
+                    OR b.leader_id   = :employee_id
+                )
+            ) AS is_member;
+            ";
             $memberRow = DB::selectOne($sql, [$id, $employee_id]);
             $isBrigadeMember = (bool) ($memberRow->is_member ?? false);
 
