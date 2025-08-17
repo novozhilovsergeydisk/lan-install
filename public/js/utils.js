@@ -102,7 +102,7 @@ async function postData(url, body) {
     } catch (error) {
         console.error('Ошибка отправки:', error);
         if (error.message !== 'EMPLOYEE_NOT_FOUND') {
-            showAlert(error.message || 'Произошла ошибка при отправке данных' . error.message, 'danger');
+            showAlert(error.message || ('Произошла ошибка при отправке данных: ' + (error && error.message ? error.message : '')), 'danger');
         }
         throw error;
     }

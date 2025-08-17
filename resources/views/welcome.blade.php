@@ -973,20 +973,48 @@
                     </div>
 
                     <div class="tab-pane fade" id="reports" role="tabpanel">
-                        <h4>Отчеты</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="mb-0">Отчеты</h4>
+                            <button type="button" class="btn btn-outline-info btn-sm" id="reports-help-btn" data-bs-toggle="modal" data-bs-target="#reportsHelpModal">
+                                <i class="bi bi-question-circle me-1"></i>Справка
+                            </button>
+                        </div>
 
                         <div class="row mb-3">
                             <div class="col-md-4">
-                                <label for="startDate" class="form-label">Дата начала</label>
-                                
-                                <div id="calendar-content-2" class="max-w-400 p-4 calendar-content">
-                                    <div id="datepicker-reports-start"></div>
+                                <label for="datepicker-reports-start" class="form-label">Дата начала</label>
+                                <div class="input-group">
+                                    <input
+                                        type="text"
+                                        id="datepicker-reports-start"
+                                        class="form-control"
+                                        placeholder="дд.мм.гггг"
+                                        autocomplete="off"
+                                        inputmode="numeric"
+                                        maxlength="10"
+                                        pattern="\d{2}\.\d{2}\.\d{4}"
+                                    />
+                                    <button class="btn btn-outline-secondary" type="button" id="btn-report-start-calendar" aria-label="Открыть календарь">
+                                        <i class="bi bi-calendar"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <label for="endDate" class="form-label">Дата окончания</label>
-                                <div id="calendar-content-3" class="max-w-400 p-4 calendar-content">
-                                    <div id="datepicker-reports-end"></div>
+                                <label for="datepicker-reports-end" class="form-label">Дата окончания</label>
+                                <div class="input-group">
+                                    <input
+                                        type="text"
+                                        id="datepicker-reports-end"
+                                        class="form-control"
+                                        placeholder="дд.мм.гггг"
+                                        autocomplete="off"
+                                        inputmode="numeric"
+                                        maxlength="10"
+                                        pattern="\d{2}\.\d{2}\.\d{4}"
+                                    />
+                                    <button class="btn btn-outline-secondary" type="button" id="btn-report-end-calendar" aria-label="Открыть календарь">
+                                        <i class="bi bi-calendar"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1031,6 +1059,53 @@
                                 <tbody id="requestsReportBody">
                                 </tbody>
                             </table>
+                        </div>
+
+                        <!-- Reports Help Modal -->
+                        <div class="modal fade" id="reportsHelpModal" tabindex="-1" aria-labelledby="reportsHelpModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="reportsHelpModalLabel">Справка по формированию отчета</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <h6 class="fw-semibold">Календарь и ввод дат</h6>
+                                            <ul class="mb-3 list-unstyled">
+                                                <li>Даты вводятся в формате <code>дд.мм.гггг</code>.<br> 
+                                                    Разрешены только цифры, точки подставляются автоматически.</li>
+                                                <li>Календарь открывается только по кнопке с иконкой календаря справа от поля.</li>
+                                                <li>При фокусе всё значение выделяется — новый ввод заменяет текущую дату.</li>
+                                                <li>По умолчанию установлены: начало — первый день текущего месяца, конец — сегодня.</li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <h6 class="fw-semibold">Фильтры</h6>
+                                            <ul class="mb-3 list-unstyled">
+                                                <li><strong>Сотрудник:</strong> по умолчанию <code>Все сотрудники</code>.<br> 
+                                                    Выберите конкретного сотрудника для отчета по нему.</li>
+                                                <li><strong>Адрес:</strong> по умолчанию <code>Все адреса</code>.<br> 
+                                                    Выберите конкретный адрес для отчета по адресу. У данного фильтра есть кнопка сброса.</li>
+                                                <li><strong>За весь период:</strong> даты игнорируются и строится отчет за весь период по выбранным фильтрам.</li>
+                                                <li>Фильтры можно комбинировать в любом порядке</li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="mb-0">
+                                            <h6 class="fw-semibold">Генерация отчета</h6>
+                                            <ul class="mb-0 list-unstyled">
+                                                <li>Нажмите кнопку <code>Сгенерировать отчет</code> после задания параметров.</li>
+                                                <li>При ошибке форматирования даты поле будет подсвечено, исправьте формат и повторите.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1113,6 +1188,39 @@
     [data-bs-theme="dark"] .form-switch .form-check-input:checked {
         background-color: #0d6efd;
         border-color: #0d6efd;
+    }
+
+    /* Help button (Reports) softer color */
+    #reports-help-btn {
+        color: #7a7a7a; /* text a bit darker for readability */
+        border-color: #ccc;
+    }
+    #reports-help-btn:hover,
+    #reports-help-btn:focus {
+        color: #666;
+        border-color: #bbb;
+        background-color: rgba(204, 204, 204, 0.15);
+    }
+    /* Dark theme adjustments */
+    [data-bs-theme="dark"] #reports-help-btn {
+        color: #ccc;
+        border-color: #888;
+    }
+    [data-bs-theme="dark"] #reports-help-btn:hover,
+    [data-bs-theme="dark"] #reports-help-btn:focus {
+        color: #e0e0e0;
+        border-color: #9a9a9a;
+        background-color: rgba(204, 204, 204, 0.10);
+    }
+    /* Reports help modal lists: keep indentation and increase line height */
+    #reportsHelpModal ul.list-unstyled {
+        padding-left: 1.25rem; /* keep left indent without bullets */
+        margin-bottom: 0.75rem;
+    }
+    #reportsHelpModal ul.list-unstyled > li {
+        line-height: 1.5; /* slightly larger for readability */
+        margin-bottom: 0.95rem;
+        font-size: 0.95rem;
     }
     
     [data-bs-theme="dark"] .form-switch .form-check-input:focus {

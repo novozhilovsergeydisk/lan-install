@@ -16,20 +16,163 @@ export function initReportDatepickers() {
         autoclose: true
     };
 
-    // Инициализация datepicker для календарей в отчётах
-    $('#datepicker-reports-start, #datepicker-reports-end').datepicker({
+    // Инициализация datepicker для календарей в отчётах (привязываем к инпутам)
+    const $startInput = $('#datepicker-reports-start');
+    const $endInput = $('#datepicker-reports-end');
+
+    $startInput.add($endInput).datepicker({
         language: 'ru',
         format: 'dd.mm.yyyy',
         autoclose: true,
         todayHighlight: true
     });
 
+    // Отключаем автопоказ календаря по фокусу/клику на инпуте — календарь открывается только по кнопке
+    // В bootstrap-datepicker 1.9.0 обработчики навешиваются без namespace, поэтому снимаем generic-события
+    $startInput.add($endInput)
+        .off('focus')
+        .off('click')
+        .off('focusin')
+        .off('mousedown');
+
+    // Открытие только по кнопке: используем флаги допуска показа
+    let allowShowStart = false;
+    let allowShowEnd = false;
+
+    $startInput.on('show', function (e) {
+        if (!allowShowStart) {
+            e.preventDefault();
+            return false;
+        }
+        // Сброс флага после разрешённого показа
+        allowShowStart = false;
+    });
+    $endInput.on('show', function (e) {
+        if (!allowShowEnd) {
+            e.preventDefault();
+            return false;
+        }
+        allowShowEnd = false;
+    });
+
+    // Обработчики кнопок для показа календаря
+    $('#btn-report-start-calendar').on('click', function () {
+        allowShowStart = true;
+        $startInput.datepicker('show');
+    });
+    $('#btn-report-end-calendar').on('click', function () {
+        allowShowEnd = true;
+        $endInput.datepicker('show');
+    });
+
+    // Разрешаем обычный ввод с клавиатуры: но если плагин всё же пытается открыть при клике/фокусе — сразу скрываем
+    $startInput.on('click focusin', function () {
+        if (!allowShowStart) {
+            try { $startInput.datepicker('hide'); } catch (_) {}
+        }
+        // Выделяем весь текст, чтобы новый ввод заменял предзаполненную дату
+        try { this.select(); } catch (_) {}
+    });
+    $endInput.on('click focusin', function () {
+        if (!allowShowEnd) {
+            try { $endInput.datepicker('hide'); } catch (_) {}
+        }
+        // Выделяем весь текст, чтобы новый ввод заменял предзаполненную дату
+        try { this.select(); } catch (_) {}
+    });
+
+    // Маска ввода dd.mm.yyyy: авто-точки, только цифры, максимум 10 символов
+    function formatToDateMask(raw) {
+        const digits = (raw || '').replace(/\D/g, '').slice(0, 8); // максимум 8 цифр
+        let out = '';
+        if (digits.length <= 2) {
+            out = digits;
+        } else if (digits.length <= 4) {
+            out = digits.slice(0, 2) + '.' + digits.slice(2);
+        } else {
+            out = digits.slice(0, 2) + '.' + digits.slice(2, 4) + '.' + digits.slice(4);
+        }
+        return out;
+    }
+
+    function attachDateInputMask($el, which) {
+        // На ввод фильтруем и расставляем точки
+        $el.on('input', function () {
+            const masked = formatToDateMask($el.val());
+            if ($el.val() !== masked) {
+                $el.val(masked);
+            }
+        });
+
+        // Ограничим клавиатурный ввод: цифры и служебные
+        $el.on('keydown', function (e) {
+            const allowedCtrl = [8, 9, 13, 27, 37, 38, 39, 40, 46]; // backspace, tab, enter, esc, arrows, delete
+            const isCtrl = e.ctrlKey || e.metaKey;
+            const isDigit = e.key >= '0' && e.key <= '9';
+            // Если нажата цифра и весь текст выделен — очищаем поле, чтобы не дописывать к старой дате
+            if (isDigit) {
+                try {
+                    const el = this;
+                    const allSelected = typeof el.selectionStart === 'number' && typeof el.selectionEnd === 'number' 
+                        && el.selectionStart === 0 && el.selectionEnd === (el.value ? el.value.length : 0);
+                    if (allSelected) {
+                        el.value = '';
+                    }
+                } catch (_) {}
+                return;
+            }
+            if (allowedCtrl.includes(e.keyCode) || isCtrl) return;
+            // Разрешим точку только если уже есть 1-2 сегмента и нет двойной точки подряд
+            if (e.key === '.') return;
+            e.preventDefault();
+        });
+
+        // При потере фокуса простая валидация + синк
+        $el.on('blur', function () {
+            const val = ($el.val() || '').trim();
+            const re = /^\d{2}\.\d{2}\.\d{4}$/;
+            if (val && !re.test(val)) {
+                $el.addClass('is-invalid');
+                return;
+            }
+            $el.removeClass('is-invalid');
+            // Синхронизируем корректный ввод с пикером
+            if (val) {
+                if (which === 'start') syncManualInput($startInput, 'start'); else syncManualInput($endInput, 'end');
+            }
+        });
+    }
+
+    attachDateInputMask($startInput, 'start');
+    attachDateInputMask($endInput, 'end');
+
+    // Синхронизация ручного ввода с датапикером (c защитой от рекурсии)
+    let isProgUpdateStart = false;
+    let isProgUpdateEnd = false;
+
+    function syncManualInput($el, which) {
+        // Не реагируем на программные обновления
+        if ((which === 'start' && isProgUpdateStart) || (which === 'end' && isProgUpdateEnd)) return;
+
+        const val = ($el.val() || '').trim();
+        const isValid = /^\d{2}\.\d{2}\.\d{4}$/.test(val);
+        if (!isValid) return;
+
+        // Ставим флаг, чтобы не ловить собственный change
+        if (which === 'start') isProgUpdateStart = true; else isProgUpdateEnd = true;
+        $el.datepicker('update', val);
+        // Сбрасываем флаг после стека событий
+        setTimeout(() => { if (which === 'start') isProgUpdateStart = false; else isProgUpdateEnd = false; }, 0);
+    }
+    $startInput.on('change', function () { syncManualInput($startInput, 'start'); });
+    $endInput.on('change', function () { syncManualInput($endInput, 'end'); });
+
     // Установка дат по умолчанию
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     
-    $('#datepicker-reports-start').datepicker('setDate', firstDayOfMonth);
-    $('#datepicker-reports-end').datepicker('setDate', today);
+    $startInput.datepicker('setDate', firstDayOfMonth);
+    $endInput.datepicker('setDate', today);
 }
 
 // Функция для загрузки списка сотрудников
@@ -260,7 +403,7 @@ export async function loadReport() {
     }
     // Затем проверяем случаи с выбранным диапазоном дат
     else if (startDate && endDate) {
-        if (employeeSelect.value === 'all_employees' && addressSelect.value === 'all_addresses') {
+        if (employeeSelect.value === 'all_employees' && (addressSelect.value === 'all_addresses' || addressSelect.value === '')) {
             url = '/reports/requests/by-date';
         }
         else if (employeeSelect.value > 0 && (addressSelect.value === 'all_addresses' || addressSelect.value === '')) {
@@ -718,7 +861,7 @@ export async function initReportHandlers() {
                 await loadReport();
             } catch (error) {
                 console.error('Ошибка при генерации отчёта:', error);
-                showAlert('Произошла ошибка при загрузке отчёта', 'danger');
+                showAlert('Произошла ошибка при загрузке отчёта: ' + error, 'danger');
             }
         });
     }
