@@ -378,3 +378,13 @@ body.dark-mode .custom-select-options li:hover {
     background-color: var(--bs-table-bg);
     color: var(--bs-table-color);
 }
+
+/* Utility: text color #ccc */
+.text-ccc {
+    color: #ccc !important;
+}
+
+/* Utility: stylish green for headings/titles */
+.text-green {
+    color: #2e7d32 !important; /* Material Green 800 */
+}

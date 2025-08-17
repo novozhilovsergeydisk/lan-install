@@ -1066,12 +1066,12 @@
                             <div class="modal-dialog modal-lg modal-dialog-scrollable">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="reportsHelpModalLabel">Справка по формированию отчета</h5>
+                                        <h5 class="modal-title text-green" id="reportsHelpModalLabel">Справка по формированию отчета</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                                     </div>
                                     <div class="modal-body">
                                         <div class="mb-3">
-                                            <h6 class="fw-semibold">Календарь и ввод дат</h6>
+                                            <h6 class="fw-semibold text-ccc">Календарь и ввод дат</h6>
                                             <ul class="mb-3 list-unstyled">
                                                 <li>Даты вводятся в формате <code>дд.мм.гггг</code>.<br> 
                                                     Разрешены только цифры, точки подставляются автоматически.</li>
@@ -1082,7 +1082,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <h6 class="fw-semibold">Фильтры</h6>
+                                            <h6 class="fw-semibold text-ccc">Фильтры</h6>
                                             <ul class="mb-3 list-unstyled">
                                                 <li><strong>Сотрудник:</strong> по умолчанию <code>Все сотрудники</code>.<br> 
                                                     Выберите конкретного сотрудника для отчета по нему.</li>
@@ -1094,7 +1094,7 @@
                                         </div>
 
                                         <div class="mb-0">
-                                            <h6 class="fw-semibold">Генерация отчета</h6>
+                                            <h6 class="fw-semibold text-ccc">Генерация отчета</h6>
                                             <ul class="mb-0 list-unstyled">
                                                 <li>Нажмите кнопку <code>Сгенерировать отчет</code> после задания параметров.</li>
                                                 <li>При ошибке форматирования даты поле будет подсвечено, исправьте формат и повторите.</li>
@@ -1221,6 +1221,7 @@
         line-height: 1.5; /* slightly larger for readability */
         margin-bottom: 0.95rem;
         font-size: 0.95rem;
+        color: #ccc;
     }
     
     [data-bs-theme="dark"] .form-switch .form-check-input:focus {
