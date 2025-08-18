@@ -260,7 +260,7 @@
                                     <label for="employeeFilter" class="form-label">Фильтр по сотрудникам в бригаде:</label>
                                     <select name="employee_filter" id="employeeFilter" class="form-select w-50 ms-2" style="margin-top: -0.4rem;">
                                         <option value="">Все сотрудники</option>
-                                        @foreach ($employees as $employee)
+                                        @foreach ($employeesFilter as $employee)
                                             <option value="{{ $employee->id }}" data-fio="{{ $employee->fio }}">{{ $employee->fio }}</option>
                                         @endforeach 
                                     </select>

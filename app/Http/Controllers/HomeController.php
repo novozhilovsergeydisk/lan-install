@@ -304,12 +304,7 @@ class HomeController extends Controller
         }
     }
     /**
-     * Get list of addresses for select element
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    /**
-     * Получить список всех сотрудников
+     * Получить список всех адресов для формирования списка адресов
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -327,7 +322,7 @@ class HomeController extends Controller
     }
 
     /**
-     * Get list of addresses for select element
+     * Получить список всех адресов для формирования списка адресов
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -352,7 +347,7 @@ class HomeController extends Controller
     }
 
     /**
-     * Get paginated list of addresses
+     * Получить список всех адресов для формирования списка адресов
      * 
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
@@ -462,6 +457,32 @@ class HomeController extends Controller
 
         // Запрашиваем addresses
         $addresses = DB::select('SELECT * FROM addresses');
+
+        // Запрашиваем employees для фильтрации заявок
+        $sql = "
+            WITH today_brigades AS (
+            SELECT DISTINCT r.brigade_id
+            FROM requests r
+            JOIN request_statuses rs ON rs.id = r.status_id
+            WHERE r.execution_date = CURRENT_DATE
+                AND rs.name NOT IN ('отменена', 'планирование')
+                AND r.brigade_id IS NOT NULL
+            )
+            SELECT e.id, e.fio, b.id AS brigade_id, b.name AS brigade_name, FALSE AS is_leader
+            FROM brigades b
+            JOIN today_brigades tb ON tb.brigade_id = b.id
+            JOIN brigade_members bm ON bm.brigade_id = b.id
+            JOIN employees e ON e.id = bm.employee_id
+            WHERE b.is_deleted = FALSE AND e.is_deleted = FALSE
+            UNION
+            SELECT el.id AS employee_id, el.fio, b.id AS brigade_id, b.name AS brigade_name, TRUE AS is_leader
+            FROM brigades b
+            JOIN today_brigades tb ON tb.brigade_id = b.id
+            JOIN employees el ON el.id = b.leader_id
+            WHERE b.is_deleted = FALSE AND el.is_deleted = FALSE;
+        ";
+        
+        $employeesFilter = DB::select($sql); 
 
         // Запрашиваем positions
         $positions = DB::select('SELECT * FROM positions');
@@ -686,6 +707,7 @@ class HomeController extends Controller
             'requests' => $requests,
             'brigades' => $brigades,
             'employees' => $employees,
+            'employeesFilter' => $employeesFilter,
             'addresses' => $addresses,
             'brigade_members' => $brigade_members,
             'comments_by_request' => $comments_by_request,

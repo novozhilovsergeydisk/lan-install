@@ -12,6 +12,7 @@ use App\Http\Controllers\PlanningRequestController;
 use App\Http\Controllers\EmployeeUserController;
 use App\Http\Controllers\EmployeesUserPositionPassportController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\EmployeesFilterController;
 
 Route::get('/employees', [EmployeesUserPositionPassportController::class, 'index'])->name('employees.index');
 
@@ -201,6 +202,11 @@ Route::get('/api/brigades/current-day', [BrigadeController::class, 'getCurrentDa
 // API для работы с сотрудниками
 Route::get('/api/employees', [HomeController::class, 'getEmployees'])
     ->name('api.employees')
+    ->middleware('auth');
+
+// Фильтр сотрудников по дате (POST)
+Route::post('/api/employees/filter', [EmployeesFilterController::class, 'filterByDate'])
+    ->name('api.employees.filter')
     ->middleware('auth');
 
 Route::post('/employees/store', [EmployeeUserController::class, 'store'])

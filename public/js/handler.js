@@ -1782,6 +1782,9 @@ export function initializePage() {
 
                 console.log('Выбрана дата в календаре (handler.js):', selectedDate);
 
+                // Обновить список сотрудников для фильтрации заявок
+                updateEmployeesFilter(selectedDate);    
+
                 // Логи выбора даты отключены
                 applyFilters();
             });
@@ -1794,6 +1797,48 @@ export function initializePage() {
             });
         }
     }
+
+    function updateEmployeesFilter(date) {
+        // запрос к серверу (POST) для получения списка сотрудников за выбранный день
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = tokenMeta ? tokenMeta.getAttribute('content') : null;
+
+        fetch('/api/employees/filter', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+            },
+            body: JSON.stringify({ date })
+        })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                // обновление списка сотрудников в UI
+                const employeesSelect = document.getElementById('employeeFilter');
+                if (!employeesSelect) return;
+                employeesSelect.innerHTML = '';
+
+                // Опция "Все сотрудники"
+                const allOpt = document.createElement('option');
+                allOpt.value = '';
+                allOpt.textContent = 'Все сотрудники';
+                employeesSelect.appendChild(allOpt);
+
+                data.forEach(employee => {
+                    const option = document.createElement('option');
+                    option.value = employee.id;
+                    option.textContent = employee.fio || employee.name || '';
+                    employeesSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки сотрудников:', error);
+            });
+    }
+    
 
     //******* Календарь *******//
 
