@@ -162,6 +162,15 @@ function initWysiwygEditor() {
     });
   }
 
+  // Экспорт утилит глобально для переиспользования
+  try {
+    window.WYSIUtils = window.WYSIUtils || {};
+    window.WYSIUtils.escapeHTML = escapeHTML;
+    window.WYSIUtils.linkify = linkify;
+  } catch (e) {
+    console.warn('Не удалось экспортировать WYSIUtils', e);
+  }
+
   // Возвращает plain text (видимый текст) из editor
   function getEditorPlainText() {
     return editor.innerText.replace(/\u00A0/g, ' ').trim();

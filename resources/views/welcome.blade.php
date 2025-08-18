@@ -382,7 +382,7 @@
                                                     @endphp
 
                                                     @if($countComments > 1)
-                                                        <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[{{ $lastCommentDate }}] {{ implode(' ', array_slice(explode(' ', $lastComment), 0, 4)) }}{{ count(explode(' ', $lastComment)) > 4 ? '...' : '' }}</p>
+                                                        <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[{{ $lastCommentDate }}] {!! str_replace(['&lt;br&gt;','&lt;br/&gt;','&lt;br /&gt;'], '<br>', e(implode(' ', array_slice(explode(' ', $lastComment), 0, 4)))) !!}{{ count(explode(' ', $lastComment)) > 4 ? '...' : '' }}</p>
                                                     @endif
                                                 </div>
                                             @endif
@@ -2426,8 +2426,9 @@
                     @csrf
                     <input type="hidden" id="requestIdToClose" name="request_id">
                     <div class="mb-3">
-                        <label for="closeComment" class="form-label">Комментарий</label>
-                        <textarea class="form-control" id="closeComment" name="comment" rows="3" required></textarea>
+                        <label for="closeCommentEditor" class="form-label">Комментарий</label>
+                        <div class="form-control" id="closeCommentEditor" contenteditable="true" style="min-height: 6rem;"></div>
+                        <textarea class="form-control d-none" id="closeComment" name="comment" rows="3" required></textarea>
                     </div>
                     <div class="mb-3">
                         <input type="checkbox" id="uncompletedWorks" name="uncompleted_works">
@@ -2442,6 +2443,63 @@
         </div>
     </div>
 </div>
+
+<script>
+// Инициализация linkify-полей для модалки закрытия заявки
+(function() {
+  const editorEl = document.getElementById('closeCommentEditor');
+  const hiddenTa = document.getElementById('closeComment');
+  const formEl = document.getElementById('closeRequestForm');
+  const btnConfirm = document.getElementById('confirmCloseRequest');
+
+  if (!editorEl || !hiddenTa) return;
+
+  function escapeHTMLLocal(str){
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function linkifyLocal(text){
+    if (!text) return '';
+    const urlRegex = /((https?:\/\/)[^\s<]+)|(\bwww\.[^\s<]+)/gi;
+    return text.replace(urlRegex, function(match){
+      let href = match;
+      if (!/^https?:\/\//i.test(href)) href = 'https://' + href;
+      return '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + match + '</a>';
+    });
+  }
+  function handlePaste(e){
+    e.preventDefault();
+    const cb = e.clipboardData || window.clipboardData;
+    const text = cb ? (cb.getData('text/plain') || cb.getData('text') || '') : '';
+    const html = linkifyLocal(escapeHTMLLocal(text)).replace(/\r?\n/g, '<br>');
+    document.execCommand('insertHTML', false, html);
+  }
+  function syncHidden(){
+    hiddenTa.value = editorEl.innerHTML;
+  }
+  editorEl.addEventListener('paste', handlePaste);
+  editorEl.addEventListener('input', syncHidden);
+  editorEl.addEventListener('blur', syncHidden);
+  if (formEl) {
+    formEl.addEventListener('submit', syncHidden);
+  }
+  if (btnConfirm && formEl) {
+    btnConfirm.addEventListener('click', function(){
+      syncHidden();
+      // если отправка формы обрабатывается JS, можно вручную триггернуть submit
+      if (typeof formEl.requestSubmit === 'function') {
+        formEl.requestSubmit();
+      } else {
+        formEl.submit();
+      }
+    });
+  }
+})();
+</script>
 
 <script>
     // Обработчик для кнопки закрытия заявки в таблице
