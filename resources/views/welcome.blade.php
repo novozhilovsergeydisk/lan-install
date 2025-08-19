@@ -2449,8 +2449,8 @@
 (function() {
   const editorEl = document.getElementById('closeCommentEditor');
   const hiddenTa = document.getElementById('closeComment');
-  const formEl = document.getElementById('closeRequestForm');
-  const btnConfirm = document.getElementById('confirmCloseRequest');
+//   const formEl = document.getElementById('closeRequestForm');
+//   const btnConfirm = document.getElementById('confirmCloseRequest');
 
   if (!editorEl || !hiddenTa) return;
 
@@ -2484,20 +2484,22 @@
   editorEl.addEventListener('paste', handlePaste);
   editorEl.addEventListener('input', syncHidden);
   editorEl.addEventListener('blur', syncHidden);
-  if (formEl) {
-    formEl.addEventListener('submit', syncHidden);
-  }
-  if (btnConfirm && formEl) {
-    btnConfirm.addEventListener('click', function(){
-      syncHidden();
-      // если отправка формы обрабатывается JS, можно вручную триггернуть submit
-      if (typeof formEl.requestSubmit === 'function') {
-        formEl.requestSubmit();
-      } else {
-        formEl.submit();
-      }
-    });
-  }
+
+//   if (formEl) {
+//     formEl.addEventListener('submit', syncHidden);
+//   }
+
+//   if (btnConfirm && formEl) {
+//     btnConfirm.addEventListener('click', function(){
+//       syncHidden();
+//       // если отправка формы обрабатывается JS, можно вручную триггернуть submit
+//       if (typeof formEl.requestSubmit === 'function') {
+//         formEl.requestSubmit();
+//       } else {
+//         formEl.submit();
+//       }
+//     });
+//   }
 })();
 </script>
 
