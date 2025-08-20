@@ -59,7 +59,8 @@ class StringHelper
         $normalized = preg_replace('/<br\s*\/?>(\s)*/i', ' ', $decoded);
         // Удаляем теги (превью текстовое, без HTML)
         $textOnly = strip_tags((string) $normalized);
-        $textOnly = trim($textOnly);
+        // Схлопываем все виды пробелов/переводов строк в один пробел
+        $textOnly = preg_replace('/\s+/u', ' ', trim($textOnly));
 
         $words = $textOnly === '' ? [] : preg_split('/\s+/u', $textOnly);
         if (!is_array($words)) {
@@ -120,8 +121,8 @@ class StringHelper
             },
             $decoded
         );
-        // Нормализуем переносы
-        $normalized = preg_replace('/<br\s*\/?>(\s)*/i', "\n", $decoded);
+        // Убираем переносы: <br> и последовательности переводов строк -> пробел
+        $normalized = preg_replace('/<br\s*\/?>(\s)*/i', ' ', $decoded);
         // Удаляем все прочие теги
         $textOnly = strip_tags((string) $normalized);
         $textOnly = trim($textOnly);
@@ -144,8 +145,7 @@ class StringHelper
             $result = e($textOnly);
         }
 
-        // Превращаем \n обратно в <br> для сохранения форматирования
-        $result = nl2br($result, false);
+        // Возвращаем в одну строку без <br>
         return $result;
     }
 }
