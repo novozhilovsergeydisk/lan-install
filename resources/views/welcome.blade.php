@@ -382,7 +382,10 @@
                                                     @endphp
 
                                                     @if($countComments > 1)
-                                                        <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[{{ $lastCommentDate }}] {!! str_replace(['&lt;br&gt;','&lt;br/&gt;','&lt;br /&gt;'], '<br>', e(implode(' ', array_slice(explode(' ', $lastComment), 0, 4)))) !!}{{ count(explode(' ', $lastComment)) > 4 ? '...' : '' }}</p>
+                                                        @php
+                                                            $preview = \App\Helpers\StringHelper::makeEscapedPreview($lastComment, 4);
+                                                        @endphp
+                                                        <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[{{ $lastCommentDate }}] {!! $preview['html'] !!}{{ $preview['ellipsis'] }}</p>
                                                     @endif
                                                 </div>
                                             @endif
@@ -1422,6 +1425,7 @@
                             // Смещаем оттенок к зелёной гамме: 120–180°
                             return `hsl(${120 + (hash % 60)},65%,40%)`;
                         }
+                        // Оборачивание ссылок вынесено в utils.js -> window.utils.linkifyPreservingAnchors
                         let html = '<div id="commentUpdateContainer" class="list-group list-group-flush">';
                         console.log('Количество комментариев:', comments.length);
 
@@ -1435,13 +1439,14 @@
                                 minute: '2-digit'
                             });
                             const color = comment.author_name === 'Система' ? '#6c757d' : stringToColor(comment.author_name);
+                            const commentContent = comment.content || comment.comment || '';
 
                             html += `
                                     <div class="list-group-item">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="me-3">
                                                 <h6 class="fw-semibold mb-1" style="color:${color}">${comment.employee_full_name}</h6>
-                                                <div class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">${comment.content || comment.comment || ''}</div>
+                                                <div class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">${(window.utils && typeof window.utils.linkifyPreservingAnchors==='function' ? window.utils.linkifyPreservingAnchors(commentContent) : commentContent)}</div>
                                                 <small class="text-muted">${formattedDate}</small>
                                                 ${index === comments.length - 1 ? `<button class="btn btn-sm btn-outline-primary ms-2 edit-comment-btn">Редактировать</button>` : ''}
                                             </div>
@@ -1597,8 +1602,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке - <span
-                        id="commentsRequestId"></span></h5>
+                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке - <span id="commentsRequestId"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="commentsContainer">

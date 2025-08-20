@@ -51,6 +51,71 @@ async function fetchData(url) {
 }
 
 /**
+ * Формирует превью комментария из первых N слов и экранирует его для безопасного вывода.
+ * Возвращает объект: { html: string, ellipsis: string }
+ * Логика максимально приближена к PHP: StringHelper::makeEscapedPreview()
+ *
+ * @param {string|null|undefined} comment
+ * @param {number} [wordLimit=4]
+ * @returns {{html: string, ellipsis: string}}
+ */
+function makeEscapedPreview(comment, wordLimit = 4) {
+    const input = comment ?? '';
+
+    // Декодируем HTML-сущности
+    const decoded = decodeEntities(input);
+    // <br> -> пробел
+    const normalized = decoded.replace(/<br\s*\/?>(\s)*/gi, ' ');
+    // Удаляем теги (для подсчёта слов)
+    const textOnly = stripTags(normalized).trim();
+
+    const words = textOnly ? textOnly.split(/\s+/u) : [];
+    const limit = Math.max(0, Number.isFinite(wordLimit) ? wordLimit : 0);
+    const snippetWords = words.slice(0, limit);
+    const needsEllipsis = words.length > limit;
+    const snippetText = snippetWords.join(' ');
+
+    // Линкуем URL'ы, экранируя НЕ-URL части
+    const urlRegex = /((https?:\/\/|www\.)[^\s<]+)/giu;
+    let result = '';
+    let last = 0;
+    let m;
+    while ((m = urlRegex.exec(snippetText)) !== null) {
+        const url = m[1];
+        const start = m.index;
+        // Текст до URL — экранируем
+        result += escapeHtml(snippetText.slice(last, start));
+        // href с протоколом
+        const href = /^https?:/i.test(url) ? url : 'http://' + url;
+        result += '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(url) + '</a>';
+        last = start + url.length;
+    }
+    // Хвост
+    result += escapeHtml(snippetText.slice(last));
+
+    return { html: result, ellipsis: needsEllipsis ? '...' : '' };
+
+    // --- helpers ---
+    function decodeEntities(str) {
+        // Используем DOM для корректного декодирования сущностей
+        const ta = document.createElement('textarea');
+        ta.innerHTML = str;
+        return ta.value;
+    }
+    function stripTags(str) {
+        return str.replace(/<[^>]*>/g, '');
+    }
+    function escapeHtml(str) {
+        return str
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+}
+
+/**
  * Отправляет данные в API
  * @param {string} url
  * @param {Object} body
@@ -139,8 +204,34 @@ async function sendRequest(url, options) {
     }
 }
 
+// Преобразует текст: оборачивает plain-URL в <a>, не трогая существующие <a>
+function linkifyPreservingAnchors(input) {
+    if (!input) return '';
+    const anchorRegex = /<a\b[^>]*>[\s\S]*?<\/a>/gi;
+    let lastIndex = 0;
+    let result = '';
+    let match;
+    while ((match = anchorRegex.exec(input)) !== null) {
+        const before = input.slice(lastIndex, match.index);
+        result += linkifyPlain(before);
+        result += match[0];
+        lastIndex = match.index + match[0].length;
+    }
+    result += linkifyPlain(input.slice(lastIndex));
+    return result;
+
+    function linkifyPlain(text) {
+        if (!text) return '';
+        const urlRegex = /(?:https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+        return text.replace(urlRegex, (url) => {
+            const href = url.startsWith('http') ? url : 'http://' + url;
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        });
+    }
+}
+
 // Экспорт для модулей
-export { showAlert, fetchData, postData, sendRequest };
+export { showAlert, fetchData, postData, sendRequest, linkifyPreservingAnchors, makeEscapedPreview };
 
 // Экспорт глобально
 if (typeof window !== 'undefined') {
@@ -148,6 +239,8 @@ if (typeof window !== 'undefined') {
         showAlert,
         fetchData,
         postData,
-        sendRequest
+        sendRequest,
+        linkifyPreservingAnchors,
+        makeEscapedPreview
     };
 }

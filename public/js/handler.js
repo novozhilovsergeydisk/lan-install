@@ -744,6 +744,49 @@ function applyFilters() {
                             // console.log({ request });
 
                             // console.log(request.is_admin);
+                            
+                            // Подготовим HTML блока комментариев без IIFE
+                            let commentsSectionHtml = '---';
+                            if (request.comments) {
+                                let commentText = '';
+                                if (Array.isArray(request.comments) && request.comments.length > 0) {
+                                    const lastComment = request.comments[request.comments.length - 1];
+                                    commentText = lastComment.text || lastComment.comment || lastComment.content || JSON.stringify(lastComment);
+                                } else if (typeof request.comments === 'object' && request.comments !== null) {
+                                    commentText = request.comments.text || request.comments.comment || request.comments.content || JSON.stringify(request.comments);
+                                } else if (typeof request.comments === 'string') {
+                                    commentText = request.comments;
+                                }
+
+                                if (commentText) {
+                                    const displayText = commentText;
+                                    const mainBlock = `
+                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
+                                            <p class="comment-preview-title">Печатный комментарий:</p>
+                                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${displayText}</div>
+                                        </div>`;
+
+                                    let lastCommentHtml = '';
+                                    if (Array.isArray(request.comments) && request.comments.length > 1) {
+                                        const lastComment = request.comments[0];
+                                        const lcText = lastComment.comment || lastComment.text || lastComment.content || '';
+                                        const lcDate = lastComment.created_at ? new Date(lastComment.created_at).toLocaleString('ru-RU', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            hour12: false
+                                        }).replace(',', '') : '';
+
+                                        const words = String(lcText).split(' ');
+                                        const truncated = words.length > 4 ? words.slice(0, 4).join(' ') + '...' : lcText;
+                                        lastCommentHtml = `<div class="mb-0"><p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[${lcDate}] ${truncated}</p></div>`;
+                                    }
+
+                                    commentsSectionHtml = mainBlock + (lastCommentHtml || '');
+                                }
+                            }
 
                             row.innerHTML = `
                             <!-- Номер заявки -->
@@ -764,61 +807,7 @@ function applyFilters() {
                             <!-- Комментарий -->
                             <td class="col-comments" style_="commentsContainer">
                                 <div class="col-date__date">${formattedDate} | ${requestNumber}</div>
-                                ${(() => {
-                                    if (!request.comments) return '---';
-
-                                    // Если comments - это массив, берем последний комментарий (новейший)
-                                    let commentText = '';
-                                    if (Array.isArray(request.comments) && request.comments.length > 0) {
-                                        // Берем последний элемент массива (новейший комментарий)
-                                        const lastComment = request.comments[request.comments.length - 1];
-                                        commentText = lastComment.text || lastComment.comment || lastComment.content || JSON.stringify(lastComment);
-                                    }
-                                    // Если comments - это объект, но не массив
-                                    else if (typeof request.comments === 'object' && request.comments !== null) {
-                                        commentText = request.comments.text || request.comments.comment || request.comments.content || JSON.stringify(request.comments);
-                                    }
-                                    // Если comments - это строка
-                                    else if (typeof request.comments === 'string') {
-                                        commentText = request.comments;
-                                    } else {
-                                        return '---';
-                                    }
-
-                                    // Экранируем кавычки для атрибута title
-                                    const escapedComment = String(commentText).replace(/"/g, '&quot;');
-                                    const displayText = commentText;
-                                    // const displayText = commentText.length > 50 ? commentText.substring(0, 50) + '...' : commentText;
-
-                                    return `
-                                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
-                                            <p class="comment-preview-title">Печатный комментарий:</p>
-                                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${displayText}</div>
-                                        </div>
-                                        ${request.comments && request.comments.length > 1 ? `
-                                            <div class="mb-0">
-                                                ${(() => {
-                                                    const lastComment = request.comments[request.comments.length - 1];
-                                                    const commentText = lastComment.comment || lastComment.text || lastComment.content || '';
-                                                    const commentDate = lastComment.created_at ? new Date(lastComment.created_at).toLocaleString('ru-RU', {
-                                                        day: '2-digit',
-                                                        month: '2-digit',
-                                                        year: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                        hour12: false
-                                                    }).replace(',', '') : '';
-                                                    
-                                                    const words = commentText.split(' ');
-                                                    const truncatedComment = words.length > 4 
-                                                        ? words.slice(0, 4).join(' ') + '...'
-                                                        : commentText;
-                                                        
-                                                    return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[${commentDate}] ${truncatedComment}</p>`;
-                                                })()}
-                                            </div>` : ''}
-                                        `;
-                                })()}
+                                ${commentsSectionHtml}
                                 <!-- Кнопка комментариев -->
                                 <div class="mt-1">
                                     <button type="button"
