@@ -1,5 +1,5 @@
 // Импорт необходимых функций из utils.js
-import { postData } from './utils.js';
+import { postData, makeEscapedPreview } from './utils.js';
 import { initRequestInWorkHandlers } from './form-handlers.js';
 
 // Делаем postData доступной глобально для обратной совместимости
@@ -103,11 +103,7 @@ export async function loadPlanningRequests() {
                         </div>
                         ${comments.length >= 1 ? `
                             <div class="mb-0">
-                                <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">
-                                    ${comments[0].created_at} | ${comments[0].author_fio}<br>
-                                    ${comments[0].comment.split(' ').slice(0, 4).join(' ')}
-                                    ${comments[0].comment.split(' ').length > 4 ? '...' : ''}
-                                </p>
+                                ${(() => { const p = makeEscapedPreview(comments[0].comment, 4); return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${comments[0].created_at} | ${comments[0].author_fio}<br>${p.html}${p.ellipsis}</p>`; })()}
                             </div>
                             <div class="mt-1">
                                 <button type="button"
@@ -779,9 +775,8 @@ function applyFilters() {
                                             hour12: false
                                         }).replace(',', '') : '';
 
-                                        const words = String(lcText).split(' ');
-                                        const truncated = words.length > 4 ? words.slice(0, 4).join(' ') + '...' : lcText;
-                                        lastCommentHtml = `<div class="mb-0"><p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[${lcDate}] ${truncated}</p></div>`;
+                                        const p = makeEscapedPreview(lcText, 4);
+                                        lastCommentHtml = `<div class="mb-0"><p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[${lcDate}] ${p.html}${p.ellipsis}</p></div>`;
                                     }
 
                                     commentsSectionHtml = mainBlock + (lastCommentHtml || '');

@@ -41,6 +41,18 @@ class StringHelper
         $comment = $comment ?? '';
         // Декодируем сущности на входе (если текст уже содержит &lt; и т.п.)
         $decoded = htmlspecialchars_decode($comment);
+        // Заменяем HTML-ссылки на их href до удаления тегов, чтобы не потерять URL
+        // Пример: <a href="https://example.com">текст</a> -> https://example.com текст
+        $decoded = preg_replace_callback(
+            '/<a\s+[^>]*href=["\']?([^"\'>\s]+)[^>]*>(.*?)<\/a>/iu',
+            function ($m) {
+                $href = $m[1] ?? '';
+                $inner = trim(strip_tags($m[2] ?? ''));
+                // Если внутри есть текст, сохраним его после URL, иначе только URL
+                return $href . ($inner !== '' ? (' ' . $inner) : '');
+            },
+            $decoded
+        );
         // Превращаем <br> в пробелы для единого подсчёта слов
         $normalized = preg_replace('/<br\s*\/?>(\s)*/i', ' ', $decoded);
         // Удаляем теги (превью текстовое, без HTML)
@@ -81,5 +93,55 @@ class StringHelper
             'html' => $result,
             'ellipsis' => $needsEllipsis ? '...' : '',
         ];
+    }
+
+    /**
+     * Безопасно экранирует полный комментарий и превращает URL'ы в кликабельные ссылки.
+     * Не выполняет усечение по словам.
+     *
+     * @param string|null $comment
+     * @return string HTML-строка, безопасная для вывода через {!! !!}
+     */
+    public static function linkifyFullEscaped(?string $comment): string
+    {
+        $comment = $comment ?? '';
+        // Декодируем сущности и подчищаем <a> на предмет потери href при strip_tags
+        $decoded = htmlspecialchars_decode($comment);
+        $decoded = preg_replace_callback(
+            '/<a\s+[^>]*href=["\']?([^"\'>\s]+)[^>]*>(.*?)<\/a>/iu',
+            function ($m) {
+                $href = $m[1] ?? '';
+                $inner = trim(strip_tags($m[2] ?? ''));
+                return $href . ($inner !== '' ? (' ' . $inner) : '');
+            },
+            $decoded
+        );
+        // Нормализуем переносы
+        $normalized = preg_replace('/<br\s*\/?>(\s)*/i', "\n", $decoded);
+        // Удаляем все прочие теги
+        $textOnly = strip_tags((string) $normalized);
+        $textOnly = trim($textOnly);
+
+        // Линкуем URL'ы
+        $pattern = '/((https?:\/\/|www\.)[^\s<]+)/iu';
+        $result = '';
+        $offset = 0;
+        if (preg_match_all($pattern, $textOnly, $matches, PREG_OFFSET_CAPTURE)) {
+            foreach ($matches[1] as $m) {
+                $url = $m[0];
+                $start = $m[1];
+                $result .= e(substr($textOnly, $offset, $start - $offset));
+                $href = stripos($url, 'http') === 0 ? $url : ('http://' . $url);
+                $result .= '<a href="' . e($href) . '" target="_blank" rel="noopener noreferrer">' . e($url) . '</a>';
+                $offset = $start + strlen($url);
+            }
+            $result .= e(substr($textOnly, $offset));
+        } else {
+            $result = e($textOnly);
+        }
+
+        // Превращаем \n обратно в <br> для сохранения форматирования
+        $result = nl2br($result, false);
+        return $result;
     }
 }
