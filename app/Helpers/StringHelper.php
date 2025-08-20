@@ -41,6 +41,8 @@ class StringHelper
         $comment = $comment ?? '';
         // Декодируем сущности на входе (если текст уже содержит &lt; и т.п.)
         $decoded = htmlspecialchars_decode($comment);
+        // Нормализуем неразрывные пробелы: NBSP (\xC2\xA0) и строковые &nbsp; -> обычные пробелы
+        $decoded = str_replace(["\xC2\xA0", '&nbsp;'], ' ', $decoded);
         // Заменяем HTML-ссылки на их href до удаления тегов, чтобы не потерять URL
         // Пример: <a href="https://example.com">текст</a> -> https://example.com текст
         $decoded = preg_replace_callback(
@@ -107,6 +109,8 @@ class StringHelper
         $comment = $comment ?? '';
         // Декодируем сущности и подчищаем <a> на предмет потери href при strip_tags
         $decoded = htmlspecialchars_decode($comment);
+        // Нормализуем неразрывные пробелы: NBSP (\xC2\xA0) и строковые &nbsp; -> обычные пробелы
+        $decoded = str_replace(["\xC2\xA0", '&nbsp;'], ' ', $decoded);
         $decoded = preg_replace_callback(
             '/<a\s+[^>]*href=["\']?([^"\'>\s]+)[^>]*>(.*?)<\/a>/iu',
             function ($m) {
