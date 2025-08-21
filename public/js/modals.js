@@ -144,24 +144,31 @@ function initPhotoReportModal() {
         photoForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            // Предотвращение повторной отправки
+            if (photoForm.dataset.submitting === '1') {
+                return;
+            }
+            photoForm.dataset.submitting = '1';
+
             // Закрываем модальное окно
             const modal = bootstrap.Modal.getInstance(photoModal);
             if (modal) {
                 modal.hide();
             }
 
-            showAlert('Форма отправки фотоотчета в разработке', 'info');
+            // showAlert('Форма отправки фотоотчета в разработке', 'info');
 
-            return;
+            // return;
 
             console.log('Событие submit формы обработано');
             
             const formData = new FormData(this);
             const requestId = formData.get('request_id');
-            const submitButton = photoForm.querySelector('button[type="submit"]');
+            // Кнопка сабмита расположена вне формы и привязана атрибутом form
+            const submitButton = document.querySelector('button[type="submit"][form="photoReportForm"]');
             const originalButtonText = submitButton ? submitButton.innerHTML : '';
             
-            // Добавляем файлы к данным формы
+            // Файлы уже присутствуют в formData, так как FormData создана из формы
             const fileInput = photoModal.querySelector('#photoUpload');
             const previewContainer = photoModal.querySelector('#photoPreview');
             
@@ -174,9 +181,7 @@ function initPhotoReportModal() {
                 return;
             }
             
-            for (let i = 0; i < fileInput.files.length; i++) {
-                formData.append('photos[]', fileInput.files[i]);
-            }
+            // Не добавляем файлы вручную в formData, чтобы избежать дублей
             
             // Показываем индикатор загрузки
             if (submitButton) {
@@ -235,6 +240,8 @@ function initPhotoReportModal() {
                 // console.error('Ошибка при загрузке фотоотчета:', error);
                 showAlert(error.message || 'Произошла ошибка при загрузке фотоотчета', 'danger');
             } finally {
+                // Сбрасываем флаг отправки
+                photoForm.dataset.submitting = '0';
                 // Восстанавливаем кнопку
                 if (submitButton) {
                     submitButton.disabled = false;

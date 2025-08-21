@@ -23,6 +23,7 @@
   overflow-y: auto;
   background-clip: padding-box;
   caret-color: var(--bs-primary);
+  text-align: left; /* гарантируем левое выравнивание по умолчанию */
 }
 
 /* Кодовый редактор textarea */

@@ -1,5 +1,5 @@
 // Импорт необходимых функций из utils.js
-import { postData, makeEscapedPreview } from './utils.js';
+import { postData, makeEscapedPreview, linkifyPreservingAnchors } from './utils.js';
 import { initRequestInWorkHandlers } from './form-handlers.js';
 
 // Делаем postData доступной глобально для обратной совместимости
@@ -742,24 +742,22 @@ function applyFilters() {
                             // console.log(request.is_admin);
                             
                             // Подготовим HTML блока комментариев без IIFE
-                            let commentsSectionHtml = '---';
+                            let commentsSectionHtml = '--';
                             if (request.comments) {
-                                let commentText = '';
+                                let firstCommentText = '';
+                                
                                 if (Array.isArray(request.comments) && request.comments.length > 0) {
-                                    const lastComment = request.comments[request.comments.length - 1];
-                                    commentText = lastComment.text || lastComment.comment || lastComment.content || JSON.stringify(lastComment);
-                                } else if (typeof request.comments === 'object' && request.comments !== null) {
-                                    commentText = request.comments.text || request.comments.comment || request.comments.content || JSON.stringify(request.comments);
-                                } else if (typeof request.comments === 'string') {
-                                    commentText = request.comments;
+                                    console.log(typeof request.comments);
+                                    const firstComment = request.comments[request.comments.length - 1];
+                                    firstCommentText = firstComment.text || firstComment.comment || firstComment.content || JSON.stringify(firstComment);
                                 }
 
-                                if (commentText) {
-                                    const displayText = commentText;
+                                if (firstCommentText) {
+                                    const displayCommentText = linkifyPreservingAnchors(firstCommentText);
                                     const mainBlock = `
                                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                                             <p class="comment-preview-title">Печатный комментарий:</p>
-                                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${displayText}</div>
+                                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${displayCommentText}</div>
                                         </div>`;
 
                                     let lastCommentHtml = '';

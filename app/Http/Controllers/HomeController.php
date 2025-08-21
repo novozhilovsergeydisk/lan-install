@@ -2243,6 +2243,7 @@ class HomeController extends Controller
             // Валидация входящих данных
             $validated = $request->validate([
                 'request_id' => 'required|integer|exists:requests,id',
+                'photos' => 'required|array|min:1',
                 'photos.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // до 10MB
                 'comment' => 'nullable|string|max:1000'
             ]);
@@ -2251,6 +2252,13 @@ class HomeController extends Controller
             $comment = $validated['comment'] ?? null;
             $userId = auth()->id();
             $now = now();
+
+            // Дополнительная проверка наличия файлов (на случай если PHP отбросил файлы из-за ограничений)
+            if (!$request->hasFile('photos')) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'photos' => ['Не загружены файлы фотоотчета']
+                ]);
+            }
 
             // Начинаем транзакцию
             DB::beginTransaction();
@@ -2278,16 +2286,21 @@ class HomeController extends Controller
             $uploadedPhotos = [];
             if ($request->hasFile('photos')) {
                 foreach ($request->file('photos') as $photo) {
-                    // Сохраняем файл в хранилище
+                    // Сохраняем файл на диске "public" (storage/app/public/images)
                     \Log::info('Попытка сохранить файл', [
                         'original_name' => $photo->getClientOriginalName(),
                         'size' => $photo->getSize(),
                         'mime' => $photo->getMimeType(),
+                        'disk' => 'public',
                         'storage_path' => storage_path('app/public/images')
                     ]);
-                    
-                    $path = $photo->store('public/images');
-                    \Log::info('Файл сохранен', ['path' => $path, 'exists' => \Storage::exists($path)]);
+
+                    // Возвращает относительный путь вида: images/xxxx.jpg
+                    $relativePath = $photo->store('images', 'public');
+                    \Log::info('Файл сохранен', [
+                        'relative_path' => $relativePath,
+                        'exists_public' => \Storage::disk('public')->exists($relativePath)
+                    ]);
                     
                     // Получаем метаданные файла
                     $originalName = $photo->getClientOriginalName();
@@ -2300,7 +2313,8 @@ class HomeController extends Controller
                     
                     // Сохраняем информацию о фото в базу данных
                     $photoId = DB::table('photos')->insertGetId([
-                        'path' => $path,
+                        // Сохраняем относительный путь на диске public: images/...
+                        'path' => $relativePath,
                         'original_name' => $originalName,
                         'file_size' => $fileSize,
                         'mime_type' => $mimeType,
@@ -2321,8 +2335,8 @@ class HomeController extends Controller
 
                     $uploadedPhotos[] = [
                         'id' => $photoId,
-                        'url' => asset(str_replace('public/', 'storage/', $path)),
-                        'path' => $path
+                        'url' => \Storage::disk('public')->url($relativePath),
+                        'path' => $relativePath
                     ];
                 }
             }

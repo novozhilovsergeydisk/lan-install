@@ -52,8 +52,8 @@ function initWysiwygEditor() {
     frag.innerHTML = html;
 
     function clean(node) {
-      // Проверяем, что узел всё ещё находится в DOM
-      if (!node || !node.parentNode) return;
+      // Проверяем, что узел валиден
+      if (!node) return;
       
       // Пройти рекурсивно по копии коллекции дочерних узлов
       // чтобы избежать проблем при изменении DOM во время итерации
@@ -66,8 +66,7 @@ function initWysiwygEditor() {
         
         // Обрабатываем только элементы
         if (ch.nodeType === Node.ELEMENT_NODE) {
-          // Проверяем, что узел всё ещё в DOM
-          if (!ch.parentNode) continue;
+          // Узел-элемент
           
           const tag = ch.tagName.toUpperCase();
           
