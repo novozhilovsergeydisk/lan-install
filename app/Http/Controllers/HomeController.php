@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\RequestTeamFilterController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class HomeController extends Controller
 {
@@ -2295,15 +2296,42 @@ class HomeController extends Controller
                         'storage_path' => storage_path('app/public/images')
                     ]);
 
-                    // Возвращает относительный путь вида: images/xxxx.jpg
-                    $relativePath = $photo->store('images', 'public');
+                    // Убеждаемся, что каталог существует на диске public
+                    if (!\Storage::disk('public')->exists('images')) {
+                        \Storage::disk('public')->makeDirectory('images');
+                    }
+                    // Готовим имя файла: берем оригинальное, нормализуем и обеспечиваем уникальность
+                    $originalName = $photo->getClientOriginalName();
+                    $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+                    $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+                    $baseSlug = Str::slug($baseName, '_');
+                    if ($baseSlug === '') { $baseSlug = 'file'; }
+                    $ext = strtolower($extension ?: ($photo->getClientOriginalExtension() ?: 'jpg'));
+
+                    $finalName = $baseSlug . '.' . $ext;
+                    $relativePath = 'images/' . $finalName;
+                    $counter = 1;
+                    while (\Storage::disk('public')->exists($relativePath)) {
+                        $finalName = $baseSlug . '_' . $counter . '.' . $ext;
+                        $relativePath = 'images/' . $finalName;
+                        $counter++;
+                    }
+
+                    // Сохраняем с заданным именем
+                    $stored = $photo->storeAs('images', $finalName, 'public');
+                    if ($stored === false) {
+                        throw new \RuntimeException('Не удалось сохранить файл на диске public. Проверьте права на каталог: ' . storage_path('app/public/images'));
+                    }
+                    // Подтверждаем факт наличия на диске
+                    if (!\Storage::disk('public')->exists($relativePath)) {
+                        throw new \RuntimeException('Файл отсутствует на диске после сохранения: ' . $relativePath);
+                    }
                     \Log::info('Файл сохранен', [
                         'relative_path' => $relativePath,
                         'exists_public' => \Storage::disk('public')->exists($relativePath)
                     ]);
                     
                     // Получаем метаданные файла
-                    $originalName = $photo->getClientOriginalName();
                     $fileSize = $photo->getSize();
                     $mimeType = $photo->getMimeType();
                     
