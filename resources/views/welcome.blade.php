@@ -410,10 +410,7 @@
                                                         </button>
                                                     @endif
 
-                                                    <button data-request-id="{{ $request->id }}" type="button"
-                                                        class="btn btn-sm btn-outline-success add-photo-btn">
-                                                        <i class="bi bi-camera me-1"></i>
-                                                    </button>
+                                                    
                                                 </div>
                                             @endif
                                         </td>
@@ -1338,7 +1335,7 @@
                 // Устанавливаем номер заявки в заголовок
                 const requestRow = button.closest('tr');
                 const requestNumberElement = requestRow.querySelector('td:nth-child(2) div:last-child');
-                const requestNumber = requestNumberElement ? requestNumberElement.textContent.trim() : `#${requestId}`;
+                const requestNumber = requestNumberElement ? requestNumberElement.textContent.trim() : `ID ${requestId}`;
                 requestIdSpan.textContent = requestNumber;
                 commentRequestId.value = requestId;
 
@@ -1602,7 +1599,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке - <span id="commentsRequestId"></span></h5>
+                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке <span id="commentsRequestId"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="commentsContainer">
@@ -1625,6 +1622,19 @@
                         </button>
                     </div>
                 </form>
+                <div class="d-flex align-items-center gap-2 me-auto">
+                    <button data-request-id="" type="button"
+                            class="btn btn-sm btn-outline-success add-photo-btn">
+                        <i class="bi bi-camera me-1"></i> Фотоотчет
+                    </button>
+                    <button id="showPhotosBtn" type="button" class="btn btn-sm btn-outline-info"
+                            aria-controls="photoReportContainer">
+                        <i class="bi bi-images me-1"></i> Показать фото
+                    </button>
+                </div>
+                <div id="photoReportContainer">
+                    
+                </div>
             </div>
         </div>
     </div>
@@ -3317,7 +3327,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
             <div class="modal-body">
-                <form id="photoReportForm">
+                <form id="photoReportForm" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" id="photoRequestId" name="request_id">
                     
@@ -3327,12 +3337,14 @@
                         <div class="form-text">Можно выбрать несколько файлов. Поддерживаются форматы: JPG, PNG, GIF.</div>
                     </div>
                     
+                    <!--
                     <div class="mb-3">
                         <label for="photoComment" class="form-label">Комментарий к фотоотчету</label>
                         <textarea class="form-control" id="photoComment" name="comment" rows="3" 
                                   placeholder="Введите комментарий к фотоотчету (необязательно)"></textarea>
                     </div>
-                    
+                    -->
+                                        
                     <div class="mb-3">
                         <label class="form-label">Предпросмотр фотографий:</label>
                         <div id="photoPreview" class="row g-2">

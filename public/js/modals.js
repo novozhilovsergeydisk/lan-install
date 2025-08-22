@@ -52,6 +52,55 @@ function initPhotoReportModal() {
         return;
     }
 
+    // Локальное состояние выбранных файлов (синхронизируется с input.files)
+    let selectedFiles = [];
+
+    // Синхронизация input.files из selectedFiles
+    function syncInputFiles() {
+        const fileInput = photoModal.querySelector('#photoUpload');
+        if (!fileInput) return;
+        const dt = new DataTransfer();
+        selectedFiles.forEach(f => dt.items.add(f));
+        fileInput.files = dt.files;
+    }
+
+    // Перерисовка превью по selectedFiles
+    function renderPreviews() {
+        const previewContainer = photoModal.querySelector('#photoPreview');
+        if (!previewContainer) return;
+        previewContainer.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'col-md-4 mb-3';
+                preview.innerHTML = `
+                        <div class="card">
+                            <img src="${e.target.result}" class="card-img-top" alt="Предпросмотр">
+                            <div class="card-body p-2 text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-photo">
+                                    <i class="bi bi-trash"></i> Удалить
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                previewContainer.appendChild(preview);
+
+                // Обработчик удаления: удаляет из selectedFiles и синхронизирует input
+                const removeBtn = preview.querySelector('.remove-photo');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function() {
+                        selectedFiles.splice(index, 1);
+                        syncInputFiles();
+                        renderPreviews();
+                    });
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     // Обработчик открытия модального окна
     photoModal.addEventListener('show.bs.modal', function(event) {
         let requestId;
@@ -86,52 +135,20 @@ function initPhotoReportModal() {
         if (previewContainer) {
             previewContainer.innerHTML = '';
         }
+
+        // Сбрасываем состояние выбранных файлов
+        selectedFiles = [];
+        syncInputFiles();
     });
 
     // Обработчик загрузки фотографий
     const photoInput = photoModal.querySelector('#photoUpload');
     if (photoInput) {
         photoInput.addEventListener('change', function(e) {
-            const files = e.target.files;
-            const previewContainer = photoModal.querySelector('#photoPreview');
-            
-            if (!previewContainer) return;
-            
-            // Очищаем предыдущие превью
-            previewContainer.innerHTML = '';
-            
-            // Показываем превью для каждого выбранного файла
-            for (const file of files) {
-                if (!file.type.startsWith('image/')) continue;
-                
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const preview = document.createElement('div');
-                    preview.className = 'col-md-4 mb-3';
-                    preview.innerHTML = `
-                        <div class="card">
-                            <img src="${e.target.result}" class="card-img-top" alt="Предпросмотр">
-                            <div class="card-body p-2 text-center">
-                                <button type="button" class="btn btn-sm btn-danger remove-photo">
-                                    <i class="bi bi-trash"></i> Удалить
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    previewContainer.appendChild(preview);
-                    
-                    // Добавляем обработчик для кнопки удаления
-                    const removeBtn = preview.querySelector('.remove-photo');
-                    if (removeBtn) {
-                        removeBtn.addEventListener('click', function() {
-                            preview.remove();
-                        });
-                    }
-                };
-                
-                reader.readAsDataURL(file);
-            }
+            // Обновляем локальное состояние и синхронизируем input
+            selectedFiles = Array.from(e.target.files || []);
+            syncInputFiles();
+            renderPreviews();
         });
     }
     
@@ -171,6 +188,37 @@ function initPhotoReportModal() {
             // Файлы уже присутствуют в formData, так как FormData создана из формы
             const fileInput = photoModal.querySelector('#photoUpload');
             const previewContainer = photoModal.querySelector('#photoPreview');
+            
+            // Диагностика: что у нас сейчас выбрано и что уйдет на сервер
+            try {
+                console.group('Фотоотчет: диагностика перед отправкой');
+                console.log('request_id:', requestId);
+                if (fileInput) {
+                    console.log('fileInput.files.length:', fileInput.files.length);
+                    Array.from(fileInput.files).forEach((f, i) => {
+                        console.log(`fileInput.files[${i}] -> name: ${f.name}, size: ${f.size}, type: ${f.type}`);
+                    });
+                }
+                if (previewContainer) {
+                    const previews = previewContainer.querySelectorAll('.card-img-top');
+                    console.log('previews count (в контейнере предпросмотра):', previews.length);
+                }
+                // Выводим содержимое FormData
+                const fdEntries = [];
+                for (const [key, value] of formData.entries()) {
+                    if (value instanceof File) {
+                        fdEntries.push({ key, name: value.name, size: value.size, type: value.type });
+                    } else {
+                        fdEntries.push({ key, value });
+                    }
+                }
+                console.log('FormData entries:', fdEntries);
+                // Частое заблуждение: удаление превью не удаляет файл из input.files
+                console.info('Note: удаление превью сейчас не влияет на input.files. Если здесь файлов больше, чем превью, причина в этом.');
+                console.groupEnd();
+            } catch (e) {
+                console.warn('Ошибка диагностического логирования:', e);
+            }
             
             // console.log('Найден input для загрузки файлов:', !!fileInput);
             // console.log('Найден контейнер для превью:', !!previewContainer);

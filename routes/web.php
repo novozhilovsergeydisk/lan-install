@@ -49,6 +49,9 @@ Route::post('/requests/cancel', [HomeController::class, 'cancelRequest'])->name(
 // Маршрут для загрузки фотоотчетов
 Route::post('/api/requests/photo-report', [HomeController::class, 'uploadPhotoReport'])->name('requests.photo-report')->middleware('auth');
 
+// Фотоотчет: GET (получение списка фото по заявке)
+Route::get('/api/photo-report/{requestId}', [HomeController::class, 'getPhotoReport'])->name('photo-report.show')->middleware('auth');
+
 // Маршруты для работы со статусами заявок
 Route::prefix('statuses')->middleware('auth')->group(function () {
     Route::get('/', [StatusController::class, 'index']);

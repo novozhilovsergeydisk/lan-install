@@ -2266,22 +2266,22 @@ class HomeController extends Controller
 
             // Создаем комментарий, если он есть
             $commentId = null;
-            if ($comment) {
-                $commentId = DB::table('comments')->insertGetId([
-                    'comment' => $comment,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
+            // if ($comment) {
+            //     $commentId = DB::table('comments')->insertGetId([
+            //         'comment' => $comment,
+            //         'created_at' => $now,
+            //         'updated_at' => $now,
+            //     ]);
 
-                // Связываем комментарий с заявкой
-                DB::table('request_comments')->insert([
-                    'request_id' => $requestId,
-                    'comment_id' => $commentId,
-                    'user_id' => $userId,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-            }
+            //     // Связываем комментарий с заявкой
+            //     DB::table('request_comments')->insert([
+            //         'request_id' => $requestId,
+            //         'comment_id' => $commentId,
+            //         'user_id' => $userId,
+            //         'created_at' => $now,
+            //         'updated_at' => $now,
+            //     ]);
+            // }
 
             // Обрабатываем загруженные фотографии
             $uploadedPhotos = [];
@@ -2403,6 +2403,82 @@ class HomeController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при загрузке фотоотчета: ' . $e->getMessage(),
+                'error' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
+        }
+    }
+
+    public function getPhotoReport(Request $request)
+    {
+        try {
+            // Поддерживаем оба варианта: GET /api/photo-report/{requestId} и POST c полем request_id
+            $requestId = $request->route('requestId') ?? $request->input('request_id');
+
+            if (!$requestId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Не передан идентификатор заявки',
+                ], 400);
+            }
+
+            // Загружаем фото через связующую таблицу request_photos -> photos
+            $rows = DB::table('request_photos as rp')
+                ->join('photos as p', 'rp.photo_id', '=', 'p.id')
+                ->where('rp.request_id', $requestId)
+                ->orderByDesc('p.created_at')
+                ->select([
+                    'p.id',
+                    'p.path',
+                    'p.original_name',
+                    'p.file_size',
+                    'p.mime_type',
+                    'p.width',
+                    'p.height',
+                    'p.created_at',
+                    'p.updated_at',
+                ])
+                ->get();
+
+            // Строим публичный URL. Если path в public/storage, используем Storage::url
+            $photos = $rows->map(function ($row) {
+                try {
+                    $url = \Storage::url($row->path);
+                } catch (\Throwable $e) {
+                    // Фолбэк: если уже абсолютный путь в /storage или /uploads
+                    $url = $row->path;
+                }
+                return [
+                    'id' => $row->id,
+                    'url' => $url,
+                    'original_name' => $row->original_name,
+                    'file_size' => $row->file_size,
+                    'mime_type' => $row->mime_type,
+                    'width' => $row->width,
+                    'height' => $row->height,
+                    'created_at' => $row->created_at,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Фотоотчет успешно получен',
+                'data' => $photos
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при получении фотоотчета:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении фотоотчета: ' . $e->getMessage(),
                 'error' => [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),

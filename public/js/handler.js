@@ -47,7 +47,8 @@ export async function loadPlanningRequests() {
         }
         
         // Находим таблицу и её тело
-        const table = container.closest('.table-responsive').querySelector('table');
+        // const table_old = container.closest('.table-responsive').querySelector('table');
+        const table = document.getElementById('requestsPlanningTable');
         const tbody = table.querySelector('tbody');
         
         // Очищаем таблицу, кроме заголовка
@@ -62,6 +63,10 @@ export async function loadPlanningRequests() {
             } catch (e) {
                 console.error('Ошибка парсинга комментариев:', e);
             }
+
+            const commentsContent = linkifyPreservingAnchors(comments[comments.length - 1].comment);
+            const commentsCount = comments.length;
+                
             
             // Форматируем комментарии для отображения
             const formattedComments = comments.length > 0 
@@ -96,14 +101,14 @@ export async function loadPlanningRequests() {
                 </td>
                 <td style="width: 50%">
                     <div class="col-date__date">${request.request_date} | ${request.number}</div>
-                    ${comments.length > 0 ? `
+                    ${commentsContent.length > 0 ? `
                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                             <p class="comment-preview-title">Печатный комментарий:</p>
-                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${comments[comments.length - 1].comment}</div>
+                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${commentsContent}</div>
                         </div>
-                        ${comments.length >= 1 ? `
+                        ${commentsCount >= 1 ? `
                             <div class="mb-0">
-                                ${(() => { const p = makeEscapedPreview(comments[0].comment, 4); return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${comments[0].created_at} | ${comments[0].author_fio}<br>${p.html}${p.ellipsis}</p>`; })()}
+                                ${(() => { const p = makeEscapedPreview(commentsContent, 4); return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${comments[0].created_at} | ${comments[0].author_fio}<br>${p.html}${p.ellipsis}</p>`; })()}
                             </div>
                             <div class="mt-1">
                                 <button type="button"

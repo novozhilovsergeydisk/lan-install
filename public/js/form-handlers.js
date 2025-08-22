@@ -9,6 +9,85 @@ export function DateFormated(date) {
     return date.split('.').reverse().join('-');
 }
 
+// Обработчик для кнопки показа фото в футере модалки комментариев
+export function initShowPhotosButton() {
+    const btn = document.getElementById('showPhotosBtn');
+    if (!btn) return;
+
+    // Сбрасываем возможные предыдущие обработчики
+    const cloned = btn.cloneNode(true);
+    btn.parentNode.replaceChild(cloned, btn);
+
+    cloned.addEventListener('click', async () => {
+        const requestId = document.getElementById('commentRequestId')?.value || '';
+        const container = document.getElementById('photoReportContainer');
+        if (!container) return;
+
+        container.innerHTML = `<div class="text-muted">Загрузка тестовых фото для заявки ${requestId ? '#' + requestId : ''}...</div>`;
+
+        // Имитируем загрузку
+        // await new Promise(r => setTimeout(r, 1400));
+
+        console.log(requestId);
+
+        // Загрузка реальных фото
+        let response;
+        try {
+            response = await fetchData(`/api/photo-report/${requestId}`);
+        } catch (e) {
+            console.error('Ошибка загрузки фотоотчета:', e);
+            container.innerHTML = '<div class="text-danger">Не удалось загрузить фотоотчет</div>';
+            return;
+        }
+
+        // API возвращает { success, message, data: [] }
+        const photos = Array.isArray(response) ? response : (response?.data || []);
+
+        console.log(response);
+
+        // Мок-данные картинок
+        // const photos = [1, 2, 3, 4, 5, 6].map(i => ({
+        //     url: `https://placehold.co/300x200?text=Photo+${i}`,
+        //     id: i
+        // }));
+
+        if (!photos.length) {
+            container.innerHTML = '<div class="text-muted">Фото не найдены</div>';
+            return;
+        }
+
+        // Рендер превью с локальными ссылками и метаданными
+        container.innerHTML = `
+            <div class="row g-2">
+                ${photos.map(p => {
+                    const name = p.original_name || `Фото ${p.id}`;
+                    const sizeKB = p.file_size ? Math.round(p.file_size / 1024) + ' KB' : '';
+                    const created = p.created_at ? `<div class=\"small text-muted\">${p.created_at}</div>` : '';
+                    const url = p.url;
+                    return `
+                        <div class=\"col-6 col-md-4\">
+                            <div class=\"card h-100\">
+                                <a href=\"${url}\" target=\"_blank\" rel=\"noopener\" class=\"text-decoration-none\">
+                                    <img src=\"${url}\" alt=\"${name}\" class=\"card-img-top\" loading=\"lazy\"
+                                         onerror=\"this.onerror=null;this.src='https://placehold.co/300x200?text=No+Image';\">
+                                </a>
+                                <div class=\"card-body p-2\">
+                                    <div class=\"small\" title=\"${name}\">${name}</div>
+                                    <div class=\"small text-muted\">${sizeKB}</div>
+                                    ${created}
+                                </div>
+                                <div class=\"card-footer p-2\">
+                                    <a href=\"${url}\" download class=\"btn btn-sm btn-outline-secondary w-100\">Скачать</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    });
+}
+
 // Функция для преобразования даты из формата YYYY-MM-DD в DD.MM.YYYY
 export function formatDateToDisplay(dateStr) {
     if (!dateStr) return '';
@@ -1708,13 +1787,35 @@ export function initAddPhotoReport() {
             // Добавляем класс active к текущей кнопке
             this.classList.add('active');
             
-            // Получаем ID заявки
-            const requestId = this.getAttribute('data-request-id');
+            // Получаем ID заявки: приоритетно из скрытого поля модалки комментариев, затем из атрибута кнопки
+            let requestId = null;
+            const commentReqInput = document.getElementById('commentRequestId');
+            if (commentReqInput && commentReqInput.value) {
+                requestId = commentReqInput.value;
+            } else {
+                requestId = this.getAttribute('data-request-id');
+            }
+
+            // Проставляем актуальный ID обратно на кнопку, чтобы relatedTarget содержал корректный id
+            if (requestId) {
+                this.setAttribute('data-request-id', requestId);
+            }
             console.log('Открытие фотоотчета для заявки:', requestId);
+
+            if (!requestId) {
+                showAlert('Не удалось определить ID заявки для фотоотчета', 'danger');
+                return;
+            }
             
             // Открываем модальное окно
             const modalElement = document.getElementById('addPhotoModal');
             if (modalElement) {
+                // Подставляем ID в скрытое поле формы до открытия модалки
+                const hiddenInput = modalElement.querySelector('#photoRequestId');
+                if (hiddenInput) hiddenInput.value = requestId;
+                const modalTitle = modalElement.querySelector('.modal-title');
+                if (modalTitle) modalTitle.textContent = `Фотоотчет по заявке #${requestId}`;
+
                 const modal = new bootstrap.Modal(modalElement);
                 modal.show();
             }

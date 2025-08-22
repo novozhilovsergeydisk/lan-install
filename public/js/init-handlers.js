@@ -9,6 +9,7 @@ import {
     initDeleteMember,
     currentDateState,
     initAddPhotoReport,
+    initShowPhotosButton,
     initAddressEditHandlers,
     initDeleteAddressHandlers,
     saveEmployeeChangesSystem,
@@ -47,6 +48,18 @@ document.addEventListener('DOMContentLoaded', function () {
     initAddressEditHandlers();
     initDeleteAddressHandlers();
     initPlanningRequestFormHandlers();
+    initShowPhotosButton();
+
+    // Очищаем контейнер фотоотчета при закрытии модального окна комментариев
+    const commentsModal = document.getElementById('commentsModal');
+    if (commentsModal) {
+        commentsModal.addEventListener('hidden.bs.modal', function () {
+            const photoContainer = document.getElementById('photoReportContainer');
+            if (photoContainer) {
+                photoContainer.innerHTML = '';
+            }
+        });
+    }
 
     // Запускаем инициализацию кастомных селектов с задержкой
     setTimeout(() => {
