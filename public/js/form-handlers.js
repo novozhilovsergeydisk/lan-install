@@ -23,7 +23,7 @@ export function initShowPhotosButton() {
         const container = document.getElementById('photoReportContainer');
         if (!container) return;
 
-        container.innerHTML = `<div class="text-muted">Загрузка тестовых фото для заявки ${requestId ? '#' + requestId : ''}...</div>`;
+        // container.innerHTML = `<div class="text-muted">Загрузка тестовых фото для заявки ${requestId ? '#' + requestId : ''}...</div>`;
 
         // Имитируем загрузку
         // await new Promise(r => setTimeout(r, 1400));
