@@ -828,9 +828,6 @@ function applyFilters() {
                                             Закрыть заявку
                                         </button>
                                     ` : ''}
-                                    <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
-                                        <i class="bi bi-camera me-1"></i>
-                                    </button>
                                 </div>
                             </td>
 

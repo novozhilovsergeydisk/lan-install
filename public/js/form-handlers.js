@@ -437,12 +437,8 @@ function addRequestToTable(result) {
                         </span>
                     </button>
                     <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                    Закрыть заявку
-                </button>
-
-                <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-outline-success add-photo-btn">
-                    <i class="bi bi-camera me-1"></i>
-                </button>
+                        Закрыть заявку
+                    </button>
                 </div>
             ` : ''}
         </td>
