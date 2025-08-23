@@ -1500,10 +1500,16 @@ class HomeController extends Controller
 
                 // Если была создана новая заявка на недоделанные работы, добавляем её ID в ответ
                 if (isset($newRequestId)) {
+                    // Создаем комментарий
+                    $newCommentId = DB::table('comments')->insertGetId([
+                        'comment' => $request->input('comment', 'Создана новая заявка на недоделанные работы'),
+                        'created_at' => now()
+                    ]);
+
                     // Связываем комментарий с заявкой
                     DB::table('request_comments')->insert([
                         'request_id' => $newRequestId,
-                        'comment_id' => $commentId,
+                        'comment_id' => $newCommentId,
                         'user_id'    => Auth::id(), // ID пользователя из аутентификации
                         'created_at' => now()
                     ]);

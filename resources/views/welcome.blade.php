@@ -1622,19 +1622,22 @@
                         </button>
                     </div>
                 </form>
-                <div class="d-flex align-items-center gap-2 me-auto">
-                    <button data-request-id="" type="button"
-                            class="btn btn-sm btn-outline-success add-photo-btn">
-                        <i class="bi bi-camera me-1"></i> Фотоотчет
-                    </button>
-                    <button id="showPhotosBtn" type="button" class="btn btn-sm btn-outline-info"
-                            aria-controls="photoReportContainer">
-                        <i class="bi bi-images me-1"></i> Показать фото
-                    </button>
+                
+                <div class="w-100 d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <button data-request-id="" type="button"
+                                class="btn btn-sm btn-outline-success add-photo-btn">
+                            <i class="bi bi-camera me-1"></i> Фотоотчет
+                        </button>
+                        <button id="showPhotosBtn" type="button" class="btn btn-sm btn-outline-info"
+                                aria-controls="photoReportContainer">
+                            <i class="bi bi-images me-1"></i> Показать фото
+                        </button>
+                    </div>
+
+                    <div id="photoReportContainer"></div>
                 </div>
-                <div id="photoReportContainer">
-                    
-                </div>
+                
             </div>
         </div>
     </div>
@@ -2568,17 +2571,21 @@
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...';
 
+                const inputData = {
+                        comment: comment,
+                        uncompleted_works: document.getElementById('uncompletedWorks').checked,
+                        _token: document.querySelector('input[name="_token"]').value
+                    };
+
+                console.log(inputData);
+
                 const response = await fetch(`/requests/${requestId}/close`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
-                    body: JSON.stringify({
-                        comment: comment,
-                        uncompleted_works: document.getElementById('uncompletedWorks').checked,
-                        _token: document.querySelector('input[name="_token"]').value
-                    })
+                    body: JSON.stringify(inputData)
                 });
 
                 const result = await response.json();
@@ -2589,7 +2596,7 @@
                     showAlert('Заявка успешно закрыта', 'success');
 
                     // Обновляем страницу
-                    setTimeout(() => location.reload(), 2000);
+                    setTimeout(() => location.reload(), 1000);
                 } else {
                     // Закрываем модальное окно
                     const modal = bootstrap.Modal.getInstance(document.getElementById('closeRequestModal'));
@@ -3333,8 +3340,8 @@
                     
                     <div class="mb-3">
                         <label for="photoUpload" class="form-label">Выберите фотографии</label>
-                        <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept="image/*" required>
-                        <div class="form-text">Можно выбрать несколько файлов. Поддерживаются форматы: JPG, PNG, GIF.</div>
+                        <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept=".jpg,.jpeg,.png,.gif,.heic,.heif" required>
+                        <div class="form-text">Можно выбрать несколько файлов. Поддерживаются форматы: JPG, PNG, GIF, HEIC/HEIF.</div>
                     </div>
                     
                     <!--
