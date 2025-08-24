@@ -6,9 +6,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const table = document.getElementById('requestsTable');
     if (!table) return;
     
-    // Используем первый tbody в таблице
-    const tbody = table.tBodies[0];
-    if (!tbody) return;
+    // Debug: init (считаем актуальные строки на момент загрузки)
+    const initTbody = table.tBodies[0];
+    console.log('[brigade-sort] init', {
+        rows: initTbody ? initTbody.querySelectorAll('tr[data-request-id]').length : 0
+    });
 
     let sortAscending = true;
 
@@ -25,8 +27,14 @@ document.addEventListener('DOMContentLoaded', function () {
     brigadeHeader.title = 'Нажмите для сортировки по бригаде';
 
     brigadeHeader.addEventListener('click', () => {
-        // Only select rows that have a valid request ID (starts with 'request-')
-        const rows = Array.from(tbody.querySelectorAll('tr[id^="request-"]'));
+        // На каждый клик заново берём актуальный tbody и строки
+        const tbody = table.tBodies[0];
+        if (!tbody) {
+            console.warn('[brigade-sort] tbody not found at click');
+            return;
+        }
+        const rows = Array.from(tbody.querySelectorAll('tr[data-request-id]'));
+        console.debug('[brigade-sort] click', { direction: sortAscending ? 'asc' : 'desc', rows: rows.length });
         
         rows.sort((a, b) => {
             const aName = getBrigadeName(a.querySelector('td.col-brigade'));
@@ -39,13 +47,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return sortAscending 
                 ? aName.localeCompare(bName, 'ru')
                 : bName.localeCompare(aName, 'ru');
-            
-            // Keep original order if comparison is equal
-            return 0;
         });
 
         // Re-append rows in new order
         rows.forEach(row => tbody.appendChild(row));
+        console.debug('[brigade-sort] sorted', { rows: rows.length });
         
         // Update sort icon
         if (sortIcon) {
@@ -55,5 +61,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Toggle sort direction for next click
         sortAscending = !sortAscending;
+        console.debug('[brigade-sort] next direction', { next: sortAscending ? 'asc' : 'desc' });
     });
 });
