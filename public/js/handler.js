@@ -2563,23 +2563,23 @@ function handleCancelRequest(button) {
                     // requestRow.style.display = 'none';
 
                     // удаляем строку из DOM
-requestRow.remove();
+                    requestRow.remove();
 
-// Перенумерация только оставшихся видимых строк
-const rows = Array.from(document.querySelectorAll('tr[data-request-id]'))
-  .filter(r => r.offsetParent !== null);
+                    // Перенумерация только оставшихся видимых строк
+                    const rows = Array.from(document.querySelectorAll('tr[data-request-id]'))
+                    .filter(r => r.offsetParent !== null);
 
-rows.forEach((row, index) => {
-  const numCell = row.querySelector('td.col-number') || row.querySelector('td:first-child');
-  if (numCell) numCell.textContent = index + 1;
-});
+                    rows.forEach((row, index) => {
+                    const numCell = row.querySelector('td.col-number') || row.querySelector('td:first-child');
+                    if (numCell) numCell.textContent = index + 1;
+                    });
 
-// Если строк не осталось — показать строку-заглушку (если используется)
-const tbody = document.querySelector('#requestsTable tbody');
-const noRow = document.getElementById('no-requests-row');
-if (tbody && noRow) {
-  if (rows.length === 0) noRow.classList.remove('d-none');
-}
+                    // Если строк не осталось — показать строку-заглушку (если используется)
+                    const tbody = document.querySelector('#requestsTable tbody');
+                    const noRow = document.getElementById('no-requests-row');
+                    if (tbody && noRow) {
+                    if (rows.length === 0) noRow.classList.remove('d-none');
+                    }
 
                     // // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
                     // const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
