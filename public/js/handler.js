@@ -5,6 +5,27 @@ import { initRequestInWorkHandlers } from './form-handlers.js';
 // Делаем postData доступной глобально для обратной совместимости
 window.postData = postData;
 
+// Функция инициализации: применяет linkifyPreservingAnchors к серверно-рендеренным комментариям
+export function linkifyRenderedComments(root = document) {
+    try {
+        const nodes = root.querySelectorAll('.comment-preview-text:not([data-linkified="1"])');
+        nodes.forEach(node => {
+            const originalHtml = node.innerHTML;
+            const processed = linkifyPreservingAnchors(originalHtml);
+            node.innerHTML = processed;
+            node.setAttribute('data-linkified', '1');
+        });
+    } catch (e) {
+        console.error('Ошибка при постобработке ссылок в комментариях:', e);
+    }
+}
+
+// Делаем доступной глобально при необходимости ручного вызова после динамических обновлений
+window.linkifyRenderedComments = linkifyRenderedComments;
+
+// Авто-вызов после полной загрузки DOM
+document.addEventListener('DOMContentLoaded', () => linkifyRenderedComments());
+
 // Загружаем запланированные заявки
 export async function loadPlanningRequests() {
     const container = document.getElementById('planning-container');

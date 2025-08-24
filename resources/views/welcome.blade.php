@@ -372,7 +372,7 @@
                                                 @endphp
                                                 <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                                                     <p class="comment-preview-title">Печатный комментарий:</p>
-                                                    <div data-comment-request-id="{{ $request->id }}" class="comment-preview-text">{!! StringHelper::linkifyFullEscaped($commentText) !!}</div>
+                                                    <div data-comment-request-id="{{ $request->id }}" class="comment-preview-text">{!! $commentText !!}</div>
                                                 </div>
                                                 <div class="mb-0">  
                                                     @php
