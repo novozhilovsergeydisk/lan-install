@@ -1635,6 +1635,13 @@
                         </button>
                     </div>
 
+                    <div class="mb-3 d-none">
+                        <label class="form-label">Предпросмотр фотографий:</label>
+                        <div id="photoPreviewNew" class="row g-2">
+                            <div class="col-12 text-muted">Здесь будет предпросмотр выбранных фотографий</div>
+                        </div>
+                    </div>
+
                     <div id="photoReportContainer"></div>
                 </div>
                 
@@ -3344,25 +3351,10 @@
                         <div class="form-text">Можно выбрать несколько файлов. Поддерживаются форматы: JPG, PNG, GIF, HEIC/HEIF.</div>
                     </div>
                     
-                    <!--
-                    <div class="mb-3">
-                        <label for="photoComment" class="form-label">Комментарий к фотоотчету</label>
-                        <textarea class="form-control" id="photoComment" name="comment" rows="3" 
-                                  placeholder="Введите комментарий к фотоотчету (необязательно)"></textarea>
-                    </div>
-                    -->
-                                        
-                    <div class="mb-3">
-                        <label class="form-label">Предпросмотр фотографий:</label>
-                        <div id="photoPreview" class="row g-2">
-                            <div class="col-12 text-muted">Здесь будет предпросмотр выбранных фотографий</div>
-                        </div>
-                    </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="submit" form="photoReportForm" class="btn btn-primary">Загрузить фотоотчет</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
             </div>
         </div>
     </div>

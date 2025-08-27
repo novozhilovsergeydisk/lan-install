@@ -1,5 +1,6 @@
 import { showAlert, postData } from './utils.js';
 import { initReportHandlers } from './report-handler.js';
+import { initPhotoReportModal } from './modals.js';
 import { 
     initFormHandlers, 
     initEmployeeEditHandlers, 
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initDeleteAddressHandlers();
     initPlanningRequestFormHandlers();
     initShowPhotosButton();
+    initPhotoReportModal();
 
     // Очищаем контейнер фотоотчета при закрытии модального окна комментариев
     const commentsModal = document.getElementById('commentsModal');

@@ -23,9 +23,6 @@ import('./utils.js')
  * Инициализация модального окна для загрузки фотоотчета
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-    initPhotoReportModal();
-});
 
 // Инициализация модального окна для редактирования адреса
 function initAddressEditModal() {
@@ -43,8 +40,8 @@ function initAddressEditModal() {
 /**
  * Инициализирует модальное окно для загрузки фотоотчета
  */
-function initPhotoReportModal() {
-    // console.log('Инициализация модального окна для фотоотчетов');
+ export function initPhotoReportModal() {
+    console.log('Инициализация модального окна для фотоотчетов');
     const photoModal = document.getElementById('addPhotoModal');
     // console.log('Найдено модальное окно:', !!photoModal);
     if (!photoModal) {
@@ -58,6 +55,9 @@ function initPhotoReportModal() {
     // Синхронизация input.files из selectedFiles
     function syncInputFiles() {
         const fileInput = photoModal.querySelector('#photoUpload');
+
+        console.log('Вызов syncInputFiles()', selectedFiles);
+
         if (!fileInput) return;
         const dt = new DataTransfer();
         selectedFiles.forEach(f => dt.items.add(f));
@@ -66,34 +66,59 @@ function initPhotoReportModal() {
 
     // Перерисовка превью по selectedFiles
     function renderPreviews() {
-        const previewContainer = photoModal.querySelector('#photoPreview');
+        // Ищем контейнер в глобальной области видимости
+        const previewContainer = document.getElementById('photoPreviewNew');
+        const container = previewContainer?.closest('.mb-3');
+        
         if (!previewContainer) return;
+        
+        // Очищаем предыдущие превью
         previewContainer.innerHTML = '';
-        selectedFiles.forEach((file, index) => {
-            if (!file.type.startsWith('image/')) return;
+        
+        // Проверяем, есть ли изображения для отображения
+        const imageFiles = selectedFiles.filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length === 0) {
+            // Если изображений нет, скрываем контейнер
+            if (container) container.classList.add('d-none');
+            return;
+        }
+        
+        // Показываем контейнер
+        if (container) container.classList.remove('d-none');
+        
+        // Добавляем превью для каждого изображения
+        imageFiles.forEach((file, index) => {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.createElement('div');
                 preview.className = 'col-md-4 mb-3';
                 preview.innerHTML = `
-                        <div class="card">
-                            <img src="${e.target.result}" class="card-img-top" alt="Предпросмотр">
-                            <div class="card-body p-2 text-center">
-                                <button type="button" class="btn btn-sm btn-danger remove-photo">
-                                    <i class="bi bi-trash"></i> Удалить
-                                </button>
-                            </div>
+                    <div class="card">
+                        <img src="${e.target.result}" class="card-img-top" alt="Предпросмотр" style="height: 120px; object-fit: cover;">
+                        <div class="card-body p-2 text-center">
+                            <button type="button" class="btn btn-sm btn-danger remove-photo">
+                                <i class="bi bi-trash"></i> Удалить
+                            </button>
                         </div>
-                    `;
+                    </div>
+                `;
                 previewContainer.appendChild(preview);
 
-                // Обработчик удаления: удаляет из selectedFiles и синхронизирует input
+                // Обработчик удаления
                 const removeBtn = preview.querySelector('.remove-photo');
                 if (removeBtn) {
-                    removeBtn.addEventListener('click', function() {
-                        selectedFiles.splice(index, 1);
-                        syncInputFiles();
-                        renderPreviews();
+                    removeBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Удаляем файл из выбранных
+                        const fileIndex = selectedFiles.findIndex(f => f === file);
+                        if (fileIndex !== -1) {
+                            selectedFiles.splice(fileIndex, 1);
+                            syncInputFiles();
+                            renderPreviews();
+                        }
                     });
                 }
             };
@@ -143,29 +168,48 @@ function initPhotoReportModal() {
 
     // Обработчик загрузки фотографий
     const photoInput = photoModal.querySelector('#photoUpload');
+    const previewContainer = document.getElementById('photoPreviewNew');
+    
     if (photoInput) {
         photoInput.addEventListener('change', function(e) {
             // Обновляем локальное состояние и синхронизируем input
             selectedFiles = Array.from(e.target.files || []);
+            console.log('selectedFiles 2', selectedFiles);
             syncInputFiles();
+            
+            // Показываем контейнер превью, если есть выбранные файлы
+            if (previewContainer && selectedFiles.length > 0) {
+                previewContainer.closest('.mb-3').classList.remove('d-none');
+            } else if (previewContainer) {
+                previewContainer.closest('.mb-3').classList.add('d-none');
+            }
+            
             renderPreviews();
+            
+            // Автоматически закрываем модальное окно после выбора файлов
+            const modal = bootstrap.Modal.getInstance(photoModal);
+            if (modal && selectedFiles.length > 0) {
+                setTimeout(() => {
+                    modal.hide();
+                }, 500); // Небольшая задержка для лучшего UX
+            }
         });
     }
     
-    // Обработчик отправки формы
-    const photoForm = photoModal.querySelector('#photoReportForm');
-    // console.log('Найдена форма photoReportForm:', !!photoForm);
+    // Обработчик отправки формы комментария с фотоотчетом
+    const commentForm = document.getElementById('addCommentForm');
+    // console.log('Найдена форма addCommentForm:', !!commentForm);
     
-    if (photoForm) {
-        // console.log('Добавление обработчика submit для формы');
-        photoForm.addEventListener('submit', async function(e) {
+    if (commentForm) {
+        // console.log('Добавление обработчика submit для формы комментария');
+        commentForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             // Предотвращение повторной отправки
-            if (photoForm.dataset.submitting === '1') {
+            if (this.dataset.submitting === '1') {
                 return;
             }
-            photoForm.dataset.submitting = '1';
+            this.dataset.submitting = '1';
 
             // Закрываем модальное окно
             const modal = bootstrap.Modal.getInstance(photoModal);
@@ -181,13 +225,13 @@ function initPhotoReportModal() {
             
             const formData = new FormData(this);
             const requestId = formData.get('request_id');
-            // Кнопка сабмита расположена вне формы и привязана атрибутом form
-            const submitButton = document.querySelector('button[type="submit"][form="photoReportForm"]');
+            // Получаем кнопку отправки
+            const submitButton = this.querySelector('button[type="submit"]');
             const originalButtonText = submitButton ? submitButton.innerHTML : '';
             
-            // Файлы уже присутствуют в formData, так как FormData создана из формы
+            // Получаем выбранные файлы из модального окна
             const fileInput = photoModal.querySelector('#photoUpload');
-            const previewContainer = photoModal.querySelector('#photoPreview');
+            const previewContainer = document.getElementById('photoPreviewNew');
             
             // Диагностика: что у нас сейчас выбрано и что уйдет на сервер
             try {
@@ -229,7 +273,12 @@ function initPhotoReportModal() {
                 return;
             }
             
-            // Не добавляем файлы вручную в formData, чтобы избежать дублей
+            // Добавляем файлы в formData, если они есть
+            if (fileInput && fileInput.files.length > 0) {
+                Array.from(fileInput.files).forEach((file, index) => {
+                    formData.append('photos[]', file);
+                });
+            }
             
             // Показываем индикатор загрузки
             if (submitButton) {
@@ -239,7 +288,6 @@ function initPhotoReportModal() {
             
             try {
                 // Отправка данных на сервер
-                // console.log('Отправка запроса на загрузку фотоотчета...');
                 const response = await fetch('/api/requests/photo-report', {
                     method: 'POST',
                     headers: {
@@ -249,52 +297,47 @@ function initPhotoReportModal() {
                     body: formData
                 });
                 
-                // console.log('Получен ответ от сервера:', {
-                //     status: response.status,
-                //     statusText: response.statusText,
-                //     headers: Object.fromEntries(response.headers.entries())
-                // });
-                
                 const data = await response.json();
-                // console.log('Тело ответа:', data);
                 
                 if (!response.ok) {
                     throw new Error(data.message || `Ошибка сервера: ${response.status}`);
                 }
                 
-                if (data.success) {
-                    showAlert('Фотоотчет успешно загружен', 'success');
-                    
-                    // Очищаем форму
-                    photoForm.reset();
-                    if (previewContainer) {
-                        previewContainer.innerHTML = '';
-                    }
-                    
-                    // Закрываем модальное окно
-                    const modal = bootstrap.Modal.getInstance(photoModal);
-                    if (modal) {
-                        modal.hide();
-                    }
-                    
-                    // Обновляем страницу или таблицу заявок, если нужно
-                    if (typeof window.updateRequestsTable === 'function') {
-                        window.updateRequestsTable();
-                    }
-                } else {
-                    throw new Error(data.message || 'Произошла ошибка при загрузке фотоотчета');
+                // Показываем уведомление об успешной загрузке
+                showAlert('Фотоотчет успешно загружен', 'success');
+                
+                // Обновляем страницу или таблицу заявок, если нужно
+                if (typeof window.updateRequestsTable === 'function') {
+                    window.updateRequestsTable();
                 }
+                
+                return data;
             } catch (error) {
-                // console.error('Ошибка при загрузке фотоотчета:', error);
+                console.error('Ошибка при загрузке фотоотчета:', error);
                 showAlert(error.message || 'Произошла ошибка при загрузке фотоотчета', 'danger');
+                throw error;
             } finally {
-                // Сбрасываем флаг отправки
-                photoForm.dataset.submitting = '0';
+                // Очищаем форму и превью
+                if (this.reset) this.reset();
+                if (previewContainer) {
+                    previewContainer.innerHTML = '<div class="col-12 text-muted">Здесь будет предпросмотр выбранных фотографий</div>';
+                    // Скрываем контейнер превью
+                    const container = previewContainer.closest('.mb-3');
+                    if (container) container.classList.add('d-none');
+                }
+                // Очищаем input файлов
+                if (fileInput) {
+                    fileInput.value = '';
+                    selectedFiles = [];
+                    syncInputFiles();
+                }
                 // Восстанавливаем кнопку
                 if (submitButton) {
                     submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
+                    if (originalButtonText) submitButton.innerHTML = originalButtonText;
                 }
+                // Сбрасываем флаг отправки
+                this.dataset.submitting = '0';
             }
         });
     }
