@@ -34,6 +34,11 @@ function initWysiwygEditor() {
 
   // Инициализация: заполнить редактор содержимым textarea (если есть)
   editor.innerHTML = textarea.value || '';
+  
+  // Удаляем пустые пробелы и <br> в начале содержимого
+  if (editor.innerHTML.trim() === '' || editor.innerHTML === '<br>') {
+    editor.innerHTML = '';
+  }
 
   // Скопировать атрибуты required/minlength/maxlength если нужно (мы будем валидировать вручную)
   const attrMin = textarea.getAttribute('minlength');
@@ -47,6 +52,9 @@ function initWysiwygEditor() {
 
   // Простая санитизация HTML: оставляем только allowedTags и атрибут href для A
   function sanitizeHTML(html) {
+    // Удаляем HTML-комментарии (как обычные, так и экранированные)
+    html = html.replace(/&lt;!--[\s\S]*?--&gt;|<!--[\s\S]*?-->/g, '');
+    
     // Создаём контейнер и парсим
     const frag = document.createElement('div');
     frag.innerHTML = html;
@@ -216,8 +224,21 @@ function initWysiwygEditor() {
   // Вставить HTML в текущую позицию курсора (вставляем sanitized html)
   function insertHTMLAtCursor(html) {
     console.log('WYSIWYG: вставка HTML', { before: editor.innerHTML, html });
-    // modern: use execCommand as simple reliable way
-    document.execCommand('insertHTML', false, html);
+    
+    // Удаляем HTML-комментарии перед вставкой
+    const sanitizedHtml = html.replace(/&lt;!--[\s\S]*?--&gt;|<!--[\s\S]*?-->/g, '');
+    
+    // Вставляем санитизированный HTML
+    document.execCommand('insertHTML', false, sanitizedHtml);
+    
+    // Удаляем лишние <br> в начале и конце содержимого
+    if (editor.innerHTML.startsWith('<br>')) {
+      editor.innerHTML = editor.innerHTML.replace(/^<br>/, '');
+    }
+    if (editor.innerHTML.endsWith('<br>')) {
+      editor.innerHTML = editor.innerHTML.replace(/<br>$/i, '');
+    }
+    
     console.log('WYSIWYG: после вставки', { after: editor.innerHTML });
   }
 
@@ -275,6 +296,42 @@ function initWysiwygEditor() {
   });
   editor.addEventListener('blur', function(e) {
     console.log('WYSIWYG: редактор потерял фокус');
+  });
+
+  // Обработчик для санитизации HTML при любом изменении содержимого
+  editor.addEventListener('input', function(e) {
+    // Получаем текущее содержимое
+    let currentHTML = editor.innerHTML;
+    
+    // Удаляем пустые пробелы и <br> в начале содержимого
+    if (currentHTML.trim() === '' || currentHTML === '<br>') {
+      currentHTML = '';
+      editor.innerHTML = '';
+      return;
+    }
+    
+    // Санитизируем HTML
+    const sanitizedHTML = sanitizeHTML(currentHTML);
+    
+    // Если содержимое изменилось после санитизации
+    if (currentHTML !== sanitizedHTML) {
+      // Сохраняем позицию курсора
+      const selection = window.getSelection();
+      const range = selection.getRangeAt(0);
+      const offset = range.startOffset;
+      
+      // Обновляем содержимое
+      editor.innerHTML = sanitizedHTML;
+      
+      // Восстанавливаем позицию курсора
+      const newRange = document.createRange();
+      const textNode = document.createTextNode('');
+      editor.appendChild(textNode);
+      newRange.setStart(textNode, Math.min(offset, textNode.length));
+      newRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
   });
 
   // --- Paste handling: sanitize, respect code-mode ---
