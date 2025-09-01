@@ -885,7 +885,8 @@ class HomeController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Комментарий успешно добавлен',
-                    'comments' => $comments
+                    'comments' => $comments,
+                    'commentId' => $commentId
                 ]);
             } catch (\Exception $e) {
                 // Откатываем изменения при ошибке
@@ -2229,6 +2230,97 @@ class HomeController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении заявок: ' . $e->getMessage(),
+                'error' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
+        }
+    }
+
+    public function uploadPhotoComment(Request $request) {  
+        try {
+
+            // Для тестирования
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => 'Фотографии успешно загружены (test)',
+            //     '$request' => $request   
+            // ], 200);
+
+            $validated = $request->validate([
+                'request_id' => 'required|integer|exists:requests,id',
+                'photo_ids' => 'required|json', // Ожидаем JSON-строку с массивом ID
+                'comment' => 'required|integer|exists:comments,id'
+            ]);
+            
+            // Декодируем JSON с ID фотографий
+            $photoIds = json_decode($validated['photo_ids'], true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Неверный формат ID фотографий'
+                ], 422);
+            }
+
+            $commentId = $validated['comment'];
+            $requestId = $validated['request_id'];
+            $now = now();
+            
+            // Начинаем транзакцию
+            DB::beginTransaction();
+
+            try {
+                // Связываем каждую фотографию с комментарием
+                foreach ($photoIds as $photoId) {
+                    DB::table('comment_photos')->insert([
+                        'comment_id' => $commentId,
+                        'photo_id' => $photoId,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
+
+                // Фиксируем изменения
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Фотографии успешно привязаны к комментарию',
+                    'commentId' => $commentId,
+                    'photoIds' => $photoIds,
+                ], 200);
+
+            } catch (\Exception $e) {
+                // В случае ошибки откатываем транзакцию
+                DB::rollBack();
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ошибка при привязке фотографий к комментарию',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при загрузке фотографий:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при загрузке фотографий: ' . $e->getMessage(),
                 'error' => [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),

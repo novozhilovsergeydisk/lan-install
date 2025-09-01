@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\CommentPhotoController;
 use App\Http\Controllers\BrigadeController;
 use App\Http\Controllers\RequestFilterController;
 use App\Http\Controllers\RequestTeamFilterController;
@@ -49,8 +50,13 @@ Route::post('/requests/cancel', [HomeController::class, 'cancelRequest'])->name(
 // Маршрут для загрузки фотоотчетов
 Route::post('/api/requests/photo-report', [HomeController::class, 'uploadPhotoReport'])->name('requests.photo-report')->middleware('auth');
 
+Route::post('/api/requests/photo-comment', [HomeController::class, 'uploadPhotoComment'])->name('requests.photo-comment')->middleware('auth');
+
 // Фотоотчет: GET (получение списка фото по заявке)
 Route::get('/api/photo-report/{requestId}', [HomeController::class, 'getPhotoReport'])->name('photo-report.show')->middleware('auth');
+
+// Фотоотчет: POST (получение фото по id комментария)
+Route::post('/api/comments/{commentId}/photos', [CommentPhotoController::class, 'index'])->name('api.comments.photos')->middleware('auth');
 
 // Маршруты для работы со статусами заявок
 Route::prefix('statuses')->middleware('auth')->group(function () {
@@ -154,6 +160,9 @@ Route::prefix('reports')->middleware('auth')->group(function () {
 
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {
+    // Get comment photos
+    Route::get('/comments/{commentId}/photos', [\App\Http\Controllers\CommentPhotoController::class, 'index'])->name('api.comments.photos');
+    
     // Get addresses for select
     Route::get('/addresses', [HomeController::class, 'getAddresses'])->name('api.addresses');
     

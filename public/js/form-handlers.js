@@ -2993,7 +2993,486 @@ function initEmployeeButtons() {
 // Инициализируем кнопки при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     initEmployeeButtons();
+    initShowPhotoButtons();
 });
+
+// Инициализация обработчиков кнопок "Показать фото"
+function initShowPhotoButtons() {
+    // Обработчик для уже существующих кнопок
+    document.addEventListener('click', function(e) {
+        const showPhotoBtn = e.target.closest('.data-show-photo-btn');
+        if (showPhotoBtn) {
+            e.preventDefault();
+            const commentId = showPhotoBtn.getAttribute('data-comment-id');
+            console.log('Показать фото для комментария ID:', commentId);
+            
+            // Используем глобальную функцию для загрузки фотографий
+            loadCommentPhotos(commentId);
+        }
+    });
+
+    // Обработчик для динамически добавляемых кнопок
+    // const observer = new MutationObserver(function(mutations) {
+    //     mutations.forEach(function(mutation) {
+    //         if (mutation.addedNodes.length) {
+    //             const buttons = document.querySelectorAll('.data-show-photo-btn:not([data-initialized])');
+    //             buttons.forEach(btn => {
+    //                 btn.setAttribute('data-initialized', 'true');
+    //                 btn.addEventListener('click', function(e) {
+    //                     e.preventDefault();
+    //                     const commentId = this.getAttribute('data-comment-id');
+    //                     console.log('Показать фото для комментария ID (динамический):', commentId);
+                        
+    //                     // Функция для загрузки и отображения фотографий комментария
+    //                     async function loadCommentPhotos(commentId) {
+    //                         try {
+    //                             // Показываем индикатор загрузки
+    //                             const loadingIndicator = document.createElement('div');
+    //                             loadingIndicator.className = 'loading-indicator';
+    //                             loadingIndicator.textContent = 'Загрузка фотографий...';
+    //                             document.body.appendChild(loadingIndicator);
+
+    //                             // Отправляем запрос на сервер для получения фотографий комментария
+    //                             const response = await fetch(`/api/comments/${commentId}/photos`);
+                                
+    //                             if (!response.ok) {
+    //                                 throw new Error('Ошибка при загрузке фотографий');
+    //                             }
+
+    //                             const photos = await response.json();
+                                
+    //                             // Создаем модальное окно для отображения фотографий
+    //                             const modal = document.createElement('div');
+    //                             modal.className = 'photo-modal';
+    //                             modal.style.cssText = `
+    //                                 position: fixed;
+    //                                 top: 0;
+    //                                 left: 0;
+    //                                 width: 100%;
+    //                                 height: 100%;
+    //                                 background-color: rgba(0, 0, 0, 0.9);
+    //                                 display: flex;
+    //                                 flex-direction: column;
+    //                                 align-items: center;
+    //                                 justify-content: center;
+    //                                 z-index: 1000;
+    //                             `;
+
+    //                             // Кнопка закрытия
+    //                             const closeBtn = document.createElement('button');
+    //                             closeBtn.textContent = '×';
+    //                             closeBtn.style.cssText = `
+    //                                 position: absolute;
+    //                                 top: 20px;
+    //                                 right: 30px;
+    //                                 color: white;
+    //                                 font-size: 40px;
+    //                                 font-weight: bold;
+    //                                 background: none;
+    //                                 border: none;
+    //                                 cursor: pointer;
+    //                             `;
+    //                             closeBtn.onclick = () => document.body.removeChild(modal);
+
+    //                             // Контейнер для фотографий
+    //                             const photosContainer = document.createElement('div');
+    //                             photosContainer.style.cssText = `
+    //                                 max-width: 90%;
+    //                                 max-height: 80vh;
+    //                                 overflow: auto;
+    //                                 display: flex;
+    //                                 flex-wrap: wrap;
+    //                                 justify-content: center;
+    //                                 gap: 15px;
+    //                                 padding: 20px;
+    //                             `;
+
+    //                             // Добавляем каждую фотографию в контейнер
+    //                             if (photos.length === 0) {
+    //                                 const noPhotos = document.createElement('p');
+    //                                 noPhotos.textContent = 'Фотографии не найдены';
+    //                                 noPhotos.style.color = 'white';
+    //                                 photosContainer.appendChild(noPhotos);
+    //                             } else {
+    //                                 photos.forEach(photo => {
+    //                                     const imgContainer = document.createElement('div');
+    //                                     imgContainer.style.cssText = 'margin: 10px; text-align: center;';
+                                        
+    //                                     const img = document.createElement('img');
+    //                                     img.src = `/storage/${photo.path}`;
+    //                                     img.style.maxWidth = '100%';
+    //                                     img.style.maxHeight = '300px';
+    //                                     img.style.cursor = 'pointer';
+                                        
+    //                                     // Добавляем возможность открыть фото в полном размере
+    //                                     img.onclick = () => {
+    //                                         const fullScreen = document.createElement('div');
+    //                                         fullScreen.style.cssText = `
+    //                                             position: fixed;
+    //                                             top: 0;
+    //                                             left: 0;
+    //                                             width: 100%;
+    //                                             height: 100%;
+    //                                             background-color: rgba(0, 0, 0, 0.95);
+    //                                             display: flex;
+    //                                             justify-content: center;
+    //                                             align-items: center;
+    //                                             z-index: 1001;
+    //                                         `;
+                                            
+    //                                         const fullImg = document.createElement('img');
+    //                                         fullImg.src = `/storage/${photo.path}`;
+    //                                         fullImg.style.maxWidth = '90%';
+    //                                         fullImg.style.maxHeight = '90vh';
+    //                                         fullImg.style.objectFit = 'contain';
+                                            
+    //                                         fullScreen.onclick = () => document.body.removeChild(fullScreen);
+    //                                         fullScreen.appendChild(fullImg);
+    //                                         document.body.appendChild(fullScreen);
+    //                                     };
+                                        
+    //                                     // Информация о фото
+    //                                     const info = document.createElement('div');
+    //                                     info.style.color = 'white';
+    //                                     info.style.fontSize = '12px';
+    //                                     info.style.marginTop = '5px';
+    //                                     info.textContent = `${photo.original_name || 'Фото'} (${formatFileSize(photo.file_size)})`;
+                                        
+    //                                     imgContainer.appendChild(img);
+    //                                     imgContainer.appendChild(info);
+    //                                     photosContainer.appendChild(imgContainer);
+    //                                 });
+    //                             }
+
+    //                             modal.appendChild(closeBtn);
+    //                             modal.appendChild(photosContainer);
+    //                             document.body.appendChild(modal);
+                                
+    //                         } catch (error) {
+    //                             console.error('Ошибка при загрузке фотографий:', error);
+    //                             alert('Не удалось загрузить фотографии. Пожалуйста, попробуйте позже.');
+    //                         } finally {
+    //                             // Удаляем индикатор загрузки
+    //                             const loadingIndicator = document.querySelector('.loading-indicator');
+    //                             if (loadingIndicator) {
+    //                                 document.body.removeChild(loadingIndicator);
+    //                             }
+    //                         }
+    //                     }
+
+    //                     // Вспомогательная функция для форматирования размера файла
+    //                     function formatFileSize(bytes) {
+    //                         if (bytes === 0) return '0 Bytes';
+    //                         const k = 1024;
+    //                         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    //                         const i = Math.floor(Math.log(bytes) / Math.log(k));
+    //                         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    //                     }
+    //                     loadCommentPhotos(commentId);
+    //                 });
+    //             });
+    //         }
+    //     });
+    // });
+
+    // Начинаем наблюдение за изменениями в DOM
+    // observer.observe(document.body, {
+    //     childList: true,
+    //     subtree: true
+    // });
+}
+
+// Функция для загрузки и отображения фотографий комментария
+async function loadCommentPhotos(commentId) {
+    try {
+        // Находим модальное окно комментариев
+        const commentsModal = document.getElementById('commentsModal');
+        if (!commentsModal) {
+            console.error('Модальное окно комментариев не найдено');
+            return;
+        }
+
+        // Находим или создаем контейнер для фотографий
+        let photosContainer = commentsModal.querySelector('.comment-photos-container');
+        if (!photosContainer) {
+            photosContainer = document.createElement('div');
+            photosContainer.className = 'comment-photos-container mt-3';
+            const commentsContainer = commentsModal.querySelector('#commentsContainer');
+            if (commentsContainer) {
+                commentsContainer.insertAdjacentElement('afterbegin', photosContainer);
+            }
+        }
+
+        // Показываем индикатор загрузки
+        photosContainer.innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <div>Загрузка фотографий...</div>
+            </div>`;
+
+        // Отправляем POST запрос на сервер для получения фотографий комментария
+        const response = await fetch('/api/comments/' + commentId + '/photos', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify({ comment_id: commentId })
+        });
+        
+        const result = await response.json();
+
+        console.log('Ответ сервера:', result);
+
+        // return;
+        
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Ошибка при загрузке фотографий');
+        }
+
+        const photos = result.data || [];
+
+        console.log('Полученные фотографии:', photos);  
+        
+        // Очищаем контейнер перед добавлением фотографий
+        photosContainer.innerHTML = '';
+        
+        // Добавляем заголовок раздела с фотографиями, если есть фотографии
+        if (photos.length > 0) {
+            const photosHeader = document.createElement('h6');
+            photosHeader.className = 'mt-3 mb-2';
+            photosHeader.textContent = 'Прикрепленные фотографии:';
+            photosContainer.appendChild(photosHeader);
+            
+            // Создаем контейнер для сетки фотографий
+            const photosGrid = document.createElement('div');
+            photosGrid.className = 'row g-2';
+            
+            // Добавляем фотографии в сетку
+            photos.forEach(photo => {
+                const photoCol = document.createElement('div');
+                photoCol.className = 'col-6 col-md-4 col-lg-3';
+                
+                const photoCard = document.createElement('div');
+                photoCard.className = 'card h-100';
+                photoCard.style.cursor = 'pointer';
+                
+                const img = document.createElement('img');
+                img.src = photo.url || `/storage/${photo.path}`;
+                img.className = 'card-img-top';
+                img.style.objectFit = 'cover';
+                img.style.height = '120px';
+                img.loading = 'lazy';
+                
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body p-2';
+                
+                const fileName = document.createElement('div');
+                fileName.className = 'small text-truncate';
+                fileName.textContent = photo.original_name || 'Фото';
+                fileName.title = photo.original_name || 'Фото';
+                
+                const fileSize = document.createElement('div');
+                fileSize.className = 'small text-muted';
+                fileSize.textContent = photo.file_size ? `${(photo.file_size / 1024).toFixed(1)} KB` : '';
+                
+                cardBody.appendChild(fileName);
+                cardBody.appendChild(fileSize);
+                
+                photoCard.appendChild(img);
+                photoCard.appendChild(cardBody);
+                photoCol.appendChild(photoCard);
+                photosGrid.appendChild(photoCol);
+                
+                // Обработчик клика для просмотра в полном размере
+                photoCard.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    
+                    const fullScreen = document.createElement('div');
+                    fullScreen.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-color: rgba(0, 0, 0, 0.9);
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 2000;
+                        cursor: pointer;
+                        padding: 20px;
+                    `;
+                    
+                    const fullImg = document.createElement('img');
+                    fullImg.src = photo.url || `${photo.path}`;
+                    fullImg.style.maxWidth = '90%';
+                    fullImg.style.maxHeight = '80vh';
+                    fullImg.style.objectFit = 'contain';
+                    
+                    const imgInfo = document.createElement('div');
+                    imgInfo.className = 'text-white text-center mt-3';
+                    imgInfo.innerHTML = `
+                        <div>${photo.original_name || 'Фото'}</div>
+                        <div class="small text-muted">${photo.file_size ? `${(photo.file_size / 1024).toFixed(1)} KB` : ''}</div>
+                    `;
+                    
+                    fullScreen.appendChild(fullImg);
+                    fullScreen.appendChild(imgInfo);
+                    document.body.appendChild(fullScreen);
+                    
+                    // Закрытие при клике
+                    fullScreen.addEventListener('click', () => {
+                        document.body.removeChild(fullScreen);
+                    });
+                });
+            });
+            
+            photosContainer.appendChild(photosGrid);
+        }
+
+        console.log('photosContainer:', photosContainer);
+
+return;
+
+        // modal.style.cssText = `
+        //     position: fixed;
+        //     top: 0;
+        //     left: 0;
+        //     width: 100%;
+        //     height: 100%;
+        //     background-color: rgba(0, 0, 0, 0.9);
+        //     display: flex;
+        //     flex-direction: column;
+        //     align-items: center;
+        //     justify-content: center;
+        //     z-index: 1000;
+        // `;
+
+        // // Кнопка закрытия
+        // const closeBtn = document.createElement('button');
+        // closeBtn.textContent = '×';
+        // closeBtn.style.cssText = `
+        //     position: absolute;
+        //     top: 20px;
+        //     right: 30px;
+        //     color: white;
+        //     font-size: 40px;
+        //     font-weight: bold;
+        //     background: none;
+        //     border: none;
+        //     cursor: pointer;
+        // `;
+        // closeBtn.onclick = () => document.body.removeChild(modal);
+
+        // // Контейнер для фотографий
+        // const modalPhotosContainer = document.createElement('div');
+        // modalPhotosContainer.style.cssText = `
+        //     max-width: 90%;
+        //     max-height: 80vh;
+        //     overflow: auto;
+        //     display: flex;
+        //     flex-wrap: wrap;
+        //     justify-content: center;
+        //     gap: 15px;
+        //     padding: 20px;
+        // `;
+
+        // // Добавляем каждую фотографию в контейнер
+        // if (photos.length === 0) {
+        //     const noPhotos = document.createElement('p');
+        //     noPhotos.textContent = 'Фотографии не найдены';
+        //     noPhotos.style.color = 'white';
+        //     modalPhotosContainer.appendChild(noPhotos);
+        // } else {
+        //     photos.forEach(photo => {
+        //         const imgContainer = document.createElement('div');
+        //         imgContainer.style.cssText = 'margin: 10px; text-align: center;';
+                
+        //         const img = document.createElement('img');
+        //         img.src = photo.url || `/storage/${photo.path}`;
+        //         img.style.maxWidth = '100%';
+        //         img.style.maxHeight = '300px';
+        //         img.style.cursor = 'pointer';
+        //         img.loading = 'lazy';
+                
+        //         // Добавляем возможность открыть фото в полном размере
+        //         img.onclick = () => {
+        //             const fullScreen = document.createElement('div');
+        //             fullScreen.style.cssText = `
+        //                 position: fixed;
+        //                 top: 0;
+        //                 left: 0;
+        //                 width: 100%;
+        //                 height: 100%;
+        //                 background-color: rgba(0, 0, 0, 0.95);
+        //                 display: flex;
+        //                 justify-content: center;
+        //                 align-items: center;
+        //                 z-index: 1001;
+        //             `;
+                    
+        //             const fullImg = document.createElement('img');
+        //             fullImg.src = photo.url || `/storage/${photo.path}`;
+        //             fullImg.style.maxWidth = '90%';
+        //             fullImg.style.maxHeight = '90vh';
+        //             fullImg.style.objectFit = 'contain';
+                    
+        //             fullScreen.onclick = () => document.body.removeChild(fullScreen);
+        //             fullScreen.appendChild(fullImg);
+        //             document.body.appendChild(fullScreen);
+        //         };
+                
+        //         // Информация о фото
+        //         const info = document.createElement('div');
+        //         info.style.color = 'white';
+        //         info.style.fontSize = '12px';
+        //         info.style.marginTop = '5px';
+        //         info.textContent = `${photo.original_name || 'Фото'} (${formatFileSize(photo.file_size)})`;
+                
+        //         imgContainer.appendChild(img);
+        //         imgContainer.appendChild(info);
+        //         modalPhotosContainer.appendChild(imgContainer);
+        //     });
+        // }
+
+        // modal.appendChild(closeBtn);
+        // modal.appendChild(modalPhotosContainer);
+        // document.body.appendChild(modal);
+        
+    } catch (error) {
+        console.error('Ошибка при загрузке фотографий:', error);
+        
+        // Показываем сообщение об ошибке
+        if (photosContainer) {
+            photosContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Не удалось загрузить фотографии: ${error.message}
+                </div>`;
+        }
+    } finally {
+        // Удаляем индикатор загрузки
+        const loadingIndicator = document.querySelector('.loading-indicator');
+        if (loadingIndicator) {
+            document.body.removeChild(loadingIndicator);
+        }
+    }
+}
+
+// Вспомогательная функция для форматирования размера файла
+function formatFileSize(bytes) {
+    if (bytes === 0 || !bytes) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 // Экспортируем функции для использования в других модулях
 export { 
@@ -3002,5 +3481,6 @@ export {
     updateRowNumbers, 
     addRequestToTable, 
     handleCommentEdit,
-    initEmployeeButtons
+    initEmployeeButtons,
+    loadCommentPhotos
 };

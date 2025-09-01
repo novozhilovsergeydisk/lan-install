@@ -1,3 +1,8 @@
+const randomHash = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+sessionStorage.setItem('sessionId', randomHash);
+
+console.log('randomHash', randomHash);
+
 import { showAlert, postData } from './utils.js';
 import { initReportHandlers } from './report-handler.js';
 import { initPhotoReportModal } from './modals.js';

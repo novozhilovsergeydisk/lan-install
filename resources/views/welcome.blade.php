@@ -1382,6 +1382,10 @@
                                     updateCommentsBadge(requestId);
                                 }, 100);
                             });
+
+                            sessionStorage.setItem('commentId', data.commentId);
+                            sessionStorage.setItem('data', JSON.stringify({commentId: data.commentId, sessionId: sessionStorage.getItem('sessionId')}));
+                            console.log('Комментарий успешно добавлен', data.commentId);
                         }
                     })
                     .catch(error => {
@@ -1445,6 +1449,7 @@
                                                 <h6 class="fw-semibold mb-1" style="color:${color}">${comment.employee_full_name}</h6>
                                                 <div class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">${(window.utils && typeof window.utils.linkifyPreservingAnchors==='function' ? window.utils.linkifyPreservingAnchors(commentContent) : commentContent)}</div>
                                                 <small class="text-muted">${formattedDate}</small>
+                                                <span class="ms-2"><a href="#" class="text-info text-decoration-none data-show-photo-btn" data-comment-id="${comment.id}">Показать фото</a></span>
                                                 ${index === comments.length - 1 ? `<button class="btn btn-sm btn-outline-primary ms-2 edit-comment-btn">Редактировать</button>` : ''}
                                             </div>
                                         </div>

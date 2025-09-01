@@ -270,6 +270,7 @@ function initAddressEditModal() {
             if (!fileInput || fileInput.files.length === 0) {
                 // console.log('Файлы не выбраны');
                 showAlert('Пожалуйста, выберите хотя бы одно фото для загрузки', 'warning');
+                console.log('Пожалуйста, выберите хотя бы одно фото для загрузки');
                 return;
             }
             
@@ -285,7 +286,9 @@ function initAddressEditModal() {
                 submitButton.disabled = true;
                 submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Отправка...';
             }
-            
+
+            console.log('Форма отправки фотоотчета formData (modals.js)', formData);
+
             try {
                 // Отправка данных на сервер
                 const response = await fetch('/api/requests/photo-report', {
@@ -310,11 +313,91 @@ function initAddressEditModal() {
                 if (typeof window.updateRequestsTable === 'function') {
                     window.updateRequestsTable();
                 }
+
+                console.log('data фотоотчета = ', data);
+                const photos = data.data.photos;
+                console.log('photos = ', photos);
+
+                const dataSession = sessionStorage.getItem('data');
+                const dataSessionJson = JSON.parse(dataSession);
+                // console.log('dataSession = ', dataSessionJson);
+                // console.log('------------------------');
+                // console.log('sessionId 1', dataSessionJson['sessionId']);
+                // console.log('sessionId 2', sessionStorage.getItem('sessionId'));
+                // console.log('------------------------');
+
+                if (dataSessionJson['sessionId'] === sessionStorage.getItem('sessionId') && sessionStorage.getItem('sessionId') !== null) {  
+                    // console.log('|---------------------------------');
+                    // console.log('|----- В [dataSession] записаны данные', dataSessionJson);
+                    console.log('|---------------------------------');
+                    console.log('|----- Записываем фотоотчет для комментария');
+                    console.log('|----- commentId = ', dataSessionJson.commentId);
+                    console.log('|----- files = ', fileInput.files);
+                    console.log('|----- sessionId = ', dataSessionJson.sessionId);
+                    console.log('|---------------------------------');
+                    // Здесь будет запрос к таблице comments_photos для записи фотоотчета
+                    
+                    // Создаем FormData для отправки файлов
+                    const formData = new FormData();
+                    formData.append('request_id', requestId);
+                    formData.append('comment', dataSessionJson.commentId);
+
+                    // Добавляем ID фотографий
+                    if (photos && photos.length > 0) {
+                        console.log('Добавляем ID фотографий в formData:');
+                        const photoIds = photos.map(photo => photo.id);
+                        formData.append('photo_ids', JSON.stringify(photoIds));
+                        console.log('ID фотографий для отправки:', photoIds);
+                    } else {
+                        console.warn('Нет фотографий для отправки');
+                    }
+
+                    // Выводим содержимое formData в читаемом виде
+                    console.log('Содержимое formData:');
+                    for (let [key, value] of formData.entries()) {
+                        console.log(key, value);
+                    }
+
+                    // return;
+
+                    // Отправляем запрос на сервер
+                    fetch('api/requests/photo-comment', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Ответ сервера:', data);
+                        
+                        // if (data.success && data.data && data.data.photos) {
+                        //     // Получаем массив ID загруженных фотографий
+                        //     const photoIds = data.data.photos.map(photo => photo.id);
+                        //     console.log('ID загруженных фотографий:', photoIds);
+                            
+                        //     // Здесь можно использовать photoIds для дальнейшей работы
+                        //     // Например, обновить интерфейс или сохранить в хранилище
+                            
+                        //     showAlert('Фотоотчет успешно загружен', 'success');
+                        // } else {
+                        //     console.log('Ошибка при загрузке фотоотчета:', data.message || 'Неизвестная ошибка');
+                        //     showAlert('Ошибка при загрузке фотоотчета', 'error');
+                        // }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при загрузке фотоотчета для комментария:', error);
+                        showAlert(error.message || 'Произошла ошибка при загрузке фотоотчета для комментария', 'danger');
+                    });
+                }
+
+                console.log('data фотоотчета для комментария = ', data);
                 
                 return data;
             } catch (error) {
-                console.error('Ошибка при загрузке фотоотчета:', error);
-                showAlert(error.message || 'Произошла ошибка при загрузке фотоотчета', 'danger');
+                console.error('Ошибка при загрузке фотоотчета для комментария:', error);
+                showAlert(error.message || 'Произошла ошибка при загрузке фотоотчета для комментария', 'danger');
                 throw error;
             } finally {
                 // Очищаем форму и превью
