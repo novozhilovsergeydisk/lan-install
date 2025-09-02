@@ -42,7 +42,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['au
 Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth')->middleware(['auth', 'roles']);;
 
 // Завершить заявку
-Route::post('/requests/{request}/finish', [HomeController::class, 'finishRequest'])->name('requests.finish')->middleware('auth')->middleware(['auth', 'roles']);;
+Route::post('/requests/{request}/delete', [HomeController::class, 'deleteRequest'])->name('requests.delete')->middleware('auth')->middleware(['auth', 'roles']);;
 
 // Transfer request
 Route::post('/api/requests/transfer', [HomeController::class, 'transferRequest'])->name('requests.transfer')->middleware('auth');

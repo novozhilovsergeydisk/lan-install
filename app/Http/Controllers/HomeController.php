@@ -1332,10 +1332,10 @@ class HomeController extends Controller
         }
     }
 
-    public function finishRequest($id, Request $request) {
+    public function deleteRequest($id, Request $request) {
         try {
             $user = auth()->user();
-            $user->method = 'HomeController::finishRequest';
+            $user->method = 'HomeController::deleteRequest';
             $employee = $user->employee;
             $employee_role = $user->roles[0];
 
@@ -1347,19 +1347,20 @@ class HomeController extends Controller
 
             // Тестовый ответ
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Заявка завершена (test)',
-                'data' => $request_id
-            ]);
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => 'Заявка завершена (test)',
+            //     'data' => $request_id
+            // ]);
 
             $sql = "update requests set status_id = 7 where id = ?";
-            $result = DB::select($sql, [$request_id]);
+            $result = DB::update($sql, [$request_id]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Заявка завершена',
-                'data' => $result
+                'message' => 'Заявка удалена',
+                'data' => $result,
+                'request_id' => $request_id
             ]);
         } catch (\Exception $e) {
             \Log::error('Ошибка при завершении заявки: ' . $e->getMessage());

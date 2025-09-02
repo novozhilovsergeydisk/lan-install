@@ -2990,15 +2990,49 @@ function initEmployeeButtons() {
     });
 }
 
-// Обработчик для кнопки "Завершить"
+// Обработчик для кнопки "Удалить"
+// Обработчик для кнопки "Удалить"
 function initRequestCloseHandlers() {
-    document.addEventListener('click', function(event) {
-        if (event.target.closest('.request-close')) {
+    document.addEventListener('click', async function(event) {
+        if (event.target.closest('.request-delete')) {
             event.preventDefault();
-            const button = event.target.closest('.request-close');
+            const button = event.target.closest('.request-delete');
             const requestId = button.dataset.requestId;
-            console.log('Нажата кнопка "Завершить" для заявки ID:', requestId);
-            // Здесь будет логика закрытия заявки
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            if (!confirm('Вы уверены, что хотите удалить эту заявку?')) {
+                return;
+            }
+
+            try {
+                console.log('Нажата кнопка "Удалить" для заявки ID:', requestId);
+                const response = await fetch(`/requests/${requestId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ request_id: requestId })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Ответ сервера:', data);
+                
+                if (data.success) {
+                    // Удаляем строку с заявкой из таблицы
+                    button.closest('tr').remove();
+                } else {
+                    showAlert(data.message || 'Произошла ошибка при удалении заявки', 'danger');
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении заявки:', error);
+                showAlert('Произошла ошибка при удалении заявки', 'danger');
+            }
         }
     });
 }

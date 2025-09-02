@@ -158,8 +158,8 @@ export async function loadPlanningRequests() {
                     </div>
                     <div class="d-flex align-items-start mt-4">
                         <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn btn-outline-danger request-close" data-request-id="${request.id}">
-                                <i class="bi bi-x-circle"></i> Завершить
+                            <button type="button" class="btn btn-outline-danger request-delete" data-request-id="${request.id}">
+                                <i class="bi bi-x-circle"></i> Удалить
                             </button>
                         </div>
                     </div>
