@@ -2990,10 +2990,24 @@ function initEmployeeButtons() {
     });
 }
 
+// Обработчик для кнопки "Завершить"
+function initRequestCloseHandlers() {
+    document.addEventListener('click', function(event) {
+        if (event.target.closest('.request-close')) {
+            event.preventDefault();
+            const button = event.target.closest('.request-close');
+            const requestId = button.dataset.requestId;
+            console.log('Нажата кнопка "Завершить" для заявки ID:', requestId);
+            // Здесь будет логика закрытия заявки
+        }
+    });
+}
+
 // Инициализируем кнопки при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     initEmployeeButtons();
     initShowPhotoButtons();
+    initRequestCloseHandlers();
 });
 
 // Инициализация обработчиков кнопок "Показать фото"
