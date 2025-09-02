@@ -41,6 +41,9 @@ Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['au
 // Close request
 Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth')->middleware(['auth', 'roles']);;
 
+// Завершить заявку
+Route::post('/requests/{request}/finish', [HomeController::class, 'finishRequest'])->name('requests.finish')->middleware('auth')->middleware(['auth', 'roles']);;
+
 // Transfer request
 Route::post('/api/requests/transfer', [HomeController::class, 'transferRequest'])->name('requests.transfer')->middleware('auth');
 
@@ -111,8 +114,6 @@ Route::prefix('api/requests')->middleware('auth')->group(function () {
     // Обновить бригаду у заявки
     Route::post('/update-brigade', [\App\Http\Controllers\ControllerRequestModification::class, 'updateRequestBrigade']);
 });
-
-
 
 // API Route for getting all statuses
 Route::get('/api/request-statuses/all', [RequestFilterController::class, 'getStatuses'])

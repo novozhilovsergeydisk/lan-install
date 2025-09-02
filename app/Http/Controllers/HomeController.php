@@ -1332,6 +1332,44 @@ class HomeController extends Controller
         }
     }
 
+    public function finishRequest($id, Request $request) {
+        try {
+            $user = auth()->user();
+            $user->method = 'HomeController::finishRequest';
+            $employee = $user->employee;
+            $employee_role = $user->roles[0];
+
+            $validated = $request->validate([
+                'request_id' => 'required|exists:requests,id',
+            ]);
+
+            $request_id = $validated['request_id'];
+
+            // Тестовый ответ
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявка завершена (test)',
+                'data' => $request_id
+            ]);
+
+            $sql = "update requests set status_id = 7 where id = ?";
+            $result = DB::select($sql, [$request_id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявка завершена',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при завершении заявки: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Ошибка при завершении заявки',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Close the specified request.
      *
