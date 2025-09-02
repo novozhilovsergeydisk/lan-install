@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Интерактивная карта Яндекс</title>
+    <!-- Подключение библиотеки Яндекс Карт -->
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&api_key=403e901c-e5cf-4790-b92b-a83507e2f12b"></script>
+    <style>
+        #map {
+            padding: 2rem;
+            width: 75%;
+            height: 1200px;
+            margin: 0 auto;            
+        }
+    </style>
+</head>
+<body style="margin: 0 auto;">
+<div id="map"></div>
+
+<!-- Скрипт для инициализации карты -->
+<script type="text/javascript">
+    ymaps.ready(function () {
+        var myMap = new ymaps.Map("map", {
+            center: [55.75, 37.62], // Центр карты (пример: Москва)
+            zoom: 10                    // Масштаб карты
+        });
+        
+        // ГЕОКОДИРОВАНИЕ АДРЕСА ПОСЛЕ ЗАГРУЗКИ БИБЛИОТЕКИ
+        ymaps.geocode("Петрозаводск").then(
+            function(res) {
+                console.log('Координаты объекта:', res.geoObjects.get(0).geometry.getCoordinates());
+                alert('Координаты объекта:' + res.geoObjects.get(0).geometry.getCoordinates().join(', '));
+            },
+            function(err) {
+                console.log('Ошибка геокодирования: ' + err.message);
+            }
+        );
+    });
+</script>
+</body>
+</html>
