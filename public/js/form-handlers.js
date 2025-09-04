@@ -3,6 +3,7 @@
 import { showAlert, postData, fetchData } from './utils.js';
 import { loadAddressesPaginated, loadPlanningRequests } from './handler.js';
 import { loadAddressesForPlanning } from './handler.js';
+import HouseNumberValidator from './validators/house-number-validator.js';
 
 // Функция для форматирования даты
 export function DateFormated(date) {
@@ -3038,9 +3039,20 @@ function initRequestCloseHandlers() {
 }
 
 // Инициализируем кнопки при загрузке страницы
+// Функция для инициализации валидации номера дома
+export function initHouseNumberValidator() {
+    const houseInputs = document.querySelectorAll('input[name="houses"]');
+    houseInputs.forEach(input => {
+        new HouseNumberValidator(input, {
+            errorMessage: 'Введите номер дома в соответствии с форматом'
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     initEmployeeButtons();
     initShowPhotoButtons();
+    initHouseNumberValidator();
     initRequestCloseHandlers();
 });
 
