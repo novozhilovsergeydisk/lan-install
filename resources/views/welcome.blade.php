@@ -94,6 +94,7 @@
     <link href="{{ asset('css/dark-theme.css') }}?v={{ time() }}" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}?v={{ time() }}" rel="stylesheet">
     <link href="{{ asset('css/mobile-requests.css') }}?v={{ time() }}" rel="stylesheet">
+    <link href="{{ asset('css/desktop-view.css') }}?v={{ time() }}" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">
 
@@ -1250,7 +1251,7 @@
 <hr class="my-0 border-top border-2 border-opacity-10">
 
 <!-- Footer -->
-<footer class="bg-dark text-white sticky-bottom">
+<footer class="bg-dark text-white sticky-bottom" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; transform-origin: bottom left;">
     <div class="container-fluid py-4">
         <div class="row justify-content-center">
             <div class="col-12 col-lg-10">
