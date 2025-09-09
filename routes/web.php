@@ -14,6 +14,10 @@ use App\Http\Controllers\EmployeeUserController;
 use App\Http\Controllers\EmployeesUserPositionPassportController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\EmployeesFilterController;
+use App\Http\Controllers\PhotoReportController;
+
+// Photo reports
+Route::post('/photo-list', [PhotoReportController::class, 'index'])->name('photo-list.index')->middleware('auth');
 
 Route::get('/employees', [EmployeesUserPositionPassportController::class, 'index'])->name('employees.index');
 

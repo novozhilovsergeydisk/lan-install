@@ -227,7 +227,14 @@
                                 type="button" role="tab">Планирование
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="photo-reports-tab" data-bs-toggle="tab" data-bs-target="#photo-reports"
+                                type="button" role="tab">Фотоотчеты
+                        </button>
+                    </li>
                 </ul>
+
+                <!-- mainTabsContent -->
 
                 <div class="tab-content" id="mainTabsContent">
                     <div class="tab-pane fade show active" id="requests" role="tabpanel">
@@ -1140,7 +1147,17 @@
                         </div>
                         @endif
                     </div>
+
+                    <div id="photo-reports" class="tab-pane fade" role="tabpanel">
+                        <h4>Фотоотчеты</h4>
+
+                        <div id="photo-reports-list">
+                            
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Календарь -->
 
                 <div class="card mt-4 hide-me">
                     <div class="card-body">
@@ -1636,7 +1653,7 @@
                         </button>
                         <button id="showPhotosBtn" type="button" class="btn btn-sm btn-outline-info"
                                 aria-controls="photoReportContainer">
-                            <i class="bi bi-images me-1"></i> Показать фото
+                            <i class="bi bi-images me-1"></i> Показать все фото
                         </button>
                     </div>
 

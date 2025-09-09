@@ -10,6 +10,262 @@ export function DateFormated(date) {
     return date.split('.').reverse().join('-');
 }
 
+async function initPhotoReportList(requestId) {
+    const container = document.getElementById('photo-reports-list');
+    
+    if (!container) return;
+
+    // container.innerHTML = `<div class="text-muted">Загрузка тестовых фото для заявки ${requestId ? '#' + requestId : ''}...</div>`;
+
+    // Имитируем загрузку
+    // await new Promise(r => setTimeout(r, 1400));
+
+    // console.log(container);
+
+    // Загрузка реальных фото
+    let response;
+    try {
+        // Получаем CSRF токен из мета-тега (стандартный способ в Laravel)
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                         (window.Laravel && window.Laravel.csrfToken) || '';
+
+        response = await fetch(`/photo-list`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            // body: JSON.stringify({ request_id: requestId })
+        }); 
+    } catch (e) {
+        console.error('Ошибка загрузки фотоотчета:', e);
+        showAlert('Не удалось загрузить фотоотчет', 'danger');
+        return;
+    }
+
+    // Обрабатываем ответ от сервера
+    const responseData = await response.json();
+    console.log('Ответ от сервера:', responseData);
+    
+    // Проверяем структуру ответа и извлекаем данные
+    const photos = Array.isArray(responseData) 
+        ? responseData 
+        : (responseData.data || []);
+
+    console.log('Фотографии:', photos);
+
+    // Мок-данные картинок
+    // const photos = [1, 2, 3, 4, 5, 6].map(i => ({
+    //     url: `https://placehold.co/300x200?text=Photo+${i}`,
+    //     id: i
+    // }));
+
+    if (!photos.length) {
+        container.innerHTML = '<div class="text-muted">Фото не найдены</div>';
+        return;
+    }
+
+    // Функция для скачивания файлов
+    function downloadFiles(files, zipName) {
+        // Проверяем, поддерживает ли браузер API для работы с ZIP
+        if (typeof JSZip === 'undefined') {
+            alert('Для скачивания архива загрузите библиотеку JSZip');
+            return;
+        }
+
+        const zip = new JSZip();
+        const promises = [];
+        
+        files.forEach((file, index) => {
+            const promise = fetch(file.url)
+                .then(response => response.blob())
+                .then(blob => {
+                    const fileName = file.original_name || `photo_${index + 1}.jpg`;
+                    zip.file(fileName, blob);
+                });
+            promises.push(promise);
+        });
+
+        Promise.all(promises).then(() => {
+            zip.generateAsync({type: 'blob'})
+                .then(content => {
+                    const url = URL.createObjectURL(content);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${zipName}.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+        });
+    }
+
+    // Добавляем скрипт JSZip, если его еще нет
+    if (typeof JSZip === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        script.integrity = 'sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==';
+        script.crossOrigin = 'anonymous';
+        script.referrerPolicy = 'no-referrer';
+        document.head.appendChild(script);
+    }
+
+    // Создаем объект для хранения всех фотографий
+    const allPhotosMap = {};
+
+    // Рендер превью с группировкой по заявкам и комментариям
+    container.innerHTML = `
+        ${photos.map(request => {
+            // Собираем все фото заявки
+            const allRequestPhotos = request.comments.flatMap(comment => 
+                (comment.photos || []).map(photo => {
+                    const photoWithIds = {
+                        ...photo,
+                        requestId: request.id,
+                        requestNumber: request.number,
+                        commentId: comment.id,
+                        commentDate: comment.created_at
+                    };
+                    
+                    // Сохраняем фото в общий объект
+                    if (!allPhotosMap[request.id]) {
+                        allPhotosMap[request.id] = [];
+                    }
+                    allPhotosMap[request.id].push(photoWithIds);
+                    
+                    if (!allPhotosMap[`comment-${comment.id}`]) {
+                        allPhotosMap[`comment-${comment.id}`] = [];
+                    }
+                    allPhotosMap[`comment-${comment.id}`].push(photoWithIds);
+                    
+                    return photoWithIds;
+                })
+            );
+            
+            return `
+                <div class="card mb-4" id="request-${request.id}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Заявка #${request.number}</h5>
+                        <button class="btn btn-sm btn-outline-primary download-request" 
+                                data-request-id="${request.id}">
+                            <i class="bi bi-download me-1"></i> Скачать все (${allRequestPhotos.length})
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        ${request.comments.map(comment => {
+                            const hasPhotos = comment.photos && comment.photos.length > 0;
+                            const commentDate = new Date(comment.created_at);
+                            
+                            return `
+                                <div class="mb-4 comment-container" id="comment-${comment.id}">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">
+                                            ${commentDate.toLocaleString('ru-RU')}
+                                        </small>
+                                        ${hasPhotos ? `
+                                            <button class="btn btn-sm btn-outline-secondary download-comment" 
+                                                    data-comment-id="${comment.id}">
+                                                <i class="bi bi-download me-1"></i> Скачать (${comment.photos.length})
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <div class="card mb-2">
+                                        <div class="card-body">
+                                            <p class="mb-0">${comment.text}</p>
+                                        </div>
+                                    </div>
+                                    ${hasPhotos ? `
+                                    <div class="mb-3">
+                                        <h6 class="small text-muted mb-2">Прикрепленные фото (${comment.photos.length}):</h6>
+                                        <div class="row g-2">
+                                            ${comment.photos.map(photo => {
+                                                const name = photo.original_name || 'Фото';
+                                                return `
+                                                    <div class="col-6 col-sm-4 col-lg-3 mb-3">
+                                                        <div class="square-image-container">
+                                                            <img src="${photo.url}" 
+                                                                 class="img-fluid square-image" 
+                                                                 alt="${name}"
+                                                                 onerror="this.onerror=null; this.src='https://placehold.co/300?text=Ошибка+загрузки'"
+                                                            >
+                                                        </div>
+                                                        <div class="mt-2 text-center small text-truncate" title="${name}">
+                                                            ${name}
+                                                        </div>
+                                                    </div>
+                                                `;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>`;
+        }).join('')}`;
+        
+    // Добавляем обработчики для кнопок скачивания
+    document.querySelectorAll('.download-request').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const requestId = e.currentTarget.dataset.requestId;
+            const photos = allPhotosMap[requestId] || [];
+            const requestNumber = photos[0] ? photos[0].requestNumber : requestId;
+            
+            if (photos.length === 0) {
+                alert('Нет фотографий для скачивания');
+                return;
+            }
+            
+            e.currentTarget.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
+            e.currentTarget.disabled = true;
+            
+            downloadFiles(
+                photos, 
+                `Заявка-${requestNumber}-${new Date().toISOString().split('T')[0]}`
+            );
+            
+            setTimeout(() => {
+                e.currentTarget.innerHTML = `<i class="bi bi-download me-1"></i> Скачать все (${photos.length})`;
+                e.currentTarget.disabled = false;
+            }, 3000);
+        });
+    });
+    
+    document.querySelectorAll('.download-comment').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const commentId = e.currentTarget.dataset.commentId;
+            const photos = allPhotosMap[`comment-${commentId}`] || [];
+            
+            if (photos.length === 0) {
+                alert('Нет фотографий для скачивания');
+                return;
+            }
+            
+            e.currentTarget.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
+            e.currentTarget.disabled = true;
+            
+            const commentDate = new Date(photos[0] ? photos[0].commentDate : new Date())
+                .toISOString()
+                .replace(/[:.]/g, '-')
+                .split('T')[0];
+                
+            downloadFiles(
+                photos, 
+                `Комментарий-${commentId}-${commentDate}`
+            );
+            
+            setTimeout(() => {
+                e.currentTarget.innerHTML = `<i class="bi bi-download me-1"></i> Скачать (${photos.length})`;
+                e.currentTarget.disabled = false;
+            }, 3000);
+        });
+    });
+}
+
 // Обработчик для кнопки показа фото в футере модалки комментариев
 export function initShowPhotosButton() {
     const btn = document.getElementById('showPhotosBtn');
@@ -3054,6 +3310,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initShowPhotoButtons();
     initHouseNumberValidator();
     initRequestCloseHandlers();
+    initPhotoReportList();
 });
 
 // Инициализация обработчиков кнопок "Показать фото"
