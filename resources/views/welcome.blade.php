@@ -94,7 +94,7 @@
     <link href="{{ asset('css/dark-theme.css') }}?v={{ time() }}" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}?v={{ time() }}" rel="stylesheet">
     <link href="{{ asset('css/mobile-requests.css') }}?v={{ time() }}" rel="stylesheet">
-    <link href="{{ asset('css/desktop-view.css') }}?v={{ time() }}" rel="stylesheet">
+    <link id="desktop-view-css" href="{{ asset('css/desktop-view.css') }}?v={{ time() }}" rel="stylesheet" disabled>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">
 
@@ -167,6 +167,11 @@
                                 Авторизован: {{ $user->name }}
                             </div>
                         @endif
+                    </div>
+                    <div>
+                        <button type="button" id="toggle-desktop-view" class="btn btn-outline-secondary">
+                            <i class="bi bi-laptop"></i> Десктоп
+                        </button>
                     </div>
                     @if (session('success'))
                         <div style="color: green; font-weight: bold;">
@@ -1174,6 +1179,9 @@
 
 <!-- Подключение WYSIWYG редактора -->
 <script src="{{ asset('js/editor.js') }}"></script>
+
+<!-- Подключение скрипта для переключения десктопного режима масштабирования вместо мобильной верстки -->
+<script src="{{ asset('js/swipe.js') }}"></script>
 
 <!-- Импортируем необходимые функции из form-handlers.js -->
 <script type="module">
