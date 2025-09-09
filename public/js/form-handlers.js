@@ -214,23 +214,27 @@ async function initPhotoReportList(requestId) {
             const requestId = e.currentTarget.dataset.requestId;
             const photos = allPhotosMap[requestId] || [];
             const requestNumber = photos[0] ? photos[0].requestNumber : requestId;
+            const downloadButton = e.currentTarget; // Сохраняем ссылку на кнопку
             
             if (photos.length === 0) {
                 alert('Нет фотографий для скачивания');
                 return;
             }
             
-            e.currentTarget.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
-            e.currentTarget.disabled = true;
+            downloadButton.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
+            downloadButton.disabled = true;
             
             downloadFiles(
                 photos, 
                 `Заявка-${requestNumber}-${new Date().toISOString().split('T')[0]}`
             );
             
+            // Используем сохраненную ссылку на кнопку
             setTimeout(() => {
-                e.currentTarget.innerHTML = `<i class="bi bi-download me-1"></i> Скачать все (${photos.length})`;
-                e.currentTarget.disabled = false;
+                if (downloadButton && downloadButton.parentNode) {
+                    downloadButton.innerHTML = `<i class="bi bi-download me-1"></i> Скачать все (${photos.length})`;
+                    downloadButton.disabled = false;
+                }
             }, 3000);
         });
     });
@@ -239,14 +243,15 @@ async function initPhotoReportList(requestId) {
         button.addEventListener('click', (e) => {
             const commentId = e.currentTarget.dataset.commentId;
             const photos = allPhotosMap[`comment-${commentId}`] || [];
+            const downloadButton = e.currentTarget; // Сохраняем ссылку на кнопку
             
             if (photos.length === 0) {
                 alert('Нет фотографий для скачивания');
                 return;
             }
             
-            e.currentTarget.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
-            e.currentTarget.disabled = true;
+            downloadButton.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
+            downloadButton.disabled = true;
             
             const commentDate = new Date(photos[0] ? photos[0].commentDate : new Date())
                 .toISOString()
@@ -258,9 +263,12 @@ async function initPhotoReportList(requestId) {
                 `Комментарий-${commentId}-${commentDate}`
             );
             
+            // Используем сохраненную ссылку на кнопку
             setTimeout(() => {
-                e.currentTarget.innerHTML = `<i class="bi bi-download me-1"></i> Скачать (${photos.length})`;
-                e.currentTarget.disabled = false;
+                if (downloadButton && downloadButton.parentNode) {
+                    downloadButton.innerHTML = `<i class="bi bi-download me-1"></i> Скачать (${photos.length})`;
+                    downloadButton.disabled = false;
+                }
             }, 3000);
         });
     });
