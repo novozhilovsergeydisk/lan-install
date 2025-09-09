@@ -145,8 +145,8 @@
 </head>
 
 <body>
-<div id="app-container" class="container-fluid g-0">
-    <div id="main-layout" class="row g-0" style="min-height: 100vh;">
+<div id="app-container" class="container-fluid g-0_">
+    <div id="main-layout" class="row g-0" style_="min-height: 100vh;">
         <!-- Left Sidebar with Calendar -->
 
         <!--
@@ -168,16 +168,17 @@
                             </div>
                         @endif
                     </div>
-                    <div>
-                        <button type="button" id="toggle-desktop-view" class="btn btn-outline-secondary">
-                            <i class="bi bi-laptop"></i> Десктоп
-                        </button>
-                    </div>
                     @if (session('success'))
                         <div style="color: green; font-weight: bold;">
                             {{ session('success') }}
                         </div>
                     @endif
+
+                    <div id="desktop-view-toggle-container" style="display: none;">
+                        <button type="button" id="toggle-desktop-view" class="btn btn-outline-secondary">
+                            <i class="bi bi-laptop"></i> Десктоп
+                        </button>
+                    </div>
 
                     <div class="d-flex align-items-center">
                         <!-- Theme Toggle -->
@@ -1259,7 +1260,7 @@
 <hr class="my-0 border-top border-2 border-opacity-10">
 
 <!-- Footer -->
-<footer class="bg-dark text-white sticky-bottom" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; transform-origin: bottom left;">
+<footer class="bg-dark text-white sticky-bottom">
     <div class="container-fluid py-4">
         <div class="row justify-content-center">
             <div class="col-12 col-lg-10">

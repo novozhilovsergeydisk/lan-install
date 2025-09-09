@@ -9,11 +9,40 @@ document.addEventListener('DOMContentLoaded', function() {
 function toggleDesktopView() {
     console.log('Вызов функции toggleDesktopView');
     const desktopViewToggle = document.getElementById('toggle-desktop-view');
+    const desktopViewToggleContainer = document.getElementById('desktop-view-toggle-container');
     const desktopViewCSS = document.getElementById('desktop-view-css');
     
-    console.log('Элементы управления:', { desktopViewToggle, desktopViewCSS });
+    if (!desktopViewToggle || !desktopViewToggleContainer || !desktopViewCSS) {
+        console.error('Не найдены необходимые элементы для переключения десктопного режима');
+        return;
+    }
     
-    if (!desktopViewToggle || !desktopViewCSS) return;
+    // Function to handle window resize
+    function handleResize() {
+        console.log('Текущая ширина экрана:', window.innerWidth);
+        if (window.innerWidth >= 300 && window.innerWidth < 992) {
+            console.log('Показываем кнопку (ширина экрана между 300 и 991px)');
+            desktopViewToggleContainer.style.display = 'block';
+            desktopViewToggleContainer.style.visibility = 'visible';
+        } else {
+            console.log('Скрываем кнопку (ширина экрана вне диапазона 300-991px)');
+            desktopViewToggleContainer.style.display = 'none';
+            desktopViewToggleContainer.style.visibility = 'hidden';
+            
+            // Принудительно переключаемся на мобильную версию при ширине > 991px
+            if (window.innerWidth > 991) {
+                console.log('Ширина экрана > 991px, сбрасываем в мобильный режим');
+                localStorage.removeItem('desktopView');
+                updateDesktopView(false);
+            }
+        }
+    }
+    
+    // Initial check on load
+    handleResize();
+    
+    // Add resize event listener
+    window.addEventListener('resize', handleResize);
     
     // Check saved preference
     const isDesktopView = localStorage.getItem('desktopView') === 'true';
@@ -25,11 +54,13 @@ function toggleDesktopView() {
             console.log('Включение десктопного режима');
             desktopViewCSS.removeAttribute('disabled');
             desktopViewToggle.classList.add('active');
+            document.querySelector('footer').style.position = 'fixed';
             initSwipe();
         } else {
             console.log('Отключение десктопного режима');
             desktopViewCSS.setAttribute('disabled', 'disabled');
             desktopViewToggle.classList.remove('active');
+            document.querySelector('footer').style.removeProperty('position');
             removeSwipeListeners();
         }
         
