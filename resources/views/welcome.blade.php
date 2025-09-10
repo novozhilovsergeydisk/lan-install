@@ -182,7 +182,7 @@
                         </div>
 
                         <div id="desktop-view-toggle-container" style="display: none;">
-                            <button type="button" id="toggle-desktop-view" class="btn btn-outline-secondary btn-sm px-3">
+                            <button type="button" id="toggle-desktop-view" style="margin-right: 0.5rem;" class="btn btn-outline-secondary btn-sm px-3">
                                 <i class="bi bi-laptop"></i> Десктоп
                             </button>
                         </div>
@@ -1257,7 +1257,7 @@
 </style>
 
 <!-- Divider -->
-<hr class="my-0 border-top border-2 border-opacity-10">
+<hr id="divider" class="my-0 border-top border-2 border-opacity-10">
 
 <!-- Footer -->
 <footer class="bg-dark text-white sticky-bottom">

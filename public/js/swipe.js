@@ -54,13 +54,13 @@ function toggleDesktopView() {
             console.log('Включение десктопного режима');
             desktopViewCSS.removeAttribute('disabled');
             desktopViewToggle.classList.add('active');
-            document.querySelector('footer').style.position = 'fixed';
+            // document.querySelector('footer').style.position = 'fixed';
             initSwipe();
         } else {
             console.log('Отключение десктопного режима');
             desktopViewCSS.setAttribute('disabled', 'disabled');
             desktopViewToggle.classList.remove('active');
-            document.querySelector('footer').style.removeProperty('position');
+            // document.querySelector('footer').style.removeProperty('position');
             removeSwipeListeners();
         }
         
