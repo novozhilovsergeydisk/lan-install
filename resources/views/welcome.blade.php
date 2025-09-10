@@ -169,9 +169,9 @@
                         @endif
                     </div>
                     @if (session('success'))
-                        <div style="color: green; font-weight: bold;">
+                        <!-- <div style="color: green; font-weight: bold;">
                             {{ session('success') }}
-                        </div>
+                        </div> -->
                     @endif
 
                     <div class="d-flex align-items-center">
