@@ -175,12 +175,6 @@
                     @endif
 
                     <div class="d-flex align-items-center">
-                        <!-- Theme Toggle -->
-                        <div class="theme-toggle me-3" id="themeToggle">
-                            <i class="bi bi-sun theme-icon" id="sunIcon"></i>
-                            <i class="bi bi-moon-stars-fill theme-icon d-none" id="moonIcon"></i>
-                        </div>
-
                         <div id="desktop-view-toggle-container" style="display: none;">
                             <button type="button" id="toggle-desktop-view" style="margin-right: 0.5rem;" class="btn btn-outline-secondary btn-sm px-3">
                                 <i class="bi bi-laptop"></i> Десктоп
@@ -194,6 +188,12 @@
                                 <i class="bi bi-box-arrow-right me-1"></i>Выход
                             </button>
                         </form>
+
+                        <!-- Theme Toggle -->
+                        <div class="theme-toggle me-3" id="themeToggle">
+                            <i class="bi bi-sun theme-icon" id="sunIcon"></i>
+                            <i class="bi bi-moon-stars-fill theme-icon d-none" id="moonIcon"></i>
+                        </div>
                     </div>
                 </div>
 
