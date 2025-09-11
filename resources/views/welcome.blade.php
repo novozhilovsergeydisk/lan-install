@@ -1477,6 +1477,7 @@
                                                 <div class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">${(window.utils && typeof window.utils.linkifyPreservingAnchors==='function' ? window.utils.linkifyPreservingAnchors(commentContent) : commentContent)}</div>
                                                 <small class="text-muted">${formattedDate}</small>
                                                 <span class="ms-2"><a href="#" class="text-info text-decoration-none data-show-photo-btn" data-comment-id="${comment.id}">Показать фото</a></span>
+                                                <span class="ms-2"><a href="#" class="text-warning text-decoration-none download-comment-btn" data-comment-id="${comment.id}">Скачать zip архив</a></span>
                                                 ${index === comments.length - 1 ? `<button class="btn btn-sm btn-outline-primary ms-2 edit-comment-btn">Редактировать</button>` : ''}
                                             </div>
                                         </div>

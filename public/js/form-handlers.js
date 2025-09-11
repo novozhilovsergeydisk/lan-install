@@ -239,6 +239,7 @@ async function initPhotoReportList(requestId) {
         });
     });
     
+    // Обработчик для кнопки скачивания комментария (старая версия)
     document.querySelectorAll('.download-comment').forEach(button => {
         button.addEventListener('click', (e) => {
             const commentId = e.currentTarget.dataset.commentId;
@@ -807,6 +808,55 @@ function initCommentValidation() {
 // Функция для инициализации обработчиков комментариев
 export function initCommentHandlers() {
     initCommentValidation();
+    
+    // Обработчик для кнопки скачивания комментария (новая версия)
+    document.addEventListener('click', function(e) {
+        const downloadBtn = e.target.closest('.download-comment-btn');
+        if (!downloadBtn) return;
+
+        showAlert('Функционал скачивания zip архива в разработке', 'warning');
+        console.log('Кнопка скачивания комментария нажата');
+        return;
+        
+        e.preventDefault();
+        const commentId = downloadBtn.dataset.commentId;
+        const photos = window.allPhotosMap ? (window.allPhotosMap[`comment-${commentId}`] || []) : [];
+        
+        if (photos.length === 0) {
+            alert('Нет фотографий для скачивания');
+            return;
+        }
+        
+        const originalHtml = downloadBtn.innerHTML;
+        downloadBtn.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
+        downloadBtn.disabled = true;
+        
+        // Создаем временную форму для отправки запроса на скачивание
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/api/comments/${commentId}/download`;
+        form.style.display = 'none';
+        
+        // Добавляем CSRF-токен
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+        
+        // Удаляем форму после отправки
+        setTimeout(() => {
+            document.body.removeChild(form);
+            downloadBtn.innerHTML = originalHtml;
+            downloadBtn.disabled = false;
+        }, 1000);
+    });
 }
 
 // Функция для инициализации обработчика кнопки редактирования адреса
@@ -3317,6 +3367,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initEmployeeButtons();
     initShowPhotoButtons();
     initHouseNumberValidator();
+    initCommentHandlers();
     initRequestCloseHandlers();
     initPhotoReportList();
 });
