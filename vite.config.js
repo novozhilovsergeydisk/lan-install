@@ -10,4 +10,13 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    optimizeDeps: {
+        include: ['jszip']
+    },
+    build: {
+        commonjsOptions: {
+            include: [/node_modules/],
+            transformMixedEsModules: true,
+        }
+    }
 });

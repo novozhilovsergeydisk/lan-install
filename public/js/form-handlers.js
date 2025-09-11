@@ -821,12 +821,6 @@ function commentPhotoDownload() {
         e.preventDefault();
         const commentId = downloadBtn.dataset.commentId;
         const originalHtml = downloadBtn.innerHTML;
-
-        // console.log('commentPhotoDownload', commentId);
-
-        // showAlert('Функционал сейчас в разработке', 'warning');
-
-        // return;
         
         try {
             // Показываем индикатор загрузки
@@ -863,36 +857,18 @@ function commentPhotoDownload() {
             // Показываем индикатор архивации
             downloadBtn.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
             
-            // Проверяем, загружена ли библиотека JSZip
-            if (typeof JSZip === 'undefined') {
-                // Пытаемся загрузить библиотеку, если её нет
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-                script.integrity = 'sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==';
-                script.crossOrigin = 'anonymous';
-                script.referrerPolicy = 'no-referrer';
-                
-                script.onload = () => {
-                    createAndDownloadZip(data.data, `comment_${commentId}_photos.zip`);
-                };
-                
-                script.onerror = () => {
-                    showAlert('Не удалось загрузить библиотеку для создания архива', 'danger');
-                    downloadBtn.innerHTML = originalHtml;
-                    downloadBtn.disabled = false;
-                };
-                
-                document.head.appendChild(script);
-                return;
-            }
-            
-            // Если библиотека уже загружена, создаем архив
+            // Создаем архив с фотографиями
             createAndDownloadZip(data.data, `comment_${commentId}_photos.zip`);
             
             // Функция для создания и скачивания ZIP-архива
             async function createAndDownloadZip(photos, zipName) {
                 try {
-                    const zip = new JSZip();
+                    // Проверяем, что JSZip доступен глобально
+                    if (typeof window.JSZip === 'undefined') {
+                        throw new Error('Библиотека JSZip не загружена');
+                    }
+                    
+                    const zip = new window.JSZip();
                     const imgFolder = zip.folder('photos');
                     
                     // Массив для хранения промисов загрузки файлов
@@ -928,10 +904,12 @@ function commentPhotoDownload() {
                     document.body.appendChild(a);
                     a.click();
                     
-                    // Очищаем
+                    // Очищаем ссылку после скачивания
                     setTimeout(() => {
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
+                        
+                        // Восстанавливаем кнопку
                         downloadBtn.innerHTML = originalHtml;
                         downloadBtn.disabled = false;
                     }, 100);
@@ -939,6 +917,8 @@ function commentPhotoDownload() {
                 } catch (error) {
                     console.error('Ошибка при создании архива:', error);
                     showAlert('Произошла ошибка при создании архива: ' + error.message, 'danger');
+                    
+                    // Восстанавливаем кнопку в случае ошибки
                     downloadBtn.innerHTML = originalHtml;
                     downloadBtn.disabled = false;
                 }

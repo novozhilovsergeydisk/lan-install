@@ -116,10 +116,6 @@
         console.log('Current role:', window.App.role);
     </script>
 
-    <style>
-        
-    </style>
-
     <!-- Проверка загрузки Bootstrap -->
     <script>
         // Проверяем, загружен ли Bootstrap
