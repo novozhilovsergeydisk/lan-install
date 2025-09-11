@@ -809,53 +809,147 @@ function initCommentValidation() {
 export function initCommentHandlers() {
     initCommentValidation();
     
-    // Обработчик для кнопки скачивания комментария (новая версия)
-    document.addEventListener('click', function(e) {
+    commentPhotoDownload();
+}
+
+function commentPhotoDownload() {
+    // Обработчик для кнопки скачивания фотографий для zip архивирования (новая версия)
+    document.addEventListener('click', async function(e) {
         const downloadBtn = e.target.closest('.download-comment-btn');
         if (!downloadBtn) return;
-
-        showAlert('Функционал скачивания zip архива в разработке', 'warning');
-        console.log('Кнопка скачивания комментария нажата');
-        return;
         
         e.preventDefault();
         const commentId = downloadBtn.dataset.commentId;
-        const photos = window.allPhotosMap ? (window.allPhotosMap[`comment-${commentId}`] || []) : [];
-        
-        if (photos.length === 0) {
-            alert('Нет фотографий для скачивания');
-            return;
-        }
-        
         const originalHtml = downloadBtn.innerHTML;
-        downloadBtn.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
-        downloadBtn.disabled = true;
+
+        // console.log('commentPhotoDownload', commentId);
+
+        // showAlert('Функционал сейчас в разработке', 'warning');
+
+        // return;
         
-        // Создаем временную форму для отправки запроса на скачивание
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/api/comments/${commentId}/download`;
-        form.style.display = 'none';
-        
-        // Добавляем CSRF-токен
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-        if (csrfToken) {
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = csrfToken;
-            form.appendChild(csrfInput);
-        }
-        
-        document.body.appendChild(form);
-        form.submit();
-        
-        // Удаляем форму после отправки
-        setTimeout(() => {
-            document.body.removeChild(form);
+        try {
+            // Показываем индикатор загрузки
+            downloadBtn.innerHTML = '<i class="bi bi-hourglass me-1"></i> Загрузка...';
+            downloadBtn.disabled = true;
+            
+            // Загружаем фотографии комментария
+            const response = await fetch(`/api/comments/${commentId}/photos`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify({ comment_id: commentId })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Ошибка при загрузке фотографий');
+            }
+            
+            const data = await response.json();
+
+            console.log('commentPhotoDownload, ответ от сервера', data);
+            
+            if (!data.data || data.data.length === 0) {
+                showAlert('Нет фото для архивации и скачивания архива', 'warning');
+                downloadBtn.innerHTML = originalHtml;
+                downloadBtn.disabled = false;
+                return;
+            }
+
+            // Показываем индикатор архивации
+            downloadBtn.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
+            
+            // Проверяем, загружена ли библиотека JSZip
+            if (typeof JSZip === 'undefined') {
+                // Пытаемся загрузить библиотеку, если её нет
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                script.integrity = 'sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==';
+                script.crossOrigin = 'anonymous';
+                script.referrerPolicy = 'no-referrer';
+                
+                script.onload = () => {
+                    createAndDownloadZip(data.data, `comment_${commentId}_photos.zip`);
+                };
+                
+                script.onerror = () => {
+                    showAlert('Не удалось загрузить библиотеку для создания архива', 'danger');
+                    downloadBtn.innerHTML = originalHtml;
+                    downloadBtn.disabled = false;
+                };
+                
+                document.head.appendChild(script);
+                return;
+            }
+            
+            // Если библиотека уже загружена, создаем архив
+            createAndDownloadZip(data.data, `comment_${commentId}_photos.zip`);
+            
+            // Функция для создания и скачивания ZIP-архива
+            async function createAndDownloadZip(photos, zipName) {
+                try {
+                    const zip = new JSZip();
+                    const imgFolder = zip.folder('photos');
+                    
+                    // Массив для хранения промисов загрузки файлов
+                    const downloadPromises = [];
+                    
+                    // Добавляем каждый файл в архив
+                    photos.forEach((photo, index) => {
+                        const promise = fetch(photo.url)
+                            .then(response => {
+                                if (!response.ok) throw new Error(`Ошибка загрузки фото: ${response.statusText}`);
+                                return response.blob();
+                            })
+                            .then(blob => {
+                                // Создаем имя файла на основе оригинального имени или индекса
+                                const fileName = photo.original_name || `photo_${index + 1}.jpg`;
+                                imgFolder.file(fileName, blob);
+                            });
+                        
+                        downloadPromises.push(promise);
+                    });
+                    
+                    // Ждем загрузки всех файлов
+                    await Promise.all(downloadPromises);
+                    
+                    // Генерируем архив
+                    const content = await zip.generateAsync({ type: 'blob' });
+                    
+                    // Создаем ссылку для скачивания
+                    const url = URL.createObjectURL(content);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = zipName;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // Очищаем
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        downloadBtn.innerHTML = originalHtml;
+                        downloadBtn.disabled = false;
+                    }, 100);
+                    
+                } catch (error) {
+                    console.error('Ошибка при создании архива:', error);
+                    showAlert('Произошла ошибка при создании архива: ' + error.message, 'danger');
+                    downloadBtn.innerHTML = originalHtml;
+                    downloadBtn.disabled = false;
+                }
+            }
+            
+        } catch (error) {
+            console.error('Ошибка при скачивании фотографий:', error);
+            showAlert('Произошла ошибка при загрузке фотографий', 'danger');
             downloadBtn.innerHTML = originalHtml;
             downloadBtn.disabled = false;
-        }, 1000);
+        }
     });
 }
 
