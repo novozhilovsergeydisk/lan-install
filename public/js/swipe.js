@@ -1,37 +1,29 @@
-console.log('Скрипт swipe.js загружен');
+// Инициализация скрипта свайпа
 
 // Desktop View Toggle functionality
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM полностью загружен, инициализируем toggleDesktopView');
     toggleDesktopView();
 });
 
 function toggleDesktopView() {
-    console.log('Вызов функции toggleDesktopView');
     const desktopViewToggle = document.getElementById('toggle-desktop-view');
     const desktopViewToggleContainer = document.getElementById('desktop-view-toggle-container');
     const desktopViewCSS = document.getElementById('desktop-view-css');
     
     if (!desktopViewToggle || !desktopViewToggleContainer || !desktopViewCSS) {
-        console.error('Не найдены необходимые элементы для переключения десктопного режима');
         return;
     }
     
     // Function to handle window resize
     function handleResize() {
-        console.log('Текущая ширина экрана:', window.innerWidth);
         if (window.innerWidth >= 300 && window.innerWidth < 992) {
-            console.log('Показываем кнопку (ширина экрана между 300 и 991px)');
             desktopViewToggleContainer.style.display = 'block';
             desktopViewToggleContainer.style.visibility = 'visible';
         } else {
-            console.log('Скрываем кнопку (ширина экрана вне диапазона 300-991px)');
             desktopViewToggleContainer.style.display = 'none';
             desktopViewToggleContainer.style.visibility = 'hidden';
             
-            // Принудительно переключаемся на мобильную версию при ширине > 991px
             if (window.innerWidth > 991) {
-                console.log('Ширина экрана > 991px, сбрасываем в мобильный режим');
                 localStorage.removeItem('desktopView');
                 updateDesktopView(false);
             }
@@ -48,16 +40,13 @@ function toggleDesktopView() {
     const isDesktopView = localStorage.getItem('desktopView') === 'true';
     
     function updateDesktopView(enable) {
-        console.log('Изменение режима отображения на:', enable ? 'десктопный' : 'мобильный');
         
         if (enable) {
-            console.log('Включение десктопного режима');
             desktopViewCSS.removeAttribute('disabled');
             desktopViewToggle.classList.add('active');
             // document.querySelector('footer').style.position = 'fixed';
             initSwipe();
         } else {
-            console.log('Отключение десктопного режима');
             desktopViewCSS.setAttribute('disabled', 'disabled');
             desktopViewToggle.classList.remove('active');
             // document.querySelector('footer').style.removeProperty('position');
@@ -65,67 +54,113 @@ function toggleDesktopView() {
         }
         
         localStorage.setItem('desktopView', enable);
-        console.log('Текущее состояние в localStorage:', localStorage.getItem('desktopView'));
     }
     
     // Initialize based on saved preference
     updateDesktopView(isDesktopView);
     
     // Toggle on button click
-    desktopViewToggle.addEventListener('click', (event) => {
-        console.log('Нажата кнопка переключения режима');
-        console.log('Текущее состояние кнопки:', event.target);
+    desktopViewToggle.addEventListener('click', function(event) {
+        event.preventDefault();
         const isCurrentlyEnabled = !desktopViewCSS.hasAttribute('disabled');
-        console.log('Текущий режим:', isCurrentlyEnabled ? 'десктопный' : 'мобильный');
-        console.log('Будет установлен режим:', isCurrentlyEnabled ? 'мобильный' : 'десктопный');
         updateDesktopView(!isCurrentlyEnabled);
     });
     
     // Swipe functionality
     let touchStartX = 0;
     let touchStartY = 0;
+    let initialTouchDistance = 0;
+    let initialScale = 1;
     const minSwipeDistance = 50;
     
+    // Получаем основной контейнер контента
+    const content = document.querySelector('.content-wrapper') || document.body;
+    
     function handleTouchStart(e) {
-        console.log('Начало касания');
+        if (e.touches.length === 2) {
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            initialTouchDistance = Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+            );
+            
+            const transform = window.getComputedStyle(content).transform;
+            if (transform !== 'none') {
+                const matrix = transform.match(/^matrix\(([\d.]+)/);
+                initialScale = matrix ? parseFloat(matrix[1]) : 1;
+            } else {
+                initialScale = 1;
+            }
+            return;
+        }
+        
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         document.body.classList.add('swiping');
-        console.log('Начальные координаты:', { x: touchStartX, y: touchStartY });
     }
     
     function handleTouchMove(e) {
-        if (!touchStartX) return;
-        
-        const touchX = e.touches[0].clientX;
-        const touchY = e.touches[0].clientY;
-        const diffX = touchStartX - touchX;
-        const diffY = touchStartY - touchY;
+        try {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                
+                // Вычисляем минимальный масштаб, чтобы контент не был уже ширины экрана
+                const container = document.querySelector('.content-wrapper') || document.documentElement;
+                const containerWidth = container.offsetWidth;
+                const viewportWidth = window.innerWidth;
+                const minScale = Math.min(1, viewportWidth / containerWidth);
+                
+                let scale = initialScale * (currentDistance / initialTouchDistance);
+                scale = Math.min(Math.max(minScale, scale), 3);
+                
+                content.style.transform = `scale(${scale})`;
+                content.style.transformOrigin = 'center center';
+                content.style.transition = 'transform 0.1s ease-out';
+                return;
+            }
+            
+            if (!touchStartX) return;
+            if (!e?.touches?.[0]) return;
+            
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            const diffX = touchStartX - touchX;
+            const diffY = touchStartY - touchY;
 
-        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
-            e.preventDefault();
+            const isHorizontal = Math.abs(diffX) > Math.abs(diffY);
+            const isEnoughDistance = Math.abs(diffX) > minSwipeDistance;
+            
+            if (isHorizontal && isEnoughDistance) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        } catch (error) {
         }
     }
     
     function handleTouchEnd(e) {
-        if (!touchStartX) {
-            console.log('Нет начальных координат для свайпа');
+        if (e.touches && e.touches.length === 1) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
             return;
         }
+        
+        if (!touchStartX) return;
         
         const touchEndX = e.changedTouches[0].clientX;
         const touchEndY = e.changedTouches[0].clientY;
         
         const diffX = touchStartX - touchEndX;
         const diffY = touchStartY - touchEndY;
-        
-        console.log('Конец касания', { 
-            start: { x: touchStartX, y: touchStartY },
-            end: { x: touchEndX, y: touchEndY },
-            diff: { x: diffX, y: diffY },
-            isHorizontalSwipe: Math.abs(diffX) > Math.abs(diffY),
-            isEnoughDistance: Math.abs(diffX) > minSwipeDistance
-        });
         
         if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
             const activeTab = document.querySelector('[data-bs-target^="#tab"].active');
@@ -144,9 +179,23 @@ function toggleDesktopView() {
     }
     
     function initSwipe() {
-        document.addEventListener('touchstart', handleTouchStart, { passive: true });
-        document.addEventListener('touchmove', handleTouchMove, { passive: false });
-        document.addEventListener('touchend', handleTouchEnd, { passive: true });
+        removeSwipeListeners();
+        
+        const tabContent = document.querySelector('.tab-content');
+        if (tabContent) {
+            // Применяем начальный масштаб, чтобы контент помещался по ширине
+            const container = document.querySelector('.content-wrapper') || document.documentElement;
+            const containerWidth = container.offsetWidth;
+            const viewportWidth = window.innerWidth;
+            const initialScale = Math.min(1, viewportWidth / containerWidth);
+            
+            container.style.transform = `scale(${initialScale})`;
+            container.style.transformOrigin = 'center center';
+            
+            tabContent.addEventListener('touchstart', handleTouchStart, { passive: true });
+            tabContent.addEventListener('touchmove', handleTouchMove, { passive: false });
+            tabContent.addEventListener('touchend', handleTouchEnd, { passive: true });
+        }
     }
     
     function removeSwipeListeners() {

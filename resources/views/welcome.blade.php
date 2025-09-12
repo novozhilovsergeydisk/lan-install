@@ -1474,6 +1474,8 @@
                                                 <small class="text-muted">${formattedDate}</small>
                                                 <span class="ms-2"><a href="#" class="text-info text-decoration-none data-show-photo-btn" data-comment-id="${comment.id}">Показать фото</a></span>
                                                 <span class="ms-2"><a href="#" class="text-warning text-decoration-none download-comment-btn" data-comment-id="${comment.id}">Скачать zip архив</a></span>
+                                                
+                                                
                                                 ${index === comments.length - 1 ? `<button class="btn btn-sm btn-outline-primary ms-2 edit-comment-btn">Редактировать</button>` : ''}
                                             </div>
                                         </div>
@@ -1643,7 +1645,12 @@
                 <form id="addCommentForm" class="w-100">
                     @csrf
                     <input type="hidden" name="request_id" id="commentRequestId">
-                    <div class="input-group">
+
+                    <div class="input-group mt-2">
+                        <input id="commentFilesInput" type="file" name="files[]" class="form-control" multiple accept="image/*,image/heic,image/heif,video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.heic,.heif,.mp3,.wav,.ogg,.mp4,.webm,.mov,.avi,.zip,.rar,.7z" />
+                    </div>
+
+                    <div class="input-group mt-2">
                         <input type="text" name="comment" class="form-control" placeholder="Напишите комментарий..."
                                required>
                         <button type="submit" class="btn btn-primary">
@@ -1662,6 +1669,7 @@
                                 aria-controls="photoReportContainer">
                             <i class="bi bi-images me-1"></i> Показать все фото
                         </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning download-all-photos-btn">Скачать zip архив всех фото</button>
                     </div>
 
                     <div class="mb-3 d-none">
