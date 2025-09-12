@@ -76,6 +76,74 @@ function toggleDesktopView() {
     // Получаем основной контейнер контента
     const content = document.querySelector('.content-wrapper') || document.body;
     
+    // Инициализация модуля перемещения контента
+    const contentDragger = (function() {
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+        let currentScale = 1;
+        
+        function startDrag(e) {
+            if (e.touches.length !== 1) return false;
+            
+            // Получаем текущий масштаб
+            const transform = window.getComputedStyle(content).transform;
+            if (transform !== 'none') {
+                const matrix = transform.match(/^matrix\(([\d.]+)/);
+                currentScale = matrix ? parseFloat(matrix[1]) : 1;
+            } else {
+                currentScale = 1;
+            }
+            
+            // Если масштаб 1, перемещение не требуется
+            if (currentScale <= 1) return false;
+            
+            isDragging = true;
+            startX = e.touches[0].clientX - translateX;
+            startY = e.touches[0].clientY - translateY;
+            content.style.transition = 'none';
+            return true;
+        }
+        
+        function drag(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            
+            // Вычисляем новые координаты
+            const x = e.touches[0].clientX - startX;
+            const y = e.touches[0].clientY - startY;
+            
+            // Ограничиваем перемещение в пределах видимой области
+            const maxX = (content.offsetWidth * (currentScale - 1)) / 2;
+            const maxY = (content.offsetHeight * (currentScale - 1)) / 2;
+            
+            translateX = Math.max(-maxX, Math.min(maxX, x));
+            translateY = Math.max(-maxY, Math.min(maxY, y));
+            
+            // Применяем трансформацию
+            content.style.transform = `matrix(${currentScale}, 0, 0, ${currentScale}, ${translateX}, ${translateY})`;
+        }
+        
+        function endDrag() {
+            if (!isDragging) return;
+            isDragging = false;
+            content.style.transition = 'transform 0.1s ease-out';
+        }
+        
+        function reset() {
+            translateX = 0;
+            translateY = 0;
+            content.style.transform = `scale(${currentScale})`;
+        }
+        
+        return {
+            start: startDrag,
+            drag: drag,
+            end: endDrag,
+            reset: reset
+        };
+    })();
+    
     function handleTouchStart(e) {
         if (e.touches.length === 2) {
             const touch1 = e.touches[0];
@@ -95,13 +163,18 @@ function toggleDesktopView() {
             return;
         }
         
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        document.body.classList.add('swiping');
+        // Пробуем начать перетаскивание
+        const isDragging = contentDragger.start(e);
+        if (!isDragging) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            document.body.classList.add('swiping');
+        }
     }
     
     function handleTouchMove(e) {
         try {
+            // Обработка жеста масштабирования двумя пальцами
             if (e.touches.length === 2) {
                 e.preventDefault();
                 
@@ -127,6 +200,17 @@ function toggleDesktopView() {
                 return;
             }
             
+            // Обработка перемещения контента
+            if (contentDragger) {
+                contentDragger.drag(e);
+                // Если обрабатываем перемещение, прерываем стандартную обработку свайпа
+                if (window.getComputedStyle(content).transform !== 'none') {
+                    e.preventDefault();
+                    return;
+                }
+            }
+            
+            // Стандартная обработка свайпа для смены вкладок
             if (!touchStartX) return;
             if (!e?.touches?.[0]) return;
             
@@ -148,6 +232,11 @@ function toggleDesktopView() {
     }
     
     function handleTouchEnd(e) {
+        // Завершаем перетаскивание, если оно активно
+        if (contentDragger) {
+            contentDragger.end();
+        }
+        
         if (e.touches && e.touches.length === 1) {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
