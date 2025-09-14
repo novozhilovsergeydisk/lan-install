@@ -1373,16 +1373,49 @@
             commentForm.addEventListener('submit', function (e) {
                 e.preventDefault();
 
+                // Инициализируем FormData
                 const formData = new FormData(this);
                 const requestId = formData.get('request_id');
+
+                // Получаем файлы из основного поля загрузки
+                const commentFileInput = document.getElementById('commentFilesInput');
+                if (commentFileInput && commentFileInput.files.length > 0) {
+                    // Добавляем файлы из основного поля загрузки
+                    Array.from(commentFileInput.files).forEach(file => {
+                        formData.append('photos[]', file);
+                    });
+                }
+
+                // Получаем форму с фотоотчетом
+                const photoReportForm = document.getElementById('photoReportForm');
+
+                // Добавляем файлы из формы фотоотчета, если она существует
+                if (photoReportForm) {
+                    const photoFormData = new FormData(photoReportForm);
+                    const photoFiles = photoFormData.getAll('photos[]');
+                    
+                    // Добавляем файлы к основным данным формы
+                    photoFiles.forEach(file => {
+                        formData.append('photos[]', file);
+                    });
+                }
+
+                console.log('Отправляемые данные:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(key, value);
+                }
+
+                console.log('----------- end ----------');
+
+                // return;
 
                 fetch('{{ route('requests.comment') }}', {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        // Content-Type не указываем, чтобы браузер сам установил правильный boundary
                     },
-                    body: new URLSearchParams(formData)
+                    body: formData
                 })
                     .then(response => {
                         if (!response.ok) {
@@ -1409,6 +1442,8 @@
                             sessionStorage.setItem('commentId', data.commentId);
                             sessionStorage.setItem('data', JSON.stringify({commentId: data.commentId, sessionId: sessionStorage.getItem('sessionId')}));
                             console.log('Комментарий успешно добавлен', data.commentId);
+
+                            console.log('Ответ от сервера', data);
                         }
                     })
                     .catch(error => {
@@ -1617,6 +1652,9 @@
 <!-- Form Validation -->
 <script src="{{ asset('js/form-validator.js') }}"></script>
 
+<!-- JSZip for file archiving -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
 <!-- Form Handlers -->
 <script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
 
@@ -1646,8 +1684,13 @@
                     @csrf
                     <input type="hidden" name="request_id" id="commentRequestId">
 
-                    <div class="input-group mt-2">
-                        <input id="commentFilesInput" type="file" name="files[]" class="form-control" multiple accept="image/*,image/heic,image/heif,video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.heic,.heif,.mp3,.wav,.ogg,.mp4,.webm,.mov,.avi,.zip,.rar,.7z" />
+                    <div class="mb-3">
+                        <label class="form-label d-block" for="commentFilesInput">
+                            Прикрепить файлы (pdf, doc, docx, xls, xlsx, zip, rar, 7z и т.д.)
+                        </label>
+                        <div class="w-100">
+                            <input id="commentFilesInput" type="file" name="files[]" class="form-control" multiple accept="image/*,image/heic,image/heif,video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.heic,.heif,.mp3,.wav,.ogg,.mp4,.webm,.mov,.avi,.zip,.rar,.7z" />
+                        </div>
                     </div>
 
                     <div class="input-group mt-2">

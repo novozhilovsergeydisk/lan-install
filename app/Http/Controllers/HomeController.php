@@ -748,7 +748,14 @@ class HomeController extends Controller
         // Логируем все входные данные
         \Log::info('Получен запрос на создание комментария:', [
             'all' => $request->all(),
-            'json' => $request->json()->all(),
+            'files' => $request->hasFile('files') ? array_map(function($file) {
+                    return [
+                        'original_name' => $file->getClientOriginalName(),
+                        'size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
+                        'extension' => $file->getClientOriginalExtension(),
+                    ];
+                }, $request->file('files')) : [],
             'headers' => $request->headers->all(),
         ]);
 
@@ -767,6 +774,8 @@ class HomeController extends Controller
             $validated = $request->validate([
                 'request_id' => 'required|exists:requests,id',
                 'comment' => 'required|string|max:1000',
+                'photos' => 'nullable|array|max:10',
+                'photos.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt',
                 '_token' => 'required|string'
             ]);
 
@@ -795,6 +804,10 @@ class HomeController extends Controller
             // Начинаем транзакцию
             DB::beginTransaction();
             \Log::info('Начало транзакции');
+
+            // Массив для хранения ID загруженных файлов
+            $uploadedFileIds = [];
+            
 
             try {
                 // Получаем структуру таблицы requests, чтобы найти колонку с датой
@@ -849,21 +862,136 @@ class HomeController extends Controller
 
                 // Привязываем комментарий к заявке
                 $requestId = $validated['request_id'];
+                $userId = $request->user()->id;
 
                 \Log::info('Данные для связи комментария с заявкой:', [
                     'request_id' => $requestId,
                     'comment_id' => $commentId,
+                    'user_id' => $userId,
                     'created_at' => $createdAt
                 ]);
 
                 // Вставляем связь с заявкой
                 $result = DB::insert(
                     'INSERT INTO request_comments (request_id, comment_id, user_id, created_at) VALUES (?, ?, ?, ?)',
-                    [$requestId, $commentId, $request->user()->id, $createdAt]
+                    [$requestId, $commentId, $userId, $createdAt]
                 );
 
                 if (!$result) {
                     throw new \Exception('Не удалось привязать комментарий к заявке');
+                }
+
+                // Обработка загруженных файлов
+                if ($request->hasFile('photos')) {
+                    foreach ($request->file('photos') as $file) {              
+                        try {
+                            // Сохранить файл в папку storage/app/public/images
+                            // Используем оригинальное имя файла
+                            $fileName = $file->getClientOriginalName();
+                            
+                            // Сохраняем файл напрямую в целевую директорию
+                            $path = storage_path('app/public/images');
+                            if (!file_exists($path)) {
+                                mkdir($path, 0755, true);
+                            }
+                            $stored = file_put_contents(
+                                $path . '/' . $fileName,
+                                file_get_contents($file->getRealPath())
+                            ) !== false;
+                            
+                            if ($stored === false) {
+                                throw new \RuntimeException('Не удалось сохранить файл. Проверьте права на запись в директорию: ' . storage_path('app/public/images'));
+                            }
+                            
+                            // Получить основную информацию о файле
+                            $fileInfo = [
+                                'name' => $file->getClientOriginalName(),
+                                'type' => $file->getMimeType(),
+                                'extension' => $file->getClientOriginalExtension(),
+                                'size' => $file->getSize(),
+                                'path' => $path . '/' . $fileName,
+                                'url' => asset('storage/images/' . $fileName)
+                            ];
+                            
+                        } catch (\Exception $e) {
+                            \Log::error('Ошибка при сохранении файла:', [
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString()
+                            ]);
+                            throw new \Exception('Не удалось сохранить файл: ' . $e->getMessage());
+                        }
+
+                        // return тестовый
+
+                        // return response()->json([
+                        //     'success' => true,
+                        //     'message' => 'Файл успешно загружен (test)',
+                        //     'file_path' => $filePath,
+                        //     'full_path' => storage_path('app/' . $filePath),
+                        //     'exists' => file_exists(storage_path('app/' . $filePath))
+                        // ]);
+
+                        if (strpos($fileInfo['type'], 'image/') === 0) {
+                            $relativePath = 'images/' . $fileInfo['name'];
+                            
+                            // Проверяем, существует ли уже такая фотография
+                            $existingPhoto = DB::table('photos')
+                                ->where('path', $relativePath)
+                                ->first();
+                            
+                            if ($existingPhoto) {
+                                // Используем существующую фотографию
+                                $photoId = $existingPhoto->id;
+                            } else {
+                                // Получаем размеры изображения
+                                list($width, $height) = @getimagesize($fileInfo['path']) ?: [null, null];
+                                
+                                $photoId = DB::table('photos')->insertGetId([
+                                    'path' => $relativePath,
+                                    'original_name' => $fileInfo['name'],
+                                    'file_size' => $fileInfo['size'],
+                                    'mime_type' => $fileInfo['type'],
+                                    'width' => $width,
+                                    'height' => $height,
+                                    'created_by' => $userId,
+                                    'created_at' => $createdAt,
+                                    'updated_at' => $createdAt,
+                                ]);
+                            }
+
+                            // Проверяем, не существует ли уже связь с заявкой
+                            $existingRequestLink = DB::table('request_photos')
+                                ->where('request_id', $requestId)
+                                ->where('photo_id', $photoId)
+                                ->first();
+
+                            // Если связи с заявкой еще нет - создаем
+                            if (!$existingRequestLink) {
+                                DB::table('request_photos')->insert([
+                                    'request_id' => $requestId,
+                                    'photo_id' => $photoId,
+                                    'created_at' => $createdAt,
+                                    'updated_at' => $createdAt,
+                                ]);
+                            }
+
+                            // Проверяем, не существует ли уже связь с комментарием
+                            $existingCommentLink = DB::table('comment_photos')
+                                ->where('comment_id', $commentId)
+                                ->where('photo_id', $photoId)
+                                ->first();
+
+                            // Если связи с комментарием еще нет - создаем
+                            if (!$existingCommentLink) {
+                                DB::table('comment_photos')->insert([
+                                    'comment_id' => $commentId,
+                                    'photo_id' => $photoId,
+                                    'created_at' => $createdAt,
+                                    'updated_at' => $createdAt,
+                                ]);
+                            }
+                        }
+                    }
                 }
 
                 // Фиксируем транзакцию
@@ -879,6 +1007,18 @@ class HomeController extends Controller
                     [$requestId]
                 );
 
+                // Временно закомментировано для comment_files
+                $files = [];
+                // if (!empty($uploadedFileIds)) {
+                //     $files = DB::table('files')
+                //         ->whereIn('id', $uploadedFileIds)
+                //         ->get()
+                //         ->map(function($file) {
+                //             $file->url = url('storage/' . $file->path);
+                //             return $file;
+                //         });
+                // }
+
                 // Логируем SQL-запросы
                 \Log::info('Выполненные SQL-запросы:', \DB::getQueryLog());
 
@@ -886,7 +1026,8 @@ class HomeController extends Controller
                     'success' => true,
                     'message' => 'Комментарий успешно добавлен',
                     'comments' => $comments,
-                    'commentId' => $commentId
+                    'commentId' => $commentId,
+                    'files' => $files
                 ]);
             } catch (\Exception $e) {
                 // Откатываем изменения при ошибке

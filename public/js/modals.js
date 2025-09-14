@@ -199,6 +199,12 @@ function initAddressEditModal() {
     // Обработчик отправки формы комментария с фотоотчетом
     const commentForm = document.getElementById('addCommentForm');
     // console.log('Найдена форма addCommentForm:', !!commentForm);
+
+
+
+    return;
+
+
     
     if (commentForm) {
         // console.log('Добавление обработчика submit для формы комментария');
@@ -268,9 +274,9 @@ function initAddressEditModal() {
             // console.log('Найден контейнер для превью:', !!previewContainer);
             
             if (!fileInput || fileInput.files.length === 0) {
-                // console.log('Файлы не выбраны');
-                showAlert('Пожалуйста, выберите хотя бы одно фото для загрузки', 'warning');
-                console.log('Пожалуйста, выберите хотя бы одно фото для загрузки');
+                // showAlert('Пожалуйста, выберите хотя бы одно фото для загрузки', 'warning');
+                // console.log('Пожалуйста, выберите хотя бы одно фото для загрузки');
+                // Фото может быть и не выбрано
                 return;
             }
             
