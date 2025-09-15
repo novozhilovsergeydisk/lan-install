@@ -1029,6 +1029,78 @@ class HomeController extends Controller
                     }
                 }
 
+                if ($request->hasFile('files')) {
+                    foreach ($request->file('files') as $file) {              
+                        try {
+                            // Сохранить файл в папку storage/app/public/files
+                            $fileName = $file->getClientOriginalName();
+                            
+                            // Сохраняем файл напрямую в целевую директорию
+                            $path = storage_path('app/public/files');
+                            if (!file_exists($path)) {
+                                mkdir($path, 0755, true);
+                            }
+                            $stored = file_put_contents(
+                                $path . '/' . $fileName,
+                                file_get_contents($file->getRealPath())
+                            ) !== false;
+                            
+                            if ($stored === false) {
+                                throw new \RuntimeException('Не удалось сохранить файл. Проверьте права на запись в директорию: ' . storage_path('app/public/files'));
+                            }
+                            
+                            // Получить основную информацию о файле
+                            $fileInfo = [
+                                'name' => $file->getClientOriginalName(),
+                                'type' => $file->getMimeType(),
+                                'extension' => $file->getClientOriginalExtension(),
+                                'size' => $file->getSize(),
+                                'path' => $path . '/' . $fileName,
+                                'url' => asset('storage/files/' . $fileName)
+                            ];
+                            
+                            $relativePath = 'files/' . $fileInfo['name'];
+                            
+                            // Проверяем, существует ли уже такой файл
+                            $existingFile = DB::table('files')
+                                ->where('path', $relativePath)
+                                ->first();
+                            
+                            if ($existingFile) {
+                                // Используем существующий файл
+                                $fileId = $existingFile->id;
+                            } else {
+                                // Создаем новую запись о файле
+                                $fileId = DB::table('files')->insertGetId([
+                                    'path' => $relativePath,
+                                    'original_name' => $fileInfo['name'],
+                                    'file_size' => $fileInfo['size'],
+                                    'mime_type' => $fileInfo['type'],
+                                    'extension' => $fileInfo['extension'],
+                                    'created_by' => $userId,
+                                    'created_at' => now(),
+                                    'updated_at' => now()
+                                ]);
+                            }
+                            
+                            // Связываем файл с комментарием
+                            DB::table('comment_files')->insert([
+                                'comment_id' => $commentId,
+                                'file_id' => $fileId,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                            
+                        } catch (\Exception $e) {
+                            \Log::error('Ошибка при сохранении файла:', [
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString()
+                            ]);
+                            throw new \Exception('Не удалось сохранить файл: ' . $e->getMessage());
+                        }
+                    }
+                }
+
                 // Фиксируем транзакцию
                 DB::commit();
                 \Log::info('Транзакция успешно завершена');

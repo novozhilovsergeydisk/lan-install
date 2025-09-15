@@ -1377,20 +1377,6 @@
                 const formData = new FormData(this);
                 const requestId = formData.get('request_id');
 
-                // Получаем форму с фотоотчетом
-                const photoReportForm = document.getElementById('photoReportForm');
-
-                // Добавляем файлы из формы фотоотчета, если она существует
-                if (photoReportForm) {
-                    const photoFormData = new FormData(photoReportForm);
-                    const photoFiles = photoFormData.getAll('photos[]');
-                    
-                    // Добавляем файлы к основным данным формы
-                    photoFiles.forEach(file => {
-                        formData.append('photos[]', file);
-                    });
-                }
-
                 console.log('Отправляемые данные:');
                 for (let [key, value] of formData.entries()) {
                     console.log(key, value);
@@ -1685,12 +1671,17 @@
                     <input type="hidden" name="request_id" id="commentRequestId">
 
                     <div class="mb-3">
-                        <label class="form-label d-block" for="commentFilesInput">
-                            Прикрепить файлы (pdf, doc, docx, xls, xlsx, zip, rar, 7z и т.д.)
-                        </label>
+                        <label for="photoUpload" class="form-label">Выберите фотографии</label>
+                        <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept=".jpg,.jpeg,.png,.gif,.heic,.heif,.bmp,.tiff,.webp">
+                        <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: JPG, PNG, GIF, BMP, TIFF, WEBP, HEIC/HEIF.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block" for="commentFilesInput">Выберите файлы</label>
                         <div class="w-100">
-                            <input id="commentFilesInput" type="file" name="files[]" class="form-control" multiple accept="image/*,image/heic,image/heif,video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.heic,.heif,.mp3,.wav,.ogg,.mp4,.webm,.mov,.avi,.zip,.rar,.7z" />
+                            <input id="commentFilesInput" type="file" name="files[]" class="form-control" multiple accept="video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.heic,.heif,.mp3,.wav,.ogg,.mp4,.webm,.mov,.avi,.zip,.rar,.7z" />
                         </div>
+                        <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, ZIP, RAR, 7Z и т.д.</div>
                     </div>
 
                     <div class="input-group mt-2">
@@ -3434,16 +3425,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
             <div class="modal-body">
-                <form id="photoReportForm" enctype="multipart/form-data">
+                <form id="photoReportForm_" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" id="photoRequestId" name="request_id">
                     
+                    <!--
                     <div class="mb-3">
                         <label for="photoUpload" class="form-label">Выберите фотографии</label>
-                        <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept=".jpg,.jpeg,.png,.gif,.heic,.heif" required>
+                        <input class="form-control" type="file" id="photoUpload_" name="photos[]" multiple accept=".jpg,.jpeg,.png,.gif,.heic,.heif" required>
                         <div class="form-text">Можно выбрать несколько файлов. Поддерживаются форматы: JPG, PNG, GIF, HEIC/HEIF.</div>
                     </div>
-                    
+                    -->
+
                 </form>
             </div>
             <div class="modal-footer">
