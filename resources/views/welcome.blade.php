@@ -1373,18 +1373,9 @@
             commentForm.addEventListener('submit', function (e) {
                 e.preventDefault();
 
-                // Инициализируем FormData
+                // Инициализируем FormData - файлы уже включены автоматически
                 const formData = new FormData(this);
                 const requestId = formData.get('request_id');
-
-                // Получаем файлы из основного поля загрузки
-                const commentFileInput = document.getElementById('commentFilesInput');
-                if (commentFileInput && commentFileInput.files.length > 0) {
-                    // Добавляем файлы из основного поля загрузки
-                    Array.from(commentFileInput.files).forEach(file => {
-                        formData.append('photos[]', file);
-                    });
-                }
 
                 // Получаем форму с фотоотчетом
                 const photoReportForm = document.getElementById('photoReportForm');
@@ -1425,6 +1416,10 @@
                     })
                     .then(data => {
                         if (data.success) {
+                            console.log('Ответ от сервера', data);
+
+                            // Проверить тестовые данные с сервера
+
                             // Очищаем поле ввода
                             commentForm.querySelector('input[name="comment"]').value = '';
 
@@ -1439,11 +1434,16 @@
                                 }, 100);
                             });
 
+                            const photoPreviewNew = document.getElementById('photoPreviewNew');
+                            photoPreviewNew.innerHTML = '';
+
                             sessionStorage.setItem('commentId', data.commentId);
                             sessionStorage.setItem('data', JSON.stringify({commentId: data.commentId, sessionId: sessionStorage.getItem('sessionId')}));
+                            
                             console.log('Комментарий успешно добавлен', data.commentId);
+                            console.log('------------ END ------------');
 
-                            console.log('Ответ от сервера', data);
+            
                         }
                     })
                     .catch(error => {

@@ -745,19 +745,54 @@ class HomeController extends Controller
      */
     public function addComment(Request $request)
     {
-        // Логируем все входные данные
-        \Log::info('Получен запрос на создание комментария:', [
-            'all' => $request->all(),
-            'files' => $request->hasFile('files') ? array_map(function($file) {
-                    return [
-                        'original_name' => $file->getClientOriginalName(),
-                        'size' => $file->getSize(),
-                        'mime_type' => $file->getMimeType(),
-                        'extension' => $file->getClientOriginalExtension(),
-                    ];
-                }, $request->file('files')) : [],
-            'headers' => $request->headers->all(),
-        ]);
+        // Собираем информацию о файлах
+        $filesInfo = [];
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $index => $file) {
+                $filesInfo[] = [
+                    'name' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                    'type' => $file->getMimeType(),
+                    'extension' => $file->getClientOriginalExtension(),
+                ];
+                \Log::info("Файл #{$index}:", $filesInfo[count($filesInfo)-1]);
+            }
+        }
+
+        // Собираем информацию о фото
+        $photosInfo = [];
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $index => $photo) {
+                $photosInfo[] = [
+                    'name' => $photo->getClientOriginalName(),
+                    'size' => $photo->getSize(),
+                    'type' => $photo->getMimeType(),
+                    'extension' => $photo->getClientOriginalExtension(),
+                ];
+                \Log::info("Фото #{$index}:", $photosInfo[count($photosInfo)-1]);
+            }
+        }
+
+        // Логируем общую информацию
+        \Log::info('=== ИНФОРМАЦИЯ О ЗАГРУЗКЕ ФАЙЛОВ ===');
+        \Log::info('Всего файлов: ' . count($filesInfo));
+        \Log::info('Всего фото: ' . count($photosInfo));
+        \Log::info('Комментарий: ' . $request->comment);
+        \Log::info('ID заявки: ' . $request->request_id);
+
+        // Ответ для отладки
+        // return response()->json([
+        //     'success' => true,
+        //     'message' => 'Файлы успешно получены',
+        //     'debug' => [
+        //         'comment' => $request->comment,
+        //         'request_id' => $request->request_id,
+        //         'files_count' => count($filesInfo),
+        //         'photos_count' => count($photosInfo),
+        //         'files' => $filesInfo,
+        //         'photos' => $photosInfo
+        //     ]
+        // ]);
 
         // Включаем логирование SQL-запросов
         \DB::enableQueryLog();
