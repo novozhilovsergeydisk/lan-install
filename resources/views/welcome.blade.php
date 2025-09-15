@@ -1696,7 +1696,7 @@
                 <div class="w-100 d-flex flex-column gap-2">
                     <div class="d-flex align-items-center gap-2">
                         <button data-request-id="" type="button"
-                                class="btn btn-sm btn-outline-success add-photo-btn">
+                                class="btn btn-sm btn-outline-success add-photo-btn d-none">
                             <i class="bi bi-camera me-1"></i> Фотоотчет
                         </button>
                         <button id="showPhotosBtn" type="button" class="btn btn-sm btn-outline-info"
