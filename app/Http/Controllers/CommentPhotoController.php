@@ -64,4 +64,71 @@ class CommentPhotoController extends Controller
             ], 500);
         }
     }
+
+    
+    /**
+     * Получить файлы для комментария
+     *
+     * @param  int  $commentId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    /**
+     * Получить файлы для комментария
+     *
+     * @param  int  $commentId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCommentFiles($commentId)
+    {
+        try {
+            // Validate comment_id
+            if (!is_numeric($commentId) || $commentId <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid comment ID'
+                ], 400);
+            }
+
+            $files = DB::table('comment_files')
+                ->join('files', 'comment_files.file_id', '=', 'files.id')
+                ->where('comment_files.comment_id', $commentId)
+                ->select([
+                    'files.id',
+                    'files.path',
+                    'files.original_name',
+                    'files.file_size',
+                    'files.mime_type',
+                    'files.extension',
+                    'files.created_by',
+                    'files.created_at',
+                    'files.updated_at',
+                ])
+                ->get()
+                ->map(function($file) {
+                    return [
+                        'id' => $file->id,
+                        'url' => asset('storage/' . $file->path),
+                        'path' => $file->path,
+                        'original_name' => $file->original_name,
+                        'file_size' => $file->file_size,
+                        'mime_type' => $file->mime_type,
+                        'extension' => $file->extension,
+                        'created_by' => $file->created_by,
+                        'created_at' => $file->created_at,
+                        'updated_at' => $file->updated_at,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $files
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Не удалось загрузить файлы',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

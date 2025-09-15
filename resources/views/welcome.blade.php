@@ -1420,16 +1420,33 @@
                                 }, 100);
                             });
 
-                            const photoPreviewNew = document.getElementById('photoPreviewNew');
-                            photoPreviewNew.innerHTML = '';
-
                             sessionStorage.setItem('commentId', data.commentId);
                             sessionStorage.setItem('data', JSON.stringify({commentId: data.commentId, sessionId: sessionStorage.getItem('sessionId')}));
                             
                             console.log('Комментарий успешно добавлен', data.commentId);
                             console.log('------------ END ------------');
 
-            
+                            // Полностью очищаем форму
+                            commentForm.reset();
+                            
+                            // Очищаем превью фотографий
+                            const photoPreviewNew = document.getElementById('photoPreviewNew');
+                            if (photoPreviewNew) {
+                                photoPreviewNew.innerHTML = '';
+                            }
+                            
+                            // Очищаем поля загрузки файлов и фотографий
+                            const commentFilesInput = document.getElementById('commentFiles');
+                            const photoUpload = document.getElementById('photoUpload');
+                            
+                            if (commentFilesInput) commentFilesInput.value = '';
+                            if (photoUpload) photoUpload.value = '';
+                            
+                            // Очищаем все остальные поля загрузки файлов на всякий случай
+                            const fileInputs = commentForm.querySelectorAll('input[type="file"]');
+                            fileInputs.forEach(input => {
+                                input.value = ''; // Сбрасываем значение файлового ввода
+                            });
                         }
                     })
                     .catch(error => {
@@ -1488,16 +1505,32 @@
 
                             html += `
                                     <div class="list-group-item">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div class="me-3">
+                                        <div class="d-flex flex-wrap justify-content-between align-items-start">
+                                            <!-- Блок с автором и текстом комментария -->
+                                            <div class="me-3 mb-2" style="flex: 1 1 100%; max-width: 100%;">
                                                 <h6 class="fw-semibold mb-1" style="color:${color}">${comment.employee_full_name}</h6>
-                                                <div class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">${(window.utils && typeof window.utils.linkifyPreservingAnchors==='function' ? window.utils.linkifyPreservingAnchors(commentContent) : commentContent)}</div>
+                                                <div class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">
+                                                    ${(window.utils && typeof window.utils.linkifyPreservingAnchors==='function' ? window.utils.linkifyPreservingAnchors(commentContent) : commentContent)}
+                                                </div>
                                                 <small class="text-muted">${formattedDate}</small>
-                                                <span class="ms-2"><a href="#" class="text-info text-decoration-none data-show-photo-btn" data-comment-id="${comment.id}">Показать фото</a></span>
-                                                <span class="ms-2"><a href="#" class="text-warning text-decoration-none download-comment-btn" data-comment-id="${comment.id}">Скачать zip архив</a></span>
-                                                
-                                                
-                                                ${index === comments.length - 1 ? `<button class="btn btn-sm btn-outline-primary ms-2 edit-comment-btn">Редактировать</button>` : ''}
+                                            </div>
+
+                                            <!-- Блок с действиями -->
+                                            <div class="d-flex flex-wrap align-items-center mt-2" style="gap: 0.5rem;">
+                                                <a href="#" class="text-info text-decoration-none data-show-photo-btn" data-comment-id="${comment.id}">
+                                                    Показать фото
+                                                </a>
+                                                <a href="#" class="text-warning text-decoration-none download-comment-btn" data-comment-id="${comment.id}">
+                                                    Скачать фото
+                                                </a>
+                                                <a href="#" class="text-warning text-decoration-none download-comment-files-btn" data-comment-id="${comment.id}">
+                                                    Скачать файлы
+                                                </a>
+                                                ${index === comments.length - 1 ? 
+                                                    `<button class="btn btn-sm btn-outline-primary edit-comment-btn">
+                                                        Редактировать
+                                                    </button>` : ''
+                                                }
                                             </div>
                                         </div>
                                     </div>`;

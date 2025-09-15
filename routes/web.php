@@ -168,6 +168,9 @@ Route::prefix('api')->middleware('auth')->group(function () {
     // Get comment photos
     Route::get('/comments/{commentId}/photos', [\App\Http\Controllers\CommentPhotoController::class, 'index'])->name('api.comments.photos');
     
+    // Get comment files
+    Route::get('/comments/{commentId}/files', [\App\Http\Controllers\CommentPhotoController::class, 'getCommentFiles'])->name('api.comments.files');
+    
     // Get addresses for select
     Route::get('/addresses', [HomeController::class, 'getAddresses'])->name('api.addresses');
     

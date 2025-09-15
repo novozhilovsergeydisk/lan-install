@@ -813,6 +813,114 @@ export function initCommentHandlers() {
 }
 
 function commentPhotoDownload() {
+    // Обработчик для кнопки скачивания файлов для zip архивирования
+    document.addEventListener('click', async function(e) {
+        const downloadFilesBtn = e.target.closest('.download-comment-files-btn');
+        if (!downloadFilesBtn) return;
+
+        console.log('Кнопка скачивания файлов для zip архивирования нажата', downloadFilesBtn);
+        
+        e.preventDefault();
+
+        const commentId = downloadFilesBtn.dataset.commentId;
+        const originalHtml = downloadFilesBtn.innerHTML;
+
+        try {
+            // Показываем индикатор загрузки
+            downloadFilesBtn.innerHTML = '<i class="bi bi-hourglass me-1"></i> Загрузка...';
+            downloadFilesBtn.disabled = true;
+
+            // Загружаем файлы комментария
+            const response = await fetch(`/api/comments/${commentId}/files`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Ошибка при загрузке файлов');
+            }
+            
+            const data = await response.json();
+
+            console.log('commentPhotoDownload, ответ от сервера', data);
+            
+            if (!data.data || data.data.length === 0) {
+                showAlert('Нет файлов для архивации и скачивания архива', 'warning');
+                downloadFilesBtn.innerHTML = originalHtml;
+                downloadFilesBtn.disabled = false;
+                return;
+            }
+
+            // Показываем индикатор архивации
+            downloadFilesBtn.innerHTML = '<i class="bi bi-hourglass me-1"></i> Архивация...';
+            downloadFilesBtn.disabled = true;
+
+            // Создаем zip архив
+            const zip = new JSZip();
+            
+            // Загружаем содержимое каждого файла
+            const filePromises = data.data.map(async (file) => {
+                try {
+                    // Загружаем файл как бинарные данные
+                    const fileResponse = await fetch(file.url);
+                    if (!fileResponse.ok) {
+                        console.error(`Не удалось загрузить файл: ${file.url}`);
+                        return null;
+                    }
+                    const fileBlob = await fileResponse.blob();
+                    zip.file(file.original_name, fileBlob);
+                    return true;
+                } catch (error) {
+                    console.error(`Ошибка при загрузке файла ${file.original_name}:`, error);
+                    return false;
+                }
+            });
+
+            // Ждем загрузки всех файлов
+            const results = await Promise.all(filePromises);
+            const successfulFiles = results.filter(Boolean).length;
+            
+            if (successfulFiles === 0) {
+                throw new Error('Не удалось загрузить ни одного файла');
+            }
+
+            // Генерируем имя файла
+            const fileName = `comment-${commentId}-files.zip`;
+
+            // Создаем Blob с архивом
+            zip.generateAsync({ type: 'blob' })
+                .then(function(content) {
+                    // Создаем ссылку для скачивания
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = fileName;
+                    link.click();
+
+                    // Очищаем ссылку
+                    URL.revokeObjectURL(link.href);
+
+                    // Возвращаем кнопку в исходное состояние
+                    downloadFilesBtn.innerHTML = originalHtml;
+                    downloadFilesBtn.disabled = false;
+                })
+                .catch(function(error) {
+                    console.error('Ошибка при создании архива:', error);
+                    showAlert('Не удалось создать архив', 'danger');
+                    downloadFilesBtn.innerHTML = originalHtml;
+                    downloadFilesBtn.disabled = false;
+                });
+        } catch (error) {
+            console.error('Ошибка при загрузке файлов:', error);
+            showAlert('Не удалось загрузить файлы', 'danger');
+            downloadFilesBtn.innerHTML = originalHtml;
+            downloadFilesBtn.disabled = false;
+        }
+    });
+
     // Обработчик для кнопки скачивания фотографий для zip архивирования (новая версия)
     document.addEventListener('click', async function(e) {
         const downloadBtn = e.target.closest('.download-comment-btn');
