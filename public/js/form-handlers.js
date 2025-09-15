@@ -3457,7 +3457,7 @@ function initShowPhotoButtons() {
             console.log('Показать фото для комментария ID:', commentId);
             
             // Используем глобальную функцию для загрузки фотографий
-            loadCommentPhotos(commentId);
+            loadCommentPhotos(commentId, showPhotoBtn);
         }
     });
 
@@ -3633,7 +3633,7 @@ function initShowPhotoButtons() {
 }
 
 // Функция для загрузки и отображения фотографий комментария
-async function loadCommentPhotos(commentId) {
+async function loadCommentPhotos(commentId, showPhotoBtn) {
     try {
         // Находим модальное окно комментариев
         const commentsModal = document.getElementById('commentsModal');
@@ -3642,11 +3642,26 @@ async function loadCommentPhotos(commentId) {
             return;
         }
 
-        // Находим или создаем контейнер для фотографий
-        let photosContainer = commentsModal.querySelector('.comment-photos-container');
-        if (!photosContainer) {
-            photosContainer = document.createElement('div');
-            photosContainer.className = 'comment-photos-container mt-3';
+        // Создаем уникальный ID для контейнера фотографий этого комментария
+        const photosContainerId = `comment-photos-${commentId}`;
+        
+        // Удаляем старый контейнер, если он существует
+        const oldContainer = document.getElementById(photosContainerId);
+        if (oldContainer) {
+            oldContainer.remove();
+        }
+        
+        // Создаем новый контейнер для фотографий
+        const photosContainer = document.createElement('div');
+        photosContainer.id = photosContainerId;
+        photosContainer.className = 'comment-photos-container mt-3';
+        
+        // Вставляем контейнер после кнопки, если она существует
+        if (showPhotoBtn && showPhotoBtn.parentNode) {
+            // Находим родительский элемент кнопки и вставляем контейнер после неё
+            showPhotoBtn.parentNode.insertBefore(photosContainer, showPhotoBtn.nextSibling);
+        } else {
+            // Или в начало контейнера комментариев, если кнопка не передана
             const commentsContainer = commentsModal.querySelector('#commentsContainer');
             if (commentsContainer) {
                 commentsContainer.insertAdjacentElement('afterbegin', photosContainer);
