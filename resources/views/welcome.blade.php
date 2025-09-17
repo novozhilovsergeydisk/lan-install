@@ -1505,7 +1505,7 @@
 
                             html += `
                                     <div class="list-group-item">
-                                        <div class="d-flex flex-wrap justify-content-between align-items-start">
+                                        <div class="d-flex flex-wrap justify-content-between align-items-start flex-column">
                                             <!-- Блок с автором и текстом комментария -->
                                             <div class="me-3 mb-2" style="flex: 1 1 100%; max-width: 100%;">
                                                 <h6 class="fw-semibold mb-1" style="color:${color}">${comment.employee_full_name}</h6>
@@ -1518,14 +1518,25 @@
                                             <!-- Блок с действиями -->
                                             <div class="d-flex flex-wrap align-items-center mt-2" style="gap: 0.5rem;">
                                                 <a href="#" class="text-info text-decoration-none data-show-photo-btn" data-comment-id="${comment.id}">
-                                                    Показать фото
+                                                    Смотреть фото
                                                 </a>
                                                 <a href="#" class="text-warning text-decoration-none download-comment-btn" data-comment-id="${comment.id}">
                                                     Скачать фото
                                                 </a>
+                                            </div>
+
+                                            <div class="d-flex flex-wrap align-items-center mt-2" style="gap: 0.5rem;">
+
+                                                <a href="#" class="text-info text-decoration-none data-show-files-btn" data-comment-id="${comment.id}">
+                                                    Показать файлы
+                                                </a>
+
                                                 <a href="#" class="text-warning text-decoration-none download-comment-files-btn" data-comment-id="${comment.id}">
                                                     Скачать файлы
                                                 </a>
+                                            </div>
+
+                                            <div class="d-flex flex-wrap align-items-center mt-2" style="gap: 0.5rem;">
                                                 ${index === comments.length - 1 ? 
                                                     `<button class="btn btn-sm btn-outline-primary edit-comment-btn">
                                                         Редактировать

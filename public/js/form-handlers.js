@@ -10,6 +10,82 @@ export function DateFormated(date) {
     return date.split('.').reverse().join('-');
 }
 
+// Обработчик для кнопки скачивания zip-архива всех фото
+function initDownloadAllPhotos() {
+    const downloadAllPhotosBtn = document.querySelector('.download-all-photos-btn');
+    
+    if (downloadAllPhotosBtn) {
+        downloadAllPhotosBtn.addEventListener('click', async function() {
+            console.log('Кнопка скачивания архива всех фото нажата');
+
+            // Показываем индикатор загрузки
+            const originalText = downloadAllPhotosBtn.innerHTML;
+            downloadAllPhotosBtn.disabled = true;
+            downloadAllPhotosBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Подготовка архива...';
+            
+            try {
+                // Отправляем запрос на создание и скачивание архива
+                const response = await fetch('/download-all-photos', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        // Можно добавить дополнительные параметры, если нужно
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка сервера: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                console.log('Ответ сервера:', result);
+
+                return;
+
+                // Получаем blob с архивом
+                const blob = await response.blob();
+                
+                // Создаем ссылку для скачивания
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Получаем имя файла из заголовка Content-Disposition
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'photos_archive.zip';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (filenameMatch != null && filenameMatch[1]) {
+                        filename = filenameMatch[1].replace(/['"]/g, '');
+                    }
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Очистка
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                console.error('Ошибка при скачивании архива:', error);
+                alert('Произошла ошибка при подготовке архива: ' + error.message);
+            } finally {
+                // Восстанавливаем кнопку в исходное состояние
+                downloadAllPhotosBtn.disabled = false;
+                downloadAllPhotosBtn.innerHTML = originalText;
+            }
+        });
+    }
+}
+
+// Функция для загрузки списка фотоотчетов
 async function initPhotoReportList(requestId) {
     const container = document.getElementById('photo-reports-list');
     
@@ -3547,12 +3623,30 @@ export function initHouseNumberValidator() {
 
 document.addEventListener('DOMContentLoaded', function() {
     initEmployeeButtons();
+    initShowFilesButtons()
     initShowPhotoButtons();
     initHouseNumberValidator();
     initCommentHandlers();
     initRequestCloseHandlers();
     initPhotoReportList();
+    initDownloadAllPhotos();
 });
+
+// Инициализация обработчиков кнопок "Показать файлы"
+function initShowFilesButtons() {
+    // Обработчик для уже существующих кнопок
+    document.addEventListener('click', function(e) {
+        const showFilesBtn = e.target.closest('.data-show-files-btn');
+        if (showFilesBtn) {
+            e.preventDefault();
+            const commentId = showFilesBtn.getAttribute('data-comment-id');
+            // console.log('Показать файлы для комментария ID:', commentId);
+            
+            // Используем глобальную функцию для загрузки фотографий
+            loadCommentFiles(commentId, showFilesBtn);
+        }
+    });
+}
 
 // Инициализация обработчиков кнопок "Показать фото"
 function initShowPhotoButtons() {
@@ -3562,12 +3656,105 @@ function initShowPhotoButtons() {
         if (showPhotoBtn) {
             e.preventDefault();
             const commentId = showPhotoBtn.getAttribute('data-comment-id');
-            console.log('Показать фото для комментария ID:', commentId);
+            // console.log('Показать фото для комментария ID:', commentId);
             
             // Используем глобальную функцию для загрузки фотографий
             loadCommentPhotos(commentId, showPhotoBtn);
         }
     });
+}
+
+async function loadCommentFiles(commentId, showFilesBtn) {
+    try {
+        console.log('Показать файлы для комментария ID:', commentId);
+
+        // Находим модальное окно комментариев
+        const commentsModal = document.getElementById('commentsModal');
+        if (!commentsModal) {
+            console.error('Модальное окно комментариев не найдено');
+            return;
+        }
+
+        // Создаем уникальный ID для контейнера файлов этого комментария
+        const filesContainerId = `comment-files-${commentId}`;
+        
+        // Удаляем старый контейнер, если он существует
+        const oldContainer = document.getElementById(filesContainerId);
+        if (oldContainer) {
+            oldContainer.remove();
+        }
+
+        // Создаем новый контейнер для файлов
+        const filesContainer = document.createElement('div');
+        filesContainer.id = filesContainerId;
+        filesContainer.className = 'comment-files-container mt-3 w-100';
+        // Заставляем контейнер занимать всю ширину в родительском flex-wrap,
+        // чтобы следующая ссылка "Скачать файлы" перешла на новую строку ниже
+        try {
+            filesContainer.style.flex = '1 1 100%';
+            filesContainer.style.width = '100%';
+        } catch (e) {}
+        
+        // Вставляем контейнер после кнопки, если она существует
+        if (showFilesBtn && showFilesBtn.parentNode) {
+            // Находим родительский элемент кнопки и вставляем контейнер после неё
+            showFilesBtn.parentNode.insertBefore(filesContainer, showFilesBtn.nextSibling);
+        } else {
+            // Или в начало контейнера комментариев, если кнопка не передана
+            const commentsContainer = commentsModal.querySelector('#commentsContainer');
+            if (commentsContainer) {
+                commentsContainer.insertAdjacentElement('afterbegin', filesContainer);
+            }
+        }
+
+        // Показываем индикатор загрузки
+        filesContainer.innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <div>Загрузка файлов...</div>
+            </div>`;
+
+        // Отправляем GET запрос на сервер для получения файлов комментария
+        const response = await fetch(`/api/comments/${commentId}/files`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при загрузке файлов');
+        }
+
+        const result = await response.json() || [];;
+        console.log('Файлы комментария:', result);
+
+        // Очищаем контейнер
+        filesContainer.innerHTML = '';
+
+        // Если есть файлы, добавляем их в контейнер
+        if (result.data.length > 0) {
+
+            console.log('Файлы комментария в контейнере:', result.data);
+
+            result.data.forEach(file => {
+                const fileElement = document.createElement('div');
+                fileElement.className = 'file-item mb-2';
+                fileElement.innerHTML = `
+                    <a href="${file.url}" target="_blank" download>
+                        <i class="fas fa-file"></i> ${file.original_name}
+                    </a>
+                `;
+                filesContainer.appendChild(fileElement);
+            });
+        } else {
+            filesContainer.innerHTML = '<div class="text-center py-3">Файлы не найдены</div>';
+        }
+
+    } catch (error) {
+        console.error('Ошибка при загрузке файлов:', error);
+    }
 }
 
 // Функция для загрузки и отображения фотографий комментария

@@ -131,4 +131,19 @@ class CommentPhotoController extends Controller
             ], 500);
         }
     }
+
+    public function downloadAllPhotos() {
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => 'All photos downloaded successfully (test)'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Не удалось загрузить фотографии',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
