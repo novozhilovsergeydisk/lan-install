@@ -1515,25 +1515,62 @@
                                                 <small class="text-muted">${formattedDate}</small>
                                             </div>
 
-                                            <!-- Блок с действиями -->
-                                            <div class="d-flex flex-wrap align-items-center mt-2" style="gap: 0.5rem;">
-                                                <a href="#" class="text-info text-decoration-none data-show-photo-btn" data-comment-id="${comment.id}">
-                                                    Смотреть фото
-                                                </a>
-                                                <a href="#" class="text-warning text-decoration-none download-comment-btn" data-comment-id="${comment.id}">
-                                                    Скачать фото
-                                                </a>
-                                            </div>
+                                            <!-- Блок с действиями (фото) -->
+                                            ${Number(comment.photos_count) > 0
+                                                ? `
+                                                    <div class="d-flex flex-wrap align-items-center mt-2" style="gap: 0.5rem;">
+                                                        <a href="#" class="text-info text-decoration-none data-show-photo-btn" data-comment-id="${comment.id}">
+                                                            Смотреть фото
+                                                        </a>
+                                                        <a href="#" class="text-warning text-decoration-none download-comment-btn" data-comment-id="${comment.id}">
+                                                            Скачать фото
+                                                        </a>
+                                                    </div>
+                                                `
+                                                : ''
+                                            }
 
                                             <div class="d-flex flex-wrap align-items-center mt-2" style="gap: 0.5rem;">
+                                                ${(() => {
+                                                    try {
+                                                        const files = Array.isArray(comment.files)
+                                                            ? comment.files
+                                                            : (typeof comment.files === 'string' && comment.files.trim().length
+                                                                ? JSON.parse(comment.files)
+                                                                : []);
+                                                        if (Array.isArray(files) && files.length > 0) {
+                                                            return `
+                                                                <div id="comment-files-${comment.id}" class="comment-files-container mt-3 w-100" style="flex: 1 1 100%;">
+                                                                    ${files.map(f => `
+                                                                        <div class=\"file-item mb-2\">
+                                                                            <a href=\"/storage/${f.file_path}\" target=\"_blank\" download>
+                                                                                <i class=\"fas fa-file\"></i> ${f.file_name}
+                                                                            </a>
+                                                                        </div>
+                                                                    `).join('')}
+                                                                </div>
+                                                            `;
+                                                        }
+                                                    } catch (e) {
+                                                        console.warn('Не удалось распарсить files у комментария', comment.id, e);
+                                                    }
+                                                    return '';
+                                                })()}
 
-                                                <a href="#" class="text-info text-decoration-none data-show-files-btn" data-comment-id="${comment.id}">
-                                                    Показать файлы
-                                                </a>
-
-                                                <a href="#" class="text-warning text-decoration-none download-comment-files-btn" data-comment-id="${comment.id}">
-                                                    Скачать файлы
-                                                </a>
+                                                ${(() => {
+                                                    try {
+                                                        const files = Array.isArray(comment.files)
+                                                            ? comment.files
+                                                            : (typeof comment.files === 'string' && comment.files.trim().length
+                                                                ? JSON.parse(comment.files)
+                                                                : []);
+                                                        return (Array.isArray(files) && files.length > 0)
+                                                            ? `<a href="#" class="text-warning text-decoration-none download-comment-files-btn" data-comment-id="${comment.id}">Скачать файл(ы) в виде zip архива</a>`
+                                                            : '';
+                                                    } catch (e) {
+                                                        return '';
+                                                    }
+                                                })()}
                                             </div>
 
                                             <div class="d-flex flex-wrap align-items-center mt-2" style="gap: 0.5rem;">

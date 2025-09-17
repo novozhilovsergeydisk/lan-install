@@ -1546,13 +1546,34 @@ class HomeController extends Controller
     {
         try {
             $comments = DB::select("
-                SELECT
+                SELECT 
                     c.id,
                     c.comment,
                     c.created_at,
                     COALESCE(u.name, 'Система') AS author_name,
                     COALESCE(e.fio, '') AS employee_full_name,
-                    c.created_at AS formatted_date
+                    c.created_at AS formatted_date,
+                    (
+                        SELECT COUNT(*)::int
+                        FROM comment_photos cp
+                        WHERE cp.comment_id = c.id
+                    ) AS photos_count,
+                    (
+                        SELECT COALESCE(
+                            json_agg(
+                                json_build_object(
+                                    'file_id', f.id,
+                                    'file_path', f.path,
+                                    'file_name', f.original_name,
+                                    'file_type', f.mime_type,
+                                    'file_size', f.file_size
+                                )
+                            ), '[]'
+                        )
+                        FROM comment_files cf
+                        JOIN files f ON cf.file_id = f.id
+                        WHERE cf.comment_id = c.id
+                    ) AS files
                 FROM request_comments rc
                 JOIN comments c ON rc.comment_id = c.id
                 LEFT JOIN users u ON rc.user_id = u.id
