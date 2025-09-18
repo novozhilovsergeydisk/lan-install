@@ -3563,8 +3563,7 @@ function initEmployeeButtons() {
     });
 }
 
-// Обработчик для кнопки "Удалить"
-// Обработчик для кнопки "Удалить"
+// Обработчик для кнопки "Удалить" на вкладке "Запланированные заявки"
 function initRequestCloseHandlers() {
     document.addEventListener('click', async function(event) {
         if (event.target.closest('.request-delete')) {
@@ -3598,7 +3597,9 @@ function initRequestCloseHandlers() {
                 
                 if (data.success) {
                     // Удаляем строку с заявкой из таблицы
-                    button.closest('tr').remove();
+                    // button.closest('tr').remove();
+
+                    await loadPlanningRequests();
                 } else {
                     showAlert(data.message || 'Произошла ошибка при удалении заявки', 'danger');
                 }

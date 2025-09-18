@@ -38,13 +38,13 @@ export async function loadPlanningRequests() {
 
     try {
         // Показываем индикатор загрузки
-        // container.innerHTML = `
-        //     <div class="d-flex justify-content-center">
-        //         <div class="spinner-border text-primary" role="status">
-        //             <span class="visually-hidden">Загрузка...</span>
-        //         </div>
-        //     </div>
-        //     `;
+        container.innerHTML = `
+            <div class="d-flex justify-content-center m-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+            </div>
+            `;
 
         // Загружаем данные с сервера
         const response = await fetch('/get-planning-requests', {
@@ -58,6 +58,8 @@ export async function loadPlanningRequests() {
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
+        } else {
+            container.innerHTML = '';
         }
 
         const result = await response.json();
