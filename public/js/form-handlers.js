@@ -87,6 +87,8 @@ function initDownloadAllPhotos() {
 
 // Функция для загрузки списка фотоотчетов
 async function initPhotoReportList(requestId) {
+    return;
+
     const container = document.getElementById('photo-reports-list');
     
     if (!container) return;

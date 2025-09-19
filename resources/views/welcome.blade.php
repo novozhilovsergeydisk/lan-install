@@ -230,11 +230,11 @@
                                 type="button" role="tab">Планирование
                         </button>
                     </li>
-                    <li class="nav-item" role="presentation">
+                    <!-- <li class="nav-item" role="presentation">
                         <button class="nav-link" id="photo-reports-tab" data-bs-toggle="tab" data-bs-target="#photo-reports"
                                 type="button" role="tab">Фотоотчеты
                         </button>
-                    </li>
+                    </li> -->
                 </ul>
 
                 <!-- mainTabsContent -->
@@ -1151,13 +1151,13 @@
                         @endif
                     </div>
 
-                    <div id="photo-reports" class="tab-pane fade" role="tabpanel">
+                    <!-- <div id="photo-reports" class="tab-pane fade" role="tabpanel">
                         <h4>Фотоотчеты</h4>
 
                         <div id="photo-reports-list">
                             
                         </div>
-                    </div>
+                    </div> -->
                 </div>
 
                 <!-- Календарь -->
