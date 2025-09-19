@@ -810,7 +810,9 @@ class HomeController extends Controller
                 'request_id' => 'required|exists:requests,id',
                 'comment' => 'required|string|max:1000',
                 'photos' => 'nullable|array|max:20',
-                'photos.*' => 'file|max:65536|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt',
+                'photos.*' => 'file|max:65536|mimes:jpg,jpeg,png,gif,webp,bmp,tiff,heic,heif',
+                'files' => 'nullable|array|max:20',
+                'files.*' => 'file|max:65536|mimes:jpg,jpeg,png,gif,webp,bmp,tiff,heic,heif,pdf,doc,docx,xls,xlsx,txt,zip,rar,mp4,mov,avi,wmv,mkv,mp3,wav,ogg,m4a',
                 '_token' => 'required|string'
             ]);
 

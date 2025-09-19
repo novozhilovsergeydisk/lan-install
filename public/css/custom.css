@@ -412,3 +412,17 @@ body.dark-mode .custom-select-options li:hover {
 .text-green {
     color: #2e7d32 !important; /* Material Green 800 */
 }
+
+/* Highlight for file input */
+.file-input-highlight {
+    border: 2px solid #dc3545 !important; /* Bootstrap's danger color */
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    border-radius: .375rem; /* Default Bootstrap border-radius */
+}
+
+/* Highlight for photo upload input */
+.photo-upload-highlight {
+    border: 2px solid #0d6efd !important; /* Bootstrap's primary blue color */
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    border-radius: .375rem; /* Default Bootstrap border-radius */
+}

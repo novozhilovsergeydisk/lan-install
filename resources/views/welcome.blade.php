@@ -1753,13 +1753,15 @@
 
                     <div class="mb-3">
                         <label for="photoUpload" class="form-label">Выберите фотографии</label>
-                        <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept=".jpg,.jpeg,.png,.gif,.heic,.heif,.bmp,.tiff,.webp">
+                        <div class="w-100 photo-upload-highlight p-1">
+                            <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept=".jpg,.jpeg,.png,.gif,.heic,.heif,.bmp,.tiff,.webp">
+                        </div>
                         <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: JPG, PNG, GIF, BMP, TIFF, WEBP, HEIC/HEIF.</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label d-block" for="commentFilesInput">Выберите файлы</label>
-                        <div class="w-100">
+                        <div class="w-100 file-input-highlight p-1">
                             <input id="commentFilesInput" type="file" name="files[]" class="form-control" multiple accept="video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.heic,.heif,.mp3,.wav,.ogg,.mp4,.webm,.mov,.avi,.zip,.rar,.7z" />
                         </div>
                         <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, ZIP, RAR, 7Z и т.д.</div>
