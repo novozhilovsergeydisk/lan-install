@@ -47,6 +47,48 @@ function initWysiwygEditor() {
 
   // Убираем видимость оригинального textarea, но оставляем в DOM
   textarea.style.display = 'none';
+  
+  // Функция для обновления содержимого textarea
+  function updateTextarea() {
+    textarea.value = editor.innerHTML;
+  }
+
+  // Функция для переключения между HTML и визуальным режимом
+  function toggleHtmlMode() {
+    if (editor.style.display === 'none') {
+      // Переключаемся на визуальный режим
+      codeArea.style.display = 'none';
+      editor.style.display = '';
+      
+      // Обновляем содержимое редактора из codeArea (сырой HTML)
+      editor.innerHTML = codeArea.value;
+      
+      // Обновляем содержимое textarea
+      updateTextarea();
+      
+      return 'HTML';
+    } else {
+      // Переключаемся в режим HTML
+      editor.style.display = 'none';
+      codeArea.style.display = '';
+      
+      // Обновляем содержимое textarea перед показом HTML
+      updateTextarea();
+      
+      // Устанавливаем содержимое textarea в codeArea, сохраняя всю разметку
+      codeArea.value = textarea.value;
+      
+      return 'Код';
+    }
+  }
+  
+  // Добавляем обработчик для кнопки переключения режима
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      const newText = toggleHtmlMode();
+      this.textContent = newText === 'HTML' ? 'HTML' : 'Код';
+    });
+  }
 
   // --- Функции утилиты ---
 
@@ -371,36 +413,6 @@ function initWysiwygEditor() {
       // fallback
       const fallback = clipboard.getData('text');
       document.execCommand('insertText', false, fallback || '');
-    }
-
-    // обновим state
-    updateToolbarState();
-  });
-
-  // --- Toggle HTML view / code view ---
-  toggleBtn.addEventListener('click', function () {
-    if (codeArea.style.display === 'none') {
-      // переключаемся в код-режим: показать HTML
-      codeArea.value = editor.innerHTML;
-      editor.style.display = 'none';
-      codeArea.style.display = 'block';
-      codeArea.focus();
-      toggleBtn.classList.add('active');
-      // Меняем текст и title кнопки в режиме кода
-      toggleBtn.textContent = 'Код';
-      toggleBtn.title = 'Код';
-    } else {
-      // из кода обратно — санитизируем HTML и покажем
-      const edited = codeArea.value || '';
-      const safe = sanitizeHTML(edited);
-      editor.innerHTML = safe;
-      codeArea.style.display = 'none';
-      editor.style.display = 'block';
-      editor.focus();
-      toggleBtn.classList.remove('active');
-      // Возвращаем текст и title для визуального режима
-      toggleBtn.textContent = 'HTML';
-      toggleBtn.title = 'HTML';
     }
     updateToolbarState();
   });

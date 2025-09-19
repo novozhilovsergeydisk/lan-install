@@ -1630,19 +1630,9 @@ function initEditorToolbar(toolbar, editor) {
 }
 
 // Обработчик для кнопки переключения HTML/Визуальный
-document.addEventListener('DOMContentLoaded', function() {
-    const toggleButton = document.getElementById('toggle-code');
-    if (toggleButton) {
-        toggleButton.addEventListener('click', function() {
-            if (this.textContent === 'HTML') {
-                this.textContent = 'Код';
-            } else {
-                this.textContent = 'HTML';
-            }
-        });
-    }
+// Перенесен в editor.js
 
-    // Обработчик для кнопки справки
+// Обработчик для кнопки справки
     const helpButton = document.getElementById('show-help');
     if (helpButton) {
         helpButton.addEventListener('click', function() {
@@ -1695,7 +1685,6 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         });
     }
-});
 
 // ************* Common functions ************* //
 
