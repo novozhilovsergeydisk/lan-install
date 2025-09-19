@@ -809,8 +809,8 @@ class HomeController extends Controller
             $validated = $request->validate([
                 'request_id' => 'required|exists:requests,id',
                 'comment' => 'required|string|max:1000',
-                'photos' => 'nullable|array|max:10',
-                'photos.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt',
+                'photos' => 'nullable|array|max:20',
+                'photos.*' => 'file|max:65536|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt',
                 '_token' => 'required|string'
             ]);
 
