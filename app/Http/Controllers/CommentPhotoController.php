@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CommentPhotoController extends Controller
 {
@@ -128,6 +129,130 @@ class CommentPhotoController extends Controller
                 'success' => false,
                 'error' => 'Не удалось загрузить файлы',
                 'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function uploadExcel(Request $request) {
+        try {
+            // Валидация файла
+            $validated = $request->validate([
+                'excel_file' => 'required|file|mimes:xlsx,xls|max:10240',
+            ]);
+
+            // Получаем загруженный файл
+            $file = $request->file('excel_file');
+            
+            // Определяем тип файла по расширению
+            $fileType = $file->getClientOriginalExtension();
+            $readerType = strtolower($fileType) === 'xls' ? 'Xls' : 'Xlsx';
+            
+            // Создаем reader для нужного типа файла
+            $reader = IOFactory::createReader($readerType);
+            
+            // Указываем, что нам нужно только прочитать данные, без лишней информации
+            $reader->setReadDataOnly(true);
+            
+            // Загружаем файл напрямую из временного хранилища
+            $spreadsheet = $reader->load($file->getRealPath());
+            $worksheet = $spreadsheet->getActiveSheet();
+            
+            // Преобразуем в массив
+            $data = $worksheet->toArray();
+            
+            // Удаляем пустые строки
+            $data = array_filter($data, function($row) {
+                return !empty(array_filter($row, function($value) {
+                    return $value !== null && $value !== '';
+                }));
+            });
+            
+            // Если нет данных
+            if (empty($data)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Файл не содержит данных'
+                ], 400);
+            }
+            
+            // Преобразуем индексированный массив в ассоциативный (первая строка - заголовки)
+            $headers = array_shift($data);
+            $result = [];
+            $citiesNotFound = [];
+            
+            // Добавляем заголовок для city_id, если его еще нет
+            if (!in_array('city_id', $headers)) {
+                $headers[] = 'city_id';
+            }
+            
+            // Получаем список всех городов из базы данных для оптимизации запросов
+            $cities = \DB::table('cities')->pluck('id', 'name')->toArray();
+            
+            foreach ($data as $rowData) {
+                // Выравниваем количество элементов в строке с количеством заголовков (минус 1, так как мы добавили city_id)
+                $row = array_pad($rowData, count($headers) - 1, null);
+                
+                // Удаляем лишние пробелы в начале и конце значений ячеек
+                $row = array_map(function($cell) {
+                    return is_string($cell) ? trim($cell) : $cell;
+                }, $row);
+                
+                // Получаем название города из первого столбца
+                $cityName = isset($row[0]) && is_string($row[0]) ? 
+                    str_ireplace('город ', '', $row[0]) : 
+                    null;
+                
+                // Ищем город в базе данных
+                $cityId = null;
+                if ($cityName) {
+                    // Ищем точное совпадение (регистронезависимо)
+                    foreach ($cities as $name => $id) {
+                        if (mb_strtolower($name) === mb_strtolower($cityName)) {
+                            $cityId = $id;
+                            break;
+                        }
+                    }
+                    
+                    // Если город не найден, добавляем в список ненайденных
+                    if (!$cityId) {
+                        $citiesNotFound[] = $cityName;
+                    }
+                }
+                
+                // Добавляем ID города в массив значений
+                $row[] = $cityId;
+                
+                // Объединяем заголовки со значениями
+                $result[] = array_combine($headers, $row);
+            }
+
+            $response = [
+                'success' => true,
+                'data' => $result,
+                'headers' => $headers,
+                'rows_count' => count($result),
+                'cities_not_found' => array_unique($citiesNotFound)
+            ];
+            
+            // Добавляем предупреждение, если есть ненайденные города
+            if (!empty($citiesNotFound)) {
+                $response['warning'] = 'Некоторые города не найдены в базе данных: ' . 
+                    implode(', ', array_unique($citiesNotFound));
+            }
+            
+            return response()->json($response);
+
+        } catch (\Exception $e) {
+            // Логируем ошибку для отладки
+            \Log::error('Ошибка при чтении Excel файла: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Ошибка при чтении файла',
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ], 500);
         }
     }

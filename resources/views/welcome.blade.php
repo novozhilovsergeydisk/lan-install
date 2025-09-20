@@ -624,6 +624,22 @@
                                 </div>
                                 -->
 
+                                <!-- Форма загрузки файла Excel с адресами -->
+                                <form id="uploadExcelForm" class="w-100">
+                                    <div class="mb-3">
+                                        <label for="excelFile" class="form-label">Выбрать файл Excel для загрузки</label>
+                                        <div class="w-100 file-upload-highlight p-1">
+                                            <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx, .xls">
+                                        </div>
+                                        <div class="form-text">Поддерживаются форматы: .xlsx, .xls</div>
+                                    </div>
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" id="uploadExcelBtn" class="btn btn-primary">
+                                            <i class="bi bi-upload me-1"></i> Загрузить
+                                        </button>
+                                    </div>
+                                </form>
+
                                 <!-- Адрес -->
                                 @if($user->isAdmin)
                                 <div>

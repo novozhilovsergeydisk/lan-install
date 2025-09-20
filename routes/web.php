@@ -277,5 +277,11 @@ Route::post('/download-all-photos', [CommentPhotoController::class, 'downloadAll
 ->name('download-all-photos')
 ->middleware('auth');
 
+// Загрузка Excel файлов
+Route::post('/upload-excel', [CommentPhotoController::class, 'uploadExcel'])
+    ->name('api.upload-excel')
+    ->middleware('auth');
+
+
 
 

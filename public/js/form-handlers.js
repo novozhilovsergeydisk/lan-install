@@ -2649,30 +2649,57 @@ export function initDeleteEmployee() {
 
 async function handleDeleteEmployee(event) {
     console.log('handleDeleteEmployee');
+    
     console.log(event);
-    // if (confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
-    //     // Получаем данные о сотруднике из атрибутов кнопки
-    //     // const employeeName = event.currentTarget.getAttribute('data-employee-name');
-    //     // const employeeId = event.currentTarget.getAttribute('data-employee-id');
+    
+    if (confirm('Вы уверены, что хотите удалить сотрудника?')) {
+        // Получаем данные о сотруднике из атрибутов кнопки
+        const employeeName = event.currentTarget.getAttribute('data-employee-name');
+        const employeeId = event.currentTarget.getAttribute('data-employee-id');
 
-    //     // console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
+        console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
 
-    //     // const data = {
-    //     //     employee_id: employeeId,
-    //     // };
+        const data = {
+            employee_id: employeeId,
+        };
 
-    //     // console.log('Отправка данных на сервер:', data);    
+        console.log('Отправка данных на сервер:', data);
 
-    //     // const result = await postData('/employee/delete', data);
+        const result = await postData('/employee/delete', data);
 
-    //     // console.log('Ответ от сервера:', result);
+        console.log('Ответ от сервера:', result);
 
-    //     // if (result.success) {
-    //     //     showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
-    //     // } else {
-    //     //     showAlert(result.message, 'danger');
-    //     // }
-    // }    
+        if (result.success) {
+            showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
+
+            // Удаляем строку с удаленным сотрудником из таблицы
+            const row = document.querySelector(`tr[data-employee-id="${employeeId}"]`);
+            if (row) {
+                // Плавно скрываем строку перед удалением
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                
+                // Удаляем строку после завершения анимации
+                setTimeout(() => {
+                    row.remove();
+                    
+                    // Показываем сообщение, если таблица пуста
+                    const tbody = document.querySelector('#employeesTable tbody');
+                    if (tbody && tbody.children.length === 0) {
+                        const emptyRow = document.createElement('tr');
+                        emptyRow.innerHTML = `
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted">Сотрудники не найдены</div>
+                            </td>
+                        `;
+                        tbody.appendChild(emptyRow);
+                    }
+                }, 300);
+            }
+        } else {
+            showAlert(result.message || 'Произошла ошибка при удалении сотрудника', 'danger');
+        }
+    }    
     // showAlert(`Реализация удаления сотрудника "${employeeName}" в разработке`, 'warning');
 }
 // END Инициализация удаления сотрудника
@@ -3538,20 +3565,21 @@ function initEmployeeButtons() {
     // });
     
     // Обработчики для кнопок удаления
-    document.querySelectorAll('.delete-employee-btn').forEach(btn => {
-        if (!btn.hasAttribute('data-listener-added')) {
-            btn.addEventListener('click', function() {
-                const employeeId = this.getAttribute('data-employee-id');
-                const employeeName = this.getAttribute('data-employee-name');
+    // document.querySelectorAll('.delete-employee-btn').forEach(btn => {
+    //     if (!btn.hasAttribute('data-listener-added')) {
+    //         btn.addEventListener('click', function() {
+    //             const employeeId = this.getAttribute('data-employee-id');
+    //             const employeeName = this.getAttribute('data-employee-name');
                 
-                if (confirm(`Вы уверены, что хотите удалить сотрудника ${employeeName}?`)) {
-                    // Здесь можно добавить логику для удаления сотрудника
-                    console.log('Delete employee:', employeeId);
-                }
-            });
-            btn.setAttribute('data-listener-added', 'true');
-        }
-    });
+    //             if (confirm(`Вы уверены, что хотите удалить сотрудника: ${employeeName}?`)) {
+    //                 // Здесь можно добавить логику для удаления сотрудника
+    //                 console.log('Delete employee:', employeeId);
+    //             }
+    //         });
+
+    //         btn.setAttribute('data-listener-added', 'true');
+    //     }
+    // });
 }
 
 // Обработчик для кнопки "Удалить" на вкладке "Запланированные заявки"
@@ -3622,7 +3650,67 @@ document.addEventListener('DOMContentLoaded', function() {
     initRequestCloseHandlers();
     initPhotoReportList();
     initDownloadAllPhotos();
+    initUploadExcel();
 });
+
+// Обработчик загрузки файла Excel
+function initUploadExcel() {
+    uploadExcelBtn.addEventListener('click', async function() {
+        console.log('Нажата кнопка "Загрузить" для файла Excel');
+
+        const fileInput = document.getElementById('excelFile');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            showAlert('Пожалуйста, выберите файл для загрузки', 'warning');
+            return;
+        }
+
+        // Выводим информацию о файле
+        console.log('Информация о загружаемом файле:', {
+            'Имя файла': file.name,
+            'Размер': `${(file.size / 1024).toFixed(2)} КБ`,
+            'Тип': file.type || 'Не определен',
+            'Дата последнего изменения': new Date(file.lastModified).toLocaleString(),
+            'Выбранный файл': file
+        });
+
+        const formData = new FormData(uploadExcelForm);
+        console.log('FormData содержимое:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}:`, value);
+        }
+        
+        try {
+            const response = await fetch('/upload-excel', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                    // Убираем Content-Type, чтобы браузер сам установил правильный заголовок с boundary для FormData
+                },
+                body: formData  // Используем FormData напрямую, без JSON.stringify
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Ответ сервера:', data);
+            
+            if (data.success) {
+                showAlert('Файл Excel успешно загружен', 'success');
+            } else {
+                showAlert(data.message || 'Произошла ошибка при загрузке файла Excel', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка при загрузке файла Excel:', error);
+            showAlert('Произошла ошибка при загрузке файла Excel', 'danger');
+        }
+    });
+    
+}
 
 // Инициализация обработчиков кнопок "Показать файлы"
 function initShowFilesButtons() {
