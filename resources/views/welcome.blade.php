@@ -1538,6 +1538,8 @@
                                                         <a href="#" class="text-info text-decoration-none data-show-photo-btn" data-comment-id="${comment.id}">
                                                             Смотреть фото
                                                         </a>
+
+
                                                         <a href="#" class="text-warning text-decoration-none download-comment-btn" data-comment-id="${comment.id}">
                                                             Скачать фото
                                                         </a>
@@ -3329,9 +3331,11 @@
                                     <div class="address-info">
                                         <p class="text-muted mb-2"><small>Идентификатор адреса: <span class="address-id">${selectedAddress.id}</span></small></p>
                                         <div class="d-flex gap-2">
+                                            @if($user->isAdmin)
                                             <button type="button" class="btn btn-sm btn-outline-primary" id="editAddressBtn">
                                                 <i class="bi bi-pencil"></i> Редактировать
                                             </button>
+                                            @endif
                                             <!-- <button type="button" class="btn btn-sm btn-outline-danger" id="deleteAddressBtn">
                                                 <i class="bi bi-trash"></i> Удалить
                                             </button> -->

@@ -316,12 +316,14 @@ export async function loadAddressesPaginated(page = 1, perPage = 30) {
             html += `
                 <tr data-address-id="${address.id}">
                     <td>
-                        <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-address-btn me-1" data-address-id="${address.id}">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger ms-2 delete-address-btn me-1" data-address-id="${address.id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        ${window.App?.user?.isAdmin ? `
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-address-btn me-1" data-address-id="${address.id}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 delete-address-btn me-1" data-address-id="${address.id}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        ` : ''}
                     </td>
                     <td>${address.city_name || '-'}</td>
                     <td>${address.district || '-'}</td>
