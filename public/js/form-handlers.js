@@ -3656,6 +3656,10 @@ document.addEventListener('DOMContentLoaded', function() {
 // Обработчик загрузки файла Excel
 function initUploadExcel() {
     uploadExcelBtn.addEventListener('click', async function() {
+        showAlert('Функция загрузки файла Excel в разработке', 'info');
+
+        return;
+
         console.log('Нажата кнопка "Загрузить" для файла Excel');
 
         const fileInput = document.getElementById('excelFile');
