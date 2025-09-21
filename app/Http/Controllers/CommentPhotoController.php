@@ -174,6 +174,8 @@ class CommentPhotoController extends Controller
                     'error' => 'Файл не содержит данных'
                 ], 400);
             }
+
+            DB::beginTransaction();
             
             // Преобразуем индексированный массив в ассоциативный (первая строка - заголовки)
             $headers = array_shift($data);
@@ -186,7 +188,7 @@ class CommentPhotoController extends Controller
             }
             
             // Получаем список всех городов из базы данных для оптимизации запросов
-            $cities = \DB::table('cities')->pluck('id', 'name')->toArray();
+            // $cities = \DB::table('cities')->pluck('id', 'name')->toArray();
             
             foreach ($data as $rowData) {
                 // Выравниваем количество элементов в строке с количеством заголовков (минус 1, так как мы добавили city_id)
@@ -201,22 +203,33 @@ class CommentPhotoController extends Controller
                 $cityName = isset($row[0]) && is_string($row[0]) ? 
                     str_ireplace('город ', '', $row[0]) : 
                     null;
+
+                $street = isset($row[1]) && is_string($row[1]) ? $row[1] : null;
+                $district = isset($row[2]) && is_string($row[2]) ? $row[2] : null;
+                $houses = isset($row[3]) && is_string($row[3]) ? $row[3] : null;
                 
                 // Ищем город в базе данных
                 $cityId = null;
                 if ($cityName) {
-                    // Ищем точное совпадение (регистронезависимо)
-                    foreach ($cities as $name => $id) {
-                        if (mb_strtolower($name) === mb_strtolower($cityName)) {
-                            $cityId = $id;
-                            break;
-                        }
-                    }
-                    
-                    // Если город не найден, добавляем в список ненайденных
-                    if (!$cityId) {
+                    $city = DB::table('cities')->where('name', 'like', '%' . $cityName . '%')->first();
+
+                    if ($city) {
+                        $cityId = $city->id;
+                    } else {
+                        $cityId = DB::insertGetId([
+                            'name' => $cityName,
+                            'region_id' => 1,
+                            'post_code' => null,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
                         $citiesNotFound[] = $cityName;
                     }
+
+                    /*
+                    
+                    */
+                    $address = DB::selectOne('SELECT * FROM addresses WHERE city_id = ' . $cityId . ' AND address = ' . $row[1]);
                 }
                 
                 // Добавляем ID города в массив значений
@@ -239,10 +252,13 @@ class CommentPhotoController extends Controller
                 $response['warning'] = 'Некоторые города не найдены в базе данных: ' . 
                     implode(', ', array_unique($citiesNotFound));
             }
+
+            DB::commit();
             
             return response()->json($response);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             // Логируем ошибку для отладки
             \Log::error('Ошибка при чтении Excel файла: ' . $e->getMessage());
             \Log::error($e->getTraceAsString());

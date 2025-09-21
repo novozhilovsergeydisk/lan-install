@@ -419,6 +419,7 @@ class HomeController extends Controller
 
     public function index()
     {
+        \Log::info('=== СТАРТ СТРАНИЦЫ ===');
         // Получаем текущего пользователя (проверка аутентификации уже выполнена в роутере)
         $user = auth()->user();
 
@@ -798,12 +799,12 @@ class HomeController extends Controller
         \DB::enableQueryLog();
 
         try {
-            \Log::info('=== НАЧАЛО ДОБАВЛЕНИЯ КОММЕНТАРИЯ ===');
-            \Log::info('Метод запроса: ' . $request->method());
-            \Log::info('Полный URL: ' . $request->fullUrl());
-            \Log::info('Content-Type: ' . $request->header('Content-Type'));
-            \Log::info('Все входные данные: ' . json_encode($request->all()));
-            \Log::info('Сырые данные запроса: ' . file_get_contents('php://input'));
+            // \Log::info('=== НАЧАЛО ДОБАВЛЕНИЯ КОММЕНТАРИЯ ===');
+            // \Log::info('Метод запроса: ' . $request->method());
+            // \Log::info('Полный URL: ' . $request->fullUrl());
+            // \Log::info('Content-Type: ' . $request->header('Content-Type'));
+            // \Log::info('Все входные данные: ' . json_encode($request->all()));
+            // \Log::info('Сырые данные запроса: ' . file_get_contents('php://input'));
 
             // Валидируем входные данные
             $validated = $request->validate([
@@ -816,7 +817,7 @@ class HomeController extends Controller
                 '_token' => 'required|string'
             ]);
 
-            \Log::info('Валидация пройдена успешно', $validated);
+            // \Log::info('Валидация пройдена успешно', $validated);
 
             // Проверяем существование заявки
             $requestExists = DB::selectOne(
@@ -826,10 +827,10 @@ class HomeController extends Controller
 
             $requestExists = $requestExists->count > 0;
 
-            \Log::info('Проверка существования заявки:', [
-                'request_id' => $validated['request_id'],
-                'exists' => $requestExists
-            ]);
+            // \Log::info('Проверка существования заявки:', [
+            //     'request_id' => $validated['request_id'],
+            //     'exists' => $requestExists
+            // ]);
 
             if (!$requestExists) {
                 return response()->json([
@@ -840,7 +841,7 @@ class HomeController extends Controller
 
             // Начинаем транзакцию
             DB::beginTransaction();
-            \Log::info('Начало транзакции');
+            // \Log::info('Начало транзакции');
 
             // Массив для хранения ID загруженных файлов
             $uploadedFileIds = [];
@@ -877,11 +878,11 @@ class HomeController extends Controller
 
                 $createdAt = $commentDate->format('Y-m-d H:i:s');
 
-                \Log::info('Данные для вставки комментария:', [
-                    'comment' => $comment,
-                    'created_at' => $createdAt,
-                    'request_date' => $requestDate
-                ]);
+                // \Log::info('Данные для вставки комментария:', [
+                //     'comment' => $comment,
+                //     'created_at' => $createdAt,
+                //     'request_date' => $requestDate
+                // ]);
 
                 // Вставляем комментарий
                 $result = DB::insert(
@@ -895,18 +896,18 @@ class HomeController extends Controller
 
                 // Получаем ID вставленного комментария
                 $commentId = DB::getPdo()->lastInsertId();
-                \Log::info('Создан комментарий с ID: ' . $commentId);
+                // \Log::info('Создан комментарий с ID: ' . $commentId);
 
                 // Привязываем комментарий к заявке
                 $requestId = $validated['request_id'];
                 $userId = $request->user()->id;
 
-                \Log::info('Данные для связи комментария с заявкой:', [
-                    'request_id' => $requestId,
-                    'comment_id' => $commentId,
-                    'user_id' => $userId,
-                    'created_at' => $createdAt
-                ]);
+                // \Log::info('Данные для связи комментария с заявкой:', [
+                //     'request_id' => $requestId,
+                //     'comment_id' => $commentId,
+                //     'user_id' => $userId,
+                //     'created_at' => $createdAt
+                // ]);
 
                 // Вставляем связь с заявкой
                 $result = DB::insert(
@@ -1105,7 +1106,7 @@ class HomeController extends Controller
 
                 // Фиксируем транзакцию
                 DB::commit();
-                \Log::info('Транзакция успешно завершена');
+                // \Log::info('Транзакция успешно завершена');
 
                 // Получаем обновленный список комментариев
                 $comments = DB::select(
@@ -1129,7 +1130,7 @@ class HomeController extends Controller
                 // }
 
                 // Логируем SQL-запросы
-                \Log::info('Выполненные SQL-запросы:', \DB::getQueryLog());
+                // \Log::info('Выполненные SQL-запросы:', \DB::getQueryLog());
 
                 return response()->json([
                     'success' => true,
@@ -1142,7 +1143,7 @@ class HomeController extends Controller
                 // Откатываем изменения при ошибке
                 if (DB::transactionLevel() > 0) {
                     DB::rollBack();
-                    \Log::warning('Транзакция откачена из-за ошибки');
+                    // \Log::warning('Транзакция откачена из-за ошибки');
                 }
 
                 $errorInfo = [
@@ -1932,7 +1933,7 @@ class HomeController extends Controller
     public function getCities()
     {
         try {
-            \Log::info('Получение списка городов из базы данных');
+            // \Log::info('Получение списка городов из базы данных');
 
             // Получаем только необходимые поля
             $cities = DB::select('SELECT id, name FROM cities ORDER BY name');
@@ -1945,8 +1946,8 @@ class HomeController extends Controller
                 ];
             }, $cities);
 
-            \Log::info('Найдено городов: ' . count($cities));
-            \Log::info('Пример данных: ' . json_encode(array_slice($cities, 0, 3), JSON_UNESCAPED_UNICODE));
+            // \Log::info('Найдено городов: ' . count($cities));
+            // \Log::info('Пример данных: ' . json_encode(array_slice($cities, 0, 3), JSON_UNESCAPED_UNICODE));
 
             return response()->json($cities);
         } catch (\Exception $e) {
@@ -2109,8 +2110,8 @@ class HomeController extends Controller
 
         try {
             // Логируем все входные данные для отладки
-            \Log::info('=== НАЧАЛО ОБРАБОТКИ ЗАПРОСА ===');
-            \Log::info('Все входные данные:', $request->all());
+            // \Log::info('=== НАЧАЛО ОБРАБОТКИ ЗАПРОСА ===');
+            // \Log::info('Все входные данные:', $request->all());
 
             // Получаем данные из запроса
             $input = $request->all();
@@ -2118,7 +2119,7 @@ class HomeController extends Controller
             // Если operator_id не указан, используем ID текущего пользователя или значение по умолчанию
             $userId = auth()->id(); // ID пользователя из авторизации
             $input['user_id'] = $userId; // Сохраняем ID пользователя для логирования
-            \Log::info('ID авторизованного пользователя: ' . $userId);
+            // \Log::info('ID авторизованного пользователя: ' . $userId);
 
             // Проверяем наличие сотрудника только если указан user_id
             $employeeId = null;
@@ -2130,12 +2131,12 @@ class HomeController extends Controller
                 if ($employee) {
                     $employeeId = $employee->id;
                     $input['operator_id'] = $employeeId; // Устанавливаем operator_id как ID сотрудника, а не пользователя
-                    \Log::info('Найден сотрудник с ID: ' . $employeeId . ' для пользователя: ' . $userId);
+                    // \Log::info('Найден сотрудник с ID: ' . $employeeId . ' для пользователя: ' . $userId);
                 } else {
-                    \Log::info('Сотрудник не найден для пользователя с ID: ' . $userId . ', но продолжаем создание заявки');
+                    // \Log::info('Сотрудник не найден для пользователя с ID: ' . $userId . ', но продолжаем создание заявки');
                 }
             } else {
-                \Log::info('Оператор не указан, создаем заявку без привязки к сотруднику');
+                // \Log::info('Оператор не указан, создаем заявку без привязки к сотруднику');
             }
 
             // Формируем массив для валидации
@@ -2156,10 +2157,10 @@ class HomeController extends Controller
             // Используем ранее найденный employeeId или null
             $validationData['operator_id'] = $employeeId;
 
-            \Log::info('Используем для заявки operator_id:', [
-                'user_id' => $userId,
-                'employee_id' => $employeeId
-            ]);
+            // \Log::info('Используем для заявки operator_id:', [
+            //     'user_id' => $userId,
+            //     'employee_id' => $employeeId
+            // ]);
 
             // Правила валидации
             $rules = [
@@ -2177,10 +2178,10 @@ class HomeController extends Controller
             ];
 
             // Логируем входные данные для отладки
-            \Log::info('Входные данные для валидации:', [
-                'validationData' => $validationData,
-                'rules' => $rules
-            ]);
+            // \Log::info('Входные данные для валидации:', [
+            //     'validationData' => $validationData,
+            //     'rules' => $rules
+            // ]);
 
             // Валидация входных данных
             $validator = \Validator::make($validationData, $rules);
@@ -2195,7 +2196,7 @@ class HomeController extends Controller
             }
 
             $validated = $validator->validated();
-            \Log::info('Валидированные данные:', $validated);
+            // \Log::info('Валидированные данные:', $validated);
 
             // 1. Подготовка данных клиента
             $fio = trim($validated['client_name'] ?? '');
@@ -2279,7 +2280,7 @@ class HomeController extends Controller
                         ]);
                     $clientId = $client->id;
                     $clientState = 'updated';
-                    \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
+                    // \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
                 } else {
                     // Создаем нового клиента (даже если все поля пустые)
                     $clientId = DB::table('clients')->insertGetId([
@@ -2289,7 +2290,7 @@ class HomeController extends Controller
                         'organization' => $clientData['organization']
                     ]);
                     $clientState = 'created';
-                    \Log::info('Создан новый клиент:', ['id' => $clientId]);
+                    // \Log::info('Создан новый клиент:', ['id' => $clientId]);
                 }
             } catch (\Exception $e) {
                 \Log::error('Ошибка при сохранении клиента: ' . $e->getMessage());
@@ -2339,14 +2340,14 @@ class HomeController extends Controller
 
             $requestId = $result[0]->id;
 
-            \Log::info('Результат вставки заявки:', ['result' => $result, 'type' => gettype($result)]);
+            // \Log::info('Результат вставки заявки:', ['result' => $result, 'type' => gettype($result)]);
 
             if (empty($result)) {
                 throw new \Exception('Не удалось создать заявку');
             }
 
             $requestId = $result[0]->id;
-            \Log::info('Создана заявка с ID:', ['id' => $requestId]);
+            // \Log::info('Создана заявка с ID:', ['id' => $requestId]);
 
             // 4. Создаем комментарий, только если он не пустой
             $commentText = trim($validated['comment'] ?? '');
@@ -2361,7 +2362,7 @@ class HomeController extends Controller
                         now()->toDateTimeString()
                     ];
 
-                    \Log::info('SQL для вставки комментария:', ['sql' => $commentSql, 'bindings' => $bindings]);
+                    // \Log::info('SQL для вставки комментария:', ['sql' => $commentSql, 'bindings' => $bindings]);
 
                     $commentResult = DB::selectOne($commentSql, $bindings);
                     $newCommentId = $commentResult ? $commentResult->id : null;
@@ -2370,7 +2371,7 @@ class HomeController extends Controller
                         throw new \Exception('Не удалось получить ID созданного комментария');
                     }
 
-                    \Log::info('Создан комментарий с ID:', ['id' => $newCommentId]);
+                    // \Log::info('Создан комментарий с ID:', ['id' => $newCommentId]);
 
                     // Создаем связь между заявкой и комментарием
                     DB::table('request_comments')->insert([
@@ -2380,10 +2381,10 @@ class HomeController extends Controller
                         'created_at' => now()->toDateTimeString()
                     ]);
 
-                    \Log::info('Связь между заявкой и комментарием создана', [
-                        'request_id' => $requestId,
-                        'comment_id' => $newCommentId
-                    ]);
+                    // \Log::info('Связь между заявкой и комментарием создана', [
+                    //     'request_id' => $requestId,
+                    //     'comment_id' => $newCommentId
+                    // ]);
                 } catch (\Exception $e) {
                     \Log::error('Ошибка при создании комментария: ' . $e->getMessage());
                     // Продолжаем выполнение, так как комментарий не является обязательным
@@ -2407,10 +2408,10 @@ class HomeController extends Controller
                 // Убраны created_at и updated_at, так как их нет в таблице
             ]);
 
-            \Log::info('Создана связь заявки с адресом:', [
-                'request_id' => $requestId,
-                'address_id' => $addressId
-            ]);
+            // \Log::info('Создана связь заявки с адресом:', [
+            //     'request_id' => $requestId,
+            //     'address_id' => $addressId
+            // ]);
 
             // 🔽 Комплексный запрос получения списка заявок с подключением к employees
             $requestById = DB::select('

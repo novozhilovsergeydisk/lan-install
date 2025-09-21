@@ -193,7 +193,7 @@ class PlanningRequestController extends Controller
         ];
 
         // Логируем все входящие данные для отладки
-        \Log::info('Incoming request data:', $request->all());
+        // \Log::info('Incoming request data:', $request->all());
         
         // Нормализуем входные данные
         $input = $request->all();
@@ -220,7 +220,7 @@ class PlanningRequestController extends Controller
                 'request_headers' => $request->headers->all()
             ];
             
-            \Log::error('Validation failed', $errorDetails);
+            // \Log::error('Validation failed', $errorDetails);
             
             return response()->json([
                 'success' => false,
@@ -239,17 +239,17 @@ class PlanningRequestController extends Controller
         $addressId = $input['addresses_planning_request_id'];
         
         // Логируем данные для отладки
-        \Log::info('Processing planning request with data:', [
-            'address_id' => $addressId,
-            'client_name' => $input['client_name_planning_request'] ?? null,
-            'client_phone' => $input['client_phone_planning_request'] ?? null,
-            'client_organization' => $input['client_organization_planning_request'] ?? null,
-            'comment' => $input['planning_request_comment'] ?? null
-        ]);
+        // \Log::info('Processing planning request with data:', [
+        //     'address_id' => $addressId,
+        //     'client_name' => $input['client_name_planning_request'] ?? null,
+        //     'client_phone' => $input['client_phone_planning_request'] ?? null,
+        //     'client_organization' => $input['client_organization_planning_request'] ?? null,
+        //     'comment' => $input['planning_request_comment'] ?? null
+        // ]);
         
         if (!$addressId) {
             $errorMessage = 'Не удалось определить ID адреса. Полученные данные: ' . json_encode($input);
-            \Log::error($errorMessage);
+            // \Log::error($errorMessage);
             
             return response()->json([
                 'success' => false,
@@ -361,8 +361,8 @@ class PlanningRequestController extends Controller
 
         try {
             // Логируем все входные данные для отладки
-            \Log::info('=== НАЧАЛО ОБРАБОТКИ ЗАПРОСА ===');
-            \Log::info('Все входные данные:', $request->all());
+            // \Log::info('=== НАЧАЛО ОБРАБОТКИ ЗАПРОСА ===');
+            // \Log::info('Все входные данные:', $request->all());
 
             // Получаем данные из запроса
             $input = $request->all();
@@ -370,7 +370,7 @@ class PlanningRequestController extends Controller
             // Если operator_id не указан, используем ID текущего пользователя или значение по умолчанию
             $userId = auth()->id(); // ID пользователя из авторизации
             $input['user_id'] = $userId; // Сохраняем ID пользователя для логирования
-            \Log::info('ID авторизованного пользователя: ' . $userId);
+            // \Log::info('ID авторизованного пользователя: ' . $userId);
 
             // Проверяем наличие сотрудника только если указан user_id
             $employeeId = null;
@@ -382,12 +382,12 @@ class PlanningRequestController extends Controller
                 if ($employee) {
                     $employeeId = $employee->id;
                     $input['operator_id'] = $employeeId; // Устанавливаем operator_id как ID сотрудника, а не пользователя
-                    \Log::info('Найден сотрудник с ID: ' . $employeeId . ' для пользователя: ' . $userId);
+                    // \Log::info('Найден сотрудник с ID: ' . $employeeId . ' для пользователя: ' . $userId);
                 } else {
-                    \Log::info('Сотрудник не найден для пользователя с ID: ' . $userId . ', но продолжаем создание заявки');
+                    // \Log::info('Сотрудник не найден для пользователя с ID: ' . $userId . ', но продолжаем создание заявки');
                 }
             } else {
-                \Log::info('Оператор не указан, создаем заявку без привязки к сотруднику');
+                // \Log::info('Оператор не указан, создаем заявку без привязки к сотруднику');
             }
 
             $validationData['brigade_id'] = $input['brigade_id'] ?? null;
@@ -424,10 +424,10 @@ class PlanningRequestController extends Controller
             ];
 
             // Логируем входные данные для отладки
-            \Log::info('Входные данные для валидации:', [
-                'validationData' => $validationData,
-                'rules' => $rules
-            ]);
+            // \Log::info('Входные данные для валидации:', [
+            //     'validationData' => $validationData,
+            //     'rules' => $rules
+            // ]);
 
             // Валидация входных данных
             $validator = \Validator::make($validationData, $rules);
@@ -442,7 +442,7 @@ class PlanningRequestController extends Controller
             }
 
             $validated = $validator->validated();
-            \Log::info('Валидированные данные:', $validated);
+            // \Log::info('Валидированные данные:', $validated);
 
             // 1. Подготовка данных клиента
             $fio = trim($validated['client_name'] ?? '');
@@ -526,7 +526,7 @@ class PlanningRequestController extends Controller
                         ]);
                     $clientId = $client->id;
                     $clientState = 'updated';
-                    \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
+                    // \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
                 } else {
                     // Создаем нового клиента (даже если все поля пустые)
                     $clientId = DB::table('clients')->insertGetId([
@@ -536,7 +536,7 @@ class PlanningRequestController extends Controller
                         'organization' => $clientData['organization']
                     ]);
                     $clientState = 'created';
-                    \Log::info('Создан новый клиент:', ['id' => $clientId]);
+                    // \Log::info('Создан новый клиент:', ['id' => $clientId]);
                 }
             } catch (\Exception $e) {
                 \Log::error('Ошибка при сохранении клиента: ' . $e->getMessage());
@@ -586,25 +586,25 @@ class PlanningRequestController extends Controller
 
             $requestId = $result[0]->id;
 
-            \Log::info('Результат вставки заявки:', ['result' => $result, 'type' => gettype($result)]);
+            // \Log::info('Результат вставки заявки:', ['result' => $result, 'type' => gettype($result)]);
 
             if (empty($result)) {
                 throw new \Exception('Не удалось создать заявку');
             }
 
             $requestId = $result[0]->id;
-            \Log::info('Создана заявка с ID:', ['id' => $requestId]);
+            // \Log::info('Создана заявка с ID:', ['id' => $requestId]);
 
             // 4. Создаем комментарий, только если он не пустой
             $commentText = trim($validated['comment'] ?? '');
             $newCommentId = null;
             
             // Логируем данные комментария для отладки
-            \Log::info('Данные комментария перед созданием:', [
-                'comment_text' => $commentText,
-                'is_empty' => empty($commentText),
-                'validated_data' => $validated
-            ]);
+            // \Log::info('Данные комментария перед созданием:', [
+            //     'comment_text' => $commentText,
+            //     'is_empty' => empty($commentText),
+            //     'validated_data' => $validated
+            // ]);
 
             if (!empty($commentText)) {
                 try {
@@ -615,7 +615,7 @@ class PlanningRequestController extends Controller
                         now()->toDateTimeString()
                     ];
 
-                    \Log::info('SQL для вставки комментария:', ['sql' => $commentSql, 'bindings' => $bindings]);
+                    // \Log::info('SQL для вставки комментария:', ['sql' => $commentSql, 'bindings' => $bindings]);
 
                     $commentResult = DB::selectOne($commentSql, $bindings);
                     $newCommentId = $commentResult ? $commentResult->id : null;
@@ -624,7 +624,7 @@ class PlanningRequestController extends Controller
                         throw new \Exception('Не удалось получить ID созданного комментария');
                     }
 
-                    \Log::info('Создан комментарий с ID:', ['id' => $newCommentId]);
+                    // \Log::info('Создан комментарий с ID:', ['id' => $newCommentId]);
 
                     // Создаем связь между заявкой и комментарием
                     DB::table('request_comments')->insert([
@@ -634,10 +634,10 @@ class PlanningRequestController extends Controller
                         'created_at' => now()->toDateTimeString()
                     ]);
 
-                    \Log::info('Связь между заявкой и комментарием создана', [
-                        'request_id' => $requestId,
-                        'comment_id' => $newCommentId
-                    ]);
+                    // \Log::info('Связь между заявкой и комментарием создана', [
+                    //     'request_id' => $requestId,
+                    //     'comment_id' => $newCommentId
+                    // ]);
                 } catch (\Exception $e) {
                     \Log::error('Ошибка при создании комментария: ' . $e->getMessage());
                     // Продолжаем выполнение, так как комментарий не является обязательным
@@ -661,10 +661,10 @@ class PlanningRequestController extends Controller
                 // Убраны created_at и updated_at, так как их нет в таблице
             ]);
 
-            \Log::info('Создана связь заявки с адресом:', [
-                'request_id' => $requestId,
-                'address_id' => $addressId
-            ]);
+            // \Log::info('Создана связь заявки с адресом:', [
+            //     'request_id' => $requestId,
+            //     'address_id' => $addressId
+            // ]);
 
             // 🔽 Комплексный запрос получения списка заявок с подключением к employees
             $requestById = DB::select('

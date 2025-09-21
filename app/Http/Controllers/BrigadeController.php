@@ -13,11 +13,11 @@ class BrigadeController extends Controller
      */
     public function index()
     {
-        \Log::info('BrigadeController@index called');
+        // \Log::info('BrigadeController@index called');
         
         try {
             // Логируем SQL-запрос
-            \DB::enableQueryLog();
+            // \DB::enableQueryLog();
             
             // Получаем список бригад с информацией о бригадире
             $brigades = DB::table('brigades')
@@ -45,9 +45,9 @@ class BrigadeController extends Controller
             });
 
             // Логируем запрос и результаты
-            $query = \DB::getQueryLog();
-            \Log::info('SQL Query:', ['query' => $query]);
-            \Log::info('Brigades data:', ['count' => $brigades->count(), 'data' => $brigades->toArray()]);
+            // $query = \DB::getQueryLog();
+            // \Log::info('SQL Query:', ['query' => $query]);
+            // \Log::info('Brigades data:', ['count' => $brigades->count(), 'data' => $brigades->toArray()]);
             
             $response = [
                 'success' => true,
@@ -56,7 +56,7 @@ class BrigadeController extends Controller
                 })
             ];
             
-            \Log::info('Response data:', $response);
+            // \Log::info('Response data:', $response);
             
             return response()->json($response);
 
@@ -94,7 +94,7 @@ class BrigadeController extends Controller
         
         $brigades = DB::select($sql);
         
-        \Log::info('Successfully retrieved current day brigades', ['count' => count($brigades)]);
+        // \Log::info('Successfully retrieved current day brigades', ['count' => count($brigades)]);
         
         return response()->json([
             'success' => true,
@@ -210,7 +210,7 @@ class BrigadeController extends Controller
  */
 public function deleteBrigade($brigadeId)
 {
-    \Log::info('Попытка удаления бригады', ['brigadeId' => $brigadeId]);
+    // \Log::info('Попытка удаления бригады', ['brigadeId' => $brigadeId]);
 
     try {
         DB::beginTransaction();
@@ -224,7 +224,7 @@ public function deleteBrigade($brigadeId)
         if (!$brigadeExists) {
             DB::rollBack();
             $error = 'Бригада не найдена или уже удалена';
-            \Log::warning($error, ['brigadeId' => $brigadeId]);
+            \Log::error($error, ['brigadeId' => $brigadeId]);
 
             return response()->json([
                 'success' => false,
@@ -240,7 +240,7 @@ public function deleteBrigade($brigadeId)
         if ($isAssigned) {
             DB::rollBack();
             $error = 'Бригада назначена на одну или более заявок и не может быть удалена';
-            \Log::warning($error, ['brigadeId' => $brigadeId]);
+            \Log::error($error, ['brigadeId' => $brigadeId]);
 
             return response()->json([
                 'success' => false,
@@ -253,10 +253,10 @@ public function deleteBrigade($brigadeId)
             ->where('brigade_id', $brigadeId)
             ->delete();
 
-        \Log::info('Удалено участников бригады', [
-            'brigadeId' => $brigadeId,
-            'deletedMembersCount' => $deletedMembers
-        ]);
+        // \Log::info('Удалено участников бригады', [
+        //     'brigadeId' => $brigadeId,
+        //     'deletedMembersCount' => $deletedMembers
+        // ]);
 
         // Удаляем саму бригаду
         $deleted = DB::table('brigades')
@@ -265,7 +265,7 @@ public function deleteBrigade($brigadeId)
 
         if ($deleted) {
             DB::commit();
-            \Log::info('Бригада успешно удалена', ['brigadeId' => $brigadeId]);
+            // \Log::info('Бригада успешно удалена', ['brigadeId' => $brigadeId]);
 
             return response()->json([
                 'success' => true,
@@ -302,7 +302,7 @@ public function deleteBrigade($brigadeId)
      */
     public function getBrigadeData($id)
     {
-        \Log::info('Начало обработки запроса для бригады ID: ' . $id);
+        // \Log::info('Начало обработки запроса для бригады ID: ' . $id);
         try {
             // Получаем данные о бригаде
             $brigade = DB::table('brigades')

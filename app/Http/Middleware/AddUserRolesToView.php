@@ -29,7 +29,7 @@ class AddUserRolesToView
             ]);
 
             if (!isset($user->employee)) {
-                \Log::info('AddUserRolesToView: Связанный сотрудник не найден');
+                // \Log::info('AddUserRolesToView: Связанный сотрудник не найден');
                 
                 $employee = DB::table('employees')
                     ->where('user_id', $user->id)
@@ -37,15 +37,15 @@ class AddUserRolesToView
                 
                 if ($employee) {
                     $user->employee = $employee;
-                    \Log::info('AddUserRolesToView: Поиск связанного сотрудника завершен');
+                    // \Log::info('AddUserRolesToView: Поиск связанного сотрудника завершен');
                 } else {
-                    \Log::warning('AddUserRolesToView: Пользователь не имеет связанного сотрудника');
+                    // \Log::warning('AddUserRolesToView: Пользователь не имеет связанного сотрудника');
                 }
             }
             
             // Загружаем роли, если они еще не загружены
             if (!isset($user->roles)) {
-                \Log::info('AddUserRolesToView: Роли не загружены, загружаем из базы');
+                // \Log::info('AddUserRolesToView: Роли не загружены, загружаем из базы');
                 
                 $roles = DB::table('user_roles')
                     ->join('roles', 'user_roles.role_id', '=', 'roles.id')
@@ -53,10 +53,10 @@ class AddUserRolesToView
                     ->pluck('roles.name')
                     ->toArray();
                 
-                \Log::info('AddUserRolesToView: Загружены роли из базы', [
-                    'user_id' => $user->id,
-                    'roles' => $roles
-                ]);
+                // \Log::info('AddUserRolesToView: Загружены роли из базы', [
+                //     'user_id' => $user->id,
+                //     'roles' => $roles
+                // ]);
                 
                 // Устанавливаем роли и флаги
                 $user->roles = $roles;
@@ -66,22 +66,22 @@ class AddUserRolesToView
                 $user->employee = $employee;
                 $user->test = 'proxima';
                 
-                \Log::info('AddUserRolesToView: Установлены флаги ролей', [
-                    'user_id' => $user->id,
-                    'isAdmin' => $user->isAdmin,
-                    'isUser' => $user->isUser,
-                    'isFitter' => $user->isFitter
-                ]);
+                // \Log::info('AddUserRolesToView: Установлены флаги ролей', [
+                //     'user_id' => $user->id,
+                //     'isAdmin' => $user->isAdmin,
+                //     'isUser' => $user->isUser,
+                //     'isFitter' => $user->isFitter
+                // ]);
             } else {
-                \Log::info('AddUserRolesToView: Роли уже загружены', [
-                    'user_id' => $user->id,
-                    'roles' => $user->roles
-                ]);
+                // \Log::info('AddUserRolesToView: Роли уже загружены', [
+                //     'user_id' => $user->id,
+                //     'roles' => $user->roles
+                // ]);
             }
             
             // Делаем пользователя доступным во всех представлениях
             view()->share('user', $user);
-            \Log::info('AddUserRolesToView: Пользователь добавлен в шаблоны');
+            // \Log::info('AddUserRolesToView: Пользователь добавлен в шаблоны');
         } else {
             \Log::info('AddUserRolesToView: Пользователь не аутентифицирован');
         }

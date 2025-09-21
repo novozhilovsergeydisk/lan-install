@@ -57,7 +57,7 @@ class ControllerRequestModification extends Controller
      */
     public function updateRequestBrigade(Request $request)
     {
-        \Log::info('Получен запрос на обновление бригады заявки', $request->all());
+        // \Log::info('Получен запрос на обновление бригады заявки', $request->all());
 
         try {
             $validated = $request->validate([
@@ -65,16 +65,16 @@ class ControllerRequestModification extends Controller
                 'request_id' => 'required|integer|exists:requests,id'
             ]);
 
-            \Log::info('Валидация пройдена', $validated);
+            // \Log::info('Валидация пройдена', $validated);        
 
             $sql = "UPDATE requests SET brigade_id = ? WHERE id = ?";
             $updated = DB::update($sql, [$request->brigade_id, $request->request_id]);
 
-            \Log::info('Результат обновления заявки', [
-                'request_id' => $request->request_id,
-                'brigade_id' => $request->brigade_id,
-                'updated' => $updated
-            ]);
+            // \Log::info('Результат обновления заявки', [
+            //     'request_id' => $request->request_id,
+            //     'brigade_id' => $request->brigade_id,
+            //     'updated' => $updated
+            // ]);
 
             if ($updated) {
                 $sql = "SELECT
