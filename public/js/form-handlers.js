@@ -3658,7 +3658,7 @@ function initUploadExcel() {
     uploadExcelBtn.addEventListener('click', async function() {
         showAlert('Функция загрузки файла Excel в разработке', 'info');
 
-        return;
+        // return;
 
         console.log('Нажата кнопка "Загрузить" для файла Excel');
 

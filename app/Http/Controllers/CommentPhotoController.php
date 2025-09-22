@@ -175,7 +175,37 @@ class CommentPhotoController extends Controller
                 ], 400);
             }
 
-            DB::beginTransaction();
+            // Включаем режим отладки SQL
+            \DB::listen(function ($query) {
+                try {
+                    $sql = $query->sql;
+                    $bindings = $query->bindings;
+                    $time = $query->time;
+                    
+                    // Заменяем плейсхолдеры на реальные значения
+                    foreach ($bindings as $binding) {
+                        if (is_null($binding)) {
+                            $value = 'NULL';
+                        } elseif (is_numeric($binding)) {
+                            $value = $binding;
+                        } elseif (is_bool($binding)) {
+                            $value = $binding ? 'true' : 'false';
+                        } else {
+                            $value = "'" . addslashes($binding) . "'";
+                        }
+                        
+                        $sql = preg_replace('/\?/', $value, $sql, 1);
+                    }
+                    
+                    \Log::info("SQL Query [{$time}ms]: " . $sql);
+                } catch (\Exception $e) {
+                    \Log::error('Ошибка логирования SQL: ' . $e->getMessage());
+                }
+            });
+
+            // Начинаем транзакцию для реального выполнения запросов
+            \DB::beginTransaction();
+            \Log::info('Начата транзакция');
             
             // Преобразуем индексированный массив в ассоциативный (первая строка - заголовки)
             $headers = array_shift($data);
@@ -187,9 +217,6 @@ class CommentPhotoController extends Controller
                 $headers[] = 'city_id';
             }
             
-            // Получаем список всех городов из базы данных для оптимизации запросов
-            // $cities = \DB::table('cities')->pluck('id', 'name')->toArray();
-            
             foreach ($data as $rowData) {
                 // Выравниваем количество элементов в строке с количеством заголовков (минус 1, так как мы добавили city_id)
                 $row = array_pad($rowData, count($headers) - 1, null);
@@ -200,37 +227,113 @@ class CommentPhotoController extends Controller
                 }, $row);
                 
                 // Получаем название города из первого столбца
-                $cityName = isset($row[0]) && is_string($row[0]) ? 
-                    str_ireplace('город ', '', $row[0]) : 
-                    null;
+                $cityName = isset($row[0]) && is_string($row[0]) ? trim(str_ireplace('город ', '', $row[0])) : null;
 
-                $street = isset($row[1]) && is_string($row[1]) ? $row[1] : null;
-                $district = isset($row[2]) && is_string($row[2]) ? $row[2] : null;
-                $houses = isset($row[3]) && is_string($row[3]) ? $row[3] : null;
+                $district = isset($row[1]) && is_string($row[1]) ? trim($row[1]) : '';
+                $street = isset($row[2]) && is_string($row[2]) ? trim($row[2]) : '';
+                $houses = isset($row[3]) && is_string($row[3]) ? trim($row[3]) : '';
+                
+                // Пропускаем строку, если отсутствуют обязательные данные
+                if (empty($cityName) || empty($street) || empty($district) || empty($houses)) {
+                    continue;
+                }
                 
                 // Ищем город в базе данных
                 $cityId = null;
                 if ($cityName) {
-                    $city = DB::table('cities')->where('name', 'like', '%' . $cityName . '%')->first();
+                    try {
+                        // Сначала пробуем найти город по точному совпадению
+                        $city = DB::table('cities')
+                            ->where('name', 'ilike', $cityName)
+                            ->first();
 
-                    if ($city) {
-                        $cityId = $city->id;
-                    } else {
-                        $cityId = DB::insertGetId([
-                            'name' => $cityName,
-                            'region_id' => 1,
-                            'post_code' => null,
-                            'created_at' => now(),
-                            'updated_at' => now()
+                        if ($city) {
+                            $cityId = $city->id;
+                        } else {
+                            // Если город не найден, пробуем найти по частичному совпадению
+                            $city = DB::table('cities')
+                                ->where('name', 'ilike', '%' . $cityName . '%')
+                                ->first();
+
+                            if ($city) {
+                                $cityId = $city->id;
+                            } else {
+                                // Если город не найден, создаем новый
+                                $cityData = [
+                                    'name' => $cityName,
+                                    'region_id' => 1,
+                                    'postal_code' => null
+                                ];
+                                $cityId = DB::table('cities')->insertGetId($cityData);
+                                \Log::info('Добавлен новый город:', array_merge(['id' => $cityId], $cityData));
+                                
+                                if (!$cityId) {
+                                    // Если не удалось получить ID, пробуем найти город снова
+                                    $city = DB::table('cities')
+                                        ->where('name', 'ilike', $cityName)
+                                        ->first();
+                                    
+                                    if ($city) {
+                                        $cityId = $city->id;
+                                    } else {
+                                        // Если город так и не найден, пропускаем строку
+                                        $citiesNotFound[] = $cityName;
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // В случае ошибки логируем и пропускаем строку
+                        \Log::error('Ошибка при обработке города: ' . $e->getMessage(), [
+                            'city_name' => $cityName,
+                            'error' => $e->getTraceAsString()
                         ]);
                         $citiesNotFound[] = $cityName;
+                        continue;
                     }
 
-                    /*
-                    
-                    */
-                    $address = DB::selectOne('SELECT * FROM addresses WHERE city_id = ' . $cityId . ' AND address = ' . $row[1]);
-                }
+                    // Ищем адрес по трем полям
+                    $address = DB::table('addresses')
+                        ->where('city_id', $cityId)
+                        ->where('street', $street)
+                        ->where('district', $district)
+                        ->where('houses', $houses)
+                        ->first(['id']);
+
+                    // Если адрес не найден, создаем новый
+                    if (!$address) {
+                        try {
+                            $addressData = [
+                                'city_id' => $cityId,
+                                'street' => $street,
+                                'district' => $district,
+                                'houses' => $houses
+                            ];
+                            $addressId = DB::table('addresses')->insertGetId($addressData);
+                            \Log::info('Добавлен новый адрес:', array_merge(['id' => $addressId], $addressData));
+                            
+                            \Log::info('Добавлен новый адрес', [
+                                'id' => $addressId,
+                                'city_id' => $cityId,
+                                'street' => $street,
+                                'district' => $district,
+                                'houses' => $houses
+                            ]);
+                        } catch (\Exception $e) {
+                            \Log::error('Ошибка при добавлении адреса', [
+                                'error' => $e->getMessage(),
+                                'city_id' => $cityId,
+                                'street' => $street,
+                                'district' => $district,
+                                'houses' => $houses
+                            ]);
+                            continue; // Пропускаем эту строку и переходим к следующей
+                        }
+                    } else {
+                        $addressId = $address->id;
+                    }
+                } // закрывающая скобка для if ($cityName)
                 
                 // Добавляем ID города в массив значений
                 $row[] = $cityId;
@@ -239,29 +342,85 @@ class CommentPhotoController extends Controller
                 $result[] = array_combine($headers, $row);
             }
 
+            // Собираем статистику по добавленным данным
+            $addedCities = [];
+            $addedAddresses = [];
+            
+            // Проходим по всем обработанным строкам
+            foreach ($result as $row) {
+                $cityName = $row['city'] ?? null;
+                $street = $row['street'] ?? null;
+                $district = $row['district'] ?? null;
+                $houses = $row['houses'] ?? null;
+                $cityId = $row['city_id'] ?? null;
+                
+                if ($cityId && !in_array($cityName, $citiesNotFound)) {
+                    $addedCities[$cityId] = [
+                        'id' => $cityId,
+                        'name' => $cityName,
+                        'region_id' => 1
+                    ];
+                }
+                
+                if ($cityId && $street && $district && $houses) {
+                    $addressKey = "{$cityId}_{$street}_{$district}_{$houses}";
+                    $addedAddresses[$addressKey] = [
+                        'city_id' => $cityId,
+                        'street' => $street,
+                        'district' => $district,
+                        'houses' => $houses
+                    ];
+                }
+            }
+            
             $response = [
                 'success' => true,
                 'data' => $result,
                 'headers' => $headers,
                 'rows_count' => count($result),
-                'cities_not_found' => array_unique($citiesNotFound)
+                'cities_not_found' => array_unique($citiesNotFound),
+                'added_data' => [
+                    'cities' => array_values($addedCities),
+                    'addresses' => array_values($addedAddresses),
+                    'cities_count' => count($addedCities),
+                    'addresses_count' => count($addedAddresses)
+                ]
             ];
             
-            // Добавляем предупреждение, если есть ненайденные города
+            // Добавляем информационные сообщения
+            $messages = [];
+            
             if (!empty($citiesNotFound)) {
-                $response['warning'] = 'Некоторые города не найдены в базе данных: ' . 
+                $messages[] = 'Некоторые города не найдены в базе данных: ' . 
                     implode(', ', array_unique($citiesNotFound));
             }
+            
+            if (!empty($addedCities)) {
+                $messages[] = 'Добавлено новых городов: ' . count($addedCities);
+            }
+            
+            if (!empty($addedAddresses)) {
+                $messages[] = 'Добавлено новых адресов: ' . count($addedAddresses);
+            }
+            
+            if (!empty($messages)) {
+                $response['message'] = implode('. ', $messages) . '.';
+            }
 
-            DB::commit();
+            // Завершаем транзакцию, так как все проверки пройдены
+            \DB::commit();
+            \Log::info('Транзакция успешно завершена, изменения сохранены');
             
             return response()->json($response);
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            // Логируем ошибку для отладки
-            \Log::error('Ошибка при чтении Excel файла: ' . $e->getMessage());
+            \Log::error('Ошибка при обработке файла: ' . $e->getMessage());
             \Log::error($e->getTraceAsString());
+            
+            if (\DB::transactionLevel() > 0) {
+                \Log::info('Откатываем транзакцию из-за ошибки');
+                \DB::rollBack();
+            }
             
             return response()->json([
                 'success' => false,
