@@ -3656,7 +3656,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Обработчик загрузки файла Excel
 function initUploadExcel() {
     uploadExcelBtn.addEventListener('click', async function() {
-        showAlert('Функция загрузки файла Excel в разработке', 'info');
+        // showAlert('Функция загрузки файла Excel в разработке', 'info');
 
         // return;
 
