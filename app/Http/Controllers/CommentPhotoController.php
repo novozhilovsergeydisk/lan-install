@@ -432,16 +432,89 @@ class CommentPhotoController extends Controller
         }
     }
 
-    public function downloadAllPhotos() {
+    public function downloadAllPhotos()
+    {
         try {
-            return response()->json([
-                'success' => true,
-                'data' => 'All photos downloaded successfully (test)'
-            ]);
+            // Создаем временный файл для архива
+            $zip = new \ZipArchive();
+            $zipName = 'photos_archive_' . now()->format('Y-m-d_H-i-s') . '.zip';
+            $zipPath = storage_path('app/temp/' . $zipName);
+            
+            // Создаем директорию, если она не существует
+            if (!file_exists(dirname($zipPath))) {
+                mkdir(dirname($zipPath), 0755, true);
+            }
+
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+                throw new \Exception('Не удалось создать архив');
+            }
+
+            // Получаем все комментарии с фотографиями для всех заявок
+            $comments = \DB::table('requests as r')
+                ->leftJoin('request_comments as rc', 'rc.request_id', '=', 'r.id')
+                ->leftJoin('comments as c', 'c.id', '=', 'rc.comment_id')
+                ->leftJoin('comment_photos as cp', 'cp.comment_id', '=', 'c.id')
+                ->leftJoin('photos as p', 'p.id', '=', 'cp.photo_id')
+                ->select(
+                    'r.id as request_id',
+                    'r.number as request_number',
+                    'c.id as comment_id',
+                    'c.comment',
+                    'p.path as photo_path',
+                    'p.original_name',
+                    'cp.created_at as photo_created_at'
+                )
+                ->whereNotNull('p.path')  // Берем только комментарии с фотографиями
+                ->orderBy('c.id')
+                ->orderBy('cp.created_at')
+                ->get()
+                ->groupBy('comment_id');
+
+            foreach ($comments as $commentId => $commentPhotos) {
+                // Создаем имя папки на основе номера заявки и комментария
+                $folderName = $commentPhotos[0]->request_number . '_' . 
+                             preg_replace('/[^a-zA-Zа-яА-Я0-9\s\-_]/u', '', $commentPhotos[0]->comment);
+                $folderName = mb_substr($folderName, 0, 50); // Ограничиваем длину имени папки
+
+                foreach ($commentPhotos as $index => $photo) {
+                    $photoPath = storage_path('app/public/' . $photo->photo_path);
+                    
+                    if (file_exists($photoPath)) {
+                        // Создаем уникальное имя файла, чтобы избежать перезаписи
+                        $fileExtension = pathinfo($photo->original_name, PATHINFO_EXTENSION);
+                        $fileName = $index . '_' . $photo->original_name;
+                        
+                        // Добавляем файл в архив с путем, включающим имя папки комментария
+                        $zip->addFile(
+                            $photoPath,
+                            $folderName . '/' . $fileName
+                        );
+                    }
+                }
+            }
+
+            $zip->close();
+
+            // Проверяем, что архив не пустой
+            if (filesize($zipPath) === 0) {
+                throw new \Exception('Не найдено фотографий для скачивания');
+            }
+
+            // Отправляем архив на скачивание
+            return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
+
         } catch (\Exception $e) {
+            \Log::error('Ошибка при создании архива с фотографиями: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            
+            // Удаляем временный файл, если он был создан
+            if (isset($zipPath) && file_exists($zipPath)) {
+                unlink($zipPath);
+            }
+
             return response()->json([
                 'success' => false,
-                'error' => 'Не удалось загрузить фотографии',
+                'error' => 'Не удалось создать архив с фотографиями',
                 'message' => $e->getMessage()
             ], 500);
         }

@@ -29,35 +29,38 @@ function initDownloadAllPhotos() {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
+                        'Accept': 'application/zip, application/json',
                     },
-                    body: JSON.stringify({
-                        // Можно добавить дополнительные параметры, если нужно
-                    })
+                    responseType: 'blob'
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Ошибка сервера: ${response.status}`);
+                    const error = await response.json().catch(() => null);
+                    throw new Error(error?.message || `Ошибка сервера: ${response.status}`);
                 }
-
-                const result = await response.json();
-
-                console.log('Ответ сервера:', result);
-
-                return;
 
                 // Получаем blob с архивом
                 const blob = await response.blob();
+                
+                // Проверяем, что это действительно архив
+                if (blob.type !== 'application/zip' && blob.type !== 'application/x-zip-compressed') {
+                    const errorText = await blob.text();
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        throw new Error(errorData.message || 'Неверный формат ответа от сервера');
+                    } catch (e) {
+                        throw new Error('Ожидался zip-архив, но получен неверный формат данных');
+                    }
+                }
                 
                 // Создаем ссылку для скачивания
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 
-                // Получаем имя файла из заголовка Content-Disposition
+                // Получаем имя файла из заголовка Content-Disposition или используем имя по умолчанию
                 const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = 'photos_archive.zip';
+                let filename = 'photos_archive_' + new Date().toISOString().slice(0, 10) + '.zip';
                 if (contentDisposition) {
                     const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
                     if (filenameMatch != null && filenameMatch[1]) {
@@ -73,9 +76,12 @@ function initDownloadAllPhotos() {
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
                 
+                // Показываем уведомление об успешном скачивании
+                showAlert('Архив с фотографиями успешно загружается', 'success');
+                
             } catch (error) {
                 console.error('Ошибка при скачивании архива:', error);
-                alert('Произошла ошибка при подготовке архива: ' + error.message);
+                showAlert('Произошла ошибка при подготовке архива: ' + error.message, 'danger');
             } finally {
                 // Восстанавливаем кнопку в исходное состояние
                 downloadAllPhotosBtn.disabled = false;
