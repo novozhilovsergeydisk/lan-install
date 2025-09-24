@@ -100,8 +100,38 @@
     .main-content {
         padding: 0 !important;
     }
+    
+    /* Стили для вертикального расположения элементов управления */
+    .d-flex.justify-content-between.align-items-center {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+    
+    /* Стили для кнопки "Новая заявка" */
+    .d-flex.justify-content-end {
+        width: 100%;
+        justify-content: flex-start !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Стили для блока с фильтром сотрудников */
+    .d-flex.justify-content-start {
+        width: 100%;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    /* Стили для выпадающего списка */
     #employeeFilter {
-        margin-top: 1rem !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 0.5rem !important;
+    }
+    
+    /* Скрываем блок с дополнительными фильтрами в мобильной версии */
+    .d-flex.d-none {
+        display: none !important;
     }
 
     .comment-preview-title {
