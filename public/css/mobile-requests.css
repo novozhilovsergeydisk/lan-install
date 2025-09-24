@@ -80,7 +80,7 @@
 }
 
 .text-comment {
-    /* font-size: 0.8rem; */
+    font-size: 1.3rem;
 }
 
 .col-date__date {
@@ -102,11 +102,11 @@
     }
 
     .comment-preview-title {
-        font-size: smaller;
+        font-size: clamp(0.9rem, 1vw, 1.3rem) !important;
     }
 
     .comment-preview-text {
-        font-size: smaller;
+        font-size: clamp(0.7rem, 1vw, 1.2rem) !important;
     }
 
     #requestsTable .col-number {
