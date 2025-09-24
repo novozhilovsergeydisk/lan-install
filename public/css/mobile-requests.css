@@ -97,6 +97,39 @@
 
 /* Адаптация для мобильных устройств (ширина экрана до 768px) */
 @media (max-width: 768px) {
+    .col-address__organization {
+        font-size: clamp(0.53rem, 1vw, 1rem) !important;
+    }
+
+    .col-address__street {
+        font-size: clamp(0.65rem, 1vw, 1rem) !important;
+        line-height: clamp(0.7rem, 1vw, 1rem) !important;
+        margin-top: clamp(10px, 1vw, 7px) !important;
+    }
+    .font-size-0-8rem {
+        font-size: clamp(0.65rem, 1vw, 1rem) !important;
+        line-height: clamp(0.65rem, 1vw, 1rem) !important;
+        margin-top: clamp(5px, 1vw, 7px) !important;
+    }
+    #requestsTable th, #requestsTable td {
+        font-size: clamp(0.9rem, 1vw, 1rem) !important;
+    }
+    h1 {
+        font-size: 1.3rem !important;
+        padding-top: 0.5rem !important;
+    }
+    .ps-4 {
+        padding-left: 0 !important;
+    }
+    .pe-4 {
+        padding-right: 0 !important;
+    }
+    .mt-4 {
+        margin-top: 0 !important;
+    }
+    .pt-4 {
+        padding-top: 0 !important;
+    }
     .main-content {
         padding: 0 !important;
     }
@@ -166,13 +199,9 @@
         font-size: 10px;
     }
 
-    .col-address__organization, .col-address__street {
-        font-size: 8px;
-    }
-
     .th-col {
-        font-size: 8px;
-        line-height: 8px;
+        font-size: clamp(0.65rem, 1vw, 1rem) !important;
+        line-height: clamp(0.65rem, 1vw, 1rem) !important;
     }
 
     .col-address {
@@ -197,10 +226,6 @@
 
     .col-actions__div button {
         font-size: 8px;
-    }
-
-    #requestsTable th, #requestsTable td {
-        font-size: 8px !important;
     }
 
     .tab-content {
