@@ -97,6 +97,9 @@
 
 /* Адаптация для мобильных устройств (ширина экрана до 768px) */
 @media (max-width: 768px) {
+    .main-content {
+        padding: 0 !important;
+    }
     #employeeFilter {
         margin-top: 1rem !important;
     }
