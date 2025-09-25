@@ -345,7 +345,7 @@
                                         $rowNumber = $loop->iteration; 
                                         // Get the current loop iteration (1-based index)
                                     @endphp
-                                    <tr id="request-{{ $request->id }}" class="align-middle status-row welcome-blade"
+                                    <tr id="request-{{ $request->id }}" data-request-number="{{ $request->number }}" data-address="{{ ($request->city_name && $request->city_name !== 'Москва' ? $request->city_name . ', ' : '') . ' ул. ' . $request->street . ', ' . $request->houses }}" class="align-middle status-row welcome-blade"
                                         style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                         data-request-id="{{ $request->id }}">
 
@@ -1370,12 +1370,15 @@
                 const modalTitle = commentsModal.querySelector('.modal-title');
                 const requestIdSpan = commentsModal.querySelector('#commentsRequestId');
                 const commentRequestId = commentsModal.querySelector('#commentRequestId');
+                const address = document.getElementById(`request-${requestId}`).getAttribute('data-address');
+                const number = document.getElementById(`request-${requestId}`).getAttribute('data-request-number');
+
+                console.log({ requestId, address, number });
 
                 // Устанавливаем номер заявки в заголовок
                 const requestRow = button.closest('tr');
                 const requestNumberElement = requestRow.querySelector('td:nth-child(2) div:last-child');
-                const requestNumber = requestNumberElement ? requestNumberElement.textContent.trim() : `ID ${requestId}`;
-                requestIdSpan.textContent = requestNumber;
+                requestIdSpan.innerHTML = requestNumberElement ? requestNumberElement.textContent.trim() : `<span class="request-number">${number}</span> ${address}`;
                 commentRequestId.value = requestId;
 
                 // Загружаем комментарии
@@ -1752,9 +1755,12 @@
 <div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="commentsModalLabel">Комментарии к заявке <span id="commentsRequestId"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header d-flex flex-column align-items-start pb-2">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <h5 class="modal-title mb-0" id="commentsModalLabel">Комментарии к заявке</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div id="commentsRequestId" class="w-100 mt-2"></div>
             </div>
             <div class="modal-body" id="commentsContainer">
                 <!-- Список комментариев будет загружен здесь -->

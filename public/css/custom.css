@@ -235,6 +235,30 @@
     transition: color 0.2s ease-in-out;
 }
 
+/* Стили для номера заявки в модальном окне */
+.request-number {
+    font-size: 1rem;
+    color: #cad5de;
+    font-weight: 500;
+}
+
+/* Адаптивные стили для заголовка модального окна */
+@media (max-width: 767.98px) {
+    #commentsModal .modal-header {
+        padding-bottom: 0.5rem;
+    }
+    
+    #commentsRequestId {
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+    
+    .request-number {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+}
+
 /* Скрываем кнопку добавления адреса */
 #addAddress {
     display: none !important;
