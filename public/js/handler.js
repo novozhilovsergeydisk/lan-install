@@ -826,7 +826,7 @@ function applyFilters() {
                             <td class="col-address" style_="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
                                 <div class="text-dark col-address__organization" style_="font-size: 0.8rem;">${request.client_organization}</div>
                                 <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" title="${request.address || address}">
-                                    ${request.city_name && request.city_name !== 'Москва' ? `<strong>${request.city_name}</strong>, ` : ''}ул. ${request.address || address}
+                                    ${request.city_name && request.city_name !== 'Москва' ? `<strong>${request.city_name}</strong>, ` : ''}<strong>ул. ${request.address || address}</strong>
                                 </small>
                                 <div class="text-dark font-size-0-8rem"><i>${request.client_fio}</i></div>
                                 <small class="d-block col-address__phone font-size-0-8rem">
