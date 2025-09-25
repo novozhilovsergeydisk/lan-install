@@ -762,6 +762,10 @@ function applyFilters() {
 
                             // Создаем HTML строки таблицы
                             const row = document.createElement('tr');
+                            row.id = `request-${request.id}`;
+                            row.setAttribute('data-address', request.address || '');
+                            row.setAttribute('data-request-number', request.number || '');
+                            
                             row.className = 'align-middle status-row class-handler';
                             row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
                             // Отладочный вывод
