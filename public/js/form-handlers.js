@@ -18,6 +18,10 @@ function initDownloadAllPhotos() {
         downloadAllPhotosBtn.addEventListener('click', async function() {
             console.log('Кнопка скачивания архива всех фото нажата');
 
+            showAlert('Подготовка архива всех фото в разработке', 'info');
+
+            return;
+
             // Показываем индикатор загрузки
             const originalText = downloadAllPhotosBtn.innerHTML;
             downloadAllPhotosBtn.disabled = true;
