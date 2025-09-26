@@ -806,6 +806,18 @@ class HomeController extends Controller
             // \Log::info('Все входные данные: ' . json_encode($request->all()));
             // \Log::info('Сырые данные запроса: ' . file_get_contents('php://input'));
 
+            // Логируем информацию о загружаемых файлах
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    \Log::info('Загружаемый файл:', [
+                        'original_name' => $file->getClientOriginalName(),
+                        'extension' => $file->getClientOriginalExtension(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                    ]);
+                }
+            }
+
             // Валидируем входные данные
             $validated = $request->validate([
                 'request_id' => 'required|exists:requests,id',
@@ -813,7 +825,30 @@ class HomeController extends Controller
                 'photos' => 'nullable|array|max:20',
                 'photos.*' => 'file|max:65536|mimes:jpg,jpeg,png,gif,webp,bmp,tiff,heic,heif',
                 'files' => 'nullable|array|max:20',
-                'files.*' => 'file|max:65536|mimes:jpg,jpeg,png,gif,webp,bmp,tiff,heic,heif,pdf,doc,docx,xls,xlsx,txt,zip,rar,mp4,mov,avi,wmv,mkv,mp3,wav,ogg,m4a',
+                'files.*' => [
+                    'file',
+                    'max:65536',
+                    function ($attribute, $value, $fail) {
+                        $allowedMimeTypes = [
+                            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 
+                            'image/heic', 'image/heif', 'application/pdf', 'application/msword', 
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'text/plain', 'text/html', 'application/zip', 'application/x-rar-compressed', 'video/mp4', 
+                            'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv', 'video/x-matroska',
+                            'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4'
+                        ];
+
+                        // Для файлов с расширением .txt разрешаем text/html
+                        if (strtolower($value->getClientOriginalExtension()) === 'txt' && $value->getMimeType() === 'text/html') {
+                            return true;
+                        }
+
+                        if (!in_array($value->getMimeType(), $allowedMimeTypes)) {
+                            $fail("Файл {$value->getClientOriginalName()} имеет недопустимый тип: " . $value->getMimeType() . ". Разрешенные типы: " . implode(', ', $allowedMimeTypes));
+                        }
+                    }
+                ],
                 '_token' => 'required|string'
             ]);
 

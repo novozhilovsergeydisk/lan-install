@@ -418,7 +418,7 @@ function displayBrigadeInfo(data) {
             // Парсим JSON-строки в объекты
             const brigadeId = brigade.brigade_id;
 
-            console.log(brigadeId);
+            // console.log(brigadeId);
 
             let leaderInfoObj = {};
             let membersArray = [];
