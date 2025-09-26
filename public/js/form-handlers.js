@@ -372,15 +372,28 @@ export function initShowPhotosButton() {
     const cloned = btn.cloneNode(true);
     btn.parentNode.replaceChild(cloned, btn);
 
+    // Добавляем атрибут для отслеживания состояния
+    let isPhotosShown = false;
+    const container = document.getElementById('photoReportContainer');
+    
+    // Функция для скрытия фотографий
+    const hidePhotos = () => {
+        if (container) {
+            container.innerHTML = '';
+        }
+        cloned.innerHTML = '<i class="bi bi-images me-1"></i> Показать все фото';
+        isPhotosShown = false;
+    };
+
     cloned.addEventListener('click', async () => {
+        // Если фотографии уже показаны, скрываем их
+        if (isPhotosShown) {
+            hidePhotos();
+            return;
+        }
+
         const requestId = document.getElementById('commentRequestId')?.value || '';
-        const container = document.getElementById('photoReportContainer');
         if (!container) return;
-
-        // container.innerHTML = `<div class="text-muted">Загрузка тестовых фото для заявки ${requestId ? '#' + requestId : ''}...</div>`;
-
-        // Имитируем загрузку
-        // await new Promise(r => setTimeout(r, 1400));
 
         console.log(requestId);
 
@@ -399,12 +412,6 @@ export function initShowPhotosButton() {
 
         console.log(response);
 
-        // Мок-данные картинок
-        // const photos = [1, 2, 3, 4, 5, 6].map(i => ({
-        //     url: `https://placehold.co/300x200?text=Photo+${i}`,
-        //     id: i
-        // }));
-
         if (!photos.length) {
             container.innerHTML = '<div class="text-muted">Фото не найдены</div>';
             return;
@@ -416,22 +423,22 @@ export function initShowPhotosButton() {
                 ${photos.map(p => {
                     const name = p.original_name || `Фото ${p.id}`;
                     const sizeKB = p.file_size ? Math.round(p.file_size / 1024) + ' KB' : '';
-                    const created = p.created_at ? `<div class=\"small text-muted\">${p.created_at}</div>` : '';
+                    const created = p.created_at ? `<div class="small text-muted">${p.created_at}</div>` : '';
                     const url = p.url;
                     return `
-                        <div class=\"col-6 col-md-4\">
-                            <div class=\"card h-100\">
-                                <a href=\"${url}\" target=\"_blank\" rel=\"noopener\" class=\"text-decoration-none\">
-                                    <img src=\"${url}\" alt=\"${name}\" class=\"card-img-top\" loading=\"lazy\"
-                                         onerror=\"this.onerror=null;this.src='https://placehold.co/300x200?text=No+Image';\">
+                        <div class="col-6 col-md-4">
+                            <div class="card h-100">
+                                <a href="${url}" target="_blank" rel="noopener" class="text-decoration-none">
+                                    <img src="${url}" alt="${name}" class="card-img-top" loading="lazy"
+                                         onerror="this.onerror=null;this.src='https://placehold.co/300x200?text=No+Image';">
                                 </a>
-                                <div class=\"card-body p-2\">
-                                    <div class=\"small\" title=\"${name}\">${name}</div>
-                                    <div class=\"small text-muted\">${sizeKB}</div>
+                                <div class="card-body p-2">
+                                    <div class="small" title="${name}">${name}</div>
+                                    <div class="small text-muted">${sizeKB}</div>
                                     ${created}
                                 </div>
-                                <div class=\"card-footer p-2\">
-                                    <a href=\"${url}\" download class=\"btn btn-sm btn-outline-secondary w-100\">Скачать</a>
+                                <div class="card-footer p-2">
+                                    <a href="${url}" download class="btn btn-sm btn-outline-secondary w-100">Скачать</a>
                                 </div>
                             </div>
                         </div>
@@ -439,6 +446,10 @@ export function initShowPhotosButton() {
                 }).join('')}
             </div>
         `;
+        
+        // Обновляем состояние и текст кнопки
+        cloned.innerHTML = '<i class="bi bi-x-circle me-1"></i> Скрыть фото';
+        isPhotosShown = true;
     });
 }
 
@@ -3750,10 +3761,31 @@ function initShowPhotoButtons() {
         if (showPhotoBtn) {
             e.preventDefault();
             const commentId = showPhotoBtn.getAttribute('data-comment-id');
-            // console.log('Показать фото для комментария ID:', commentId);
+            const photosContainerId = `comment-photos-${commentId}`;
             
-            // Используем глобальную функцию для загрузки фотографий
-            loadCommentPhotos(commentId, showPhotoBtn);
+            // Проверяем, активна ли уже кнопка (показаны ли фото)
+            const isActive = showPhotoBtn.classList.contains('active');
+            const photosContainer = document.getElementById(photosContainerId);
+            
+            if (isActive) {
+                // Если кнопка активна, скрываем фотографии
+                showPhotoBtn.classList.remove('active');
+                if (photosContainer) {
+                    photosContainer.remove();
+                }
+            } else {
+                // Скрываем все открытые фотографии
+                document.querySelectorAll('.data-show-photo-btn.active').forEach(btn => {
+                    btn.classList.remove('active');
+                    const containerId = `comment-photos-${btn.getAttribute('data-comment-id')}`;
+                    const container = document.getElementById(containerId);
+                    if (container) container.remove();
+                });
+                
+                // Показываем фотографии для выбранного комментария
+                showPhotoBtn.classList.add('active');
+                loadCommentPhotos(commentId, showPhotoBtn);
+            }
         }
     });
 }
