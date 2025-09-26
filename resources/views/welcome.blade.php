@@ -652,8 +652,8 @@
                                 <div class="alert alert-info">Добавление адресов доступно только для администраторов</div>
                                 @endif
 
-                                <div id="addressInfo">
-                                    <!-- Здесь будет только добавленный адрес -->
+                                <div id="addressInfo" class="block-address-info">
+                                    <!-- Здесь будет только добавленный адрес или найденный адрес -->
                                 </div>
 
                                 <!-- Список всех адресов -->
@@ -3327,7 +3327,7 @@
                                 <div class="card-header bg-primary text-white">
                                     <strong>Выбранный адрес</strong>
                                 </div>
-                                <div id="addressInfoBlock" class="card-body" data-update-address-id="${selectedAddress.id}">
+                                <div id="addressInfoBlock" class="card-body" data-update-address-id="${selectedAddress.id}" data-delete-address-id="${selectedAddress.id}">
                                     <p data-update-city><strong>Город:</strong> ${selectedAddress.city || '-'}</p>
                                     <p data-update-district><strong>Район:</strong> ${selectedAddress.district || '-'}</p>
                                     <p data-update-street><strong>Улица:</strong> ${selectedAddress.street || '-'}</p>
@@ -3342,9 +3342,9 @@
                                                 <i class="bi bi-pencil"></i> Редактировать
                                             </button>
                                             @endif
-                                            <!-- <button type="button" class="btn btn-sm btn-outline-danger" id="deleteAddressBtn">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" id="deleteAddressBtn">
                                                 <i class="bi bi-trash"></i> Удалить
-                                            </button> -->
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

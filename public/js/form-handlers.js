@@ -1149,10 +1149,12 @@ export function initAddressEditButton() {
     
     // Используем делегирование событий, так как кнопка создается динамически
     document.addEventListener('click', function(event) {
-        // Проверяем, что клик был по кнопке редактирования адреса или её дочерним элементам
+        // Проверяем, что клик был по кнопке редактирования адреса или по кнопке удаления адреса или по их дочерним элементам
         const editButton = event.target.closest('#editAddressBtn');
         
         if (editButton) {
+            console.log('Клик по кнопке редактирования адреса 1:', editButton);
+
             event.preventDefault();
             event.stopPropagation();
             
@@ -2131,12 +2133,29 @@ export function initDeleteAddressHandlers() {
     document.addEventListener('click', async function(event) {
         // Проверяем, был ли клик по кнопке удаления или её дочерним элементам
         const deleteButton = event.target.closest('.delete-address-btn');
+
+        const deleteButtonBlock = event.target.closest('#deleteAddressBtn');
+
         
-        if (deleteButton) {
+
+        // id="addressInfoBlock"
+        
+        if (deleteButton || deleteButtonBlock) {
             event.preventDefault();
             event.stopPropagation();
+            let addressId;
+
+            if (deleteButtonBlock) {
+                const addressInfoBlock = document.getElementById('addressInfoBlock');
+                addressId = addressInfoBlock.getAttribute('data-delete-address-id');
+    
+                console.log('Клик по кнопке удаления адреса deleteButtonBlock, addressId:', addressId);
+                
+            }
             
-            const addressId = deleteButton.getAttribute('data-address-id');
+            addressId = deleteButton ? deleteButton.getAttribute('data-address-id') : addressId;
+
+            console.log('addressId:', addressId);
             
             if (!confirm('Вы уверены, что хотите удалить этот адрес?')) {
                 return;
@@ -2163,13 +2182,39 @@ export function initDeleteAddressHandlers() {
                 if (result.success) {
                     showAlert('Адрес успешно удален', 'success');
                     console.log('Адрес успешно удален, ID:', addressId);
+
+                    const addressInfo = document.getElementById('addressInfo');
+                    addressInfo.innerHTML = '';
                     
                     // Обновляем таблицу адресов
                     if (typeof loadAddressesPaginated === 'function') {
                         await loadAddressesPaginated();
-                    } else {
-                        console.warn('Функция loadAddressesPaginated не найдена, перезагружаем страницу');
-                        window.location.reload();
+                    }
+                    
+                    // Обновляем выпадающий список адресов
+                    if (typeof window.loadAddresses === 'function') {
+                        // Вызываем загрузку адресов
+                        window.loadAddresses();
+                        
+                        // Инициализируем кастомный селект с задержкой
+                        setTimeout(() => {
+                            const selectElement = document.getElementById('addresses_id');
+                            if (selectElement) {
+                                // Удаляем старый кастомный селект, если он есть
+                                const oldWrapper = document.getElementById('custom-select-wrapper-addresses_id');
+                                if (oldWrapper) {
+                                    oldWrapper.remove();
+                                }
+                                
+                                // Показываем оригинальный селект
+                                selectElement.style.display = 'block';
+                                
+                                // Инициализируем кастомный селект заново
+                                if (typeof window.initCustomSelect === 'function') {
+                                    window.initCustomSelect('addresses_id', 'Выберите адрес из списка');
+                                }
+                            }
+                        }, 500); // Даем время на загрузку адресов
                     }
                 } else {
                     throw new Error(result.message || 'Неизвестная ошибка при удалении адреса');
