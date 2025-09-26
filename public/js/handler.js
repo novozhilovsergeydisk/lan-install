@@ -99,10 +99,17 @@ export async function loadPlanningRequests() {
             // console.log('Комментарии:', comments);
             // console.log('Комментарии форматированные:', formattedComments);
 
+            // Формируем адрес
+            const cityPrefix = request.city_name && request.city_name !== 'Москва' ? `${request.city_name}, ` : '';
+            const fullAddress = `${cityPrefix}ул. ${request.street || ''}, ${request.house_number || ''}`.trim();
+            
             // Создаем строку таблицы
             const row = document.createElement('tr');
-            row.setAttribute('data-request-id', request.id);
-            // Применяем стили для переопределения Bootstrap
+            row.id = `request-${request.id}`;
+            row.dataset.requestNumber = request.number || '';
+            row.dataset.address = fullAddress;
+            row.className = 'align-middle status-row welcome-blade';
+            row.style.setProperty('--status-color', request.color || '#e2e0e6');
             row.style.setProperty('--bs-table-bg', request.color, 'important');
             row.style.backgroundColor = request.color;
             row.style.color = '#000000'; // Устанавливаем черный цвет текста
@@ -114,12 +121,14 @@ export async function loadPlanningRequests() {
                 </td>
                 <td style="width: 35%">
                     <div class="d-flex flex-column">
-                       <div class="text-dark col-address__organization">${request.organization || 'Не указан'}</div>
-                       <small class="d-block">${request.address || 'Не указан'}</small>
-                       <div class="text-dark font-size-0-8rem"><i>${request.fio}</i></div>
-                       <small class="text-black d-block font-size-0-8rem">
-                            <i>${request.phone ?? 'Нет телефона'}</i>
-                       </small>                              
+                        <div class="text-dark col-address__organization">${request.organization || 'Не указан'}</div>
+                        <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" data-bs-original-title="${fullAddress}">
+                            <strong>${fullAddress}</strong>
+                        </small>
+                        <div class="text-dark font-size-0-8rem"><i>${request.fio || ''}</i></div>
+                        <small class="text-black d-block font-size-0-8rem">
+                            <i>${request.phone || 'Нет телефона'}</i>
+                        </small>
                     </div>
                 </td>
                 <td style="width: 50%">
