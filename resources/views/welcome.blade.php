@@ -1401,17 +1401,59 @@
                     console.log(key, value);
                 }
 
+                // Получаем элементы формы
+                const commentInput = commentForm.querySelector('input[name="comment"]');
+                const submitButton = commentForm.querySelector('button[type="submit"]');
+                const originalButtonText = submitButton.innerHTML;
+                
+                // Проверяем валидность формы
+                if (!commentForm.checkValidity()) {
+                    // Если форма невалидна, показываем стандартное сообщение
+                    commentForm.reportValidity();
+                    return; // Прерываем выполнение
+                }
+                
+                // Блокируем поле ввода и кнопку
+                commentInput.readOnly = true; // Используем readOnly вместо disabled, чтобы не сбрасывать required
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Отправка...';
+                
                 console.log('----------- end ----------');
+                
+                // Функция для разблокировки формы
+                const unlockForm = () => {
+                    // Очищаем поле ввода только если форма была успешно отправлена
+                    if (formSubmitted) {
+                        commentInput.value = '';
+                    }
+                    
+                    // Разблокируем поле ввода
+                    commentInput.readOnly = false;
+                    
+                    // Восстанавливаем кнопку
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
+                };
+                
+                // Флаг успешной отправки
+                let formSubmitted = false;
 
-                // return;
-
-                fetch('{{ route('requests.comment') }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        // Content-Type не указываем, чтобы браузер сам установил правильный boundary
-                    },
-                    body: formData
+                // Устанавливаем задержку перед отправкой (минимум 2 секунды)
+                const delayPromise = new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Отправляем запрос после задержки
+                Promise.all([
+                    delayPromise,
+                    fetch('{{ route('requests.comment') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: formData
+                    })
+                ]).then(([_, response]) => {
+                    formSubmitted = true;
+                    return response;
                 })
                     .then(response => {
                         if (!response.ok) {
@@ -1471,6 +1513,9 @@
                     .catch(error => {
                         console.error('Ошибка:', error);
                         utils.showAlert('Произошла ошибка при добавлении комментария', 'danger');
+                    })
+                    .finally(() => {
+                        unlockForm();
                     });
             });
         }
