@@ -752,16 +752,19 @@ function addRequestToTable(result) {
         year: 'numeric'
     });
 
-    // Создаем новую строку для таблицы
-    const newRow = document.createElement('tr');
-    newRow.className = 'align-middle status-row xxx-3';
-    newRow.dataset.requestId = requestData.id;
-    newRow.style.setProperty('--status-color', requestData.status_color || '#e2e0e6');
-
     // Формируем адрес из данных адреса
     const street = addressData.street || '';
     const house = addressData.house || '';
-    const addressText = street && house ? `ул. ${street}, д. ${house}` : 'Адрес не указан';
+    const cityPrefix = addressData.city_name && addressData.city_name !== 'Москва' ? `${addressData.city_name}, ` : '';
+    const fullAddress = `${cityPrefix}ул. ${street}, ${house}`.trim();
+    
+    // Создаем новую строку для таблицы
+    const newRow = document.createElement('tr');
+    newRow.id = `request-${requestData.id}`;
+    newRow.dataset.requestNumber = requestData.number || '';
+    newRow.dataset.address = fullAddress;
+    newRow.className = 'align-middle status-row new-row';
+    newRow.style.setProperty('--status-color', requestData.status_color || '#e2e0e6');
 
     // Получаем комментарий, если есть
     const commentText = commentData.comment || requestData.comment || '';
@@ -773,8 +776,8 @@ function addRequestToTable(result) {
         <!-- Клиент -->
         <td class="col-address">
             <div class="text-dark col-address__organization">${clientOrganization}</div>
-            <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" data-bs-original-title="${addressText}">
-            ${addressData.city_name && addressData.city_name !== 'Москва' ? `<strong>${addressData.city_name}</strong>, ` : ''}ул. ${addressText}
+            <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" data-bs-original-title="${fullAddress}">
+                <strong>${fullAddress}</strong>
             </small>
             <div class="text-dark font-size-0-8rem"><i>${clientData.fio || requestData.client_fio}</i></div>
             <small class="text-black d-block font-size-0-8rem">
