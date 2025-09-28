@@ -529,6 +529,8 @@ export const selectedRequestState = {
         this.status_color = newRequest.status_color;
         this.street = newRequest.street;
         this.houses = newRequest.houses;
+        this.latitudeEdit = newRequest.latitudeEdit;
+        this.longitudeEdit = newRequest.longitudeEdit;
         this.district = newRequest.district;
         this.client_phone = newRequest.client_phone;
         this.operator_name = newRequest.operator_name;
@@ -544,6 +546,8 @@ export const selectedRequestState = {
         this.status_color = null;
         this.street = null;
         this.houses = null;
+        this.latitudeEdit = null;
+        this.longitudeEdit = null;
         this.district = null;
         this.client_phone = null;
         this.operator_name = null;
@@ -1199,12 +1203,16 @@ export function initAddressEditButton() {
                                 }
                             }
                         }
+
+                        console.log('Окно редактирования адреса №1:', address);
                         
                         document.getElementById('district').value = address.district || '';
                         document.getElementById('street').value = address.street || '';
                         document.getElementById('houses').value = address.houses || '';
                         document.getElementById('responsible_person').value = address.responsible_person || '';
                         document.getElementById('comments').value = address.comments || '';
+                        document.getElementById('latitudeEdit').value = address.latitude ? parseFloat(address.latitude).toString() : '';
+                        document.getElementById('longitudeEdit').value = address.longitude ? parseFloat(address.longitude).toString() : '';
                         
                         // Показываем модальное окно
                         modal.show();
@@ -2263,12 +2271,16 @@ export function initAddressEditHandlers() {
                                 }
                             }
                         }
+
+                        console.log('Загружены данные адреса по кнопке редактирования из списка:', address);
                         
                         document.getElementById('district').value = address.district || '';
                         document.getElementById('street').value = address.street || '';
                         document.getElementById('houses').value = address.houses || '';
                         document.getElementById('responsible_person').value = address.responsible_person || '';
                         document.getElementById('comments').value = address.comments || '';
+                        document.getElementById('latitudeEdit').value = address.latitude ? parseFloat(address.latitude).toString() : '';
+                        document.getElementById('longitudeEdit').value = address.longitude ? parseFloat(address.longitude).toString() : '';
                         
                         // Показываем модальное окно
                         modal.show();
@@ -2352,7 +2364,7 @@ export function initAddressEditHandlers() {
                     body: JSON.stringify(data)
                 });
 
-                console.log('Получен ответ от сервера. Статус:', response.status);
+                console.log('Получен ответ от сервера. Адреса:', response.status);
                 
                 let responseData;
                 try {

@@ -17,6 +17,8 @@ class GeoController extends Controller
                 a.district, 
                 a.responsible_person,
                 a.comments,
+                a.latitude,
+                a.longitude,
                 c.name as city_name,
                 c.id as city_id,
                 r.id as region_id
@@ -109,54 +111,99 @@ class GeoController extends Controller
 
     public function updateAddress(Request $request, $id)
     {
-        $request->validate([
+        $validated = $request->validate([
             'street' => 'required|string|max:255',
             'houses' => 'required|string|max:255',
             'district' => 'required|string|max:255',
             'city_id' => 'required|exists:cities,id',
             'responsible_person' => 'nullable|string|max:100',
             'comments' => 'nullable|string',
+            'latitudeEdit' => [
+                'nullable',
+                'numeric',
+                'between:-90,90',
+                'regex:/^-?(90(\.0{1,7})?|([0-8]?[0-9])(\.\d{1,7})?)$/'
+            ],
+            'longitudeEdit' => [
+                'nullable',
+                'numeric',
+                'between:-180,180',
+                'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/'
+            ]
+        ], [
+            'latitudeEdit.regex' => 'Некорректный формат широты. Допустимый формат: от -90 до 90, до 7 знаков после точки',
+            'longitudeEdit.regex' => 'Некорректный формат долготы. Допустимый формат: от -180 до 180, до 7 знаков после точки',
+            'latitudeEdit.between' => 'Широта должна быть в диапазоне от -90 до 90 градусов',
+            'longitudeEdit.between' => 'Долгота должна быть в диапазоне от -180 до 180 градусов',
         ]);
 
-        $updated = DB::update(
-            'UPDATE addresses SET 
-                street = :street,
-                houses = :houses,
-                district = :district,
-                city_id = :city_id,
-                responsible_person = :responsible_person,
-                comments = :comments
-            WHERE id = :id',
-            [
+        try {
+            // Проверяем, что если одно поле координат заполнено, то и второе тоже
+            if ((isset($validated['latitudeEdit']) && !isset($validated['longitudeEdit'])) || 
+                (!isset($validated['latitudeEdit']) && isset($validated['longitudeEdit']))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Необходимо заполнить оба поля координат'
+                ], 422);
+            }
+
+            $data = [
                 'id' => $id,
-                'street' => $request->street,
-                'houses' => $request->houses,
-                'district' => $request->district,
-                'city_id' => $request->city_id,
-                'responsible_person' => $request->responsible_person,
-                'comments' => $request->comments,
-            ]
-        );
+                'street' => $validated['street'],
+                'houses' => $validated['houses'],
+                'district' => $validated['district'],
+                'city_id' => $validated['city_id'],
+                'responsible_person' => $validated['responsible_person'] ?? null,
+                'comments' => $validated['comments'] ?? null,
+                'latitude' => isset($validated['latitudeEdit']) ? (float)$validated['latitudeEdit'] : null,
+                'longitude' => isset($validated['longitudeEdit']) ? (float)$validated['longitudeEdit'] : null
+            ];
 
-        if ($updated) {
+            $updated = DB::update(
+                'UPDATE addresses SET 
+                    street = :street,
+                    houses = :houses,
+                    district = :district,
+                    city_id = :city_id,
+                    responsible_person = :responsible_person,
+                    comments = :comments,
+                    latitude = :latitude,
+                    longitude = :longitude
+                WHERE id = :id',
+                $data
+            );
+
+            if ($updated) {
+                // Получаем обновленный адрес с названием города
+                $address = DB::table('addresses')
+                    ->select('addresses.*', 'cities.name as city_name')
+                    ->leftJoin('cities', 'addresses.city_id', '=', 'cities.id')
+                    ->where('addresses.id', $id)
+                    ->first();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Адрес успешно обновлен',
+                    'data' => $address
+                ]);
+            }
+
             return response()->json([
-                'success' => true,
-                'message' => 'Адрес успешно обновлен',
-                'data' => [
-                    'id' => $id,
-                    'street' => $request->street,
-                    'houses' => $request->houses,
-                    'district' => $request->district,
-                    'city_id' => $request->city_id,
-                    'responsible_person' => $request->responsible_person,
-                    'comments' => $request->comments,
-                ]
-            ]);
-        }
+                'success' => false,
+                'message' => 'Не удалось обновить адрес'
+            ], 500);
 
-        return response()->json([
-            'success' => false,
-        ], 500);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при обновлении адреса: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обновлении адреса: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function addAddress(Request $request)

@@ -3387,8 +3387,8 @@
                                     <p data-update-houses><strong>Дом:</strong> ${selectedAddress.houses || '-'}</p>
                                     <p data-update-responsible-person><strong>Ответственное лицо:</strong> ${selectedAddress.responsible_person || 'не указано'}</p>
                                     <p data-update-comments><strong>Комментарий:</strong> ${selectedAddress.comments || 'нет комментария'}</p>
-                                    <p data-update-latitude><strong>Широта:</strong> ${selectedAddress.latitude || '-'}</p>
-                                    <p data-update-longitude><strong>Долгота:</strong> ${selectedAddress.longitude || '-'}</p>
+                                    <p data-update-latitude><strong>Широта:</strong> ${selectedAddress.latitude ? parseFloat(selectedAddress.latitude).toString() : '-'}</p>
+                                    <p data-update-longitude><strong>Долгота:</strong> ${selectedAddress.longitude ? parseFloat(selectedAddress.longitude).toString() : '-'}</p>
                                     <div class="address-info">
                                         <p class="text-muted mb-2"><small>Идентификатор адреса: <span class="address-id">${selectedAddress.id}</span></small></p>
                                         <div class="d-flex gap-2">
@@ -3720,6 +3720,18 @@
                         <label for="houses" class="form-label">Дома</label>
                         <input type="text" class="form-control" id="houses" name="houses" 
                                placeholder="Например: 1, 3, 5-7, 9к1">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="latitudeEdit" class="form-label">Широта</label>
+                        <input type="text" class="form-control" id="latitudeEdit" name="latitudeEdit" 
+                               placeholder="Например: 55.755826">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="longitudeEdit" class="form-label">Долгота</label>
+                        <input type="text" class="form-control" id="longitudeEdit" name="longitudeEdit" 
+                               placeholder="Например: 37.617299">
                     </div>
                     
                     <div class="mb-3">
