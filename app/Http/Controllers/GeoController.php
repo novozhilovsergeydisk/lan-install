@@ -51,6 +51,8 @@ class GeoController extends Controller
                 a.district, 
                 a.responsible_person,
                 a.comments,
+                a.latitude,
+                a.longitude,
                 c.name as city_name,
                 c.id as city_id,
                 r.id as region_id
@@ -80,6 +82,8 @@ class GeoController extends Controller
                 a.district, 
                 a.responsible_person,
                 a.comments,
+                a.latitude,
+                a.longitude,
                 c.name as city, 
                 r.name as region
             FROM addresses a
@@ -152,30 +156,63 @@ class GeoController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => 'Не удалось обновить адрес'
         ], 500);
     }
 
     public function addAddress(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'street' => 'required|string|max:255',
             'houses' => 'required|string|max:255',
             'district' => 'required|string|max:255',
             'city_id' => 'required|exists:cities,id',
-            'responsible_person' => 'nullable|string|max:100',
-            'comments' => 'nullable|string'
+            'responsible_person' => 'required|string|max:255',
+            'comments' => 'nullable|string',
+            'latitude' => [
+                'nullable',
+                'numeric',
+                'between:-90,90',
+                'regex:/^-?(90(\.0{1,7})?|([0-8]?[0-9])(\.\d{1,7})?)$/'
+            ],
+            'longitude' => [
+                'nullable',
+                'numeric',
+                'between:-180,180',
+                'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/'
+            ]
+        ], [
+            'latitude.regex' => 'Некорректный формат широты. Допустимый формат: от -90 до 90, до 7 знаков после точки',
+            'longitude.regex' => 'Некорректный формат долготы. Допустимый формат: от -180 до 180, до 7 знаков после точки',
+            'latitude.between' => 'Широта должна быть в диапазоне от -90 до 90 градусов',
+            'longitude.between' => 'Долгота должна быть в диапазоне от -180 до 180 градусов',
         ]);
 
+        // Проверка, что если одно поле координат заполнено, то и второе тоже
+        if (($request->has('latitude') && !$request->has('longitude')) || 
+            (!$request->has('latitude') && $request->has('longitude'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Необходимо заполнить оба поля координат'
+            ], 422);
+        }
+
         // Добавляем адрес и получаем его ID
-        $addressId = DB::table('addresses')->insertGetId([
+        $addressData = [
             'street' => $request->street,
             'houses' => $request->houses,
             'district' => $request->district,
             'city_id' => $request->city_id,
             'responsible_person' => $request->responsible_person,
             'comments' => $request->comments
-        ]);
+        ];
+
+        // Добавляем координаты, если они есть
+        if ($request->has('latitude') && $request->has('longitude')) {
+            $addressData['latitude'] = $request->latitude;
+            $addressData['longitude'] = $request->longitude;
+        }
+
+        $addressId = DB::table('addresses')->insertGetId($addressData);
         
         // Получаем информацию о городе
         $city = DB::table('cities')->where('id', $request->city_id)->first();
@@ -189,7 +226,9 @@ class GeoController extends Controller
             'street' => $request->street,
             'houses' => $request->houses,
             'responsible_person' => $request->responsible_person,
-            'comments' => $request->comments
+            'comments' => $request->comments,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude
         ];
 
         return response()->json([

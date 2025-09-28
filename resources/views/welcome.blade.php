@@ -941,7 +941,7 @@
                         <div class="card">
                             <div class="card-body p-0">
                                 <div class="table-responsive">
-                                    <table class="table table-hover mb-0" data-table="statuses">
+                                    <table id="statusesTable" class="table table-hover mb-0" >
                                         <thead class="table-light">
                                             <tr>
                                                 <th style="width: 50px;">ID</th>
@@ -3130,6 +3130,14 @@
                         </div>
                         <div class="invalid-feedback d-none">Пожалуйста, укажите корректный номер дома</div>
                     </div>
+
+                    <!-- Координаты для Яндекс карт -->
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Координаты</label>
+                        <input id="latitude" type="text" name="latitude" class="form-control" placeholder="Широта">
+                        <input id="longitude" type="text" name="longitude" class="form-control mt-2" placeholder="Долгота">
+                    </div>
+                    
                     <div class="col-md-12 mb-3">
                         <label class="form-label">Ответственное лицо</label>
                         <input type="text" name="responsible_person" class="form-control" placeholder="ФИО ответственного лица">
@@ -3379,6 +3387,8 @@
                                     <p data-update-houses><strong>Дом:</strong> ${selectedAddress.houses || '-'}</p>
                                     <p data-update-responsible-person><strong>Ответственное лицо:</strong> ${selectedAddress.responsible_person || 'не указано'}</p>
                                     <p data-update-comments><strong>Комментарий:</strong> ${selectedAddress.comments || 'нет комментария'}</p>
+                                    <p data-update-latitude><strong>Широта:</strong> ${selectedAddress.latitude || '-'}</p>
+                                    <p data-update-longitude><strong>Долгота:</strong> ${selectedAddress.longitude || '-'}</p>
                                     <div class="address-info">
                                         <p class="text-muted mb-2"><small>Идентификатор адреса: <span class="address-id">${selectedAddress.id}</span></small></p>
                                         <div class="d-flex gap-2">
@@ -3432,6 +3442,64 @@
         }
     });
 
+    // Функция для валидации координат
+    function validateCoordinates(latitude, longitude) {
+        // Если оба поля пустые, это валидно (необязательные поля)
+        if ((!latitude || latitude === '') && (!longitude || longitude === '')) {
+            return { isValid: true };
+        }
+        
+        // Проверяем, что заполнены оба поля
+        if ((!latitude || latitude === '') || (!longitude || longitude === '')) {
+            return {
+                isValid: false,
+                message: 'Необходимо заполнить оба поля координат'
+            };
+        }
+
+        // Преобразуем в число для проверки диапазонов
+        const latNum = parseFloat(latitude);
+        const lngNum = parseFloat(longitude);
+
+        // Проверяем формат и диапазон широты
+        const latRegex = /^-?(90(\.0{1,7})?|([0-8]?[0-9])(\.\d{1,7})?)$/;
+        if (!latRegex.test(latitude) || isNaN(latNum) || latNum < -90 || latNum > 90) {
+            return {
+                isValid: false,
+                message: 'Некорректный формат широты. Допустимый формат: от -90 до 90, до 7 знаков после точки. Пример: 55.777044'
+            };
+        }
+
+        // Проверяем формат и диапазон долготы
+        const lngRegex = /^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/;
+        if (!lngRegex.test(longitude) || isNaN(lngNum) || lngNum < -180 || lngNum > 180) {
+            return {
+                isValid: false,
+                message: 'Некорректный формат долготы. Допустимый формат: от -180 до 180, до 7 знаков после точки. Пример: 37.555554'
+            };
+        }
+
+        // Проверяем числовые диапазоны
+        const lat = parseFloat(latitude);
+        const lng = parseFloat(longitude);
+
+        if (isNaN(lat) || lat < -90 || lat > 90) {
+            return {
+                isValid: false,
+                message: 'Широта должна быть в диапазоне от -90 до 90 градусов'
+            };
+        }
+
+        if (isNaN(lng) || lng < -180 || lng > 180) {
+            return {
+                isValid: false,
+                message: 'Долгота должна быть в диапазоне от -180 до 180 градусов'
+            };
+        }
+
+        return { isValid: true };
+    }
+
     // Обработка отправки формы
     document.getElementById('saveAddressBtn').addEventListener('click', async function() {
         const form = document.getElementById('addressForm');
@@ -3448,6 +3516,16 @@
         let isValid = validateAddressForm(form);
         if (!isValid) {
             showAlert('Пожалуйста, заполните все обязательные поля', 'warning');
+            return;
+        }
+        
+        // Валидация координат
+        const latitude = form.querySelector('input[name="latitude"]').value.trim();
+        const longitude = form.querySelector('input[name="longitude"]').value.trim();
+        const coordValidation = validateCoordinates(latitude, longitude);
+        
+        if (!coordValidation.isValid) {
+            showAlert(coordValidation.message, 'warning');
             return;
         }
         
@@ -3510,6 +3588,8 @@
                                 <p><strong>Район:</strong> ${result.address.district || '-'}</p>
                                 <p><strong>Улица:</strong> ${result.address.street || '-'}</p>
                                 <p><strong>Дом:</strong> ${result.address.houses || '-'}</p>
+                                <p><strong>Широта:</strong> ${result.address.latitude || '-'}</p>
+                                <p><strong>Долгота:</strong> ${result.address.longitude || '-'}</p>
                     `;
                     
                     // Добавляем все поля, включая необязательные, с подстановкой значений по умолчанию
