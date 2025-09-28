@@ -98,10 +98,10 @@ export async function loadPlanningRequests() {
             
             // console.log('Комментарии:', comments);
             // console.log('Комментарии форматированные:', formattedComments);
-
+            // console.log(request);
             // Формируем адрес
             const cityPrefix = request.city_name && request.city_name !== 'Москва' ? `${request.city_name}, ` : '';
-            const fullAddress = `${cityPrefix}ул. ${request.street || ''}, ${request.house_number || ''}`.trim();
+            const fullAddress = `${cityPrefix}ул. ${request.street || ''}, ${request.houses || ''}`.trim();
             
             // Создаем строку таблицы
             const row = document.createElement('tr');
