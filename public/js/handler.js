@@ -75,7 +75,7 @@ export async function loadPlanningRequests() {
         const tbody = table.querySelector('tbody');
         
         // Очищаем таблицу, кроме заголовка
-        tbody.innerHTML = '';
+        tbody.innerHTML = ''; 
         
         // Добавляем строки для каждой заявки
         result.data.planningRequests.forEach((request, index) => {
@@ -107,6 +107,7 @@ export async function loadPlanningRequests() {
             const row = document.createElement('tr');
             row.id = `request-${request.id}`;
             row.dataset.requestNumber = request.number || '';
+            row.dataset.requestStatus = request.status_id || 'status';
             row.dataset.address = fullAddress;
             row.className = 'align-middle status-row welcome-blade';
             row.style.setProperty('--status-color', request.color || '#e2e0e6');

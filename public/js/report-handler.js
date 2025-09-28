@@ -448,6 +448,20 @@ export async function loadReport() {
     }
     
     console.log('Данные для запроса:', requestData);
+
+    // Показываем индикатор загрузки
+    const tbody = document.querySelector('#requestsReportTable tbody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="100%" class="text-center" style="height: 200px; vertical-align: middle;">
+                <div class="d-flex justify-content-center align-items-center w-100 h-100">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <span class="ms-3 fs-5"></span>
+                </div>
+            </td>
+        </tr>`;
     
     const result = await postData(url, requestData);
 
@@ -692,11 +706,28 @@ function renderReportTable(data) {
                                     <span>${comment.comment || 'Система'}</span>
                                 </div>
                                 <div style="color:rgb(66, 68, 69); font-size: 0.9em;">${date}</div>
-                                <div style="color:rgb(66, 68, 69); font-size: 1.0em;">Добавил: ${comment.author_name}</div>
+                                <div style="color:rgb(66, 68, 69); font-size: 1.0em;">Добавил тест: ${comment.author_name}</div>
                             </div>
                         `;
                     }).join('')}
-                </div>`;
+                </div>
+                
+                <div class="mt-1">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                            data-bs-toggle="modal"
+                            data-bs-target="#commentsModal"
+                            data-request-id="${request.id}"
+                            style="position: relative; z-index: 1;">
+                        <i class="bi bi-chat-left-text me-1"></i>
+                        <span class="text-comment">Комментарии</span>
+                        <span class="badge bg-primary rounded-pill ms-1">
+                            ${comments_by_request[request.id].length}
+                        </span>
+                    </button>
+                </div>
+                
+                `;
         } else {
             commentHtml = '<small>Нет комментариев</small>';
         }

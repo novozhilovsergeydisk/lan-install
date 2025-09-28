@@ -345,7 +345,7 @@
                                         $rowNumber = $loop->iteration; 
                                         // Get the current loop iteration (1-based index)
                                     @endphp
-                                    <tr id="request-{{ $request->id }}" data-request-number="{{ $request->number }}" data-address="{{ ($request->city_name && $request->city_name !== 'Москва' ? $request->city_name . ', ' : '') . ' ул. ' . $request->street . ', ' . $request->houses }}" class="align-middle status-row welcome-blade"
+                                    <tr id="request-{{ $request->id }}" data-request-status="{{ $request->status_id }}" data-request-number="{{ $request->number }}" data-address="{{ ($request->city_name && $request->city_name !== 'Москва' ? $request->city_name . ', ' : '') . ' ул. ' . $request->street . ', ' . $request->houses }}" class="align-middle status-row welcome-blade"
                                         style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                         data-request-id="{{ $request->id }}">
 

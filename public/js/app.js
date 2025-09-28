@@ -37,8 +37,11 @@ $(document).ready(function() {
 
     // Sync datepicker with input field
     $('#datepicker').on('changeDate', function(e) {
-        $('#dateInput').val(e.format('dd.mm.yyyy'));
-        $('#selectedDate').text(e.format('dd.mm.yyyy'));
+        const selectedDate = e.format('dd.mm.yyyy');
+        console.log('Выбрана дата:', selectedDate);
+        console.log('Объект события:', e);
+        $('#dateInput').val(selectedDate);
+        $('#selectedDate').text(selectedDate);
     });
 
     // Initialize input field datepicker
