@@ -13,6 +13,8 @@ export function DateFormated(date) {
 // Обработчик для кнопки экспорта отчета в Excel
 function initExportReportBtn() {
     console.log('Функция initExportReportBtn вызвана');
+
+    return;
     
     const exportBtn = document.getElementById('export-report-btn');
     

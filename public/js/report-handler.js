@@ -504,7 +504,7 @@ function renderReportTable(data) {
     const exportBtn = document.getElementById('export-report-btn');
 
     // Нужно сохранить данные в localStorage
-    localStorage.setItem('reportData', JSON.stringify(data));
+    // localStorage.setItem('reportData', JSON.stringify(data));
 
     // console.log('reportData:', localStorage.getItem('reportData'));
 

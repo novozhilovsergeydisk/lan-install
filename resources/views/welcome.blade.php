@@ -3760,7 +3760,9 @@
 <script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
 
 <!-- Подключаем библиотеку для экспорта в Excel -->
+<!--
 <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+-->
 
 </body>
 
