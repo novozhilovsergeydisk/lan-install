@@ -205,11 +205,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateRequest(requestData) {
         console.log('Updating request with data:', requestData);
-        const requestId = requestData.id; // Убираем префикс 'request-'
+        const requestId = requestData.id; // ID заявки
         console.log('Ищем строку с data-request-id:', requestId);
         
-        // Ищем строку по атрибуту data-request-id
-        const requestRow = document.querySelector(`[data-request-id="${requestId}"]`);
+        // Ищем строку по атрибуту data-request-id (проверяем как кнопку, так и строку таблицы)
+        let requestRow = document.querySelector(`button[data-request-id="${requestId}"]`);
+        
+        if (!requestRow) {
+            // Если не нашли кнопку, ищем строку таблицы
+            requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
+        }
         
         // Если строка не найдена, возможно, она еще не загружена
         if (!requestRow) {
@@ -222,30 +227,25 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Находим ячейку с бригадой
-        console.log('Поиск ячейки бригады в строке:', requestRow);
+        // Если нашли кнопку, поднимаемся до строки таблицы
+        if (requestRow.tagName === 'BUTTON') {
+            requestRow = requestRow.closest('tr');
+            if (!requestRow) {
+                console.error('Не удалось найти родительскую строку таблицы для кнопки');
+                return;
+            }
+        }
 
-        /*
-<div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
-                                    
-        <div class="mb-1"><i>Бригада</i></div>
-        <div><strong>Селиверстов А.</strong>
-    , Марков А., Соловьев Н.</div>
-<a href="#" class="text-black hover:text-gray-700 hover:underline view-brigade-btn" style="text-decoration: none; font-size: 0.75rem; 
-line-height: 1.2; display: inline-block; margin-top: 10px;" onmouseover="this.style.textDecoration='underline'" 
-onmouseout="this.style.textDecoration='none'" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="148">
-    подробнее...
-</a>
-</div>
-        */
-        
-        // Пробуем разные возможные селекторы
+        console.log('Найдена строка заявки:', requestRow);
+
+        // Пробуем разные возможные селекторы для ячейки с бригадой
         let brigadeCell = requestRow.querySelector('td[data-col="brigade"]') || 
-                         requestRow.querySelector('.col-brigade') ||
+                         requestRow.querySelector('td.col-brigade') ||
+                         requestRow.querySelector('td[data-name="brigadeMembers"]') ||
                          requestRow.querySelector('td:nth-child(5)'); // 5-я колонка, если другие не сработают
         
         if (!brigadeCell) {
-            console.error('Ячейка бригады не найдена. Доступные ячейки:');
+            console.log('Ячейка бригады не найдена стандартными селекторами. Доступные ячейки:');
             const allCells = requestRow.querySelectorAll('td');
             allCells.forEach((cell, index) => {
                 console.log(`Ячейка ${index}:`, cell.outerHTML);

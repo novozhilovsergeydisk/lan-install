@@ -501,6 +501,19 @@ function shortenName(fullName) {
  */
 function renderReportTable(data) {
     console.log('Полученные данные в data:', data);
+    const exportBtn = document.getElementById('export-report-btn');
+
+    // Нужно сохранить данные в localStorage
+    localStorage.setItem('reportData', JSON.stringify(data));
+
+    // console.log('reportData:', localStorage.getItem('reportData'));
+
+    if (data.requests.length === 0) {
+        // showAlert('Нет данных для отображения', 'warning');
+        exportBtn.classList.add('d-none');
+    } else {
+        exportBtn.classList.remove('d-none');
+    }
     
     const tbody = document.querySelector('#requestsReportTable tbody');
     if (!tbody) {

@@ -10,6 +10,241 @@ export function DateFormated(date) {
     return date.split('.').reverse().join('-');
 }
 
+// Обработчик для кнопки экспорта отчета в Excel
+function initExportReportBtn() {
+    console.log('Функция initExportReportBtn вызвана');
+    
+    const exportBtn = document.getElementById('export-report-btn');
+    
+    exportBtn.addEventListener('click', function() {
+        console.log('Кнопка экспорта нажата');
+        
+        try {
+            // Получаем данные из localStorage
+            const reportData = JSON.parse(localStorage.getItem('reportData'));
+
+            console.log('reportData:', reportData);
+
+            const requests = reportData.requests;
+
+            console.log('requests:', requests);
+
+            const brigadeMembers = reportData.brigadeMembers;
+
+            console.log('brigadeMembers:', brigadeMembers);
+
+            const comments_by_request = reportData.comments_by_request;
+
+            console.log('comments_by_request:', comments_by_request);
+            
+            if (!reportData || !reportData.requests || reportData.requests.length === 0) {
+                showAlert('Нет данных для экспорта', 'warning');
+                return;
+            }
+
+            // Проверяем, загружена ли библиотека XLSX
+            if (typeof XLSX === 'undefined') {
+                showAlert('Библиотека для экспорта не загружена', 'error');
+            }
+
+            // Подготавливаем данные для экспорта
+            const exportData = [];
+            
+            // Добавляем заголовки вручную, чтобы избежать дублирования
+            const headers = {
+                'requests': 'Заявки',
+                'brigade': 'Члены бригады',
+                'comments': 'Комментарии'
+            };
+            
+            // Обрабатываем каждую заявку
+            requests.forEach(request => {
+                let commentsText = '';
+                
+                try {
+                    // Получаем ID заявки (проверяем все возможные варианты ID)
+                    const requestId = request.id || request.request_id || request.requestId;
+                    
+                    if (!requestId) {
+                        console.warn('У заявки отсутствует ID:', request);
+                        commentsText = 'Ошибка: у заявки отсутствует ID';
+                    } else {
+                        // Ищем комментарии для текущей заявки
+                        const comments = comments_by_request && comments_by_request[requestId]
+                            ? Array.isArray(comments_by_request[requestId]) 
+                                ? comments_by_request[requestId] 
+                                : []
+                            : [];
+                        
+                        if (comments.length > 0) {
+                            commentsText = comments
+                                .filter(comment => comment) // Фильтруем пустые комментарии
+                                .map(comment => {
+                                    try {
+                                        const date = comment.created_at 
+                                            ? new Date(comment.created_at).toLocaleString('ru-RU') 
+                                            : 'Без даты';
+                                        const text = comment.comment || 'Без текста';
+                                        const author = comment.employee_full_name || comment.employee_name || 'Неизвестный автор';
+                                        return `${date}: ${text} (${author})`;
+                                    } catch (e) {
+                                        console.error('Ошибка при обработке комментария:', e, comment);
+                                        return null;
+                                    }
+                                })
+                                .filter(Boolean) // Удаляем null из-за ошибок обработки
+                                .join('\n\n');
+                        } else {
+                            commentsText = 'Нет комментариев';
+                        }
+                    }
+                } catch (e) {
+                    console.error('Ошибка при обработке комментариев для заявки:', request, e);
+                }
+
+                // Получаем членов бригады для текущей заявки
+                let brigadeText = '';
+                if (request.brigade_id) {
+                    try {
+                        // Находим всех членов бригады по brigade_id (нестрогое сравнение)
+                        const brigadeId = request.brigade_id;
+                        const brigadeMembersList = Array.isArray(brigadeMembers) 
+                            ? brigadeMembers.filter(member => 
+                                member && (member.brigade_id === brigadeId || member.brigadeId === brigadeId)
+                            )
+                            : [];
+                        
+                        if (brigadeMembersList.length > 0) {
+                            brigadeText = brigadeMembersList
+                                .map(member => {
+                                    if (!member) return null;
+                                    if (member.full_name) return member.full_name;
+                                    if (member.name || member.surname) {
+                                        return `${member.name || ''} ${member.surname || ''}`.trim();
+                                    }
+                                    if (member.employee_full_name) return member.employee_full_name;
+                                    if (member.employee_name) return member.employee_name;
+                                    return null;
+                                })
+                                .filter(Boolean) // Удаляем пустые строки
+                                .join('\n');
+                        } else {
+                            brigadeText = 'Нет данных о бригаде';
+                        }
+                    } catch (e) {
+                        console.error('Ошибка при обработке бригады:', e);
+                        brigadeText = 'Ошибка загрузки состава бригады';
+                    }
+                } else {
+                    brigadeText = 'Бригада не назначена';
+                }
+
+                // Формируем информацию о заявке
+                const requestInfo = [
+                    `№: ${request.number}`,
+                    `Дата: ${request.request_date}`,
+                    `Статус: ${request.status_name}`,
+                    `Клиент: ${request.client_fio}`,
+                    `Тел.: ${request.client_phone}`,
+                    `Орг.: ${request.client_organization}`,
+                    `Адрес: ${request.street || ''} ${request.houses || ''}`,
+                    `Район: ${request.district || ''}`,
+                    `Ответственный: ${request.operator_name || ''}`
+                ].filter(Boolean).join('\n');
+
+                exportData.push({
+                    'Заявки': requestInfo,
+                    'Члены бригады': brigadeText,
+                    'Комментарии': commentsText
+                });
+            });
+
+            // Создаем новую книгу Excel
+            const wb = XLSX.utils.book_new();
+            
+            // Создаем лист с данными
+            const ws = XLSX.utils.json_to_sheet(exportData, {skipHeader: true});
+            
+            // Добавляем заголовки вручную, чтобы избежать дублирования
+            const headerRange = XLSX.utils.decode_range(ws['!ref']);
+            
+            // Добавляем заголовки
+            Object.keys(headers).forEach((key, index) => {
+                const cellAddress = XLSX.utils.encode_cell({r: 0, c: index});
+                ws[cellAddress] = {v: headers[key], t: 's', s: {font: {bold: true}, alignment: {wrapText: true}}};
+            });
+            
+            // Устанавливаем ширину колонок
+            const colWidths = [
+                {wch: 40},  // Заявки
+                {wch: 30},  // Члены бригады
+                {wch: 80}   // Комментарии
+            ];
+            ws['!cols'] = colWidths;
+            
+            // Устанавливаем форматирование для всех ячеек
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            
+            // Проходим по всем строкам и столбцам
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                // Устанавливаем высоту строки
+                if (!ws['!rows']) ws['!rows'] = [];
+                if (!ws['!rows'][R]) ws['!rows'][R] = {};
+                ws['!rows'][R].hpt = 60; // Высота строки в пикселях
+                
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
+                    
+                    // Если ячейка не существует, создаем пустую
+                    if (!ws[cellAddress]) {
+                        ws[cellAddress] = { t: 's', v: '' };
+                    }
+                    
+                    // Устанавливаем стили для ячейки
+                    ws[cellAddress].s = {
+                        alignment: {
+                            wrapText: true,  // Включаем перенос текста
+                            vertical: 'top',  // Выравнивание по верхнему краю
+                            horizontal: 'left', // Выравнивание по левому краю
+                            shrinkToFit: false // Отключаем сжатие текста
+                        },
+                        border: {
+                            top: { style: 'thin', color: { rgb: 'D3D3D3' } },
+                            bottom: { style: 'thin', color: { rgb: 'D3D3D3' } },
+                            left: { style: 'thin', color: { rgb: 'D3D3D3' } },
+                            right: { style: 'thin', color: { rgb: 'D3D3D3' } }
+                        }
+                    };
+                }
+            }
+            
+            // Делаем заголовки жирными
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cellAddress = XLSX.utils.encode_cell({r: 0, c: C});
+                if (ws[cellAddress]) {
+                    ws[cellAddress].s.font = { bold: true };
+                }
+            }
+            
+            // Добавляем лист в книгу
+            XLSX.utils.book_append_sheet(wb, ws, 'Заявки');
+            
+            // Генерируем имя файла с текущей датой
+            const date = new Date().toISOString().split('T')[0];
+            const fileName = `Заявки_${date}.xlsx`;
+            
+            // Скачиваем файл
+            XLSX.writeFile(wb, fileName);
+            
+            console.log('Экспорт в Excel выполнен успешно');
+        } catch (error) {
+            console.error('Ошибка при экспорте в Excel:', error);
+            showAlert('Произошла ошибка при экспорте в Excel', 'error');
+        }
+    });
+}
+
+
 // Обработчик для кнопки скачивания zip-архива всех фото
 function initDownloadAllPhotos() {
     const downloadAllPhotosBtn = document.querySelector('.download-all-photos-btn');
@@ -3732,6 +3967,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initPhotoReportList();
     initDownloadAllPhotos();
     initUploadExcel();
+    initExportReportBtn()
 });
 
 // Обработчик загрузки файла Excel

@@ -1070,6 +1070,8 @@
 
                         <button id="generate-report-btn" class="btn btn-outline-primary mt-3 mb-3">Сгенерировать отчет</button>
                         
+                        <button id="export-report-btn" class="btn btn-outline-primary mt-3 mb-3 d-none">Выгрузить в excel</button>
+
                         <!-- Report Table -->
                         <div class="table-responsive t-custom">
                             <table id="requestsReportTable" class="table table-hover align-middle mb-0" style="min-width: 992px; margin-bottom: 0;">
@@ -3756,6 +3758,9 @@
 <!-- Подключаем скрипт для работы с модальными окнами -->
 <script type="module" src="{{ asset('js/modals.js') }}"></script>
 <script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
+
+<!-- Подключаем библиотеку для экспорта в Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
 
 </body>
 
