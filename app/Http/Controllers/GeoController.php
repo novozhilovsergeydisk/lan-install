@@ -213,7 +213,7 @@ class GeoController extends Controller
             'houses' => 'required|string|max:255',
             'district' => 'required|string|max:255',
             'city_id' => 'required|exists:cities,id',
-            'responsible_person' => 'required|string|max:255',
+            'responsible_person' => 'nullable|string|max:255',
             'comments' => 'nullable|string',
             'latitude' => [
                 'nullable',
