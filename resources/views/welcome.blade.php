@@ -32,6 +32,23 @@
             white-space: nowrap; /* предотвращаем перенос текста */
         }
         
+        /* Стили для невалидных полей */
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            padding-right: calc(1.5em + 0.75rem);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+        
+        .invalid-feedback {
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #dc3545;
+        }
+        
         /* Стили для таблицы отчётов */
         #reportTable tbody tr.status-row {
             --status-color: #ffffff; /* Белый цвет по умолчанию */
@@ -1388,14 +1405,57 @@
             });
         }
 
+        // Функция валидации формы
+        function validateCommentForm() {
+            const commentField = document.getElementById('commentField');
+            const errorMessage = commentField.nextElementSibling; // Блок с сообщением об ошибке
+            let isValid = true;
+            
+            console.log('Валидация формы. Текст комментария:', commentField.value);
+            
+            // Сбрасываем предыдущие состояния валидации
+            commentField.classList.remove('is-invalid');
+            if (errorMessage) {
+                errorMessage.classList.add('d-none');
+            }
+            
+            // Проверяем поле комментария
+            if (!commentField.value.trim()) {
+                console.log('Ошибка валидации: поле комментария пустое');
+                commentField.classList.add('is-invalid');
+                if (errorMessage) {
+                    errorMessage.classList.remove('d-none');
+                }
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
         // Обработка отправки формы комментария
         const commentForm = document.getElementById('addCommentForm');
         if (commentForm) {
+            console.log('Форма комментария найдена, добавляем обработчик submit');
+            
             commentForm.addEventListener('submit', function (e) {
+                console.log('Отправка формы комментария');
                 e.preventDefault();
+                
+                // Валидируем форму
+                if (!validateCommentForm()) {
+                    console.log('Валидация не пройдена');
+                    // Прокручиваем к первой ошибке
+                    const firstError = this.querySelector('.is-invalid');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return false;
+                }
+                
+                console.log('Валидация пройдена, продолжаем отправку');
 
-                // Инициализируем FormData - файлы уже включены автоматически
-                const formData = new FormData(this);
+            // Инициализируем FormData - файлы уже включены автоматически
+            const formData = new FormData(this);
                 const requestId = formData.get('request_id');
 
                 console.log('Отправляемые данные:');
@@ -1404,7 +1464,7 @@
                 }
 
                 // Получаем элементы формы
-                const commentInput = commentForm.querySelector('input[name="comment"]');
+                const commentInput = commentForm.querySelector('textarea[name="comment"]');
                 const submitButton = commentForm.querySelector('button[type="submit"]');
                 const originalButtonText = submitButton.innerHTML;
                 
@@ -1426,15 +1486,28 @@
                 const unlockForm = () => {
                     // Очищаем поле ввода только если форма была успешно отправлена
                     if (formSubmitted) {
-                        commentInput.value = '';
+                        const commentTextarea = document.querySelector('#addCommentForm textarea[name="comment"]');
+                        if (commentTextarea) {
+                            commentTextarea.value = '';
+                        }
+                        
+                        // Также сбрасываем выбранные файлы
+                        const fileInputs = document.querySelectorAll('#addCommentForm input[type="file"]');
+                        fileInputs.forEach(input => {
+                            input.value = '';
+                        });
                     }
                     
-                    // Разблокируем поле ввода
-                    commentInput.readOnly = false;
+                    // Разблокируем поле ввода, если оно существует
+                    if (commentInput) {
+                        commentInput.readOnly = false;
+                    }
                     
                     // Восстанавливаем кнопку
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = originalButtonText;
+                    }
                 };
                 
                 // Флаг успешной отправки
@@ -1469,8 +1542,11 @@
 
                             // Проверить тестовые данные с сервера
 
-                            // Очищаем поле ввода
-                            commentForm.querySelector('input[name="comment"]').value = '';
+                            // Очищаем поле ввода комментария
+                            const commentTextarea = commentForm.querySelector('textarea[name="comment"]');
+                            if (commentTextarea) {
+                                commentTextarea.value = '';
+                            }
 
                             // Показываем уведомление об успехе
                             utils.showAlert('Комментарий успешно добавлен', 'success');
@@ -1818,9 +1894,22 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <form id="addCommentForm" class="w-100">
+                <form id="addCommentForm" class="w-100" novalidate>
                     @csrf
                     <input type="hidden" name="request_id" id="commentRequestId">
+
+                    <div class="input-group mt-2 mb-4">
+                        <label  for="comment" class="form-label">Введите комментарий</label>
+                        
+                        <div class="w-100 d-flex flex-column gap-2">
+                            <textarea name="comment" id="commentField" class="form-control form-control-lg" rows="3" 
+                                placeholder="Напишите комментарий..." required></textarea>
+                            <div class="invalid-feedback d-none">Пожалуйста, введите комментарий</div>
+                            <button type="submit" class="btn btn-success">
+                                <i class=""></i> Записать комментарий
+                            </button>
+                        </div>
+                    </div>
 
                     <div class="mb-3">
                         <label for="photoUpload" class="form-label">Выберите фотографии</label>
@@ -1836,14 +1925,6 @@
                             <input id="commentFilesInput" type="file" name="files[]" class="form-control" multiple accept="video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.heic,.heif,.mp3,.wav,.ogg,.mp4,.webm,.mov,.avi,.zip,.rar,.7z" />
                         </div>
                         <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, ZIP, RAR, 7Z и т.д.</div>
-                    </div>
-
-                    <div class="input-group mt-2">
-                        <input type="text" name="comment" class="form-control" placeholder="Напишите комментарий..."
-                               required>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send"></i> Отправить
-                        </button>
                     </div>
                 </form>
                 
