@@ -512,7 +512,16 @@ function displayBrigadeInfo(data) {
                 `;
                 membersList.appendChild(membersTable);
             } else {
-                membersList.innerHTML += '<div class="alert alert-info">Бригадир сам является участником бригады</div>';
+                membersList.innerHTML += `
+                    <div class="alert alert-info">Бригадир сам является участником бригады</div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-danger delete-member-btn mt-2" 
+                                data-brigade-id="${brigadeId}" 
+                                data-employee-id="${leaderInfoObj.id}">
+                            Удалить
+                        </button>
+                    </div>
+                `;
             }
 
             // Добавляем информацию в карточку
