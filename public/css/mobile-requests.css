@@ -1,5 +1,49 @@
 /* public/css/mobile-requests.css */
 
+/* Стили для блока адресов на мобильных устройствах */
+@media (max-width: 995.98px) {
+    #input-excel {
+        margin-top: -1rem !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Убираем выравнивание по нижнему краю на мобильных */
+    #addresses .d-flex.align-items-end {
+        align-items: flex-start !important;
+    }
+    /* Стили для кнопки добавления адреса на мобильных */
+    .btn[data-bs-target="#assignAddressModal"] {
+        margin-top: 0 !important;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    /* Стили для формы загрузки Excel */
+    #uploadExcelForm .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+        width: 100%;
+    }
+    
+    #uploadExcelForm .form-control {
+        width: 100% !important;
+        max-width: 100%;
+    }
+    #addresses .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem !important;
+    }
+    #addresses .d-flex > div:first-child {
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+    #addresses .d-flex form {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+}
+
 /* Стили для фильтра сотрудников на мобильных устройствах */
 @media (max-width: 767.98px) {
     /* Стили для контейнера фильтра сотрудников */

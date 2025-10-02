@@ -605,69 +605,38 @@
 
                         <div class="card mb-4">
                             <div class="card-body">
-                                <!-- Регион -->
-                                <!--
-                                <div class="mb-4">
-                                    <h6>Добавить регион</h6>
-                                    <form id="regionForm" class="row g-2 align-items-end">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Название региона</label>
-                                            <input type="text" name="name" class="form-control" placeholder="Например: Московская область" required>
-                                        </div>
-                                        <div class="col-auto">
-                                            <button type="submit" class="btn btn-outline-primary">Добавить регион</button>
-                                        </div>
-                                    </form>
-                                </div>
-                                -->
-
-                                <!-- Город -->
-                                <!--
-                                <div class="mb-4">
-                                    <h6>Добавить город</h6>
-                                    <form id="cityForm" class="row g-2 align-items-end">
-                                        <div class="col-md-4">
-                                            <label class="form-label" data-field-name="Название города">Название города</label>
-                                            <input type="text" name="name" class="form-control" placeholder="Например: Коломна" required>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label" data-field-name="Регион">Регион</label>
-                                            <select name="positions" class="form-select" required data-field-name="Должность"></select>
-                                        </div>
-                                        <div class="col-auto">
-                                            <button type="submit" class="btn btn-outline-primary">Добавить город</button>
-                                        </div>
-                                    </form>
-                                </div>
-                                -->
-
-                                <!-- Форма загрузки файла Excel с адресами -->
-                                <form id="uploadExcelForm" class="w-100">
-                                    <div class="mb-3">
-                                        <label for="excelFile" class="form-label">Выбрать файл Excel для загрузки</label>
-                                        <div class="w-100 file-upload-highlight p-1">
-                                            <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx, .xls">
-                                        </div>
-                                        <div class="form-text">Поддерживаются форматы: .xlsx, .xls</div>
-                                    </div>
-                                    <div class="d-flex justify-content-end">
-                                        <button type="button" id="uploadExcelBtn" class="btn btn-primary">
-                                            <i class="bi bi-upload me-1"></i> Загрузить
+                                <div class="d-flex align-items-end gap-3 mb-3">
+                                    @if($user->isAdmin)
+                                    <div>
+                                        <!-- Кнопка для открытия модального окна добавления адреса -->
+                                        <button type="button" class="btn btn-primary" style="margin-top: -4.0rem;" data-bs-toggle="modal" data-bs-target="#assignAddressModal">
+                                            <i class="bi bi-plus-circle me-1"></i>Добавление адреса
                                         </button>
                                     </div>
-                                </form>
-
-                                <!-- Адрес -->
-                                @if($user->isAdmin)
-                                <div>
-                                    <!-- Кнопка для открытия модального окна добавления адреса -->
-                                    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#assignAddressModal">
-                                        <i class="bi bi-plus-circle me-1"></i>Добавить адрес
-                                    </button>
+                                    @else
+                                    <div class="alert alert-info mb-0">Добавление адресов доступно только для администраторов</div>
+                                    @endif
+                                    
+                                    <!-- Форма загрузки файла Excel с адресами -->
+                                    <form id="uploadExcelForm" class="flex-grow-1" style="margin-left: 1.5rem;">
+                                        <div class="mb-0">
+                                            <div class="input-group flex-nowrap">
+                                            
+                                                <div class="d-flex gap-2">
+                                                    <div id="input-excel">
+                                                        <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx, .xls" style="width: 23rem;">
+                                                    </div>
+                                                    <div>
+                                                        <button type="button" id="uploadExcelBtn" class="btn btn-primary flex-shrink-0">
+                                                            <i class="bi bi-upload"></i> Загрузить
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-text" style="font-size: 0.775em;">Поддерживаются форматы: .xlsx, .xls</div>
+                                        </div>
+                                    </form>
                                 </div>
-                                @else
-                                <div class="alert alert-info">Добавление адресов доступно только для администраторов</div>
-                                @endif
 
                                 <div id="addressInfo" class="block-address-info">
                                     <!-- Здесь будет только добавленный адрес или найденный адрес -->
