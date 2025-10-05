@@ -19,6 +19,9 @@ use App\Http\Controllers\PhotoReportController;
 // Photo reports
 Route::post('/photo-list', [PhotoReportController::class, 'index'])->name('photo-list.index')->middleware('auth');
 
+// Яндекс.Карты
+Route::get('/yandex-maps', [GeoController::class, 'getAddressesYandex'])->name('geo.addresses-yandex')->middleware('auth');
+
 Route::get('/employees', [EmployeesUserPositionPassportController::class, 'index'])->name('employees.index');
 
 Route::middleware(['auth', 'roles'])->group(function () {
@@ -208,6 +211,8 @@ Route::prefix('api/geo')->middleware('auth')->group(function () {
     Route::get('/addresses', [GeoController::class, 'getAddresses']);
     Route::get('/cities', [GeoController::class, 'getCities']);
     Route::get('/regions', [GeoController::class, 'getRegions']);
+
+    Route::get('/yandex', [GeoController::class, 'getAddressesYandex']);
 
     Route::post('/addresses', [GeoController::class, 'addAddress']);
     Route::post('/cities', [GeoController::class, 'addCity']);

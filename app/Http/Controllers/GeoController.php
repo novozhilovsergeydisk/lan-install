@@ -7,6 +7,12 @@ use Illuminate\Support\Facades\DB;
 
 class GeoController extends Controller
 {
+    public function getAddressesYandex()
+    {
+        // view
+        return view('geo.addresses-yandex');
+    }
+
     public function getAddress($id)
     {
         $address = DB::selectOne("
