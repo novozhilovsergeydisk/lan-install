@@ -99,6 +99,8 @@
         }
     </style>
 
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Bootstrap 5 CSS -->
     <link href="{{ asset('css/bootstrap.css') }}?v={{ time() }}" rel="stylesheet">
     <!-- Bootstrap Icons -->

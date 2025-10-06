@@ -130,23 +130,64 @@ function initYandexMap() {
         const placemarks = [];
         const geocoder = ymaps.geocode;
         
+        // Создаём кастомный макет для постоянно видимой подписи рядом с меткой
+        const MyIconContentLayout = ymaps.templateLayoutFactory.createClass(
+            '<div style="min-width: 120px; max-width: 350px; background: white; padding: 6px 10px; border: 1px solid #007bff; border-radius: 4px; margin-left: 12px; font-size: 13px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: normal; word-break: normal; display: inline-block;">$[properties.iconContent]</div>'
+        );
+
         // Функция для добавления метки на карту
         function addPlacemark(request, address, coords, index) {
             // Форматируем номер заявки в формат REQ-YYYYMMDD-XXXX
             const requestNumber = request.number || `REQ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(request.id || index + 1).padStart(4, '0')}`;
+            const brigadeName = request.brigade_name || 'Без бригады';
+
+            // Определяем цвет метки в зависимости от статуса
+            let iconColor = '#1e98ff'; // Синий по умолчанию
+            if (request.status_id === 4) iconColor = '#4CAF50'; // Зеленый для выполненных
+            else if (request.status_id === 3) iconColor = '#FFC107'; // Желтый для в работе
+            else if (request.status_id === 2) iconColor = '#FF9800'; // Оранжевый для назначенных
+            
+            // Формируем текст для постоянной подписи
+            const labelText = `
+                <div style="margin-bottom: 4px; font-weight: 500;"><strong>${brigadeName}</strong></div>
+                <div>${address || 'Адрес не указан'}</div>
+                ${request.status ? `<div style="color: #666; font-size: 0.9em; margin-top: 2px;">${request.status}</div>` : ''}
+            `;
+
+            // const labelText = `
+            // <div style="white-space: normal; width: 100% !important; max-width: 180px; line-height: 1.2; border: 2px solid #007bff; padding: 4px 8px;">
+            //     <div style="font-weight: bold;">${requestNumber}</div>
+            //     <div>${address || 'Адрес не указан'}</div>
+            //     ${request.status ? `<div style="color: #666; font-size: 0.9em;">${request.status}</div>` : ''}
+            // </div>
+            // `;
             
             const placemark = new ymaps.Placemark(coords, {
-                hintContent: `${requestNumber}\n${address}`,
+                iconContent: labelText, // Это будет отображаться всегда рядом с меткой
+                // hintContent: `${requestNumber}\n${address}`, // Закомментировали подсказку при наведении
                 balloonContent: `
                     <div style="padding: 10px;">
                         <h3>${requestNumber}</h3>
                         <p><strong>Адрес:</strong> ${address}</p>
                         ${request.status ? `<p><strong>Статус:</strong> ${request.status}</p>` : ''}
-                        ${request.description ? `<p>${request.description}</p>` : ''}
+                        ${request.client_fio ? `<p><strong>Клиент:</strong> ${request.client_fio}</p>` : ''}
+                        ${request.client_phone ? `<p><strong>Телефон:</strong> <a href="tel:${request.client_phone}">${request.client_phone}</a></p>` : ''}
+                        ${request.brigade_name ? `<p><strong>Бригада:</strong> ${request.brigade_name}</p>` : ''}
+                        ${request.description ? `<p><strong>Описание:</strong> ${request.description}</p>` : ''}
                     </div>
                 `
             }, {
-                preset: 'islands#blueDotIcon',
+                iconLayout: 'default#imageWithContent',
+                iconImageHref: 'data:image/svg+xml;base64,' + btoa(`
+                    <svg width="30" height="42" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15,0 C6.7,0 0,6.7 0,15 C0,23.3 15,42 15,42 S30,23.3 30,15 C30,6.7 23.3,0 15,0 Z" fill="${iconColor}" stroke="white" stroke-width="2"/>
+                        <circle cx="15" cy="15" r="5" fill="white"/>
+                    </svg>
+                `),
+                iconImageSize: [30, 42],
+                iconImageOffset: [-15, -42],
+                iconContentLayout: MyIconContentLayout,
+                iconContentOffset: [15, 0], // Смещение текста вправо от метки
                 draggable: false
             });
             
@@ -4179,72 +4220,6 @@ async function handleSaveEmployeeChanges(event) {
         showAlert(`Ошибка: ${error.message}`, 'danger');
     }
 }
-
-// Функция для обновления таблицы сотрудников
-// async function refreshEmployeesTable() {
-//     try {
-//         const response = await fetch('/api/employees');
-//         if (!response.ok) {
-//             throw new Error('Ошибка при загрузке данных сотрудников');
-//         }
-        
-//         const employees = await response.json();
-//         const tbody = document.querySelector('#employeesTable tbody');
-        
-//         if (!tbody) return;
-        
-//         // Очищаем текущее содержимое таблицы
-//         tbody.innerHTML = '';
-        
-//         // Заполняем таблицу новыми данными
-//         employees.forEach(employee => {
-//             const row = document.createElement('tr');
-//             row.className = 'small';
-            
-//             // Форматируем дату рождения, если она есть
-//             const birthDate = employee.birth_date ? new Date(employee.birth_date).toLocaleDateString('ru-RU') : '';
-            
-//             row.innerHTML = `
-//                 <td>
-//                     <div>${employee.fio || ''} <br> ${employee.user_email || ''}</div>
-//                     <div class="mt-2">
-//                         <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn me-1" 
-//                                 data-employee-id="${employee.id}" 
-//                                 data-employee-name="${employee.fio || ''}">
-//                             <i class="bi bi-pencil-square"></i>
-//                         </button> 
-//                         <button type="button" class="btn btn-sm btn-outline-danger ms-2 delete-employee-btn me-1" 
-//                                 data-employee-id="${employee.id}" 
-//                                 data-employee-name="${employee.fio || ''}">
-//                             <i class="bi bi-trash"></i>
-//                         </button>
-//                     </div>
-//                 </td>
-//                 <td>${employee.phone || ''}</td>
-//                 <td>${employee.position || ''}</td>
-//                 <td>${birthDate}</td>
-//                 <td>
-//                     <div>
-//                         ${employee.series_number || ''} <br> 
-//                         ${employee.passport_issued_at || ''} <br> 
-//                         ${employee.passport_issued_by || ''} <br> 
-//                         ${employee.department_code || ''}
-//                     </div>
-//                 </td>
-//                 <td>${employee.car_brand || ''} <br> ${employee.car_plate || ''}</td>
-//             `;
-            
-//             tbody.appendChild(row);
-//         });
-        
-//         // Инициализируем обработчики для новых кнопок редактирования/удаления
-//         initEmployeeButtons();
-        
-//     } catch (error) {
-//         console.error('Ошибка при обновлении таблицы сотрудников:', error);
-//         showAlert('Не удалось обновить список сотрудников', 'danger');
-//     }
-// }
 
 // Функция для инициализации обработчиков кнопок сотрудников
 function initEmployeeButtons() {
