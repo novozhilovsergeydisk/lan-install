@@ -4354,65 +4354,97 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Обработчик загрузки файла Excel
 function initUploadExcel() {
-    uploadExcelBtn.addEventListener('click', async function() {
-        // showAlert('Функция загрузки файла Excel в разработке', 'info');
+    const uploadExcelBtn = document.getElementById('uploadExcelBtn');
+    const uploadExcelForm = document.getElementById('uploadExcelForm');
+    const fileInput = document.getElementById('excelFile');
+    
+    if (!uploadExcelBtn || !uploadExcelForm || !fileInput) {
+        console.warn('Не найдены необходимые элементы для загрузки Excel');
+        return;
+    }
 
-        // return;
+    // Обработчик клика по кнопке загрузки
+    uploadExcelBtn.addEventListener('click', handleExcelUpload);
+    
+    // Обработчик сброса формы после успешной загрузки
+    uploadExcelForm.addEventListener('reset', () => {
+        fileInput.value = '';
+    });
+}
 
-        console.log('Нажата кнопка "Загрузить" для файла Excel');
+// Функция обработки загрузки Excel файла
+async function handleExcelUpload() {
+    const fileInput = document.getElementById('excelFile');
+    const file = fileInput?.files?.[0];
+    
+    if (!file) {
+        showAlert('Пожалуйста, выберите файл для загрузки', 'warning');
+        return;
+    }
 
-        const fileInput = document.getElementById('excelFile');
-        const file = fileInput.files[0];
-        
-        if (!file) {
-            showAlert('Пожалуйста, выберите файл для загрузки', 'warning');
-            return;
-        }
+    // Проверяем расширение файла
+    const validExtensions = ['.xlsx', '.xls', '.csv'];
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    if (!validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+        showAlert('Пожалуйста, выберите файл с расширением .xlsx, .xls или .csv', 'warning');
+        return;
+    }
 
-        // Выводим информацию о файле
-        console.log('Информация о загружаемом файле:', {
-            'Имя файла': file.name,
-            'Размер': `${(file.size / 1024).toFixed(2)} КБ`,
-            'Тип': file.type || 'Не определен',
-            'Дата последнего изменения': new Date(file.lastModified).toLocaleString(),
-            'Выбранный файл': file
+    // Выводим информацию о файле
+    console.log('Информация о загружаемом файле:', {
+        'Имя файла': file.name,
+        'Размер': `${(file.size / 1024).toFixed(2)} КБ`,
+        'Тип': file.type || 'Не определен',
+        'Дата последнего изменения': new Date(file.lastModified).toLocaleString()
+    });
+
+    const formData = new FormData();
+    formData.append('excel_file', file);
+    
+    // Добавляем CSRF-токен
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!csrfToken) {
+        console.error('CSRF token не найден');
+        showAlert('Ошибка безопасности. Пожалуйста, обновите страницу.', 'danger');
+        return;
+    }
+
+    try {
+        const response = await fetch('/upload-excel', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
         });
 
-        const formData = new FormData(uploadExcelForm);
-        console.log('FormData содержимое:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}:`, value);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || `Ошибка сервера: ${response.status}`);
+        }
+
+        console.log('Успешный ответ сервера:', data);
+        showAlert('Файл успешно загружен и обработан', 'success');
+        
+        // Очищаем форму после успешной загрузки
+        if (uploadExcelForm) {
+            uploadExcelForm.reset();
         }
         
-        try {
-            const response = await fetch('/upload-excel', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
-                    // Убираем Content-Type, чтобы браузер сам установил правильный заголовок с boundary для FormData
-                },
-                body: formData  // Используем FormData напрямую, без JSON.stringify
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Ответ сервера:', data);
-            
-            if (data.success) {
-                showAlert('Файл Excel успешно загружен', 'success');
-            } else {
-                showAlert(data.message || 'Произошла ошибка при загрузке файла Excel', 'danger');
-            }
-        } catch (error) {
-            console.error('Ошибка при загрузке файла Excel:', error);
-            showAlert('Произошла ошибка при загрузке файла Excel', 'danger');
+        // Обновляем список заявок, если функция доступна
+        if (typeof loadPlanningRequests === 'function') {
+            loadPlanningRequests();
         }
-    });
-    
+        
+    } catch (error) {
+        console.error('Ошибка при загрузке файла Excel:', error);
+        const errorMessage = error.message || 'Произошла ошибка при загрузке файла';
+        showAlert(errorMessage, 'danger');
+    }
 }
 
 // Инициализация обработчиков кнопок "Показать файлы"

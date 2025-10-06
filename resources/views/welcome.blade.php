@@ -632,14 +632,14 @@
                                         </button>
                                     </div>
                                     @else
-                                    <div class="alert alert-info mb-0">Добавление адресов доступно только для администраторов</div>
+                                    <div class="alert alert-info mb-0">Добавление и загрузка адресов доступно только для администраторов</div>
                                     @endif
                                     
+                                    @if($user->isAdmin)
                                     <!-- Форма загрузки файла Excel с адресами -->
                                     <form id="uploadExcelForm" class="flex-grow-1" style="margin-left: 1.5rem;">
                                         <div class="mb-0">
                                             <div class="input-group flex-nowrap">
-                                            
                                                 <div class="d-flex gap-2">
                                                     <div id="input-excel">
                                                         <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx, .xls" style="width: 23rem;">
@@ -654,6 +654,7 @@
                                             <div class="form-text" style="font-size: 0.775em;">Поддерживаются форматы: .xlsx, .xls</div>
                                         </div>
                                     </form>
+                                    @endif
                                 </div>
 
                                 <div id="addressInfo" class="block-address-info">
