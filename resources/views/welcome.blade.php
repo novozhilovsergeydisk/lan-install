@@ -315,7 +315,7 @@
 
                             <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
                                     id="btn-open-map">
-                                <i class="bi bi-map me-1"></i>Карта
+                                <i class="bi bi-map me-1"></i>На карте
                             </button>
 
                             <div id="status-buttons" class="d-flex flex-wrap gap-2  hide-me">
