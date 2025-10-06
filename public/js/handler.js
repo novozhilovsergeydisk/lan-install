@@ -625,6 +625,33 @@ function applyFilters() {
                 return data;
             })
             .then(data => {
+                console.log('Загрузка заявок для выбранной даты ', data);
+                
+                // Проверяем, что есть данные для сохранения
+                if (data && data.data && Array.isArray(data.data)) {
+                    // Сохраняем данные в localStorage
+                    localStorage.setItem('requestsData', JSON.stringify(data.data));
+                    console.log('Данные заявок сохранены в localStorage:', data.data.length, 'записей');
+                    
+                    // Показываем контейнер карты, если он скрыт
+                    const mapContainer = document.getElementById('map-content');
+                    if (mapContainer) {
+                        mapContainer.classList.remove('hide-me');
+                    }
+                    
+                    // Вызываем loadRequestsByDate для обновления данных на карте
+                    if (typeof loadRequestsByDate === 'function') {
+                        loadRequestsByDate(selectedDate);
+                    }
+                    
+                    // Если функция initMapWithRequests доступна, вызываем её
+                    if (typeof initMapWithRequests === 'function') {
+                        initMapWithRequests();
+                    }
+                } else {
+                    console.log('Нет данных о заявках для сохранения');
+                }
+                
                 // Логи ответов отключены
                 if (data) {
                     if (data.success === false) {

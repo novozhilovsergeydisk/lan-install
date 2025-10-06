@@ -336,7 +336,9 @@ class HomeController extends Controller
                 a.street,
                 a.houses,
                 c.name as city,
-                a.district
+                a.district,
+                a.latitude,
+                a.longitude
             FROM addresses a
             JOIN cities c ON a.city_id = c.id
             ORDER BY a.street, a.houses
@@ -372,6 +374,8 @@ class HomeController extends Controller
                 a.doc,
                 a.comments,
                 a.responsible_person,
+                a.latitude,
+                a.longitude,
                 c.created_at,
                 c.updated_at,
                 c.id as city_id,
@@ -607,6 +611,8 @@ class HomeController extends Controller
                 addr.houses,
                 addr.district,
                 addr.city_id,
+                addr.latitude,
+                addr.longitude,
                 ct.name AS city_name,
                 ct.postal_code AS city_postal_code
             FROM requests r
@@ -647,6 +653,8 @@ class HomeController extends Controller
                         addr.houses,
                         addr.district,
                         addr.city_id,
+                        addr.latitude,
+                        addr.longitude,
                         ct.name AS city_name,
                         ct.postal_code AS city_postal_code,
                         rs.name AS status_name,
@@ -684,8 +692,14 @@ class HomeController extends Controller
             }
 
         $requests = DB::select($sql);
-
-        //        dd($requestByDate);
+        
+        // Convert stdClass objects to arrays for the view
+        // $requestsData = array_map(function($request) {
+        //     return (array) $request;
+        // }, $requests);
+        
+        // Add requests data to the view
+        // view()->share('requestsData', $requestsData);
 
         $flags = [
             'new' => 'new',
@@ -1288,6 +1302,8 @@ class HomeController extends Controller
                         addr.houses,
                         addr.district,
                         addr.city_id,
+                        addr.latitude,
+                        addr.longitude,
                         ct.name AS city_name,
                         (
                             SELECT COUNT(*)
@@ -1341,6 +1357,8 @@ class HomeController extends Controller
                         addr.houses,
                         addr.district,
                         addr.city_id,
+                        addr.latitude,
+                        addr.longitude,
                         ct.name AS city_name,
                         (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count
                     FROM requests r
@@ -2464,6 +2482,8 @@ class HomeController extends Controller
                     addr.houses,
                     addr.district,
                     addr.city_id,
+                    addr.latitude,
+                    addr.longitude,
                     ct.name AS city_name,
                     ct.postal_code AS city_postal_code
                 FROM requests r

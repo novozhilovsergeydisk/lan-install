@@ -313,6 +313,11 @@
                                 <i class="bi bi-calendar me-1"></i>Календарь
                             </button>
 
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
+                                    id="btn-open-map">
+                                <i class="bi bi-map me-1"></i>Карта
+                            </button>
+
                             <div id="status-buttons" class="d-flex flex-wrap gap-2  hide-me">
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->
                             </div>
@@ -323,6 +328,19 @@
                         <div id="calendar-content" class="max-w-400 p-4 hide-me">
                             <div id="datepicker"></div>
                         </div>
+
+                        <div id="map-content" class="p-4 hide-me" style="height: 800px; width: 100%;">
+                            <div id="map" style="width: 100%; height: 100%;"></div>
+                        </div>
+                        
+                        <!-- Yandex.Maps API -->
+                        <script src="https://api-maps.yandex.ru/2.1/?apikey={{ config('services.yandex.maps_key') }}&lang=ru_RU" type="text/javascript"></script>
+
+                        <script>
+                            // const requestsData = @json($requests);
+                            // console.log('requestsData:', requestsData);
+                            // localStorage.setItem('requestsData', JSON.stringify(requestsData));
+                        </script>
 
                         <!-- Контейнер таблицы заявок (всегда отображается) -->
                         <div id="requests-table-container" class="table-responsive mt-4 t-custom">
@@ -1180,6 +1198,13 @@
 
 <!-- Подключение WYSIWYG редактора -->
 <script src="{{ asset('js/editor.js') }}"></script>
+
+<!-- Передаем данные о заявках в JavaScript -->
+<script>
+    const requestsData = @json($requests);
+    console.log('requestsData:', requestsData);
+    localStorage.setItem('requestsData', JSON.stringify(requestsData));
+</script>
 
 <!-- Подключение скрипта для переключения десктопного режима масштабирования вместо мобильной верстки -->
 <script src="{{ asset('js/swipe.js') }}"></script>

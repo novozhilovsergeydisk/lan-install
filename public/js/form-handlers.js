@@ -10,11 +10,391 @@ export function DateFormated(date) {
     return date.split('.').reverse().join('-');
 }
 
+// Глобальная переменная для хранения состояния загрузки карты
+window.ymapsLoading = false;
+
+// Функция для инициализации карты с метками
+function initMapWithRequests() {
+    console.log('Инициализация карты с заявками...');
+    
+    // Проверяем, загружена ли API Яндекс.Карт
+    if (typeof ymaps === 'undefined') {
+        console.log('API Яндекс.Карт не загружено, пробуем загрузить...');
+        loadYandexMaps();
+        return;
+    }
+    
+    // Если API загружено, инициализируем карту
+    initYandexMap();
+}
+
+// Функция для загрузки API Яндекс.Карт
+function loadYandexMaps() {
+    if (window.ymapsLoading) {
+        console.log('API Яндекс.Карт уже загружается...');
+        return;
+    }
+    
+    console.log('Загрузка API Яндекс.Карт...');
+    window.ymapsLoading = true;
+    
+    // Создаем скрипт для загрузки API
+    const script = document.createElement('script');
+    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${window.yandexMapsApiKey || ''}&lang=ru_RU&load=package.full`;
+    script.async = true;
+    
+    // Обработчик успешной загрузки
+    script.onload = function() {
+        console.log('API Яндекс.Карт успешно загружено');
+        window.ymaps.ready(initYandexMap);
+    };
+    
+    // Обработчик ошибки загрузки
+    script.onerror = function() {
+        console.error('Ошибка загрузки API Яндекс.Карт');
+        window.ymapsLoading = false;
+        showAlert('Не удалось загрузить карту. Пожалуйста, обновите страницу.', 'error');
+    };
+    
+    document.head.appendChild(script);
+}
+
+// Функция инициализации карты после загрузки API
+function initYandexMap() {
+    console.log('Инициализация карты...');
+
+    try {
+        // Если карта уже существует, очищаем её
+        if (window.yandexMap) {
+            console.log('Уничтожаем существующую карту');
+            window.yandexMap.destroy();
+            window.yandexMap = null;
+        }
+        
+        // Пересоздаем элемент карты
+        const mapContent = document.getElementById('map-content');
+        if (!mapContent) {
+            console.error('Контейнер карты не найден');
+            return;
+        }
+        
+        mapContent.innerHTML = '<div id="map" style="width: 100%; height: 100%;"></div>';
+        console.log('Элемент карты пересоздан');
+        
+        // Создаем карту с центром на Москве
+        window.yandexMap = new ymaps.Map('map', {
+            center: [55.75, 37.62], // Центр Москвы (Красная площадь)
+            zoom: 10, // Оптимальный зум для просмотра города
+            controls: ['zoomControl', 'typeSelector', 'fullscreenControl']
+        });
+        
+        // Обновляем локальную переменную и флаг инициализации
+        yandexMap = window.yandexMap;
+        isMapInitialized = true;
+        
+        // Принудительно обновляем границы карты после загрузки
+        setTimeout(() => {
+            if (window.yandexMap) {
+                window.yandexMap.setZoom(10).then(() => {
+                    window.yandexMap.setCenter([55.75, 37.62]);
+                    window.yandexMap.setZoom(10);
+                });
+            }
+        }, 100);
+        
+        // Сохраняем ссылку на карту в локальную переменную для использования в этой функции
+        const map = window.yandexMap;
+
+        // Проверяем, есть ли данные о заявках
+        const requestsData = localStorage.getItem('requestsData');
+        let requests = [];
+        
+        try {
+            if (requestsData) {
+                requests = JSON.parse(requestsData);
+            }
+        } catch (e) {
+            console.error('Ошибка при парсинге данных заявок:', e);
+            requests = [];
+        }
+
+        console.log('Всего заявок:', requests.length);
+        console.log('Первые 3 заявки:', requests.slice(0, 3));
+
+        if (!Array.isArray(requests) || requests.length === 0) {
+            console.log('Нет данных о заявках для отображения на карте');
+            return;
+        }
+
+        // Массив для хранения объектов меток
+        const placemarks = [];
+        const geocoder = ymaps.geocode;
+        
+        // Функция для добавления метки на карту
+        function addPlacemark(request, address, coords, index) {
+            // Форматируем номер заявки в формат REQ-YYYYMMDD-XXXX
+            const requestNumber = request.number || `REQ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(request.id || index + 1).padStart(4, '0')}`;
+            
+            const placemark = new ymaps.Placemark(coords, {
+                hintContent: `${requestNumber}\n${address}`,
+                balloonContent: `
+                    <div style="padding: 10px;">
+                        <h3>${requestNumber}</h3>
+                        <p><strong>Адрес:</strong> ${address}</p>
+                        ${request.status ? `<p><strong>Статус:</strong> ${request.status}</p>` : ''}
+                        ${request.description ? `<p>${request.description}</p>` : ''}
+                    </div>
+                `
+            }, {
+                preset: 'islands#blueDotIcon',
+                draggable: false
+            });
+            
+            map.geoObjects.add(placemark);
+            placemarks.push(placemark);
+            
+            // Если это первая метка, центрируем карту на ней
+            if (placemarks.length === 1) {
+                map.setCenter(coords, 12);
+            }
+            
+            return placemark;
+        }
+
+        console.log('Обработка заявок:', requests);
+        
+        // Счетчик для отслеживания завершения геокодирования
+        let processedCount = 0;
+        
+        // Обрабатываем каждую заявку
+        requests.forEach((request, index) => {
+            // Проверяем, есть ли уже координаты
+            if (request.latitude && request.longitude && !isNaN(parseFloat(request.latitude)) && !isNaN(parseFloat(request.longitude))) {
+                const coords = [parseFloat(request.latitude), parseFloat(request.longitude)];
+                const address = [
+                    request.city_name,
+                    request.street,
+                    request.houses
+                ].filter(Boolean).join(', ');
+                
+                console.log(`Заявка ${request.id}: координаты найдены`, coords, address);
+                addPlacemark(request, address, coords, index);
+                processedCount++;
+                
+                // Если это последняя итерация, обновляем границы карты
+                if (processedCount === requests.length && placemarks.length > 0) {
+                    updateMapBounds();
+                }
+                return;
+            } else {
+                console.log(`Заявка ${request.id}: координаты отсутствуют или некорректны`, {
+                    latitude: request.latitude,
+                    longitude: request.longitude,
+                    hasCoords: !!(request.latitude && request.longitude),
+                    isValid: !!(request.latitude && request.longitude && !isNaN(parseFloat(request.latitude)) && !isNaN(parseFloat(request.longitude)))
+                });
+            }
+            
+            // Если координат нет, проверяем наличие адреса
+            if (!request.city_name || !request.street) {
+                console.warn(`Заявка ${request.id}: у заявки отсутствует полный адрес:`, {
+                    city_name: request.city_name,
+                    street: request.street,
+                    houses: request.houses
+                });
+                processedCount++;
+                
+                // Если это последняя итерация, обновляем границы карты
+                if (processedCount === requests.length && placemarks.length > 0) {
+                    updateMapBounds();
+                }
+                return;
+            }
+            
+            // Формируем адрес для геокодирования
+            const addressParts = [
+                'Россия',
+                request.city_name,
+                request.street,
+                request.houses
+            ].filter(Boolean);
+            
+            // Удаляем дубликаты для лучшего геокодирования
+            const uniqueParts = [];
+            const seen = new Set();
+            for (const part of addressParts) {
+                if (!seen.has(part)) {
+                    seen.add(part);
+                    uniqueParts.push(part);
+                }
+            }
+            
+            const address = uniqueParts.join(', ');
+            console.log(`Заявка ${request.id}: геокодируем адрес:`, address);
+            
+            // Используем callback-подход вместо промисов
+            geocoder(address, { 
+                results: 1,
+                json: true
+            }).then(function(res) {
+                try {
+                    if (!res || !res.geoObjects || res.geoObjects.getLength() === 0) {
+                        console.warn('Адрес не найден:', address);
+                        return;
+                    }
+                    
+                    const firstGeoObject = res.geoObjects.get(0);
+                    if (!firstGeoObject) {
+                        console.warn('Не удалось получить геообъект для адреса:', address);
+                        return;
+                    }
+                    
+                    try {
+                        const coords = firstGeoObject.geometry.getCoordinates();
+                        addPlacemark(request, address, coords, index);
+                    } catch (e) {
+                        console.error('Ошибка при получении координат для адреса:', address, e);
+                    }
+                } catch (e) {
+                    console.error('Ошибка при обработке геокодирования:', e);
+                } finally {
+                    processedCount++;
+                    console.log(`Заявка ${request.id}: обработка завершена, обработано ${processedCount} из ${requests.length}`);
+                    
+                    // Если это последняя итерация, обновляем границы карты
+                    if (processedCount === requests.length) {
+                        console.log(`Все заявки обработаны. Успешно добавлено меток: ${placemarks.length} из ${requests.length}`);
+                        if (placemarks.length > 0) {
+                            updateMapBounds();
+                        } else {
+                            console.warn('Нет меток для отображения на карте');
+                            // Если ни одной метки не добавлено, показываем сообщение пользователю
+                            showAlert('Не удалось определить координаты для отображения заявок на карте. Пожалуйста, проверьте наличие адресов в заявках.', 'warning');
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Функция для обновления границ карты
+        function updateMapBounds() {
+            try {
+                if (placemarks.length > 0) {
+                    map.setBounds(map.geoObjects.getBounds(), {
+                        checkZoomRange: true,
+                        zoomMargin: 50
+                    });
+                } else {
+                    console.warn('Нет меток для отображения на карте');
+                }
+            } catch (e) {
+                console.error('Ошибка при обновлении границ карты:', e);
+            }
+        }
+        
+    } catch (e) {
+        console.error('Ошибка при инициализации карты:', e);
+        showAlert('Произошла ошибка при загрузке карты. Пожалуйста, обновите страницу.', 'error');
+    }
+}
+
+// Глобальные переменные для работы с картой
+let yandexMap = null;
+let isMapInitialized = false;
+
+function initOpenMapBtn() {
+    const btnOpenMap = document.getElementById('btn-open-map');
+    const mapContent = document.getElementById('map-content');
+    
+    btnOpenMap.addEventListener('click', function() {
+        console.log('Кнопка открытия карты нажата');
+
+        const requestsData = localStorage.getItem('requestsData');
+
+        console.log('requestsData *:', requestsData);
+
+        // return;
+
+        // Проверяем фактическую видимость (класс или computed display)
+        const hasHideMeClass = mapContent.classList.contains('hide-me');
+        const computedDisplay = window.getComputedStyle(mapContent).display;
+        const isHidden = hasHideMeClass || computedDisplay === 'none';
+        
+        console.log('Состояние контейнера карты:', {
+            hasHideMeClass: hasHideMeClass,
+            classList: Array.from(mapContent.classList),
+            displayStyle: mapContent.style.display,
+            computedDisplay: computedDisplay,
+            isHidden: isHidden
+        });
+        
+        // Если карта скрыта, показываем её
+        if (isHidden) {
+            console.log('Карта показывается');
+            
+            // Удаляем класс скрытия
+            mapContent.classList.remove('hide-me');
+            
+            // Явно устанавливаем стили для показа
+            mapContent.style.display = 'block';
+            mapContent.style.visibility = 'visible';
+            mapContent.style.height = '800px';
+            mapContent.style.padding = '1rem';
+            
+            // Проверяем, загружена ли API Яндекс.Карт
+            if (typeof ymaps !== 'undefined') {
+                console.log('API Яндекс.Карт загружено');
+                
+                // Синхронизируем локальную переменную с глобальной
+                if (!window.yandexMap && yandexMap) {
+                    // Если глобальная карта уничтожена, сбрасываем локальные переменные
+                    yandexMap = null;
+                    isMapInitialized = false;
+                } else if (window.yandexMap && !yandexMap) {
+                    yandexMap = window.yandexMap;
+                    isMapInitialized = true;
+                }
+                
+                // Дожидаемся готовности API перед инициализацией
+                ymaps.ready(function() {
+                    if (yandexMap && isMapInitialized) {
+                        console.log('Карта уже инициализирована, обновляем метки');
+                        // Очищаем карту от старых меток
+                        yandexMap.geoObjects.removeAll();
+                        // Перезагружаем данные и метки
+                        initYandexMap();
+                    } else {
+                        console.log('Инициализируем карту в первый раз');
+                        initYandexMap();
+                    }
+                });
+            } else {
+                console.error('API Яндекс.Карт не загружено');
+                loadYandexMaps(); // Пытаемся загрузить API, если оно не загружено
+            }
+        } else {
+            // Карта скрывается
+            console.log('Карта скрывается');
+            
+            // Добавляем класс скрытия
+            mapContent.classList.add('hide-me');
+            
+            // Устанавливаем inline-стили для скрытия
+            mapContent.style.display = 'none';
+            mapContent.style.visibility = 'hidden';
+            mapContent.style.height = '0';
+            mapContent.style.padding = '0';
+        }
+
+        console.log('END');
+    });
+}
+
 // Обработчик для кнопки экспорта отчета в Excel
 function initExportReportBtn() {
     console.log('Функция initExportReportBtn вызвана');
 
-    return;
+    // return;
     
     const exportBtn = document.getElementById('export-report-btn');
     
@@ -245,7 +625,6 @@ function initExportReportBtn() {
         }
     });
 }
-
 
 // Обработчик для кнопки скачивания zip-архива всех фото
 function initDownloadAllPhotos() {
@@ -3969,7 +4348,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initPhotoReportList();
     initDownloadAllPhotos();
     initUploadExcel();
-    initExportReportBtn()
+    initExportReportBtn();
+    initOpenMapBtn();
 });
 
 // Обработчик загрузки файла Excel
