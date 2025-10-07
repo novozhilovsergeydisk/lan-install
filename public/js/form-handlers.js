@@ -14,50 +14,50 @@ export function DateFormated(date) {
 window.ymapsLoading = false;
 
 // Функция для инициализации карты с метками
-function initMapWithRequests() {
-    console.log('Инициализация карты с заявками...');
+// function initMapWithRequests() {
+//     console.log('Инициализация карты с заявками...');
     
-    // Проверяем, загружена ли API Яндекс.Карт
-    if (typeof ymaps === 'undefined') {
-        console.log('API Яндекс.Карт не загружено, пробуем загрузить...');
-        loadYandexMaps();
-        return;
-    }
+//     // Проверяем, загружена ли API Яндекс.Карт
+//     if (typeof ymaps === 'undefined') {
+//         console.log('API Яндекс.Карт не загружено, пробуем загрузить...');
+//         loadYandexMaps();
+//         return;
+//     }
     
-    // Если API загружено, инициализируем карту
-    initYandexMap();
-}
+//     // Если API загружено, инициализируем карту
+//     initYandexMap();
+// }
 
 // Функция для загрузки API Яндекс.Карт
-function loadYandexMaps() {
-    if (window.ymapsLoading) {
-        console.log('API Яндекс.Карт уже загружается...');
-        return;
-    }
+// function loadYandexMaps() {
+//     if (window.ymapsLoading) {
+//         console.log('API Яндекс.Карт уже загружается...');
+//         return;
+//     }
     
-    console.log('Загрузка API Яндекс.Карт...');
-    window.ymapsLoading = true;
+//     console.log('Загрузка API Яндекс.Карт...');
+//     window.ymapsLoading = true;
     
-    // Создаем скрипт для загрузки API
-    const script = document.createElement('script');
-    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${window.yandexMapsApiKey || ''}&lang=ru_RU&load=package.full`;
-    script.async = true;
+//     // Создаем скрипт для загрузки API
+//     const script = document.createElement('script');
+//     script.src = `https://api-maps.yandex.ru/2.1/?apikey=${window.yandexMapsApiKey || ''}&lang=ru_RU&load=package.full`;
+//     script.async = true;
     
-    // Обработчик успешной загрузки
-    script.onload = function() {
-        console.log('API Яндекс.Карт успешно загружено');
-        window.ymaps.ready(initYandexMap);
-    };
+//     // Обработчик успешной загрузки
+//     script.onload = function() {
+//         console.log('API Яндекс.Карт успешно загружено');
+//         window.ymaps.ready(initYandexMap);
+//     };
     
-    // Обработчик ошибки загрузки
-    script.onerror = function() {
-        console.error('Ошибка загрузки API Яндекс.Карт');
-        window.ymapsLoading = false;
-        showAlert('Не удалось загрузить карту. Пожалуйста, обновите страницу.', 'error');
-    };
+//     // Обработчик ошибки загрузки
+//     script.onerror = function() {
+//         console.error('Ошибка загрузки API Яндекс.Карт');
+//         window.ymapsLoading = false;
+//         showAlert('Не удалось загрузить карту. Пожалуйста, обновите страницу.', 'error');
+//     };
     
-    document.head.appendChild(script);
-}
+//     document.head.appendChild(script);
+// }
 
 // Функция инициализации карты после загрузки API
 function initYandexMap() {
@@ -132,7 +132,7 @@ function initYandexMap() {
         
         // Создаём кастомный макет для постоянно видимой подписи рядом с меткой
         const MyIconContentLayout = ymaps.templateLayoutFactory.createClass(
-            '<div style="min-width: 120px; max-width: 350px; background: white; padding: 6px 10px; border: 1px solid #007bff; border-radius: 4px; margin-left: 12px; font-size: 13px; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: normal; word-break: normal; display: inline-block;">$[properties.iconContent]</div>'
+            '<div style="min-width: 35px; max-width: auto; background: rgba(255, 255, 255, 0.7); padding: 0rem; border-radius: 4px; white-space: nowrap; word-break: keep-all; display: inline-block;">$[properties.iconContent]</div>'
         );
 
         // Функция для добавления метки на карту
@@ -146,13 +146,18 @@ function initYandexMap() {
             if (request.status_id === 4) iconColor = '#4CAF50'; // Зеленый для выполненных
             else if (request.status_id === 3) iconColor = '#FFC107'; // Желтый для в работе
             else if (request.status_id === 2) iconColor = '#FF9800'; // Оранжевый для назначенных
+
+            const labelText = `
+                <div style="font-weight: 500; font-size: 0.7rem; padding-left: 0rem;">${brigadeName}</div>
+            `;
+                
             
             // Формируем текст для постоянной подписи
-            const labelText = `
-                <div style="margin-bottom: 4px; font-weight: 500;"><strong>${brigadeName}</strong></div>
-                <div>${address || 'Адрес не указан'}</div>
-                ${request.status ? `<div style="color: #666; font-size: 0.9em; margin-top: 2px;">${request.status}</div>` : ''}
-            `;
+            // const labelText = `
+            //     <div style="margin-bottom: 4px; font-weight: 500;"><strong>${brigadeName}</strong></div>
+            //     <div>${address || 'Адрес не указан'}</div>
+            //     ${request.status ? `<div style="color: #666; font-size: 0.9em; margin-top: 2px;">${request.status}</div>` : ''}
+            // `;
 
             // const labelText = `
             // <div style="white-space: normal; width: 100% !important; max-width: 180px; line-height: 1.2; border: 2px solid #007bff; padding: 4px 8px;">
@@ -162,32 +167,67 @@ function initYandexMap() {
             // </div>
             // `;
             
+            // Проверяем мобильное устройство
+            const isMobile = window.innerWidth < 768;
+            
+            // Создаем контент балуна
+            const balloonContent = `
+                <div class="balloon-content" style="padding: ${isMobile ? '1rem' : '0.1rem'};">
+                    <h3 style="margin: 0 0 10px 0; font-size: ${isMobile ? '1.2rem' : '1rem'};">${requestNumber}</h3>
+                    ${request.client_organization ? `<p style="margin: 5px 0;"><strong>Организация:</strong> ${request.client_organization}</p>` : ''}
+                    <p style="margin: 5px 0;"><strong>Адрес:</strong> ${address}</p>
+                    ${request.status ? `<p style="margin: 5px 0;"><strong>Статус:</strong> ${request.status_name}</p>` : ''}
+                    ${request.client_fio ? `<p style="margin: 5px 0;"><strong>Клиент:</strong> ${request.client_fio}</p>` : ''}
+                    ${request.client_phone ? `<p style="margin: 5px 0;"><strong>Телефон:</strong> <a href="tel:${request.client_phone}" style="color: #1e88e5; text-decoration: none;">${request.client_phone}</a></p>` : ''}
+                    ${request.brigade_name ? `<p style="margin: 5px 0;"><strong>Бригада:</strong> ${request.brigade_name}</p>` : ''}
+                    ${request.description ? `<p style="margin: 10px 0 0 0; padding-top: 8px; border-top: 1px solid #eee;"><strong>Описание:</strong> ${request.description}</p>` : ''}
+                </div>
+            `;
+
+            // Создаем стили для мобильного балуна
+            if (isMobile) {
+                const style = document.createElement('style');
+                style.textContent = `
+                    .ymaps-2-1-79-balloon {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        left: 0 !important;
+                        top: auto !important;
+                        bottom: 0 !important;
+                        transform: none !important;
+                        border-radius: 12px 12px 0 0 !important;
+                        box-shadow: 0 -2px 10px rgba(0,0,0,0.1) !important;
+                    }
+                    .ymaps-2-1-79-balloon__content {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+                    .ymaps-2-1-79-balloon__layout {
+                        border-radius: 12px 12px 0 0 !important;
+                    }
+                    .ymaps-2-1-79-balloon__close-button {
+                        top: 10px !important;
+                        right: 10px !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
             const placemark = new ymaps.Placemark(coords, {
                 iconContent: labelText, // Это будет отображаться всегда рядом с меткой
-                // hintContent: `${requestNumber}\n${address}`, // Закомментировали подсказку при наведении
-                balloonContent: `
-                    <div style="padding: 10px;">
-                        <h3>${requestNumber}</h3>
-                        <p><strong>Адрес:</strong> ${address}</p>
-                        ${request.status ? `<p><strong>Статус:</strong> ${request.status}</p>` : ''}
-                        ${request.client_fio ? `<p><strong>Клиент:</strong> ${request.client_fio}</p>` : ''}
-                        ${request.client_phone ? `<p><strong>Телефон:</strong> <a href="tel:${request.client_phone}">${request.client_phone}</a></p>` : ''}
-                        ${request.brigade_name ? `<p><strong>Бригада:</strong> ${request.brigade_name}</p>` : ''}
-                        ${request.description ? `<p><strong>Описание:</strong> ${request.description}</p>` : ''}
-                    </div>
-                `
+                balloonContent: balloonContent
             }, {
                 iconLayout: 'default#imageWithContent',
                 iconImageHref: 'data:image/svg+xml;base64,' + btoa(`
-                    <svg width="30" height="42" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15,0 C6.7,0 0,6.7 0,15 C0,23.3 15,42 15,42 S30,23.3 30,15 C30,6.7 23.3,0 15,0 Z" fill="${iconColor}" stroke="white" stroke-width="2"/>
-                        <circle cx="15" cy="15" r="5" fill="white"/>
+                    <svg width="22" height="100" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12,0 C5.4,0 0,5.4 0,12 C0,18.6 12,34 12,34 S24,18.6 24,12 C24,5.4 18.6,0 12,0 Z" fill="${iconColor}" stroke="white" stroke-width="1.6"/>
+                        <circle cx="12" cy="12" r="4" fill="white"/>
                     </svg>
                 `),
-                iconImageSize: [30, 42],
+                iconImageSize: [22, 100],
                 iconImageOffset: [-15, -42],
                 iconContentLayout: MyIconContentLayout,
-                iconContentOffset: [15, 0], // Смещение текста вправо от метки
+                iconContentOffset: [24, 0], // Смещение текста вправо от метки
                 draggable: false
             });
             
@@ -411,7 +451,7 @@ function initOpenMapBtn() {
                 });
             } else {
                 console.error('API Яндекс.Карт не загружено');
-                loadYandexMaps(); // Пытаемся загрузить API, если оно не загружено
+                // loadYandexMaps(); // Пытаемся загрузить API, если оно не загружено
             }
         } else {
             // Карта скрывается
