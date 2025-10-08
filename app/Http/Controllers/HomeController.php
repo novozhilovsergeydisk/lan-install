@@ -132,6 +132,10 @@ class HomeController extends Controller
                 'reason' => 'required|string|max:1000'
             ]);
 
+            // Log
+            \Log::info('=== START cancelRequest ===', []);
+            \Log::info('=== Все входные данные ===', ['validated' => $validated]);
+
             // Начинаем транзакцию
             DB::beginTransaction();
 
@@ -191,6 +195,10 @@ class HomeController extends Controller
             $commentsCount = DB::table('request_comments')
                 ->where('request_id', $validated['request_id'])
                 ->count();
+
+            // Log
+            \Log::info('=== Все выходные данные ===', ['commentsCount' => $commentsCount]);
+            \Log::info('=== END cancelRequest ===', []);
 
             return response()->json([
                 'success' => true,
@@ -276,6 +284,17 @@ class HomeController extends Controller
                 ->join('request_comments', 'comments.id', '=', 'request_comments.comment_id')
                 ->where('request_comments.request_id', $validated['request_id'])
                 ->count();
+
+                \Log::info('=== START transferRequest ===', []);
+                \Log::info('Validated data', $validated);
+                \Log::info('Request data', ['data' => (array) $requestData]);
+                \Log::info('Comment and metadata', [
+                    'comment' => $comment,
+                    'request_id' => $validated['request_id'],
+                    'comment_id' => $commentId,
+                    'comments_count' => $commentsCount
+                ]);
+                \Log::info('=== END transferRequest ===');
 
             // Commit transaction
             DB::commit();
@@ -423,7 +442,7 @@ class HomeController extends Controller
 
     public function index()
     {
-        \Log::info('=== СТАРТ СТРАНИЦЫ ===');
+        // \Log::info('=== СТАРТ СТРАНИЦЫ ===', []);
         // Получаем текущего пользователя (проверка аутентификации уже выполнена в роутере)
         $user = auth()->user();
 
@@ -751,6 +770,12 @@ class HomeController extends Controller
 
         // Логируем данные для отладки
         // \Log::info('View data:', ['comments_by_request' => $comments_by_request]);
+
+        // \log::info('$user', (array)$user);
+
+        // \Log::info('Content-Type: ' . $request->header('Content-Type'));
+        
+        // \Log::info('=== КОНЕЦ СТРАНИЦЫ ===', []);
 
         return view('welcome', $viewData);
     }
@@ -1659,16 +1684,22 @@ class HomeController extends Controller
 
     public function deleteRequest($id, Request $request) {
         try {
+            \Log::info('=== START deleteRequest ===', []);
+
             $user = auth()->user();
             $user->method = 'HomeController::deleteRequest';
             $employee = $user->employee;
             $employee_role = $user->roles[0];
+
+            
 
             $validated = $request->validate([
                 'request_id' => 'required|exists:requests,id',
             ]);
 
             $request_id = $validated['request_id'];
+
+            \Log::info('=== Все входные данные ===', ['request_id' => $request_id]);
 
             // Тестовый ответ
 
@@ -1680,6 +1711,10 @@ class HomeController extends Controller
 
             $sql = "update requests set status_id = 7 where id = ?";
             $result = DB::update($sql, [$request_id]);
+
+            \Log::info('=== Все выходные данные ===', ['sql' => 'update requests set status_id = 7 where id =' . $request_id, 'result' => $result]);
+
+            \Log::info('=== END deleteRequest ===', []);
 
             return response()->json([
                 'success' => true,
@@ -1709,6 +1744,13 @@ class HomeController extends Controller
             $user->method = 'HomeController::closeRequest';
             $employee = $user->employee;
             $employee_role = $user->roles[0];
+
+            \Log::info('=== START closeRequest ===', []);
+            \Log::info('Все входные данные', ['data' => $request->all()]);
+            \Log::info('ID заявки', ['id' => $id]);
+            \Log::info('ID сотрудника', ['id' => $employee->id]);
+            \Log::info('Роль сотрудника', ['role' => $employee_role]);
+
 
             $sql = "select * from requests where id = ?";
             $result = DB::select($sql, [$id]);
@@ -1882,6 +1924,14 @@ class HomeController extends Controller
                     $response['new_request_id'] = $newRequestId;
                     $response['new_request_number'] = $requestNumber;
                 }
+
+                // Перед возвратом ответа
+                \Log::info('Все выходные данные', [
+                    'success' => $response['success'] ?? null,
+                    'message' => $response['message'] ?? null,
+                    'new_request_id' => $response['new_request_id'] ?? null
+                ]);
+                \Log::info('=== END closeRequest ===', []);
 
                 return response()->json($response);
             }
@@ -2163,8 +2213,8 @@ class HomeController extends Controller
 
         try {
             // Логируем все входные данные для отладки
-            // \Log::info('=== НАЧАЛО ОБРАБОТКИ ЗАПРОСА ===');
-            // \Log::info('Все входные данные:', $request->all());
+            \Log::info('=== START storeRequest ===');
+            \Log::info('Все входные данные:', $request->all());
 
             // Получаем данные из запроса
             $input = $request->all();
@@ -2546,6 +2596,27 @@ class HomeController extends Controller
 
             // Фиксируем изменения, если все успешно
             DB::commit();
+            
+            // Логируем основные данные о заявке
+            \Log::info('Создана новая заявка:', [
+                'request' => [
+                    'id' => $requestId,
+                    'number' => $requestNumber,
+                    'type_id' => $validated['request_type_id'],
+                    'status_id' => $validated['status_id'],
+                    'execution_date' => $validated['execution_date'],
+                    'is_admin' => $user->isAdmin
+                ],
+                'client' => $clientId ? [
+                    'id' => $clientId,
+                    'is_new' => !$isExistingClient
+                ] : 'Без привязки к клиенту',
+                'address_id' => $address->id ?? null,
+                'comment_id' => $newCommentId ?? null
+            ]); 
+
+            \Log::info('=== END storeRequest ===');
+
             return response()->json($response);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

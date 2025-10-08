@@ -331,7 +331,7 @@
                             <div id="datepicker"></div>
                         </div>
 
-                        <div id="map-content" class="p-4 hide-me" style="height: 800px; width: 100%;">
+                        <div id="map-content" class="hide-me" style="height: 800px; width: 100%;">
                             <div id="map" style="width: 100%; height: 100%;"></div>
                         </div>
                         

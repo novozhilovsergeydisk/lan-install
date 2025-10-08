@@ -241,7 +241,7 @@ function initYandexMap() {
                             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
                             padding: 16px;
                             min-width: 280px;
-                            max-width: 400px;
+                            max-width: 575px;
                             width: auto !important;
                             box-sizing: border-box;
                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -385,7 +385,7 @@ function initYandexMap() {
                     const balloon = document.querySelector('.custom-balloon');
                     if (balloon) {
                         balloon.style.minWidth = '280px';
-                        balloon.style.maxWidth = '400px';
+                        balloon.style.maxWidth = '575px';
                     }
                 }
             });
