@@ -11,7 +11,7 @@ export function DateFormated(date) {
 }
 
 // Глобальная переменная для хранения состояния загрузки карты
-window.ymapsLoading = false;
+// window.ymapsLoading = false;
 
 // Функция для инициализации карты с метками
 // function initMapWithRequests() {
@@ -170,52 +170,161 @@ function initYandexMap() {
             // Проверяем мобильное устройство
             const isMobile = window.innerWidth < 768;
             
+            // Создаем кастомный макет балуна, если он еще не создан
+            if (!window.balloonLayout) {
+                window.balloonLayout = ymaps.templateLayoutFactory.createClass(
+                    '<div class="custom-balloon">' +
+                        '<div class="custom-balloon__content">$[properties.balloonContent]</div>' +
+                        '<div class="custom-balloon__close-button">&times;</div>' +
+                    '</div>', {
+                        build: function() {
+                            window.balloonLayout.superclass.build.call(this);
+                            this.getData().geoObject.events.add('balloonclose', this.onBalloonClose, this);
+                            this._$element = this.getParentElement().querySelector('.custom-balloon');
+                            this._$closeButton = this._$element.querySelector('.custom-balloon__close-button');
+                            this._$closeButton.addEventListener('click', this.onCloseClick.bind(this));
+                            
+                            // Добавляем обработчик для мобильных устройств
+                            if (isMobile) {
+                                this._$element.classList.add('mobile');
+                            }
+                        },
+                        clear: function() {
+                            this._$closeButton.removeEventListener('click', this.onCloseClick);
+                            this.getData().geoObject.events.remove('balloonclose', this.onBalloonClose, this);
+                            window.balloonLayout.superclass.clear.call(this);
+                        },
+                        onCloseClick: function(e) {
+                            e.preventDefault();
+                            this.getData().geoObject.balloon.close();
+                        },
+                        onBalloonClose: function() {}
+                    }
+                );
+                
+                // Добавляем стили для кастомного балуна
+                if (!document.getElementById('custom-balloon-styles')) {
+                    const style = document.createElement('style');
+                    style.id = 'custom-balloon-styles';
+                    style.textContent = `
+                        @media (max-width: 767px) {
+                            .ymaps-2-1-79-balloon {
+                                position: fixed !important;
+                                top: auto !important;
+                                bottom: 0 !important;
+                                left: 0 !important;
+                                right: 0 !important;
+                                width: 100% !important;
+                                max-width: 100% !important;
+                                height: auto !important;
+                                transform: none !important;
+                                margin: 0 !important;
+                                border-radius: 12px 12px 0 0 !important;
+                                box-shadow: 0 -2px 10px rgba(0,0,0,0.1) !important;
+                            }
+                            .ymaps-2-1-79-balloon__content {
+                                margin: 0 !important;
+                                padding: 0 !important;
+                            }
+                            .custom-balloon {
+                                width: 100% !important;
+                                max-width: 100% !important;
+                                border-radius: 12px 12px 0 0 !important;
+                                box-sizing: border-box;
+                                position: relative;
+                            }
+                        }
+                        .custom-balloon {
+                            position: relative;
+                            background: #fff;
+                            border-radius: 8px;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                            padding: 16px;
+                            min-width: 280px;
+                            max-width: 400px;
+                            width: auto !important;
+                            box-sizing: border-box;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                            font-size: 14px;
+                            line-height: 1.4;
+                        }
+                        /* Стили для корректного отображения контента балуна */
+                        .ymaps-2-1-79-balloon {
+                            width: auto !important;
+                            max-width: 100% !important;
+                        }
+                        .ymaps-2-1-79-balloon__content {
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        .custom-balloon__close-button {
+                            position: absolute;
+                            top: 8px;
+                            right: 8px;
+                            width: 24px;
+                            height: 24px;
+                            background: none;
+                            border: none;
+                            font-size: 20px;
+                            line-height: 1;
+                            cursor: pointer;
+                            color: #999;
+                            padding: 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                        .custom-balloon__close-button:hover {
+                            color: #333;
+                        }
+                        .custom-balloon__content {
+                            padding-right: 10px;
+                        }
+                        .custom-balloon h3 {
+                            margin: 0 0 12px 0;
+                            font-size: 16px;
+                            color: #1e88e5;
+                            font-weight: 600;
+                        }
+                        .custom-balloon p {
+                            margin: 6px 0;
+                            color: #333;
+                        }
+                        .custom-balloon a {
+                            color: #1e88e5;
+                            text-decoration: none;
+                        }
+                        .custom-balloon a:hover {
+                            text-decoration: underline;
+                        }
+                        .custom-balloon .description {
+                            margin-top: 10px;
+                            padding-top: 10px;
+                            border-top: 1px solid #eee;
+                            color: #555;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+            
             // Создаем контент балуна
             const balloonContent = `
-                <div class="balloon-content" style="padding: ${isMobile ? '1rem' : '0.1rem'};">
-                    <h3 style="margin: 0 0 10px 0; font-size: ${isMobile ? '1.2rem' : '1rem'};">${requestNumber}</h3>
-                    ${request.client_organization ? `<p style="margin: 5px 0;"><strong>Организация:</strong> ${request.client_organization}</p>` : ''}
-                    <p style="margin: 5px 0;"><strong>Адрес:</strong> ${address}</p>
-                    ${request.status ? `<p style="margin: 5px 0;"><strong>Статус:</strong> ${request.status_name}</p>` : ''}
-                    ${request.client_fio ? `<p style="margin: 5px 0;"><strong>Клиент:</strong> ${request.client_fio}</p>` : ''}
-                    ${request.client_phone ? `<p style="margin: 5px 0;"><strong>Телефон:</strong> <a href="tel:${request.client_phone}" style="color: #1e88e5; text-decoration: none;">${request.client_phone}</a></p>` : ''}
-                    ${request.brigade_name ? `<p style="margin: 5px 0;"><strong>Бригада:</strong> ${request.brigade_name}</p>` : ''}
-                    ${request.description ? `<p style="margin: 10px 0 0 0; padding-top: 8px; border-top: 1px solid #eee;"><strong>Описание:</strong> ${request.description}</p>` : ''}
-                </div>
+                <h3>${requestNumber}</h3>
+                ${request.client_organization ? `<p><strong>Организация:</strong> ${request.client_organization}</p>` : ''}
+                <p><strong>Адрес:</strong> ${address}</p>
+                ${request.status ? `<p><strong>Статус:</strong> ${request.status_name}</p>` : ''}
+                ${request.client_fio ? `<p><strong>Клиент:</strong> ${request.client_fio}</p>` : ''}
+                ${request.client_phone ? `<p><strong>Телефон:</strong> <a href="tel:${request.client_phone}">${request.client_phone}</a></p>` : ''}
+                ${request.brigade_name ? `<p><strong>Бригада:</strong> ${request.brigade_name}</p>` : ''}
+                ${request.description ? `<div class="description"><strong>Описание:</strong> ${request.description}</div>` : ''}
             `;
 
-            // Создаем стили для мобильного балуна
-            if (isMobile) {
-                const style = document.createElement('style');
-                style.textContent = `
-                    .ymaps-2-1-79-balloon {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        left: 0 !important;
-                        top: auto !important;
-                        bottom: 0 !important;
-                        transform: none !important;
-                        border-radius: 12px 12px 0 0 !important;
-                        box-shadow: 0 -2px 10px rgba(0,0,0,0.1) !important;
-                    }
-                    .ymaps-2-1-79-balloon__content {
-                        margin: 0 !important;
-                        padding: 0 !important;
-                    }
-                    .ymaps-2-1-79-balloon__layout {
-                        border-radius: 12px 12px 0 0 !important;
-                    }
-                    .ymaps-2-1-79-balloon__close-button {
-                        top: 10px !important;
-                        right: 10px !important;
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
             const placemark = new ymaps.Placemark(coords, {
-                iconContent: labelText, // Это будет отображаться всегда рядом с меткой
-                balloonContent: balloonContent
+                iconContent: labelText,
+                balloonContent: balloonContent,
+                balloonContentHeader: requestNumber,
+                balloonContentBody: address
             }, {
                 iconLayout: 'default#imageWithContent',
                 iconImageHref: 'data:image/svg+xml;base64,' + btoa(`
@@ -227,8 +336,58 @@ function initYandexMap() {
                 iconImageSize: [22, 100],
                 iconImageOffset: [-15, -42],
                 iconContentLayout: MyIconContentLayout,
-                iconContentOffset: [24, 0], // Смещение текста вправо от метки
-                draggable: false
+                iconContentOffset: [24, 0],
+                draggable: false,
+                balloonLayout: window.balloonLayout,
+                balloonCloseButton: false,
+                balloonPanelMaxMapArea: 0,
+                balloonAutoPan: true,
+                balloonOffset: [0, -40]
+            });
+            
+            // Обработчик открытия балуна
+            placemark.events.add('balloonopen', function() {
+                if (isMobile) {
+                    // Для мобильных устройств принудительно обновляем стили
+                    setTimeout(() => {
+                        const balloon = document.querySelector('.custom-balloon');
+                        const balloonContainer = document.querySelector('.ymaps-2-1-79-balloon');
+                        const balloonLayout = document.querySelector('.ymaps-2-1-79-balloon__layout');
+                        
+                        if (balloonContainer) {
+                            balloonContainer.style.position = 'fixed';
+                            balloonContainer.style.top = 'auto';
+                            balloonContainer.style.bottom = '0';
+                            balloonContainer.style.left = '0';
+                            balloonContainer.style.right = '0';
+                            balloonContainer.style.width = '100%';
+                            balloonContainer.style.maxWidth = '100%';
+                            balloonContainer.style.height = 'auto';
+                            balloonContainer.style.transform = 'none';
+                            balloonContainer.style.margin = '0';
+                            balloonContainer.style.borderRadius = '12px 12px 0 0';
+                            balloonContainer.style.boxShadow = '0 -2px 10px rgba(0,0,0,0.1)';
+                        }
+                        
+                        if (balloonLayout) {
+                            balloonLayout.style.borderRadius = '12px 12px 0 0';
+                        }
+                        
+                        if (balloon) {
+                            balloon.style.width = '100%';
+                            balloon.style.maxWidth = '100%';
+                            balloon.style.borderRadius = '12px 12px 0 0';
+                            balloon.style.boxSizing = 'border-box';
+                        }
+                    }, 0);
+                } else {
+                    // Для десктопной версии
+                    const balloon = document.querySelector('.custom-balloon');
+                    if (balloon) {
+                        balloon.style.minWidth = '280px';
+                        balloon.style.maxWidth = '400px';
+                    }
+                }
             });
             
             map.geoObjects.add(placemark);
