@@ -48,7 +48,7 @@ class PlanningRequestController extends Controller
         try {
             // Получаем текущие данные заявки
             $currentRequest = DB::table('requests')->find($requestId);
-            \Log::info('Before update:', [
+            \Log::info('=== START planninginWorkRequest ===', [
                 'request' => $currentRequest,
                 'request_id' => $requestId,
                 'execution_date' => $planningExecutionDate
@@ -63,7 +63,7 @@ class PlanningRequestController extends Controller
                 return is_string($param) ? "'$param'" : $param;
             }, $bindings), $sql);
             
-            \Log::info('Executing SQL:', ['sql' => $fullSql]);
+            // \Log::info('Executing SQL:', ['sql' => $fullSql]);
             
             $result = DB::update($sql, $bindings);
             
@@ -77,6 +77,8 @@ class PlanningRequestController extends Controller
             if ($statusChanged) {
                 // Фиксируем изменения, если статус изменился
                 DB::commit();
+
+                \Log::info('=== END planninginWorkRequest ===', []);
                 
                 return response()->json([
                     'success' => true,

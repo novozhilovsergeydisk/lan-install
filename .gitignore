@@ -1,3 +1,7 @@
+filter_by_date.sh
+filter_by_date_and_block.sh
+filter_by_date_and_block.sh.bak
+filter_log.php
 BACKUPS/
 ./diff.txt
 diff.txt
