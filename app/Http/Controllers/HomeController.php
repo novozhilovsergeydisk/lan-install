@@ -33,6 +33,9 @@ class HomeController extends Controller
                 'password' => 'required|string|min:8',
             ]);
 
+            \Log::info('=== START updateCredentials 200 ===', []);
+            \Log::info('Все входные данные', ['data' => $request->all()]);
+
             $sql = "select * from employees where id = $id";
             $result = DB::select($sql);
             $user_id = $result[0]->user_id;
@@ -64,6 +67,9 @@ class HomeController extends Controller
             if ($result === 0) {
                 throw new \Exception('Пароль не был обновлен');
             }
+            
+            \Log::info('result', ['result' => $result]);   
+            \Log::info('=== END updateCredentials 200 ===', []);
 
             return response()->json([
                 'success' => true,
@@ -75,13 +81,18 @@ class HomeController extends Controller
             ]);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::error('=== START ERROR updateCredentials 404 ===', []);
+            \Log::error('Error updating user credentials 404: ' . $e->getMessage());
+            \Log::error('=== END ERROR updateCredentials 404 ===', []);
             return response()->json([
                 'success' => false,
                 'message' => 'Пользователь не найден',
                 'error' => $e->getMessage()
             ], 404);
         } catch (\Exception $e) {
-            \Log::error('Error updating user credentials: ' . $e->getMessage());
+            \Log::error('=== START ERROR updateCredentials 500 ===', []);
+            \Log::error('Error updating user credentials 500: ' . $e->getMessage());
+            \Log::error('=== END ERROR updateCredentials 500 ===', []);
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при обновлении пароля',
@@ -109,7 +120,9 @@ class HomeController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('Error getting roles: ' . $e->getMessage());
+            \Log::error('=== START ERROR getRoles 500 ===', []);
+            \Log::error('Error getting roles 500: ' . $e->getMessage());
+            \Log::error('=== END ERROR getRoles 500 ===', []);
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении списка ролей',
@@ -209,6 +222,9 @@ class HomeController extends Controller
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('=== START ERROR cancelRequest 422 ===', []);
+            \Log::error('Ошибка при отмене заявки 422: ' . $e->getMessage());
+            \Log::error('=== END ERROR cancelRequest 422 ===', []);
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
@@ -217,8 +233,9 @@ class HomeController extends Controller
         } catch (\Exception $e) {
             // Откатываем транзакцию в случае ошибки
             DB::rollBack();
-            Log::error('Ошибка при отмене заявки: ' . $e->getMessage());
-
+            \Log::error('=== START ERROR cancelRequest 500 ===', []);
+            \Log::error('Ошибка при отмене заявки 500: ' . $e->getMessage());
+            \Log::error('=== END ERROR cancelRequest 500 ===', []);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -285,16 +302,16 @@ class HomeController extends Controller
                 ->where('request_comments.request_id', $validated['request_id'])
                 ->count();
 
-                \Log::info('=== START transferRequest ===', []);
-                \Log::info('Validated data', $validated);
-                \Log::info('Request data', ['data' => (array) $requestData]);
-                \Log::info('Comment and metadata', [
-                    'comment' => $comment,
-                    'request_id' => $validated['request_id'],
-                    'comment_id' => $commentId,
-                    'comments_count' => $commentsCount
-                ]);
-                \Log::info('=== END transferRequest ===');
+            \Log::info('=== START transferRequest ===', []);
+            \Log::info('Validated data', $validated);
+            \Log::info('Request data', ['data' => (array) $requestData]);
+            \Log::info('Comment and metadata', [
+                'comment' => $comment,
+                'request_id' => $validated['request_id'],
+                'comment_id' => $commentId,
+                'comments_count' => $commentsCount
+            ]);
+            \Log::info('=== END transferRequest ===');
 
             // Commit transaction
             DB::commit();
@@ -309,6 +326,9 @@ class HomeController extends Controller
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+            \Log::error('=== START ERROR transferRequest 422 ===', []);
+            \Log::error('Ошибка при переносе заявки 422: ' . $e->getMessage());
+            \Log::error('=== END ERROR transferRequest 422 ===', []);
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
@@ -316,7 +336,9 @@ class HomeController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Ошибка при переносе заявки: ' . $e->getMessage());
+            \Log::error('=== START ERROR transferRequest 500 ===', []);
+            \Log::error('Ошибка при переносе заявки 500: ' . $e->getMessage());
+            \Log::error('=== END ERROR transferRequest 500 ===', []);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -1723,7 +1745,9 @@ class HomeController extends Controller
                 'request_id' => $request_id
             ]);
         } catch (\Exception $e) {
+            \Log::error('=== START ERROR deleteRequest ===', []);
             \Log::error('Ошибка при завершении заявки: ' . $e->getMessage());
+            \Log::error('=== END ERROR deleteRequest ===', []);
             return response()->json([
                 'error' => 'Ошибка при завершении заявки',
                 'message' => $e->getMessage()
