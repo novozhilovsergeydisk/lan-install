@@ -15,6 +15,15 @@ use App\Http\Controllers\EmployeesUserPositionPassportController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\EmployeesFilterController;
 use App\Http\Controllers\PhotoReportController;
+use App\Http\Controllers\CityController;
+
+// Города добавление
+Route::post('/cities/store', [CityController::class, 'store'])
+    ->middleware('auth')
+    ->name('cities.store');
+
+ // Получение саписка регионов
+Route::get('/regions', [CityController::class, 'getRegions'])->name('regions.index');   
 
 // Photo reports
 Route::post('/photo-list', [PhotoReportController::class, 'index'])->name('photo-list.index')->middleware('auth');

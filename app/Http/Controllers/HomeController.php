@@ -757,6 +757,9 @@ class HomeController extends Controller
 
         // Получаем список городов для выпадающего списка
         $cities = DB::table('cities')->orderBy('name')->get();
+        
+        // Получаем список регионов для выпадающего списка
+        $regions = DB::table('regions')->orderBy('name')->get();
 
         // Собираем все переменные для передачи в представление
         $viewData = [
@@ -779,6 +782,7 @@ class HomeController extends Controller
             'positions' => $positions,
             'roles' => $roles,
             'cities' => $cities, // Добавляем список городов
+            'regions' => $regions, // Добавляем список регионов
             'isAdmin' => $user->isAdmin ?? false,
             'isUser' => $user->isUser ?? false,
             'isFitter' => $user->isFitter ?? false,

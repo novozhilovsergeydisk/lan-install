@@ -10,54 +10,81 @@ export function DateFormated(date) {
     return date.split('.').reverse().join('-');
 }
 
-// Глобальная переменная для хранения состояния загрузки карты
-// window.ymapsLoading = false;
+function validateForm(form) {
+    let isValid = true;
+    
+    // Сбрасываем все ошибки и валидацию
+    form.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
+        el.classList.remove('is-invalid', 'is-valid');
+    });
+    
+    // Проверяем все обязательные поля
+    form.querySelectorAll('[required]').forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.add('is-valid');
+        }
+    });
+    
+    // Проверяем необязательные поля, если они заполнены
+    form.querySelectorAll('input:not([required]), select:not([required])').forEach(field => {
+        if (field.value.trim()) {
+            field.classList.add('is-valid');
+        }
+    });
+    
+    return isValid;
+}
 
-// Функция для инициализации карты с метками
-// function initMapWithRequests() {
-//     console.log('Инициализация карты с заявками...');
+function initAddCity() {
+    const form = document.getElementById('addCityForm');
+    const addCityBtn = document.getElementById('addCityBtn');
     
-//     // Проверяем, загружена ли API Яндекс.Карт
-//     if (typeof ymaps === 'undefined') {
-//         console.log('API Яндекс.Карт не загружено, пробуем загрузить...');
-//         loadYandexMaps();
-//         return;
-//     }
-    
-//     // Если API загружено, инициализируем карту
-//     initYandexMap();
-// }
+    if (!addCityBtn) return;
 
-// Функция для загрузки API Яндекс.Карт
-// function loadYandexMaps() {
-//     if (window.ymapsLoading) {
-//         console.log('API Яндекс.Карт уже загружается...');
-//         return;
-//     }
-    
-//     console.log('Загрузка API Яндекс.Карт...');
-//     window.ymapsLoading = true;
-    
-//     // Создаем скрипт для загрузки API
-//     const script = document.createElement('script');
-//     script.src = `https://api-maps.yandex.ru/2.1/?apikey=${window.yandexMapsApiKey || ''}&lang=ru_RU&load=package.full`;
-//     script.async = true;
-    
-//     // Обработчик успешной загрузки
-//     script.onload = function() {
-//         console.log('API Яндекс.Карт успешно загружено');
-//         window.ymaps.ready(initYandexMap);
-//     };
-    
-//     // Обработчик ошибки загрузки
-//     script.onerror = function() {
-//         console.error('Ошибка загрузки API Яндекс.Карт');
-//         window.ymapsLoading = false;
-//         showAlert('Не удалось загрузить карту. Пожалуйста, обновите страницу.', 'error');
-//     };
-    
-//     document.head.appendChild(script);
-// }
+    // Валидация при вводе
+    form.querySelectorAll('input, select').forEach(field => {
+        field.addEventListener('input', () => {
+            if (field.classList.contains('is-invalid')) {
+                field.classList.remove('is-invalid');
+            }
+        });
+    });
+
+    addCityBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        if (!validateForm(form)) {
+            showAlert('Пожалуйста, заполните все обязательные поля', 'error');
+            return;
+        }
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Раскомментируйте этот код, когда будете готовы к отправке
+        /*
+        postData('/cities/add', data)
+            .then(response => {
+                console.log(response);
+                showAlert('Город успешно добавлен', 'success');
+                form.reset();
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('assignCityModal'));
+                modal.hide();
+            })
+            .catch(error => {
+                console.error(error);
+                showAlert('Произошла ошибка при добавлении города: ' + (error.message || ''), 'error');
+            });
+        */
+        
+        // Временный вывод для отладки
+        console.log('Данные формы:', data);
+    });
+}
 
 // Функция инициализации карты после загрузки API
 function initYandexMap() {
@@ -4559,6 +4586,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initUploadExcel();
     initExportReportBtn();
     initOpenMapBtn();
+    initAddCity();
 });
 
 // Обработчик загрузки файла Excel

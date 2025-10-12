@@ -214,81 +214,106 @@ class GeoController extends Controller
 
     public function addAddress(Request $request)
     {
-        $validated = $request->validate([
-            'street' => 'required|string|max:255',
-            'houses' => 'required|string|max:255',
-            'district' => 'required|string|max:255',
-            'city_id' => 'required|exists:cities,id',
-            'responsible_person' => 'nullable|string|max:255',
-            'comments' => 'nullable|string',
-            'latitude' => [
-                'nullable',
-                'numeric',
-                'between:-90,90',
-                'regex:/^-?(90(\.0{1,7})?|([0-8]?[0-9])(\.\d{1,7})?)$/'
-            ],
-            'longitude' => [
-                'nullable',
-                'numeric',
-                'between:-180,180',
-                'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/'
-            ]
-        ], [
-            'latitude.regex' => 'Некорректный формат широты. Допустимый формат: от -90 до 90, до 7 знаков после точки',
-            'longitude.regex' => 'Некорректный формат долготы. Допустимый формат: от -180 до 180, до 7 знаков после точки',
-            'latitude.between' => 'Широта должна быть в диапазоне от -90 до 90 градусов',
-            'longitude.between' => 'Долгота должна быть в диапазоне от -180 до 180 градусов',
-        ]);
+        \Log::info('=== START addAddress ===', []);
 
-        // Проверка, что если одно поле координат заполнено, то и второе тоже
-        if (($request->has('latitude') && !$request->has('longitude')) || 
-            (!$request->has('latitude') && $request->has('longitude'))) {
+        try {
+            $validated = $request->validate([
+                'street' => 'required|string|max:255',
+                'houses' => 'required|string|max:255',
+                'district' => 'required|string|max:255',
+                'city_id' => 'required|exists:cities,id',
+                'responsible_person' => 'nullable|string|max:255',
+                'comments' => 'nullable|string',
+                'latitude' => [
+                    'nullable',
+                    'numeric',
+                    'between:-90,90',
+                    'regex:/^-?(90(\.0{1,7})?|([0-8]?[0-9])(\.\d{1,7})?)$/'
+                ],
+                'longitude' => [
+                    'nullable',
+                    'numeric',
+                    'between:-180,180',
+                    'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/'
+                ]
+            ], [
+                'latitude.regex' => 'Некорректный формат широты. Допустимый формат: от -90 до 90, до 7 знаков после точки',
+                'longitude.regex' => 'Некорректный формат долготы. Допустимый формат: от -180 до 180, до 7 знаков после точки',
+                'latitude.between' => 'Широта должна быть в диапазоне от -90 до 90 градусов',
+                'longitude.between' => 'Долгота должна быть в диапазоне от -180 до 180 градусов',
+            ]);
+
+            \Log::info('=== Все входные данные ===', $validated);
+
+            // Проверка, что если одно поле координат заполнено, то и второе тоже
+            if (($request->has('latitude') && !$request->has('longitude')) || 
+                (!$request->has('latitude') && $request->has('longitude'))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Необходимо заполнить оба поля координат'
+                ], 422);
+            }
+
+            // Добавляем адрес и получаем его ID
+            $addressData = [
+                'street' => $request->street,
+                'houses' => $request->houses,
+                'district' => $request->district,
+                'city_id' => $request->city_id,
+                'responsible_person' => $request->responsible_person,
+                'comments' => $request->comments
+            ];
+
+            // Добавляем координаты, если они есть
+            if ($request->has('latitude') && $request->has('longitude')) {
+                $addressData['latitude'] = $request->latitude;
+                $addressData['longitude'] = $request->longitude;
+            }
+
+            DB::beginTransaction();
+            $addressId = DB::table('addresses')->insertGetId($addressData);
+            DB::commit();    
+                
+            // Получаем информацию о городе
+            $city = DB::table('cities')->where('id', $request->city_id)->first();
+            $cityName = $city ? $city->name : '';
+            
+            // Создаем объект с информацией о добавленном адресе
+            $addressInfo = [
+                'id' => $addressId,
+                'city' => $cityName,
+                'district' => $request->district,
+                'street' => $request->street,
+                'houses' => $request->houses,
+                'responsible_person' => $request->responsible_person,
+                'comments' => $request->comments,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude
+            ];
+
+            \Log::info('=== Все выходные данные ===', $addressInfo);
+            \Log::info('=== END addAddress ===', []);
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'Адрес добавлен',
+                'address' => $addressInfo
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::info('=== END addAddress ===', []);  
+            \Log::info('=== START error addAddress ===', []); 
+            \Log::error('Ошибка при добавлении адреса: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request_data' => $request->all()
+            ]);
+            \Log::info('=== END error addAddress ===', []); 
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Необходимо заполнить оба поля координат'
-            ], 422);
+                'message' => 'Ошибка при добавлении адреса: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Добавляем адрес и получаем его ID
-        $addressData = [
-            'street' => $request->street,
-            'houses' => $request->houses,
-            'district' => $request->district,
-            'city_id' => $request->city_id,
-            'responsible_person' => $request->responsible_person,
-            'comments' => $request->comments
-        ];
-
-        // Добавляем координаты, если они есть
-        if ($request->has('latitude') && $request->has('longitude')) {
-            $addressData['latitude'] = $request->latitude;
-            $addressData['longitude'] = $request->longitude;
-        }
-
-        $addressId = DB::table('addresses')->insertGetId($addressData);
-        
-        // Получаем информацию о городе
-        $city = DB::table('cities')->where('id', $request->city_id)->first();
-        $cityName = $city ? $city->name : '';
-        
-        // Создаем объект с информацией о добавленном адресе
-        $addressInfo = [
-            'id' => $addressId,
-            'city' => $cityName,
-            'district' => $request->district,
-            'street' => $request->street,
-            'houses' => $request->houses,
-            'responsible_person' => $request->responsible_person,
-            'comments' => $request->comments,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude
-        ];
-
-        return response()->json([
-            'success' => true, 
-            'message' => 'Адрес добавлен',
-            'address' => $addressInfo
-        ]);
     }
 
     public function addCity(Request $request)

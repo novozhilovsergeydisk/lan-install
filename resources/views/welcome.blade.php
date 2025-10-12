@@ -627,10 +627,15 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-end gap-3 mb-3">
                                     @if($user->isAdmin)
-                                    <div>
+                                    <div class="d-flex flex-column gap-2">
                                         <!-- Кнопка для открытия модального окна добавления адреса -->
-                                        <button type="button" class="btn btn-primary" style="margin-top: -4.0rem;" data-bs-toggle="modal" data-bs-target="#assignAddressModal">
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#assignAddressModal">
                                             <i class="bi bi-plus-circle me-1"></i>Добавление адреса
+                                        </button>
+
+                                        <!-- Кнопка для открытия модального окна добавления города -->
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#assignCityModal">
+                                            <i class="bi bi-plus-circle me-1"></i>Добавление города
                                         </button>
                                     </div>
                                     @else
@@ -647,7 +652,7 @@
                                                         <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx, .xls" style="width: 23rem;">
                                                     </div>
                                                     <div>
-                                                        <button type="button" id="uploadExcelBtn" class="btn btn-primary flex-shrink-0">
+                                                        <button type="button" id="uploadExcelBtn" class="btn btn-outline-primary flex-shrink-0">
                                                             <i class="bi bi-upload"></i> Загрузить
                                                         </button>
                                                     </div>
@@ -672,7 +677,7 @@
                                 <div id="AllAddressesList" class="table-responsive">
                                     <!-- Таблица будет сгенерирована и заполнена через JavaScript -->
                                     <div class="d-flex justify-content-center">
-                                        <div class="spinner-border text-primary" role="status">
+                                        <div class="spinner-border" role="status">
                                             <span class="visually-hidden">Загрузка...</span>
                                         </div>
                                     </div>
@@ -3457,7 +3462,7 @@
                     if (addressInfoBlock) {
                         let addressHtml = `
                             <div class="card mb-3">
-                                <div class="card-header bg-primary text-white">
+                                <div class="card-header text-white">
                                     <strong>Выбранный адрес</strong>
                                 </div>
                                 <div id="addressInfoBlock" class="card-body" data-update-address-id="${selectedAddress.id}" data-delete-address-id="${selectedAddress.id}">
@@ -3660,7 +3665,7 @@
                     // Формируем текст с информацией об адресе
                     let addressHtml = `
                         <div class="card mb-3">
-                            <div class="card-header bg-primary text-white">
+                            <div class="card-header text-white">
                                 <strong>Добавленный адрес</strong>
                             </div>
                             <div class="card-body">
@@ -3703,6 +3708,46 @@
         }
     }); 
 </script>
+
+<!-- ******* Модальные окна ******* -->
+
+<!-- Модальное окно добавления города -->
+<div class="modal fade" id="assignCityModal" tabindex="-1" aria-labelledby="assignCityModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header text-white">
+                <h5 class="modal-title" id="assignCityModalLabel">Добавление города</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <form id="addCityForm" method="POST" action="{{ route('cities.store') }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="cityName" class="form-label">Название города <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="cityName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="regionSelect" class="form-label">Регион <span class="text-danger">*</span></label>
+                        <select class="form-select" id="regionSelect" name="region_id" required>
+                            <option value="" selected disabled>Выберите регион</option>
+                            @foreach($regions as $region)
+                                <option value="{{ $region->id }}">{{ $region->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="postalCode" class="form-label">Почтовый индекс (необязательно)</label>
+                        <input type="text" class="form-control" id="postalCode" name="postal_code" maxlength="10">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button id="addCityBtn" type="button" class="btn btn-primary">Записать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <!-- Модальное окно для изменения даты и статуса запланированной заявки на значение "новая" -->
 <div class="modal fade" id="changePlanningRequestStatusModal" tabindex="-1" aria-labelledby="changePlanningRequestStatusModalLabel" aria-hidden="true">
