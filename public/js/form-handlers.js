@@ -542,91 +542,95 @@ function initYandexMap() {
 let yandexMap = null;
 let isMapInitialized = false;
 
+function showMap(requestsData) {
+    const mapContent = document.getElementById('map-content');
+    console.log('requestsData *:', requestsData);
+
+    // return;
+
+    // Проверяем фактическую видимость (класс или computed display)
+    const hasHideMeClass = mapContent.classList.contains('hide-me');
+    const computedDisplay = window.getComputedStyle(mapContent).display;
+    const isHidden = hasHideMeClass || computedDisplay === 'none';
+    
+    console.log('Состояние контейнера карты:', {
+        hasHideMeClass: hasHideMeClass,
+        classList: Array.from(mapContent.classList),
+        displayStyle: mapContent.style.display,
+        computedDisplay: computedDisplay,
+        isHidden: isHidden
+    });
+    
+    // Если карта скрыта, показываем её
+    if (isHidden) {
+        console.log('Карта показывается');
+        
+        // Удаляем класс скрытия
+        mapContent.classList.remove('hide-me');
+        
+        // Явно устанавливаем стили для показа
+        mapContent.style.display = 'block';
+        mapContent.style.visibility = 'visible';
+        mapContent.style.height = '800px';
+        mapContent.style.padding = '1rem';
+        
+        // Проверяем, загружена ли API Яндекс.Карт
+        if (typeof ymaps !== 'undefined') {
+            console.log('API Яндекс.Карт загружено');
+            
+            // Синхронизируем локальную переменную с глобальной
+            if (!window.yandexMap && yandexMap) {
+                // Если глобальная карта уничтожена, сбрасываем локальные переменные
+                yandexMap = null;
+                isMapInitialized = false;
+            } else if (window.yandexMap && !yandexMap) {
+                yandexMap = window.yandexMap;
+                isMapInitialized = true;
+            }
+            
+            // Дожидаемся готовности API перед инициализацией
+            ymaps.ready(function() {
+                if (yandexMap && isMapInitialized) {
+                    console.log('Карта уже инициализирована, обновляем метки');
+                    // Очищаем карту от старых меток
+                    yandexMap.geoObjects.removeAll();
+                    // Перезагружаем данные и метки
+                    initYandexMap();
+                } else {
+                    console.log('Инициализируем карту в первый раз');
+                    initYandexMap();
+                }
+            });
+        } else {
+            console.error('API Яндекс.Карт не загружено');
+            // loadYandexMaps(); // Пытаемся загрузить API, если оно не загружено
+        }
+    } else {
+        // Карта скрывается
+        console.log('Карта скрывается');
+        
+        // Добавляем класс скрытия
+        mapContent.classList.add('hide-me');
+        
+        // Устанавливаем inline-стили для скрытия
+        mapContent.style.display = 'none';
+        mapContent.style.visibility = 'hidden';
+        mapContent.style.height = '0';
+        mapContent.style.padding = '0';
+    }
+
+    console.log('END');
+}
+
 function initOpenMapBtn() {
     const btnOpenMap = document.getElementById('btn-open-map');
-    const mapContent = document.getElementById('map-content');
     
     btnOpenMap.addEventListener('click', function() {
         console.log('Кнопка открытия карты нажата');
 
         const requestsData = localStorage.getItem('requestsData');
 
-        console.log('requestsData *:', requestsData);
-
-        // return;
-
-        // Проверяем фактическую видимость (класс или computed display)
-        const hasHideMeClass = mapContent.classList.contains('hide-me');
-        const computedDisplay = window.getComputedStyle(mapContent).display;
-        const isHidden = hasHideMeClass || computedDisplay === 'none';
-        
-        console.log('Состояние контейнера карты:', {
-            hasHideMeClass: hasHideMeClass,
-            classList: Array.from(mapContent.classList),
-            displayStyle: mapContent.style.display,
-            computedDisplay: computedDisplay,
-            isHidden: isHidden
-        });
-        
-        // Если карта скрыта, показываем её
-        if (isHidden) {
-            console.log('Карта показывается');
-            
-            // Удаляем класс скрытия
-            mapContent.classList.remove('hide-me');
-            
-            // Явно устанавливаем стили для показа
-            mapContent.style.display = 'block';
-            mapContent.style.visibility = 'visible';
-            mapContent.style.height = '800px';
-            mapContent.style.padding = '1rem';
-            
-            // Проверяем, загружена ли API Яндекс.Карт
-            if (typeof ymaps !== 'undefined') {
-                console.log('API Яндекс.Карт загружено');
-                
-                // Синхронизируем локальную переменную с глобальной
-                if (!window.yandexMap && yandexMap) {
-                    // Если глобальная карта уничтожена, сбрасываем локальные переменные
-                    yandexMap = null;
-                    isMapInitialized = false;
-                } else if (window.yandexMap && !yandexMap) {
-                    yandexMap = window.yandexMap;
-                    isMapInitialized = true;
-                }
-                
-                // Дожидаемся готовности API перед инициализацией
-                ymaps.ready(function() {
-                    if (yandexMap && isMapInitialized) {
-                        console.log('Карта уже инициализирована, обновляем метки');
-                        // Очищаем карту от старых меток
-                        yandexMap.geoObjects.removeAll();
-                        // Перезагружаем данные и метки
-                        initYandexMap();
-                    } else {
-                        console.log('Инициализируем карту в первый раз');
-                        initYandexMap();
-                    }
-                });
-            } else {
-                console.error('API Яндекс.Карт не загружено');
-                // loadYandexMaps(); // Пытаемся загрузить API, если оно не загружено
-            }
-        } else {
-            // Карта скрывается
-            console.log('Карта скрывается');
-            
-            // Добавляем класс скрытия
-            mapContent.classList.add('hide-me');
-            
-            // Устанавливаем inline-стили для скрытия
-            mapContent.style.display = 'none';
-            mapContent.style.visibility = 'hidden';
-            mapContent.style.height = '0';
-            mapContent.style.padding = '0';
-        }
-
-        console.log('END');
+        showMap(requestsData);
     });
 }
 
@@ -3644,10 +3648,14 @@ async function handleDeleteEmployee(event) {
 // Инициализация фильтра сотрудников
 export function initEmployeeFilter() {
     const employeeFilter = document.getElementById('employeeFilter');   
+    // console.log('employeeFilter:', employeeFilter);
     if (employeeFilter) {
         employeeFilter.addEventListener('change', function() {
             const selectedEmployeeId = this.value;
             handleEmployeeFilterChange(selectedEmployeeId);
+
+            console.log('changeSelectedEmployeeId:', selectedEmployeeId);
+
         });
     }
 }
@@ -3668,10 +3676,19 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
 
     // Иначе фильтруем по фамилии и первой букве имени в ячейке бригады
     const rows = document.querySelectorAll('#requestsTable tbody tr');
+
+    const requestsData = localStorage.getItem('requestsData');
+    const requests = requestsData ? JSON.parse(requestsData) : [];
+
+    console.log('requests:', requests);
     
     // Получаем фамилию и первую букву имени (например, "Абдуганиев Н.")
     const nameParts = employeeName.split(' ');
     const searchPattern = `${nameParts[0]} ${nameParts[1].charAt(0)}.`;
+
+    console.log('searchPattern:', searchPattern);
+    console.log('rows:', rows);
+    console.log('employeeName:', employeeName);
     
     rows.forEach(row => {
         const brigadeCell = row.querySelector('.col-brigade__div');
@@ -3687,11 +3704,29 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
             row.style.display = 'none';
         }
     });
+
+    // Получаем все видимые строки таблицы
+    const visibleRows = Array.from(document.querySelectorAll('#requestsTable tbody tr')).filter(
+        row => row.style.display !== 'none'
+    );
+    
+    // Получаем ID заявок из видимых строк
+    const visibleRequestIds = visibleRows.map(row => 
+        parseInt(row.getAttribute('data-request-id'))
+    );
+    
+    // Фильтруем массив requests, оставляя только те заявки, которые есть в видимых строках
+    const requestsNew = requests.filter(request => 
+        visibleRequestIds.includes(request.id)
+    );
+    
+    console.log('Отфильтрованные заявки:', requestsNew);
+
+    localStorage.setItem('requestsData', JSON.stringify(requestsNew));
     
     // Прокручиваем к первой видимой строке
-    const firstVisibleRow = document.querySelector('#requestsTable tbody tr[style=""]');
-    if (firstVisibleRow) {
-        firstVisibleRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (visibleRows.length > 0) {
+        visibleRows[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
 

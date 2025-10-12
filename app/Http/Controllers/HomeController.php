@@ -398,6 +398,7 @@ class HomeController extends Controller
      */
     public function getAddressesPaginated(Request $request)
     {
+     
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
         $offset = ($page - 1) * $perPage;
@@ -464,6 +465,8 @@ class HomeController extends Controller
 
     public function index()
     {
+        // throw new \Exception('Test exception');
+
         // \Log::info('=== СТАРТ СТРАНИЦЫ ===', []);
         // Получаем текущего пользователя (проверка аутентификации уже выполнена в роутере)
         $user = auth()->user();

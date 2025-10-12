@@ -22,6 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Подключаем Sentry для автоматического отлова и отправки ошибок
-        Integration::handles($exceptions);
+        // Integration::handles($exceptions);
     })
     ->create();
