@@ -75,7 +75,7 @@ function initAddCity() {
             })
             .catch(error => {
                 console.error(error);
-                showAlert('Произошла ошибка. Возможно такой город уже существует.', 'warning');
+                showAlert('Произошла ошибка. Возможно такой город уже существует.', 'danger');
             });
     });
 }

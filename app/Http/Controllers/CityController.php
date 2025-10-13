@@ -59,7 +59,7 @@ class CityController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            Nightwatch::error('Ошибка при добавлении города', [
+            Nightwatch::message('Ошибка при добавлении города', [
                 'city_name' => $request->name,
                 'user_id' => auth()->id(),
             ]);
