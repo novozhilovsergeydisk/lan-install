@@ -3701,7 +3701,7 @@
             }
         } catch (error) {
             console.error('Ошибка при добавлении адреса:', error);
-            showAlert('Произошла ошибка при добавлении адреса', 'danger');
+            showAlert('Произошла ошибка, возможно такой адрес уже существует', 'danger');
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;

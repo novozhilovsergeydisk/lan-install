@@ -57,16 +57,14 @@ function initAddCity() {
         e.preventDefault();
         
         if (!validateForm(form)) {
-            showAlert('Пожалуйста, заполните все обязательные поля', 'error');
+            showAlert('Пожалуйста, заполните все обязательные поля!!', 'danger');
             return;
         }
 
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        
-        // Раскомментируйте этот код, когда будете готовы к отправке
-        /*
-        postData('/cities/add', data)
+
+        postData('/cities/store', data)
             .then(response => {
                 console.log(response);
                 showAlert('Город успешно добавлен', 'success');
@@ -77,12 +75,8 @@ function initAddCity() {
             })
             .catch(error => {
                 console.error(error);
-                showAlert('Произошла ошибка при добавлении города: ' + (error.message || ''), 'error');
+                showAlert('Произошла ошибка. Возможно такой город уже существует.', 'warning');
             });
-        */
-        
-        // Временный вывод для отладки
-        console.log('Данные формы:', data);
     });
 }
 

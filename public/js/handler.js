@@ -3489,7 +3489,7 @@ function validateForm(form) {
     });
 
     if (!isValid) {
-        showAlert('Пожалуйста, заполните все обязательные поля', 'warning');
+        showAlert('Пожалуйста, заполните все обязательные поля!', 'warning');
     }
 
     return isValid;
