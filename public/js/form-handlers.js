@@ -659,7 +659,9 @@ function initOpenMapBtn() {
 function initExportReportBtn() {
     console.log('Функция initExportReportBtn вызвана');
 
-    // return;
+    showAlert('Функционал экспорта отчета в Excel в разработке', 'warning');
+
+    return;
     
     const exportBtn = document.getElementById('export-report-btn');
     
