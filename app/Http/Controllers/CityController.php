@@ -42,11 +42,6 @@ class CityController extends Controller
             
             DB::commit();
 
-            Nightwatch::message('Пользователь создал город', [
-                'city_name' => $request->name,
-                'user_id' => auth()->id(),
-            ]);
-
             \Log::info('=== Все выходные данные ===', $city);
             \Log::info('=== END store ===', []);
 
@@ -58,11 +53,6 @@ class CityController extends Controller
             
         } catch (\Exception $e) {
             DB::rollBack();
-
-            Nightwatch::message('Ошибка при добавлении города', [
-                'city_name' => $request->name,
-                'user_id' => auth()->id(),
-            ]);
 
             \Log::info('=== END store ===', []);
             \Log::info('=== START error store ===', []);
