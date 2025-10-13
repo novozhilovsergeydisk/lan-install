@@ -659,14 +659,16 @@ function initOpenMapBtn() {
 function initExportReportBtn() {
     console.log('Функция initExportReportBtn вызвана');
 
-    // showAlert('Функционал экспорта отчета в Excel в разработке', 'warning');
-
-    return;
+    // return;
     
     const exportBtn = document.getElementById('export-report-btn');
     
     exportBtn.addEventListener('click', function() {
         console.log('Кнопка экспорта нажата');
+
+        showAlert('Функционал экспорта отчета в Excel в разработке', 'warning');
+
+        return;
         
         try {
             // Получаем данные из localStorage
