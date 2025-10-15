@@ -42,8 +42,8 @@ class CityController extends Controller
             
             DB::commit();
 
-            \Log::info('=== Все выходные данные ===', $city);
-            \Log::info('=== END store ===', []);
+            \Log::info('=== Все выходные данные ===', (array)$city);
+            \Log::info('=== END store ===');
 
             return response()->json([
                 'success' => true,
@@ -54,10 +54,10 @@ class CityController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            \Log::info('=== END store ===', []);
-            \Log::info('=== START error store ===', []);
-            \Log::info('Ошибка при добавлении города: ' . $e->getMessage());
-            \Log::info('=== END error store ===', []);
+            \Log::info('=== END store ===');
+            \Log::error('=== START error store ===');
+            \Log::error('Ошибка при добавлении города, город с таким названием уже существует', []);
+            \Log::error('=== END error store ===');
             
             return response()->json([
                 'success' => false,

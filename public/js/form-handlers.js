@@ -74,8 +74,19 @@ function initAddCity() {
                 modal.hide();
             })
             .catch(error => {
-                console.error(error);
-                showAlert('Произошла ошибка. Возможно такой город уже существует.', 'danger');
+                console.error('Ошибка при добавлении города:', error);
+                
+                let errorMessage = 'Произошла ошибка при добавлении города';
+                
+                // Проверяем, содержит ли ошибка информацию о дублирующемся городе
+                if (error.message && error.message.includes('duplicate key value violates unique constraint')) {
+                    errorMessage = 'Город с таким названием уже существует в выбранном регионе';
+                } else if (error.message) {
+                    // Берем сообщение об ошибке с сервера, если оно есть
+                    errorMessage = error.message;
+                }
+                
+                showAlert(errorMessage, 'danger');
             });
     });
 }
@@ -4574,8 +4585,9 @@ export function initHouseNumberValidator() {
 
 document.addEventListener('DOMContentLoaded', function() {
     initEmployeeButtons();
-    initShowFilesButtons()
+    initShowFilesButtons();
     initShowPhotoButtons();
+    initAddCity();
     initHouseNumberValidator();
     initCommentHandlers();
     initRequestCloseHandlers();
@@ -4584,7 +4596,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initUploadExcel();
     initExportReportBtn();
     initOpenMapBtn();
-    initAddCity();
 });
 
 // Обработчик загрузки файла Excel
