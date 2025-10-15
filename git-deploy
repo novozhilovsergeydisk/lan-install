@@ -72,5 +72,9 @@ ssh "$SERVER_PATH" "cd $REMOTE_DIR && GIT_SSH_COMMAND='ssh -i $SSH_KEY' git pull
   exit 1
 }
 
+php artisan cache:clear
+php artisan view:clear
+php artisan config:clear
+
 # === Завершение ===
 success "✅ Все операции успешно завершены!"

@@ -902,18 +902,31 @@ class HomeController extends Controller
                             'image/heic', 'image/heif', 'application/pdf', 'application/msword', 
                             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                             'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                            'text/plain', 'text/html', 'application/zip', 'application/x-rar-compressed', 'video/mp4', 
-                            'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv', 'video/x-matroska',
+                            'text/plain', 'text/html', 'application/zip', 'application/x-rar', 'application/x-rar-compressed', 
+                            'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv', 'video/x-matroska',
                             'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4'
                         ];
 
+                        // Логируем информацию о файле
+                        \Log::info('Проверка файла:', [
+                            'имя_файла' => $value->getClientOriginalName(),
+                            'расширение' => $value->getClientOriginalExtension(),
+                            'mime_тип' => $value->getMimeType(),
+                            'размер' => $value->getSize(),
+                            'валидный_тип' => in_array($value->getMimeType(), $allowedMimeTypes) ? 'да' : 'нет'
+                        ]);
+
                         // Для файлов с расширением .txt разрешаем text/html
                         if (strtolower($value->getClientOriginalExtension()) === 'txt' && $value->getMimeType() === 'text/html') {
+                            \Log::info('Разрешён .txt файл с MIME-типом text/html');
                             return true;
                         }
 
                         if (!in_array($value->getMimeType(), $allowedMimeTypes)) {
-                            $fail("Файл {$value->getClientOriginalName()} имеет недопустимый тип: " . $value->getMimeType() . ". Разрешенные типы: " . implode(', ', $allowedMimeTypes));
+                            $errorMessage = "Файл {$value->getClientOriginalName()} имеет недопустимый тип: " . $value->getMimeType() . 
+                                         ". Разрешенные типы: " . implode(', ', $allowedMimeTypes);
+                            \Log::error($errorMessage);
+                            $fail($errorMessage);
                         }
                     }
                 ],

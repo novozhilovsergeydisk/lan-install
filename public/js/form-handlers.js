@@ -57,37 +57,39 @@ function initAddCity() {
         e.preventDefault();
         
         if (!validateForm(form)) {
-            showAlert('Пожалуйста, заполните все обязательные поля!!', 'danger');
+            showAlert('Пожалуйста, заполните все обязательные поля!!', 'warning');
             return;
         }
 
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
 
-        postData('/cities/store', data)
-            .then(response => {
-                console.log(response);
-                showAlert('Город успешно добавлен', 'success');
-                form.reset();
-                // Закрываем модальное окно
-                const modal = bootstrap.Modal.getInstance(document.getElementById('assignCityModal'));
-                modal.hide();
-            })
-            .catch(error => {
-                console.error('Ошибка при добавлении города:', error);
-                
-                let errorMessage = 'Произошла ошибка при добавлении города';
-                
-                // Проверяем, содержит ли ошибка информацию о дублирующемся городе
-                if (error.message && error.message.includes('duplicate key value violates unique constraint')) {
-                    errorMessage = 'Город с таким названием уже существует в выбранном регионе';
-                } else if (error.message) {
-                    // Берем сообщение об ошибке с сервера, если оно есть
-                    errorMessage = error.message;
-                }
-                
-                showAlert(errorMessage, 'danger');
-            });
+        fetch('/cities/store', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(data)
+        }).then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        }).then(response => {
+            console.log(response);
+            showAlert('Город успешно добавлен', 'success');
+            form.reset();
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('assignCityModal'));
+            modal.hide();
+        }).catch(error => {
+            console.info('Ошибка при добавлении города:', error);
+            const errorMessage = 'Город с таким названием уже существует в выбранном регионе';
+            showAlert(errorMessage, 'danger');
+        });
     });
 }
 
