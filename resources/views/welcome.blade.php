@@ -1210,8 +1210,63 @@
 <!-- Передаем данные о заявках в JavaScript -->
 <script>
     const requestsData = @json($requests);
-    console.log('requestsData:', requestsData);
-    localStorage.setItem('requestsData', JSON.stringify(requestsData));
+    const brigadeMembersCurrentDayData = @json($brigadeMembersCurrentDay);
+
+    console.log('brigadeMembersCurrentDayData ###', brigadeMembersCurrentDayData);
+    
+    // Вычисляем размер данных в байтах
+    const requestsDataSize = new Blob([JSON.stringify(requestsData)]).size;
+    const brigadeMembersCurrentDayDataSize = new Blob([JSON.stringify(brigadeMembersCurrentDayData)]).size;
+    const totalSize = requestsDataSize + brigadeMembersCurrentDayDataSize;
+    
+    // Функция для форматирования размера в читаемый вид
+    function formatSize(bytes) {
+        if (bytes === 0) return '0 байт';
+        const k = 1024;
+        const sizes = ['байт', 'КБ', 'МБ', 'ГБ'];
+        const i = Math.min(3, Math.floor(Math.log(bytes) / Math.log(k)));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Выводим информацию о размере данных
+    console.log('=== Размеры данных для сохранения ===');
+    console.log(`Данные заявок: ${requestsData.length} записей, размер: ${formatSize(requestsDataSize)}`);
+    console.log(`Данные бригадиров: ${brigadeMembersCurrentDayData.length} записей, размер: ${formatSize(brigadeMembersCurrentDayDataSize)}`);
+    console.log(`Общий размер: ${formatSize(totalSize)}`);
+    
+    // Проверяем лимит localStorage (обычно 5-10 МБ)
+    const localStorageLimit = 5 * 1024 * 1024; // 5 МБ
+    if (totalSize > localStorageLimit * 0.9) {
+        console.warn(`⚠️ Внимание: общий размер данных (${formatSize(totalSize)}) близок к лимиту localStorage (${formatSize(localStorageLimit)})`);
+    } else {
+        console.log(`✅ Размер данных (${formatSize(totalSize)}) в пределах допустимого лимита`);
+    }
+    
+    // Сохраняем данные
+    try {
+        localStorage.setItem('requestsData', JSON.stringify(requestsData));
+        localStorage.setItem('brigadeMembersCurrentDayData', JSON.stringify(brigadeMembersCurrentDayData));
+        console.log('✅ Данные успешно сохранены в localStorage');
+    } catch (e) {
+        console.error('❌ Ошибка при сохранении данных в localStorage:', e);
+    }
+
+    // Проверяем, что данные успешно сохранились
+    const savedBrigadesData = localStorage.getItem('brigadeMembersCurrentDayData');
+    if (savedBrigadesData) {
+        try {
+            const parsedData = JSON.parse(savedBrigadesData);
+            console.log('Проверка сохраненных данных бригадиров:', {
+                count: parsedData.length,
+                firstItem: parsedData[0],
+                lastItem: parsedData[parsedData.length - 1]
+            });
+        } catch (e) {
+            console.error('Ошибка при проверке сохраненных данных:', e);
+        }
+    } else {
+        console.warn('Данные бригад не найдены в localStorage');
+    }
 </script>
 
 <!-- Подключение скрипта для переключения десктопного режима масштабирования вместо мобильной верстки -->

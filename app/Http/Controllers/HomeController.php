@@ -584,6 +584,30 @@ class HomeController extends Controller
 
         $brigadeMembersWithDetails = DB::select($sql);
 
+        $sql = "WITH today_brigades AS (
+            SELECT DISTINCT r.brigade_id
+            FROM requests r
+            JOIN request_statuses rs ON rs.id = r.status_id
+            WHERE r.execution_date = CURRENT_DATE
+                AND rs.name NOT IN ('отменена', 'планирование')
+                AND r.brigade_id IS NOT NULL
+            )
+            SELECT e.id, e.fio, b.id AS brigade_id, b.name AS brigade_name, FALSE AS is_leader
+            FROM brigades b
+            JOIN today_brigades tb ON tb.brigade_id = b.id
+            JOIN brigade_members bm ON bm.brigade_id = b.id
+            JOIN employees e ON e.id = bm.employee_id
+            WHERE b.is_deleted = FALSE AND e.is_deleted = FALSE
+            UNION
+            SELECT el.id AS employee_id, el.fio, b.id AS brigade_id, b.name AS brigade_name, TRUE AS is_leader
+            FROM brigades b
+            JOIN today_brigades tb ON tb.brigade_id = b.id
+            JOIN employees el ON el.id = b.leader_id
+            WHERE b.is_deleted = FALSE AND el.is_deleted = FALSE
+            ORDER BY brigade_id DESC";
+
+        $brigadeMembersCurrentDay = DB::select($sql);
+
         // dd($brigadeMembersWithDetails);`
 
         // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
@@ -777,6 +801,7 @@ class HomeController extends Controller
             'request_addresses' => $request_addresses,
             'requests_types' => $requests_types,
             'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+            'brigadeMembersCurrentDay' => $brigadeMembersCurrentDay,
             'brigadesCurrentDay' => $brigadesCurrentDay,
             'flags' => $flags,
             'positions' => $positions,
@@ -1628,8 +1653,32 @@ class HomeController extends Controller
             // $user->user_id = $user->id;
             // $user->sql = $sql;
 
+            $sql = "WITH today_brigades AS (
+                SELECT DISTINCT r.brigade_id
+                FROM requests r
+                JOIN request_statuses rs ON rs.id = r.status_id
+                WHERE r.execution_date = CURRENT_DATE
+                    AND rs.name NOT IN ('отменена', 'планирование')
+                    AND r.brigade_id IS NOT NULL
+                )
+                SELECT e.id, e.fio, b.id AS brigade_id, b.name AS brigade_name, FALSE AS is_leader
+                FROM brigades b
+                JOIN today_brigades tb ON tb.brigade_id = b.id
+                JOIN brigade_members bm ON bm.brigade_id = b.id
+                JOIN employees e ON e.id = bm.employee_id
+                WHERE b.is_deleted = FALSE AND e.is_deleted = FALSE
+                UNION
+                SELECT el.id AS employee_id, el.fio, b.id AS brigade_id, b.name AS brigade_name, TRUE AS is_leader
+                FROM brigades b
+                JOIN today_brigades tb ON tb.brigade_id = b.id
+                JOIN employees el ON el.id = b.leader_id
+                WHERE b.is_deleted = FALSE AND el.is_deleted = FALSE
+                ORDER BY brigade_id DESC";
+
+            $brigadeMembersCurrentDay = DB::select($sql);
+
             // Добавляем членов бригады, информацию о бригадире и комментарии к каждой заявке
-            $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest, $user) {
+            $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest, $brigadeMembersCurrentDay, $user) {
                 $brigadeId = $request->brigade_id;
                 $request->brigade_members = $brigadeMembers[$brigadeId] ?? [];
                 $request->brigade_leader_name = $brigadeLeaders[$brigadeId] ?? null;
@@ -1640,6 +1689,8 @@ class HomeController extends Controller
                 $request->isFitter = $user->isFitter ?? false;
                 $request->sql = $user->sql;
                 $request->user_id = $user->id;
+                $request->brigadeMembersCurrentDay = $brigadeMembersCurrentDay;
+                
                 return $request;
             }, $requestByDate);
 

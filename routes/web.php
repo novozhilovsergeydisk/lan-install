@@ -17,6 +17,8 @@ use App\Http\Controllers\EmployeesFilterController;
 use App\Http\Controllers\PhotoReportController;
 use App\Http\Controllers\CityController;
 
+Route::get('/brigades/date/{date}', [BrigadeController::class, 'getBrigadesByDate'])->name('brigades.date');
+
 // Города добавление
 Route::post('/cities/store', [CityController::class, 'store'])
     ->middleware('auth')
@@ -179,6 +181,12 @@ Route::prefix('reports')->middleware('auth')->group(function () {
 Route::prefix('api')->middleware('auth')->group(function () {
     // Get comment photos
     Route::get('/comments/{commentId}/photos', [\App\Http\Controllers\CommentPhotoController::class, 'index'])->name('api.comments.photos');
+    
+    // Test log route
+    Route::get('/test-log', function() {
+        \Log::info('TEST message from route');
+        return 'Logged!';
+    })->name('test.log');
     
     // Get comment files
     Route::get('/comments/{commentId}/files', [\App\Http\Controllers\CommentPhotoController::class, 'getCommentFiles'])->name('api.comments.files');

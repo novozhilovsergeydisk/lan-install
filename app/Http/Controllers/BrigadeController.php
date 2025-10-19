@@ -8,6 +8,47 @@ use Illuminate\Support\Facades\Log;
 
 class BrigadeController extends Controller
 {
+    public function getBrigadesByDate($date)
+    {
+        try {
+            $sql = "WITH today_brigades AS (
+                SELECT DISTINCT r.brigade_id
+                FROM requests r
+                JOIN request_statuses rs ON rs.id = r.status_id
+                WHERE r.execution_date = '$date'
+                    AND rs.name NOT IN ('отменена', 'планирование')
+                    AND r.brigade_id IS NOT NULL
+                )
+                SELECT e.id, e.fio, b.id AS brigade_id, b.name AS brigade_name, FALSE AS is_leader
+                FROM brigades b
+                JOIN today_brigades tb ON tb.brigade_id = b.id
+                JOIN brigade_members bm ON bm.brigade_id = b.id
+                JOIN employees e ON e.id = bm.employee_id
+                WHERE b.is_deleted = FALSE AND e.is_deleted = FALSE
+                UNION
+                SELECT el.id AS employee_id, el.fio, b.id AS brigade_id, b.name AS brigade_name, TRUE AS is_leader
+                FROM brigades b
+                JOIN today_brigades tb ON tb.brigade_id = b.id
+                JOIN employees el ON el.id = b.leader_id
+                WHERE b.is_deleted = FALSE AND el.is_deleted = FALSE
+                ORDER BY brigade_id DESC";
+            $brigades = DB::select($sql);
+            return response()->json([
+                'success' => true,
+                'data' => $brigades
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in BrigadeController@getBrigadesByDate: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении списка бригад на указанную дату',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Display a listing of the resource.
      */

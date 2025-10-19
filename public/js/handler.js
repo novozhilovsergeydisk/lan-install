@@ -580,7 +580,7 @@ window.refreshRequestsTable = function() {
 };
 
 // Функция для применения фильтров
-function applyFilters() {
+async function applyFilters() {
     // Собираем все выбранные фильтры
     const activeFilters = {
         statuses: [...filterState.statuses],
@@ -597,10 +597,25 @@ function applyFilters() {
         const [day, month, year] = filterState.date.split('.');
         const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 
+        const result = await fetch(`/brigades/date/${formattedDate}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+
+        const brigadeData = await result.json();
+
+        console.log(brigadeData.data);
+
+        localStorage.setItem('brigadeMembersCurrentDayData', JSON.stringify(brigadeData.data));
+
         // Формируем URL с отформатированной датой
         const apiUrl = `/api/requests/date/${formattedDate}`;
 
-        fetch(apiUrl, {
+        await fetch(apiUrl, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',

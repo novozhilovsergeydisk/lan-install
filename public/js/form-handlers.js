@@ -53,7 +53,7 @@ function initAddCity() {
         });
     });
 
-    addCityBtn.addEventListener('click', (e) => {
+    addCityBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         
         if (!validateForm(form)) {
@@ -64,7 +64,7 @@ function initAddCity() {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
 
-        fetch('/cities/store', {
+        const result = await fetch('/cities/store', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -73,24 +73,23 @@ function initAddCity() {
             },
             credentials: 'same-origin',
             body: JSON.stringify(data)
-        }).then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw err; });
-            }
-            return response.json();
-        }).then(response => {
-            console.log(response);
-            showAlert('Город успешно добавлен', 'success');
-            form.reset();
-            // Закрываем модальное окно
-            const modal = bootstrap.Modal.getInstance(document.getElementById('assignCityModal'));
-            modal.hide();
-        }).catch(error => {
-            console.info('Ошибка при добавлении города:', error);
-            const errorMessage = 'Город с таким названием уже существует в выбранном регионе';
-            showAlert(errorMessage, 'danger');
         });
+
+        if (!result.ok) {
+            const errorData = await result.json();
+            throw new Error(errorData.message || 'Ошибка при добавлении города');
+        }
+
+        const response = await result.json();
+        console.log(response);
+        showAlert('Город успешно добавлен', 'success');
+        form.reset();
+
+        // Закрываем модальное окно
+        const modal = bootstrap.Modal.getInstance(document.getElementById('assignCityModal'));
+        modal.hide();
     });
+
 }
 
 // Функция инициализации карты после загрузки API
@@ -155,6 +154,22 @@ function initYandexMap() {
         console.log('Всего заявок:', requests.length);
         console.log('Первые 3 заявки:', requests.slice(0, 3));
 
+        let brigadeMembersData = [];
+        try {
+            const brigadeMembersJson = localStorage.getItem('brigadeMembersCurrentDayData');
+            if (brigadeMembersJson) {
+                brigadeMembersData = JSON.parse(brigadeMembersJson);
+                console.log('Данные о членах бригад загружены:', brigadeMembersData.length, 'записей');
+            } else {
+                console.warn('Данные о членах бригад отсутствуют в localStorage');
+            }
+        } catch (e) {
+            console.error('Ошибка при загрузке данных о членах бригад:', e);
+            brigadeMembersData = [];
+        }
+
+        console.log('brigadeMembersCurrentDayData:', brigadeMembersData);    
+
         if (!Array.isArray(requests) || requests.length === 0) {
             console.log('Нет данных о заявках для отображения на карте');
             return;
@@ -172,6 +187,30 @@ function initYandexMap() {
         // Функция для добавления метки на карту
         function addPlacemark(request, address, coords, index) {
             // Форматируем номер заявки в формат REQ-YYYYMMDD-XXXX
+            // Инициализируем переменные для работы с бригадой
+            let brigadeLeader = null;
+            let brigadeMembersList = [];
+            
+            // Инициализируем данные о бригаде, если они есть
+            if (Array.isArray(brigadeMembersData) && request.brigade_id) {
+                const brigadeMembers = brigadeMembersData.filter(member => member.brigade_id === request.brigade_id);
+                brigadeLeader = brigadeMembers.find(member => member.is_leader);
+                
+                // Получаем список всех членов бригады (кроме бригадира)
+                const otherMembers = brigadeMembers
+                    .filter(member => !member.is_leader && member.fio)
+                    .map(member => member.fio);
+                
+                // Собираем список: сначала бригадир, затем остальные
+                brigadeMembersList = [
+                    ...(brigadeLeader && brigadeLeader.fio ? [brigadeLeader.fio] : []),
+                    ...otherMembers
+                ];
+                
+                // Удаляем дубликаты и пустые значения
+                brigadeMembersList = [...new Set(brigadeMembersList.filter(Boolean))];
+            }
+
             const requestNumber = request.number || `REQ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(request.id || index + 1).padStart(4, '0')}`;
             const brigadeName = request.brigade_name || 'Без бригады';
 
@@ -181,8 +220,12 @@ function initYandexMap() {
             else if (request.status_id === 3) iconColor = '#FFC107'; // Желтый для в работе
             else if (request.status_id === 2) iconColor = '#FF9800'; // Оранжевый для назначенных
 
+            // Формируем текст метки с именем бригадира
+            const leaderName = brigadeLeader ? (brigadeLeader.fio || brigadeLeader.name) : '';
             const labelText = `
-                <div style="font-weight: 500; font-size: 0.7rem; padding-left: 0rem;">${brigadeName}</div>
+                <div style="font-weight: 500; font-size: 0.7rem; padding-left: 0rem; color: black;">
+                    ${leaderName || brigadeName}
+                </div>
             `;
                 
             
@@ -341,6 +384,26 @@ function initYandexMap() {
                     document.head.appendChild(style);
                 }
             }
+
+            // Обрабатываем данные о бригаде, если они есть
+            if (Array.isArray(brigadeMembersData) && request.brigade_id) {
+                const brigadeMembers = brigadeMembersData.filter(member => member.brigade_id === request.brigade_id);
+                brigadeLeader = brigadeMembers.find(member => member.is_leader);
+                
+                // Получаем список всех членов бригады (кроме бригадира)
+                const otherMembers = brigadeMembers
+                    .filter(member => !member.is_leader && member.fio)
+                    .map(member => member.fio);
+                
+                // Собираем список: сначала бригадир, затем остальные
+                brigadeMembersList = [
+                    ...(brigadeLeader && brigadeLeader.fio ? [brigadeLeader.fio] : []),
+                    ...otherMembers
+                ];
+                
+                // Удаляем дубликаты и пустые значения
+                brigadeMembersList = [...new Set(brigadeMembersList.filter(Boolean))];
+            }
             
             // Создаем контент балуна
             const balloonContent = `
@@ -352,6 +415,12 @@ function initYandexMap() {
                 ${request.client_phone ? `<p><strong>Телефон:</strong> <a href="tel:${request.client_phone}">${request.client_phone}</a></p>` : ''}
                 ${request.brigade_name ? `<p><strong>Бригада:</strong> ${request.brigade_name}</p>` : ''}
                 ${request.description ? `<div class="description"><strong>Описание:</strong> ${request.description}</div>` : ''}
+                ${brigadeMembersList && brigadeMembersList.length > 0 ? `
+                    <div><strong>Члены бригады:</strong></div>
+                    <div style="">
+                        ${brigadeMembersList.map(member => `${member}<br>`).join('')}
+                    </div>
+                ` : ''}
             `;
 
             const placemark = new ymaps.Placemark(coords, {
@@ -381,6 +450,8 @@ function initYandexMap() {
             
             // Обработчик открытия балуна
             placemark.events.add('balloonopen', function() {
+                console.log('balloonopen');
+
                 if (isMobile) {
                     // Для мобильных устройств принудительно обновляем стили
                     setTimeout(() => {
@@ -451,7 +522,7 @@ function initYandexMap() {
                     request.houses
                 ].filter(Boolean).join(', ');
                 
-                console.log(`Заявка ${request.id}: координаты найдены`, coords, address);
+                // console.log(`Заявка ${request.id}: координаты найдены`, coords, address);
                 addPlacemark(request, address, coords, index);
                 processedCount++;
                 
@@ -576,9 +647,9 @@ function initYandexMap() {
 let yandexMap = null;
 let isMapInitialized = false;
 
-function showMap(requestsData) {
+function showMap() {
     const mapContent = document.getElementById('map-content');
-    console.log('requestsData *:', requestsData);
+    // console.log('requestsData *:', requestsData);
 
     // return;
 
@@ -587,17 +658,17 @@ function showMap(requestsData) {
     const computedDisplay = window.getComputedStyle(mapContent).display;
     const isHidden = hasHideMeClass || computedDisplay === 'none';
     
-    console.log('Состояние контейнера карты:', {
-        hasHideMeClass: hasHideMeClass,
-        classList: Array.from(mapContent.classList),
-        displayStyle: mapContent.style.display,
-        computedDisplay: computedDisplay,
-        isHidden: isHidden
-    });
+    // console.log('Состояние контейнера карты:', {
+    //     hasHideMeClass: hasHideMeClass,
+    //     classList: Array.from(mapContent.classList),
+    //     displayStyle: mapContent.style.display,
+    //     computedDisplay: computedDisplay,
+    //     isHidden: isHidden
+    // });
     
     // Если карта скрыта, показываем её
     if (isHidden) {
-        console.log('Карта показывается');
+        // console.log('Карта показывается');
         
         // Удаляем класс скрытия
         mapContent.classList.remove('hide-me');
@@ -610,38 +681,40 @@ function showMap(requestsData) {
         
         // Проверяем, загружена ли API Яндекс.Карт
         if (typeof ymaps !== 'undefined') {
-            console.log('API Яндекс.Карт загружено');
+            // console.log('API Яндекс.Карт загружено');
             
             // Синхронизируем локальную переменную с глобальной
             if (!window.yandexMap && yandexMap) {
                 // Если глобальная карта уничтожена, сбрасываем локальные переменные
                 yandexMap = null;
                 isMapInitialized = false;
+                console.log('Карта уничтожена');
             } else if (window.yandexMap && !yandexMap) {
                 yandexMap = window.yandexMap;
                 isMapInitialized = true;
+                console.log('Карта инициализирована');
             }
             
             // Дожидаемся готовности API перед инициализацией
             ymaps.ready(function() {
                 if (yandexMap && isMapInitialized) {
-                    console.log('Карта уже инициализирована, обновляем метки');
+                    // console.log('Карта уже инициализирована, обновляем метки');
                     // Очищаем карту от старых меток
                     yandexMap.geoObjects.removeAll();
                     // Перезагружаем данные и метки
                     initYandexMap();
                 } else {
-                    console.log('Инициализируем карту в первый раз');
+                    // console.log('Инициализируем карту в первый раз');
                     initYandexMap();
                 }
             });
         } else {
-            console.error('API Яндекс.Карт не загружено');
+            // console.error('API Яндекс.Карт не загружено');
             // loadYandexMaps(); // Пытаемся загрузить API, если оно не загружено
         }
     } else {
         // Карта скрывается
-        console.log('Карта скрывается');
+        // console.log('Карта скрывается');
         
         // Добавляем класс скрытия
         mapContent.classList.add('hide-me');
@@ -662,9 +735,9 @@ function initOpenMapBtn() {
     btnOpenMap.addEventListener('click', function() {
         console.log('Кнопка открытия карты нажата');
 
-        const requestsData = localStorage.getItem('requestsData');
+        // const requestsData = localStorage.getItem('requestsData');
 
-        showMap(requestsData);
+        showMap();
     });
 }
 
@@ -3233,6 +3306,13 @@ export function initAddressEditHandlers() {
                 showAlert('Ошибка: не удалось определить адрес для обновления', 'danger');
                 return;
             }
+
+            // Получаем цвет иконки на основе статуса
+            const iconColor = getStatusColor(request.status_id || 0);
+            // Определяем текст для метки: имя бригадира или название бригады
+            const labelText = (brigadeLeader && (brigadeLeader.fio || brigadeLeader.name)) || 
+                            request.brigade_name || 
+                            request.id;
 
             // Показываем индикатор загрузки
             const saveButton = event.target;
