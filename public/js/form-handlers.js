@@ -220,11 +220,27 @@ function initYandexMap() {
             else if (request.status_id === 3) iconColor = '#FFC107'; // Желтый для в работе
             else if (request.status_id === 2) iconColor = '#FF9800'; // Оранжевый для назначенных
 
+            // Функция для форматирования ФИО в формат "Фамилия И.О." (максимум 2 инициала)
+            const formatFullName = (fullName) => {
+                if (!fullName) return '';
+                const parts = fullName.trim().split(' ').filter(Boolean);
+                if (parts.length === 0) return '';
+                
+                const lastName = parts[0];
+                // Берем максимум 2 первых инициала
+                const initials = parts.slice(1, 3)
+                    .map(part => part.charAt(0) + '.')
+                    .join('');
+                    
+                return `${lastName} ${initials}`.trim();
+            };
+
             // Формируем текст метки с именем бригадира
             const leaderName = brigadeLeader ? (brigadeLeader.fio || brigadeLeader.name) : '';
+            const formattedLeaderName = formatFullName(leaderName);
             const labelText = `
                 <div style="font-weight: 500; font-size: 0.7rem; padding-left: 0rem; color: black;">
-                    ${leaderName || brigadeName}
+                    ${formattedLeaderName || brigadeName}
                 </div>
             `;
                 
