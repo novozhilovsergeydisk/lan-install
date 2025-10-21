@@ -77,6 +77,7 @@ function initAddCity() {
 
         if (!result.ok) {
             const errorData = await result.json();
+            showAlert('Ошибка при добавлении города, возможно такой город уже существует', 'danger');
             throw new Error(errorData.message || 'Ошибка при добавлении города');
         }
 
