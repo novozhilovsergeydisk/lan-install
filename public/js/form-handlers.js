@@ -141,10 +141,31 @@ function initYandexMap() {
         // Проверяем, есть ли данные о заявках
         const requestsData = localStorage.getItem('requestsData');
         let requests = [];
-        
+
         try {
-            if (requestsData) {
+            if (requestsData && requestsData !== '[]') {  // Добавлена проверка на пустой массив
                 requests = JSON.parse(requestsData);
+            } else {
+
+                // Вывессты выбранную дату и текущую
+                // console.log('Выбранная дата:', selectedDateState, formatDateToInput(selectedDateState));
+                // console.log('Текущая дата:', currentDateState, formatDateToInput(currentDateState));
+                
+                // const [day, month, year] = filterState.date.split('.');
+                // const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
+                // console.log('formattedDate', formattedDate);
+
+                // const result = await fetch(`/brigades/date/${formattedDate}`, {
+                //     method: 'GET',
+                //     headers: {
+                //         'Accept': 'application/json',
+                //         'X-Requested-With': 'XMLHttpRequest'
+                //     },
+                //     credentials: 'same-origin'
+                // });
+
+                console.log('Нет данных заявок или данные пусты');
             }
         } catch (e) {
             console.error('Ошибка при парсинге данных заявок:', e);
@@ -433,7 +454,7 @@ function initYandexMap() {
                 ${request.description ? `<div class="description small"><strong>Описание:</strong> ${request.description}</div>` : ''}
                 ${brigadeMembersList && brigadeMembersList.length > 0 ? `
                     <div class="small mb-1"><strong>Члены бригады:</strong></div>
-                    <div class="small mb-1" style_="font-size: 0.8rem; line-height: 1.2">
+                    <div class="small mb-1">
                         ${brigadeMembersList.map(member => `${formatFullName(member)}`).join(', ')}
                     </div>
                 ` : ''}
@@ -1445,6 +1466,24 @@ export function formatDateToDisplay(dateStr) {
     if (!dateStr) return '';
     const [year, month, day] = dateStr.split('-');
     return `${day}.${month}.${year}`;
+}   
+
+// Функция для преобразования даты из формата DD.MM.YYYY в YYYY-MM-DD
+export function formatDateToInput(dateStr) {
+    if (!dateStr) return '';
+    const [day, month, year] = dateStr.split('.');
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
+
+// Функция для определения цвета иконки на основе статуса заявки
+function getStatusColor(statusId) {
+    const statusColors = {
+        1: '#1e98ff', // Новый - синий
+        2: '#FF9800',  // Назначен - оранжевый
+        3: '#FFC107',  // В работе - желтый
+        4: '#4CAF50'   // Выполнен - зеленый
+    };
+    return statusColors[statusId] || '#9E9E9E'; // По умолчанию серый
 }
 
 // Глобальная переменная для хранения текущей даты
@@ -3324,7 +3363,7 @@ export function initAddressEditHandlers() {
             }
 
             // Получаем цвет иконки на основе статуса
-            const iconColor = getStatusColor(request.status_id || 0);
+            // const iconColor = getStatusColor(request.status_id || 0);
             // Определяем текст для метки: имя бригадира или название бригады
             const labelText = (brigadeLeader && (brigadeLeader.fio || brigadeLeader.name)) || 
                             request.brigade_name || 
@@ -3812,6 +3851,9 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
     const rows = document.querySelectorAll('#requestsTable tbody tr');
 
     const requestsData = localStorage.getItem('requestsData');
+
+    // console.log('requestsData:', requestsData);
+
     const requests = requestsData ? JSON.parse(requestsData) : [];
 
     console.log('requests:', requests);
@@ -3821,7 +3863,7 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
     const searchPattern = `${nameParts[0]} ${nameParts[1].charAt(0)}.`;
 
     console.log('searchPattern:', searchPattern);
-    console.log('rows:', rows);
+    // console.log('rows:', rows);
     console.log('employeeName:', employeeName);
     
     rows.forEach(row => {

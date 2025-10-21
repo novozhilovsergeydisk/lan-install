@@ -35,7 +35,8 @@ class BrigadeController extends Controller
             $brigades = DB::select($sql);
             return response()->json([
                 'success' => true,
-                'data' => $brigades
+                'data' => $brigades,
+                'sql' => $sql
             ]);
         } catch (\Exception $e) {
             \Log::error('Error in BrigadeController@getBrigadesByDate: ' . $e->getMessage());

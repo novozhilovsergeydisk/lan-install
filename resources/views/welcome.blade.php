@@ -3173,7 +3173,7 @@
 <!-- Brigades Script -->
 <script>
     // Передаем данные заявок в JavaScript
-    {{--window.requestsData = @json($requests);--}}
+    // {{--window.requestsData = @json($requests);--}}
     // console.log('Данные заявок переданы в JavaScript:', window.requestsData);
 </script>
 <!-- Bootstrap JS уже подключен через CDN выше -->

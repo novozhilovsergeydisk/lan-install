@@ -597,6 +597,8 @@ async function applyFilters() {
         const [day, month, year] = filterState.date.split('.');
         const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 
+        console.log('formattedDate', formattedDate);
+
         const result = await fetch(`/brigades/date/${formattedDate}`, {
             method: 'GET',
             headers: {
@@ -608,7 +610,7 @@ async function applyFilters() {
 
         const brigadeData = await result.json();
 
-        console.log(brigadeData.data);
+        console.log('localStorage.setItem', brigadeData.data);
 
         localStorage.setItem('brigadeMembersCurrentDayData', JSON.stringify(brigadeData.data));
 
