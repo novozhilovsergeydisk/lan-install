@@ -424,17 +424,17 @@ function initYandexMap() {
             // Создаем контент балуна
             const balloonContent = `
                 <h3>${requestNumber}</h3>
-                ${request.client_organization ? `<p><strong>Организация:</strong> ${request.client_organization}</p>` : ''}
-                <p><strong>Адрес:</strong> ${address}</p>
-                ${request.status ? `<p><strong>Статус:</strong> ${request.status_name}</p>` : ''}
-                ${request.client_fio ? `<p><strong>Клиент:</strong> ${request.client_fio}</p>` : ''}
-                ${request.client_phone ? `<p><strong>Телефон:</strong> <a href="tel:${request.client_phone}">${request.client_phone}</a></p>` : ''}
-                ${request.brigade_name ? `<p><strong>Бригада:</strong> ${request.brigade_name}</p>` : ''}
-                ${request.description ? `<div class="description"><strong>Описание:</strong> ${request.description}</div>` : ''}
+                ${request.client_organization ? `<p class="small mb-1"><strong>Организация:</strong> ${request.client_organization}</p>` : ''}
+                <p class="small mb-1"><strong>Адрес:</strong> ${address}</p>
+                ${request.status ? `<p class="small mb-1"><strong>Статус:</strong> ${request.status_name}</p>` : ''}
+                ${request.client_fio ? `<p class="small mb-1"><strong>Клиент:</strong> ${request.client_fio}</p>` : ''}
+                ${request.client_phone ? `<p class="small mb-1"><strong>Телефон:</strong> <a href="tel:${request.client_phone}">${request.client_phone}</a></p>` : ''}
+                ${request.brigade_name ? `<p class="small mb-1"><strong>Бригада:</strong> ${request.brigade_name}</p>` : ''}
+                ${request.description ? `<div class="description small"><strong>Описание:</strong> ${request.description}</div>` : ''}
                 ${brigadeMembersList && brigadeMembersList.length > 0 ? `
-                    <div><strong>Члены бригады:</strong></div>
-                    <div style="">
-                        ${brigadeMembersList.map(member => `${member}<br>`).join('')}
+                    <div class="small mb-1"><strong>Члены бригады:</strong></div>
+                    <div class="small mb-1" style_="font-size: 0.8rem; line-height: 1.2">
+                        ${brigadeMembersList.map(member => `${formatFullName(member)}`).join(', ')}
                     </div>
                 ` : ''}
             `;
