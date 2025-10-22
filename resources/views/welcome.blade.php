@@ -1246,7 +1246,7 @@
     try {
         localStorage.setItem('requestsData', JSON.stringify(requestsData));
         localStorage.setItem('brigadeMembersCurrentDayData', JSON.stringify(brigadeMembersCurrentDayData));
-        console.log('✅ Данные успешно сохранены в localStorage');
+        console.log('✅ Данные успешно сохранены в localStorage', JSON.parse(localStorage.getItem('requestsData')));
     } catch (e) {
         console.error('❌ Ошибка при сохранении данных в localStorage:', e);
     }
