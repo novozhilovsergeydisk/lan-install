@@ -3878,6 +3878,89 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
         document.querySelectorAll('#requestsTable tbody tr').forEach(row => {
             row.style.display = '';
         });
+
+        // Иначе фильтруем по фамилии и первой букве имени в ячейке бригады
+        const rows = document.querySelectorAll('#requestsTable tbody tr');
+
+        const requestsData = localStorage.getItem('requestsData');
+        
+        // Получаем отфильтрованные данные из localStorage
+        let requestsDataFilter = localStorage.getItem('requestsDataFilter');
+        console.log('🟢 requestsDataFilter (raw):', requestsDataFilter ? JSON.parse(requestsDataFilter) : []);
+
+        // Если данных нет или это пустая строка/массив, сохраняем текущие данные
+        if (!requestsDataFilter || requestsDataFilter === '[]' || JSON.parse(requestsDataFilter || '[]').length === 0) {
+            localStorage.setItem('requestsDataFilter', requestsData);
+            console.log('🟢🟢🟢 Сохраняем начальные данные в requestsDataFilter');
+            requestsDataFilter = requestsData; // Используем текущие данные
+        }
+
+        // Парсим данные, используя пустой массив как fallback
+        const requests = requestsDataFilter ? JSON.parse(requestsDataFilter) : [];
+
+        console.log('requests:', requests);
+
+        // Получаем фамилию и первую букву имени (например, "Абдуганиев Н.")
+        const nameParts = employeeName.split(' ');
+        const searchPattern = `${nameParts[0]} ${nameParts[1].charAt(0)}.`;
+
+        console.log('searchPattern:', searchPattern);
+        // console.log('rows:', rows);
+        console.log('employeeName:', employeeName);
+        
+        // rows.forEach(row => {
+        //     const brigadeCell = row.querySelector('.col-brigade__div');
+        //     if (brigadeCell) {
+        //         // Получаем весь текст из ячейки бригады
+        //         const brigadeText = brigadeCell.textContent || '';
+                
+        //         // Проверяем, содержит ли текст фамилию и первую букву имени
+        //         const hasEmployee = brigadeText.includes(searchPattern);
+        //         row.style.display = hasEmployee ? '' : 'none';
+        //     } else {
+        //         // Если ячейка бригады не найдена, скрываем строку
+        //         row.style.display = 'none';
+        //     }
+        // });
+
+        // Получаем все видимые строки таблицы
+        const visibleRows = Array.from(document.querySelectorAll('#requestsTable tbody tr')).filter(
+            row => row.style.display !== 'none'
+        );
+        
+        // Получаем ID заявок из видимых строк
+        const visibleRequestIds = visibleRows.map(row => 
+            parseInt(row.getAttribute('data-request-id'))
+        );
+
+        // Фильтруем массив requests, оставляя только те заявки, которые есть в видимых строках
+        const requestsNew = requests.filter(request =>  
+            {
+                const isVisible = visibleRequestIds.includes(request.id);
+                // console.log('🟣 request.id:', request.id, 'Виден:', isVisible);
+                // console.log('🟡 request:', request);
+                return isVisible;  // Важно вернуть результат проверки
+            }
+        );
+
+        const mapContainer_ = document.getElementById('map-content');
+        if (mapContainer_) {
+            mapContainer_.style.display = 'none';  // Force hide with inline style
+            mapContainer_.classList.add('hide-me');
+            console.log('🟣 Map container hidden');
+        } else {
+            console.warn('⚠️ Map container not found');
+        }
+        
+        console.log('🔴 Отфильтрованные заявки:', requestsNew, mapContainer_);
+
+        localStorage.setItem('requestsData', JSON.stringify(requestsNew));
+        
+        // Прокручиваем к первой видимой строке
+        if (visibleRows.length > 0) {
+            visibleRows[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
         return;
     }
 
