@@ -189,7 +189,7 @@ async function initYandexMap() {
         }
 
         console.log('Всего заявок:', requests.length);
-        console.log('Первые 3 заявки:', requests.slice(0, 3));
+        console.log('✅ Заявки загружены из localStorage:', requests);
 
         let brigadeMembersData = [];
         try {
