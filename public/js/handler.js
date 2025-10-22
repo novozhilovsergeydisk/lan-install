@@ -647,13 +647,14 @@ async function applyFilters() {
                 // Проверяем, что есть данные для сохранения
                 if (data && data.data && Array.isArray(data.data)) {
                     // Сохраняем данные в localStorage
+                    localStorage.setItem('requestsDataFilter', '[]');
                     localStorage.setItem('requestsData', JSON.stringify(data.data));
                     console.log('Данные заявок сохранены в localStorage:', data.data.length, 'записей');
                     
-                    // Показываем контейнер карты, если он скрыт
+                    // Скрываем контейнер карты
                     const mapContainer = document.getElementById('map-content');
                     if (mapContainer) {
-                        mapContainer.classList.remove('hide-me');
+                        mapContainer.classList.add('hide-me');
                     }
                     
                     // Вызываем loadRequestsByDate для обновления данных на карте

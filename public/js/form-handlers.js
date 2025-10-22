@@ -94,7 +94,7 @@ function initAddCity() {
 }
 
 // Функция инициализации карты после загрузки API
-function initYandexMap() {
+async function initYandexMap() {
     console.log('Инициализация карты...');
 
     try {
@@ -143,30 +143,45 @@ function initYandexMap() {
         const requestsData = localStorage.getItem('requestsData');
         let requests = [];
 
+        // Получаем даты из объектов, если они есть
+        const selectedDate = selectedDateState && selectedDateState.date ? selectedDateState.date : '';
+        const currentDate = currentDateState && currentDateState.date ? currentDateState.date : '';
+        
+        // Форматируем даты для отображения
+        const formattedSelectedDate = formatDateToInput(selectedDate);
+        const formattedCurrentDate = formatDateToInput(currentDate);
+        
+        console.log('Выбранная дата:', selectedDate, '->', formattedSelectedDate);
+        console.log('Текущая дата:', currentDate, '->', formattedCurrentDate);
+
         try {
             if (requestsData && requestsData !== '[]') {  // Добавлена проверка на пустой массив
                 requests = JSON.parse(requestsData);
-            } else {
+                console.log('✅ Заявки загружены из localStorage:', requests);
+            } else if (formattedSelectedDate) {  // Делаем запрос только если есть выбранная дата
+                console.log('❌ Заявки нет в localStorage, делаем запрос');
+                const result = await fetch(`/brigades/date/${formattedSelectedDate}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
 
-                // Вывессты выбранную дату и текущую
-                // console.log('Выбранная дата:', selectedDateState, formatDateToInput(selectedDateState));
-                // console.log('Текущая дата:', currentDateState, formatDateToInput(currentDateState));
+                if (!result.ok) {
+                    throw new Error(`Ошибка HTTP: ${result.status}`);
+                }
                 
-                // const [day, month, year] = filterState.date.split('.');
-                // const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-
-                // console.log('formattedDate', formattedDate);
-
-                // const result = await fetch(`/brigades/date/${formattedDate}`, {
-                //     method: 'GET',
-                //     headers: {
-                //         'Accept': 'application/json',
-                //         'X-Requested-With': 'XMLHttpRequest'
-                //     },
-                //     credentials: 'same-origin'
-                // });
-
-                console.log('Нет данных заявок или данные пусты');
+                const data = await result.json();
+                console.log('Данные бригад:', data);
+                
+                if (data.success && data.data) {
+                    // Обработка успешного ответа
+                    requests = data.data;
+                } else {
+                    console.log('Нет данных о бригадах для выбранной даты');
+                }
             }
         } catch (e) {
             console.error('Ошибка при парсинге данных заявок:', e);
@@ -181,7 +196,7 @@ function initYandexMap() {
             const brigadeMembersJson = localStorage.getItem('brigadeMembersCurrentDayData');
             if (brigadeMembersJson) {
                 brigadeMembersData = JSON.parse(brigadeMembersJson);
-                console.log('Данные о членах бригад загружены:', brigadeMembersData.length, 'записей');
+                console.log('Данные о членах бригад загружены:', brigadeMembersData);
             } else {
                 console.warn('Данные о членах бригад отсутствуют в localStorage');
             }
@@ -1471,9 +1486,21 @@ export function formatDateToDisplay(dateStr) {
 
 // Функция для преобразования даты из формата DD.MM.YYYY в YYYY-MM-DD
 export function formatDateToInput(dateStr) {
-    if (!dateStr) return '';
-    const [day, month, year] = dateStr.split('.');
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    if (!dateStr || typeof dateStr !== 'string') {
+        console.error('Некорректный формат даты:', dateStr);
+        return '';
+    }
+    
+    try {
+        const [day, month, year] = dateStr.split('.');
+        if (!day || !month || !year) {
+            throw new Error('Неверный формат даты');
+        }
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    } catch (e) {
+        console.error('Ошибка при форматировании даты:', e.message, 'Входные данные:', dateStr);
+        return '';
+    }
 }
 
 // Функция для определения цвета иконки на основе статуса заявки
@@ -3839,6 +3866,12 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
     const select = document.getElementById('employeeFilter');
     const selectedOption = select ? select.options[select.selectedIndex] : null;
     const employeeName = selectedOption ? selectedOption.text.trim() : '';
+
+    // Скрываем контейнер карты
+    const mapContainer = document.getElementById('map-content');
+    if (mapContainer) {
+        mapContainer.classList.add('hide-me');
+    }
     
     // Если выбран "Все сотрудники" или пустое значение
     if (!selectedEmployeeId || !employeeName) {
@@ -3852,10 +3885,20 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
     const rows = document.querySelectorAll('#requestsTable tbody tr');
 
     const requestsData = localStorage.getItem('requestsData');
+    
+    // Получаем отфильтрованные данные из localStorage
+    let requestsDataFilter = localStorage.getItem('requestsDataFilter');
+    console.log('🟢 requestsDataFilter (raw):', requestsDataFilter ? JSON.parse(requestsDataFilter) : []);
 
-    // console.log('requestsData:', requestsData);
+    // Если данных нет или это пустая строка/массив, сохраняем текущие данные
+    if (!requestsDataFilter || requestsDataFilter === '[]' || JSON.parse(requestsDataFilter || '[]').length === 0) {
+        localStorage.setItem('requestsDataFilter', requestsData);
+        console.log('🟢🟢🟢 Сохраняем начальные данные в requestsDataFilter');
+        requestsDataFilter = requestsData; // Используем текущие данные
+    }
 
-    const requests = requestsData ? JSON.parse(requestsData) : [];
+    // Парсим данные, используя пустой массив как fallback
+    const requests = requestsDataFilter ? JSON.parse(requestsDataFilter) : [];
 
     console.log('requests:', requests);
     
@@ -3893,11 +3936,25 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
     );
     
     // Фильтруем массив requests, оставляя только те заявки, которые есть в видимых строках
-    const requestsNew = requests.filter(request => 
-        visibleRequestIds.includes(request.id)
+    const requestsNew = requests.filter(request =>  
+        {
+            const isVisible = visibleRequestIds.includes(request.id);
+            // console.log('🟣 request.id:', request.id, 'Виден:', isVisible);
+            // console.log('🟡 request:', request);
+            return isVisible;  // Важно вернуть результат проверки
+        }
     );
+
+    const mapContainer_ = document.getElementById('map-content');
+    if (mapContainer_) {
+        mapContainer_.style.display = 'none';  // Force hide with inline style
+        mapContainer_.classList.add('hide-me');
+        console.log('🟣 Map container hidden');
+    } else {
+        console.warn('⚠️ Map container not found');
+    }
     
-    console.log('Отфильтрованные заявки:', requestsNew);
+    console.log('🔴 Отфильтрованные заявки:', requestsNew, mapContainer_);
 
     localStorage.setItem('requestsData', JSON.stringify(requestsNew));
     
