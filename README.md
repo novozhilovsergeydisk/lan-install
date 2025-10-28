@@ -1,17 +1,122 @@
 # lan-install.online
 
-## lan-install.online is a web application with expressive.
+## Описание проекта
 
-`
-git clone git@github.com:novozhilovsergeydisk/lan-install .
-`
+**lan-install.online** - это веб-приложение на базе Laravel для управления заявками на установку и обслуживание сетей (LAN). Система позволяет управлять бригадами монтажников, отслеживать заявки, генерировать отчеты и работать с геоданными.
 
+### Основные возможности
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Управление заявками**: Создание, редактирование, закрытие и перенос заявок
+- **Управление бригадами**: Формирование бригад монтажников с назначением бригадиров
+- **Геоданные**: Работа с адресами, городами и регионами через Яндекс.Карты
+- **Отчетность**: Генерация отчетов по сотрудникам, адресам и периодам
+- **Фотоотчеты**: Загрузка и управление фотоотчетами по заявкам
+- **Управление сотрудниками**: Добавление, редактирование и фильтрация сотрудников
+- **Комментарии**: Система комментариев к заявкам с вложениями
+
+## Установка и настройка
+
+### Требования
+
+- PHP 8.1 или выше
+- Composer
+- Node.js и npm
+- MySQL или другая поддерживаемая БД
+
+### Шаги установки
+
+1. **Клонируйте репозиторий:**
+   ```bash
+   git clone git@github.com:novozhilovsergeydisk/lan-install .
+   cd lan-install.online
+   ```
+
+2. **Установите зависимости PHP:**
+   ```bash
+   composer install
+   ```
+
+3. **Установите зависимости JavaScript:**
+   ```bash
+   npm install
+   ```
+
+4. **Настройте окружение:**
+   ```bash
+   cp .env.example .env
+   ```
+   Отредактируйте `.env` файл с вашими настройками базы данных и другими параметрами.
+
+5. **Сгенерируйте ключ приложения:**
+   ```bash
+   php artisan key:generate
+   ```
+
+6. **Запустите миграции:**
+   ```bash
+   php artisan migrate
+   ```
+
+7. **Заполните базу данных начальными данными (если есть):**
+   ```bash
+   php artisan db:seed
+   ```
+
+8. **Соберите фронтенд:**
+   ```bash
+   npm run build
+   ```
+
+9. **Запустите сервер:**
+   ```bash
+   php artisan serve
+   ```
+
+## Использование
+
+### Аутентификация
+
+Приложение использует стандартную систему аутентификации Laravel. Зарегистрируйтесь или войдите в систему.
+
+### Основные разделы
+
+- **Главная страница**: Просмотр и управление заявками
+- **Бригады**: Создание и управление бригадами монтажников
+- **Сотрудники**: Управление персоналом
+- **Отчеты**: Генерация различных отчетов
+- **Геоданные**: Работа с адресами и картами
+
+### API
+
+Подробная документация API доступна в файле `docs/API.md`.
+
+## Разработка
+
+### Команды сборки
+
+- **Сборка фронтенда**: `npm run build`
+- **Сервер разработки**: `npm run dev`
+- **Полная среда разработки**: `composer run dev`
+
+### Тестирование
+
+- **Запуск всех тестов**: `composer run test`
+- **Запуск с покрытием**: `vendor/bin/phpunit --coverage-html coverage`
+
+### Линтинг
+
+- **PHP-линтинг**: `vendor/bin/pint`
+- **Исправление**: `vendor/bin/pint --fix`
+
+## Технологии
+
+- **Backend**: Laravel Framework
+- **Frontend**: JavaScript, CSS, Bootstrap
+- **База данных**: MySQL
+- **Карты**: Яндекс.Карты API
+- **Файлы**: Загрузка Excel, фотоотчетов
+
+## Лицензия
+
+Этот проект является частным и предназначен для внутреннего использования.
 

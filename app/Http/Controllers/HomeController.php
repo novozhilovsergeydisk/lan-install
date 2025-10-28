@@ -8,21 +8,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\RequestTeamFilterController;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
+/**
+ * Главный контроллер приложения lan-install.online
+ *
+ * Отвечает за управление заявками, комментариями, сотрудниками и основной логикой приложения.
+ * Включает методы для работы с заявками, аутентификацией пользователей и отчетностью.
+ */
 class HomeController extends Controller
 {
     /**
-     * Получает список ролей для селекта
+     * Обновляет учетные данные пользователя (пароль)
      *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    /**
-     * Update user credentials (login and password)
+     * Метод позволяет администраторам обновлять пароли сотрудников.
+     * Выполняет валидацию входных данных и обновляет пароль в базе данных.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param  int  $id ID сотрудника
      * @return \Illuminate\Http\JsonResponse
      */
     public function updateCredentials(Request $request, $id)
@@ -102,9 +105,11 @@ class HomeController extends Controller
     }
 
     /**
-     * Получает список ролей для селекта
+     * Получает список всех ролей пользователей
      *
-     * @return \Illuminate\Http\JsonResponse
+     * Возвращает список ролей из базы данных для использования в селектах форм.
+     *
+     * @return \Illuminate\Http\JsonResponse JSON с массивом ролей
      */
     public function getRoles()
     {
@@ -132,7 +137,10 @@ class HomeController extends Controller
     }
 
     /**
-     * Отмена заявки
+     * Отменяет заявку с указанием причины
+     *
+     * Метод выполняет отмену заявки, создает комментарий с причиной отмены
+     * и обновляет статус заявки. Использует транзакции для обеспечения целостности данных.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
