@@ -4,6 +4,73 @@
  * @typedef {'success'|'danger'|'warning'} AlertType
  */
 
+function log() {
+    console.log(...arguments);
+}
+
+function logInfo() {
+    console.info(...arguments);
+}
+
+function logError() {
+    console.error(...arguments);
+}
+
+function showModal(id) {
+    const el = getElement(id);
+    if (el) {
+        const modal = new bootstrap.Modal(el);
+        modal.show();
+    }
+}
+
+function getElement(id) {
+    try {
+        const el = document.getElementById(id);
+        
+        if (!el) {
+            console.warn(`Элемент с id "${id}" не найден`);
+            return null;
+        }
+        return el;
+    } catch (error) {
+        console.error(`Ошибка при получении элемента "${id}":`, error);
+        return null;
+    }
+}
+
+function setValue(id, value) {
+    try {
+        const el = getElement(id);
+        if (!el) return;
+
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+            el.value = value;
+        } else {
+            console.warn(`Элемент "${id}" не поддерживает установку value`);
+        }
+    } catch (error) {
+        console.error(`Ошибка при установке значения для "${id}":`, error);
+    }
+}
+
+function getValue(id) {
+    try {
+        const el = getElement(id);
+        if (!el) return '';
+
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+            return el.value || '';
+        } else {
+            console.warn(`Элемент "${id}" не поддерживает получение value`);
+            return '';
+        }
+    } catch (error) {
+        console.error(`Ошибка при получении значения для "${id}":`, error);
+        return '';
+    }
+}
+
 /**
  * Показывает пользовательское уведомление
  * @param {string} message Текст сообщения
@@ -231,7 +298,7 @@ function linkifyPreservingAnchors(input) {
 }
 
 // Экспорт для модулей
-export { showAlert, fetchData, postData, sendRequest, linkifyPreservingAnchors, makeEscapedPreview };
+export { showAlert, fetchData, postData, sendRequest, linkifyPreservingAnchors, makeEscapedPreview, log, logInfo, logError, showModal, getElement, setValue, getValue };
 
 // Экспорт глобально
 if (typeof window !== 'undefined') {

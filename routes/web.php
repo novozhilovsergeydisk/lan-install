@@ -17,6 +17,9 @@ use App\Http\Controllers\EmployeesFilterController;
 use App\Http\Controllers\PhotoReportController;
 use App\Http\Controllers\CityController;
 
+// Update request
+Route::put('/requests/{request}', [HomeController::class, 'updateRequest'])->name('requests.update')->middleware('auth')->middleware(['auth', 'roles']);
+
 Route::get('/brigades/date/{date}', [BrigadeController::class, 'getBrigadesByDate'])->name('brigades.date');
 
 // Города добавление
@@ -52,6 +55,9 @@ Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->na
 Route::post('/register', [RegisterController::class, 'register']);
 
 // home
+
+// Получение данных заявки для редактирования
+Route::get('/requests/{id}', [HomeController::class, 'getEditRequest'])->name('requests.getEditRequest')->middleware('auth');
 
 // Главная страница
 Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['auth', 'roles']);

@@ -514,11 +514,10 @@
                                                     </button>
 
                                                     <button type="button"
-                                                            class="btn btn-sm btn-outline-success transfer-request-btn p-1"
+                                                            class="btn btn-sm btn-outline-green transfer-request-btn p-1"
                                                             data-bs-toggle="tooltip"
                                                             data-bs-placement="left"
                                                             data-bs-title="Перенести заявку"
-                                                            style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;"
                                                             data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-arrow-left-right"></i>
                                                     </button>
@@ -531,6 +530,15 @@
                                                             data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-x-circle"></i>
                                                     </button>
+
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-purple edit-request-btn p-1"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="left"
+                                                            data-bs-title="Редактировать заявку"
+                                                            data-request-id="{{ $request->id }}">
+                                                        <i class="bi bi-pencil"></i>
+                                                   </button>
                                                 @endif
                                             </div>
                                             @endif
@@ -3765,6 +3773,144 @@
 </script>
 
 <!-- ******* Модальные окна ******* -->
+
+<!-- Модальное окно редактирования заявки -->
+<div class="modal fade" id="editRequestModal" tabindex="-1" aria-labelledby="editRequestModalLabel" aria-hidden="true" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRequestModalLabel">Редактирование заявки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRequestForm">
+                    @csrf
+                    <input type="hidden" name="_method" value="PUT" />
+                    <input type="hidden" id="editRequestId" name="request_id" />
+                    <div class="mb-3">
+                        <!-- <h6>Информация о клиенте</h6> -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editClientName" class="form-label">Контактное лицо <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editClientName" name="client_name" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editClientPhone" class="form-label">Телефон <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="editClientPhone" name="client_phone" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editClientOrganization" class="form-label">Организация</label>
+                                <input type="text" class="form-control" id="editClientOrganization" name="client_organization" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 hide-me">
+                        <!-- <h6>Детали заявки</h6> -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editRequestType" class="form-label">Тип заявки <span class="text-danger">*</span></label>
+                                <select class="form-select" id="editRequestType" name="request_type_id" required>
+                                    <option value="" disabled selected>Выберите тип заявки</option>
+                                    <!-- Will be populated by JavaScript -->
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editRequestStatus" class="form-label">Статус</label>
+                                <select class="form-select" id="editRequestStatus" name="status_id">
+                                    <!-- Will be populated by JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editExecutionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="editExecutionDate" name="execution_date" required />
+                                <!-- min устанавливается динамически через JavaScript -->
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editExecutionTime" class="form-label">Время выполнения</label>
+                                <input type="time" class="form-control" id="editExecutionTime" name="execution_time" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Адрес</h6>
+                        <div class="mb-3">
+                            <select class="form-select" id="editAddressesId" name="addresses_id" required>
+                                <option value="" disabled selected>Выберите адрес</option>
+                                <!-- Will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div id="editAddressesIdError" class="invalid-feedback d-none">
+                            Пожалуйста, выберите адрес из списка
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="mb-3">
+                            <h6>Комментарий к заявке</h6>
+                            <div class="mb-3">
+                                <!-- Начало блока WYSIWYG -->
+                                <div class="my-wysiwyg">
+                                    <!-- Панель кнопок -->
+                                    <div class="wysiwyg-toolbar btn-group mb-2" role="group" aria-label="Editor toolbar">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="bold" title="Жирный"><strong>B</strong></button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="italic" title="Курсив"><em>I</em></button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            data-cmd="createLink"
+                                            title="Вставить ссылку"
+                                        >
+                                            link
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            data-cmd="unlink"
+                                            title="Убрать ссылку"
+                                        >
+                                            unlink
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="editToggleCode" title="HTML">HTML</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="editShowHelp" title="Справка">
+                                            <i class="bi bi-question-circle"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Визуальный редактор -->
+                                    <div class="wysiwyg-editor border rounded p-2" contenteditable="true" id="editCommentEditor"></div>
+
+                                    <!-- Редактор HTML-кода -->
+                                    <textarea class="wysiwyg-code form-control mt-2" id="editCommentCode" rows="6" style="display: none;"></textarea>
+
+                                    <!-- Оригинальный textarea (скрытый) -->
+                                    <textarea class="form-control" id="editComment" name="comment" rows="3" placeholder="Введите комментарий к заявке" required minlength="3" maxlength="1000" style="display: none;"></textarea>
+                                    <!-- Сообщение об ошибке -->
+                                    <div id="editCommentError" class="invalid-feedback d-none">
+                                        Пожалуйста, введите комментарий (от 3 до 1000 символов)
+                                    </div>
+                                </div>
+                                <!-- Конец блока WYSIWYG -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 px-3">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" id="updateRequest">Обновить заявку</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
 
 <!-- Модальное окно добавления города -->
 <div class="modal fade" id="assignCityModal" tabindex="-1" aria-labelledby="assignCityModalLabel" aria-hidden="true">

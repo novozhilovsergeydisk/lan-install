@@ -18,6 +18,123 @@ use Illuminate\Support\Str;
  */
 class HomeController extends Controller
 {
+    public function getEditRequest($id)
+    {
+        try {
+            // return response()->json(
+            //     [
+            //         'success' => true,
+            //         'message' => 'Запрос для получения данных заявки для обновления (тест)',
+            //         'id' => $id
+            //     ]
+            // );
+
+            // Check auth
+            if (!auth()->check()) {
+                return response()->json(['success' => false, 'message' => 'Необходима авторизация'], 401);
+            }
+
+            $user = auth()->user();
+
+            // Загружаем роли пользователя
+            $sql = "SELECT roles.name FROM user_roles
+                JOIN roles ON user_roles.role_id = roles.id
+                WHERE user_roles.user_id = " . $user->id;
+
+            $roles = DB::select($sql);
+
+            // Извлекаем только имена ролей из результатов запроса
+            $roleNames = array_map(function($role) {
+                return $role->name;
+            }, $roles);
+
+            // Устанавливаем роли и флаги
+            $user->roles = $roleNames;
+            $user->isAdmin = in_array('admin', $roleNames);
+            $user->isUser = in_array('user', $roleNames);
+            $user->isFitter = in_array('fitter', $roleNames);
+            $user->user_id = $user->id;
+            $user->sql = $sql;
+
+            if (!$user->isAdmin) {
+                return response()->json(['success' => false, 'message' => 'Недостаточно прав'], 403);
+            }
+
+            $request = DB::table('requests')
+                ->leftJoin('clients', 'requests.client_id', '=', 'clients.id')
+                ->leftJoin('request_addresses', 'requests.id', '=', 'request_addresses.request_id')
+                ->leftJoin('addresses', 'request_addresses.address_id', '=', 'addresses.id')
+                ->select(
+                    'requests.*',
+                    'clients.fio as client_fio',
+                    'clients.phone as client_phone',
+                    'clients.organization as client_organization',
+                    'addresses.street',
+                    'addresses.houses as house'
+                )
+                ->where('requests.id', $id)
+                ->first();
+
+            if (!$request) {
+                return response()->json(['success' => false, 'message' => 'Заявка не найдена'], 404);
+            }
+
+            return response()->json(['success' => true, 'data' => $request]);
+        } catch (\Exception $e) {
+            \Log::error('=== START ERROR getEditRequest 500 ===', []);
+            \Log::error('Error getting edit request 500: ' . $e->getMessage());
+            \Log::error('=== END ERROR getEditRequest 500 ===', []);
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении данных заявки для редактирования',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateRequest(Request $request, $id)
+    {
+
+        return response()->json(['success' => true, 'message' => 'Заявка обновлена test', 'request' => $request]);
+
+        // Check auth
+        if (!auth()->check()) {
+            return response()->json(['success' => false, 'message' => 'Необходима авторизация'], 401);
+        }
+
+        $user = auth()->user();
+        if (!$user->isAdmin) {
+            return response()->json(['success' => false, 'message' => 'Недостаточно прав'], 403);
+        }
+
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+
+            // Update request
+            DB::table('requests')->where('id', $id)->update([
+                'client_fio' => $input['client_name'] ?? null,
+                'client_phone' => $input['client_phone'] ?? null,
+                'client_organization' => $input['client_organization'] ?? null,
+                'request_type_id' => $input['request_type_id'] ?? null,
+                'status_id' => $input['status_id'] ?? null,
+                'comment' => $input['comment'] ?? null,
+                'execution_date' => $input['execution_date'] ?? null,
+                'execution_time' => $input['execution_time'] ?? null,
+                'addresses_id' => $input['addresses_id'] ?? null,
+                'updated_at' => now()
+            ]);
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Заявка обновлена']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при обновлении заявки: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Ошибка при обновлении'], 500);
+        }
+    }
+    
+
     /**
      * Обновляет учетные данные пользователя (пароль)
      *

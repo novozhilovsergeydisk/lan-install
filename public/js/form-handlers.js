@@ -1,9 +1,199 @@
 // form-handlers.js
 
-import { showAlert, postData, fetchData } from './utils.js';
+import { showAlert, postData, fetchData, log, logInfo, logError, showModal, getElement, setValue, getValue } from './utils.js';
 import { loadAddressesPaginated, loadPlanningRequests } from './handler.js';
 import { loadAddressesForPlanning } from './handler.js';
 import HouseNumberValidator from './validators/house-number-validator.js';
+
+// Обработчик кнопки редактирования заявки
+async function initEditRequestHandler() {
+    document.addEventListener('click', async function(event) {
+        if (!event.target.closest('.edit-request-btn')) return;
+
+        const button = event.target.closest('.edit-request-btn');
+        const requestId = button.dataset.requestId;
+        document.getElementById('editRequestId').value = requestId;
+
+        try {
+            const response = await fetch(`/requests/${requestId}`);
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки');
+            }
+            const responseData = await response.json();
+            const data = responseData.data || responseData; // Поддерживаем оба формата ответа
+
+            console.log('Получены данные с сервера:', JSON.stringify(responseData, null, 2));
+            console.log('Используемые данные:', data);
+
+            const modalEl = document.getElementById('editRequestModal');
+            console.log('Найден элемент модального окна:', modalEl);
+            if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+
+                // Добавляем обработчик события показа модального окна
+                const fillForm = function() {
+                    console.log('Начинаем заполнение формы');
+                    
+                    // Загружаем адреса для выпадающего списка
+                    if (typeof loadAddresses === 'function') {
+                        loadAddresses('editAddressesId');
+                    }
+                    
+                    // Выводим все доступные поля из data
+                    console.log('Доступные поля в data:', Object.keys(data));
+                    console.log('Данные для заполнения:', data);
+
+                    const clientNameEl = document.getElementById('editClientName');
+                    log({ clientNameEl });
+                    if (clientNameEl) clientNameEl.value = data.client_fio || data.clientName || '';
+                    log(clientNameEl.value);
+
+                    const clientPhoneEl = document.getElementById('editClientPhone');
+                    log({ clientPhoneEl });
+                    if (clientPhoneEl) clientPhoneEl.value = data.client_phone || data.clientPhone || '';
+                    log(clientPhoneEl.value);
+
+                    const clientOrgEl = document.getElementById('editClientOrganization');
+                    log({ clientOrgEl });
+                    if (clientOrgEl) clientOrgEl.value = data.client_organization || data.clientOrganization || '';
+                    log(clientOrgEl.value);
+
+                    const requestTypeEl = document.getElementById('editRequestType');
+                    log({ requestTypeEl });
+                    if (requestTypeEl) requestTypeEl.value = data.request_type_id || data.requestTypeId || '';
+                    log(requestTypeEl.value);
+
+                    const requestStatusEl = document.getElementById('editRequestStatus');
+                    log({ requestStatusEl });
+                    if (requestStatusEl) requestStatusEl.value = data.status_id || data.statusId || '';
+                    log(requestStatusEl.value);
+
+                    const executionDateEl = document.getElementById('editExecutionDate');
+                    log({ executionDateEl });
+                    if (executionDateEl) executionDateEl.value = data.execution_date || data.executionDate || '';
+                    log(executionDateEl.value);
+
+                    const executionTimeEl = document.getElementById('editExecutionTime');
+                    log({ executionTimeEl });
+                    if (executionTimeEl) executionTimeEl.value = data.execution_time || data.executionTime || '';
+                    log(executionTimeEl.value);
+
+                    // Проверяем наличие элемента addressesId перед обращением к нему
+                    const addressesIdEl = document.getElementById('editAddressesId');
+                    log({ addressesIdEl });
+                    if (addressesIdEl) {
+                        addressesIdEl.value = data.addresses_id || '';
+                        log('Значение addressesId установлено:', addressesIdEl.value);
+                    } else {
+                        console.warn('Элемент с id "addressesId" не найден в DOM');
+                    }
+
+                    const commentEl = document.getElementById('editComment');
+                    log({ commentEl });
+                    if (commentEl) commentEl.value = data.comment || data.commentText || '';
+                    log(commentEl.value);
+
+                    log('Заполнение формы завершено');
+                    
+                    // Инициализируем кастомный селект для адреса
+                    if (typeof window.initCustomSelect === 'function') {
+                        // Инициализируем кастомный селект с повторными попытками
+                        function tryInitEditAddressSelect(attempts = 0) {
+                            const editAddressesId = document.getElementById('editAddressesId');
+                            if (editAddressesId) {
+                                window.initCustomSelect('editAddressesId', 'Выберите адрес из списка');
+                                console.log('Кастомный селект для editAddressesId инициализирован');
+                            } else if (attempts < 5) {
+                                console.log(`Попытка ${attempts + 1}: Элемент editAddressesId не найден, повторная попытка через 100мс`);
+                                setTimeout(() => tryInitEditAddressSelect(attempts + 1), 100);
+                            } else {
+                                console.error('Не удалось найти элемент editAddressesId после 5 попыток');
+                            }
+                        }
+                        
+                        // Запускаем инициализацию с небольшой задержкой
+                        setTimeout(tryInitEditAddressSelect, 100);
+                    } else {
+                        console.error('Функция initCustomSelect не найдена');
+                    }
+                    
+                    // Проверяем значения полей после заполнения
+                    const fields = ['editClientName', 'editClientPhone', 'editClientOrganization', 'editRequestType', 
+                                 'editRequestStatus', 'execution_date', 'execution_time', 'editAddressesId', 'editComment'];
+                    fields.forEach(field => {
+                        const el = document.getElementById(field);
+                        console.log(`Поле ${field}:`, el ? {value: el.value, id: el.id} : 'не найдено');
+                    });
+                };
+                
+                // Скрываем все активные tooltips перед показом модального окна
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    const tooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+                    if (tooltip) tooltip.hide();
+                });
+
+                // Если модальное окно уже показано, вызываем fillForm напрямую
+                if (modalEl.classList.contains('show')) {
+                    console.log('Модальное окно уже показано, заполняем форму сразу');
+                    fillForm();
+                } else {
+                    console.log('Ожидаем показ модального окна');
+                    modalEl.addEventListener('shown.bs.modal', fillForm, { once: true });
+                }
+
+                modal.show();
+            }
+        } catch (error) {
+            logError('Ошибка:', error);
+            showAlert('Ошибка загрузки данных заявки', 'danger');
+        }
+    });
+}
+
+// Обработчик отправки формы редактирования
+async function initEditRequestFormHandler() {
+    const updateRequest = document.getElementById('updateRequest');
+    document.getElementById('updateRequest').addEventListener('click', async function() {
+        const formData = new FormData(document.getElementById('editRequestForm'));
+        const requestId = getValue('editRequestId');
+
+        console.log(requestId);
+
+        try {
+            const response = await fetch(`/requests/${requestId}`, {
+                method: 'PUT',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+
+            const data = await response.json();
+
+            console.log(data);
+
+            if (data.success) {
+                const modalEl = getElement('editRequestModal');
+                console.log(modalEl);
+                if (modalEl) {
+                    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                    modal.hide();
+                }
+
+                showAlert('Функционал в разработке', 'warning');
+
+                // location.reload(); // Или обновить строку таблицы
+            } else {
+                console.error('Ошибка:', data.message || 'Неизвестная ошибка');
+                showAlert(data.message || 'Ошибка', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showAlert('Ошибка обновления', 'danger');
+        }
+    });
+}
 
 // Функция для форматирования даты
 export function DateFormated(date) {
@@ -157,7 +347,7 @@ async function initYandexMap() {
         try {
             if (requestsData && requestsData !== '[]') {  // Добавлена проверка на пустой массив
                 requests = JSON.parse(requestsData);
-                console.log('✅ Заявки загружены из localStorage:', requests);
+                // console.log('✅ Заявки загружены из localStorage:', requests);
             } else if (formattedSelectedDate) {  // Делаем запрос только если есть выбранная дата
                 console.log('❌ Заявки нет в localStorage, делаем запрос');
                 const result = await fetch(`/brigades/date/${formattedSelectedDate}`, {
@@ -205,7 +395,7 @@ async function initYandexMap() {
             brigadeMembersData = [];
         }
 
-        console.log('brigadeMembersCurrentDayData:', brigadeMembersData);    
+        // console.log('brigadeMembersCurrentDayData:', brigadeMembersData);    
 
         if (!Array.isArray(requests) || requests.length === 0) {
             console.log('Нет данных о заявках для отображения на карте');
@@ -280,22 +470,6 @@ async function initYandexMap() {
                     ${formattedLeaderName || brigadeName}
                 </div>
             `;
-                
-            
-            // Формируем текст для постоянной подписи
-            // const labelText = `
-            //     <div style="margin-bottom: 4px; font-weight: 500;"><strong>${brigadeName}</strong></div>
-            //     <div>${address || 'Адрес не указан'}</div>
-            //     ${request.status ? `<div style="color: #666; font-size: 0.9em; margin-top: 2px;">${request.status}</div>` : ''}
-            // `;
-
-            // const labelText = `
-            // <div style="white-space: normal; width: 100% !important; max-width: 180px; line-height: 1.2; border: 2px solid #007bff; padding: 4px 8px;">
-            //     <div style="font-weight: bold;">${requestNumber}</div>
-            //     <div>${address || 'Адрес не указан'}</div>
-            //     ${request.status ? `<div style="color: #666; font-size: 0.9em;">${request.status}</div>` : ''}
-            // </div>
-            // `;
             
             // Проверяем мобильное устройство
             const isMobile = window.innerWidth < 768;
@@ -559,7 +733,7 @@ async function initYandexMap() {
             return placemark;
         }
 
-        console.log('Обработка заявок:', requests);
+        // console.log('Обработка заявок:', requests);
         
         // Счетчик для отслеживания завершения геокодирования
         let processedCount = 0;
@@ -574,8 +748,10 @@ async function initYandexMap() {
                     request.street,
                     request.houses
                 ].filter(Boolean).join(', ');
-                
+
+                // console.clear;
                 // console.log(`Заявка ${request.id}: координаты найдены`, coords, address);
+
                 addPlacemark(request, address, coords, index);
                 processedCount++;
                 
@@ -4877,6 +5053,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initUploadExcel();
     initExportReportBtn();
     initOpenMapBtn();
+    initEditRequestHandler();
+    initEditRequestFormHandler();
 });
 
 // Обработчик загрузки файла Excel
