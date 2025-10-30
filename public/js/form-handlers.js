@@ -90,8 +90,8 @@ async function initEditRequestHandler() {
 
                     const commentEl = document.getElementById('editComment');
                     log({ commentEl });
-                    if (commentEl) commentEl.value = data.comment || data.commentText || '';
-                    log(commentEl.value);
+                    // if (commentEl) commentEl.value = data.comment || data.commentText || '';
+                    // log(commentEl.value);
 
                     log('Заполнение формы завершено');
                     
@@ -158,7 +158,15 @@ async function initEditRequestFormHandler() {
         const formData = new FormData(document.getElementById('editRequestForm'));
         const requestId = getValue('editRequestId');
 
-        console.log(requestId);
+        log(requestId);
+
+        // Логируем все поля формы
+        const form = document.getElementById('editRequestForm');
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(el => console.log(`Поле формы: ${el.name} = ${el.value}`));
+
+        // Логируем содержимое FormData
+        formData.forEach((value, key) => console.log(`FormData: ${key} = ${value}`));
 
         try {
             const response = await fetch(`/requests/${requestId}`, {
