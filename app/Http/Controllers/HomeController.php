@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\RequestTeamFilterController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 /**
@@ -30,21 +30,21 @@ class HomeController extends Controller
             // );
 
             // Check auth
-            if (!auth()->check()) {
+            if (! auth()->check()) {
                 return response()->json(['success' => false, 'message' => 'Необходима авторизация'], 401);
             }
 
             $user = auth()->user();
 
             // Загружаем роли пользователя
-            $sql = "SELECT roles.name FROM user_roles
+            $sql = 'SELECT roles.name FROM user_roles
                 JOIN roles ON user_roles.role_id = roles.id
-                WHERE user_roles.user_id = " . $user->id;
+                WHERE user_roles.user_id = '.$user->id;
 
             $roles = DB::select($sql);
 
             // Извлекаем только имена ролей из результатов запроса
-            $roleNames = array_map(function($role) {
+            $roleNames = array_map(function ($role) {
                 return $role->name;
             }, $roles);
 
@@ -56,7 +56,7 @@ class HomeController extends Controller
             $user->user_id = $user->id;
             $user->sql = $sql;
 
-            if (!$user->isAdmin) {
+            if (! $user->isAdmin) {
                 return response()->json(['success' => false, 'message' => 'Недостаточно прав'], 403);
             }
 
@@ -75,19 +75,20 @@ class HomeController extends Controller
                 ->where('requests.id', $id)
                 ->first();
 
-            if (!$request) {
+            if (! $request) {
                 return response()->json(['success' => false, 'message' => 'Заявка не найдена'], 404);
             }
 
             return response()->json(['success' => true, 'data' => $request]);
         } catch (\Exception $e) {
             \Log::error('=== START ERROR getEditRequest 500 ===', []);
-            \Log::error('Error getting edit request 500: ' . $e->getMessage());
+            \Log::error('Error getting edit request 500: '.$e->getMessage());
             \Log::error('=== END ERROR getEditRequest 500 ===', []);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении данных заявки для редактирования',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -98,12 +99,12 @@ class HomeController extends Controller
         return response()->json(['success' => true, 'message' => 'Заявка обновлена test', 'request' => $request]);
 
         // Check auth
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return response()->json(['success' => false, 'message' => 'Необходима авторизация'], 401);
         }
 
         $user = auth()->user();
-        if (!$user->isAdmin) {
+        if (! $user->isAdmin) {
             return response()->json(['success' => false, 'message' => 'Недостаточно прав'], 403);
         }
 
@@ -122,18 +123,19 @@ class HomeController extends Controller
                 'execution_date' => $input['execution_date'] ?? null,
                 'execution_time' => $input['execution_time'] ?? null,
                 'addresses_id' => $input['addresses_id'] ?? null,
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
 
             DB::commit();
+
             return response()->json(['success' => true, 'message' => 'Заявка обновлена']);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Ошибка при обновлении заявки: ' . $e->getMessage());
+            \Log::error('Ошибка при обновлении заявки: '.$e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Ошибка при обновлении'], 500);
         }
     }
-    
 
     /**
      * Обновляет учетные данные пользователя (пароль)
@@ -141,8 +143,7 @@ class HomeController extends Controller
      * Метод позволяет администраторам обновлять пароли сотрудников.
      * Выполняет валидацию входных данных и обновляет пароль в базе данных.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id ID сотрудника
+     * @param  int  $id  ID сотрудника
      * @return \Illuminate\Http\JsonResponse
      */
     public function updateCredentials(Request $request, $id)
@@ -170,8 +171,8 @@ class HomeController extends Controller
 
             // Проверяем существование пользователя
             $user = DB::selectOne('SELECT id FROM users WHERE id = ?', [$user_id]);
-            
-            if (!$user) {
+
+            if (! $user) {
                 throw new \Exception('Пользователь не найден');
             }
 
@@ -179,16 +180,16 @@ class HomeController extends Controller
             $result = DB::update(
                 'UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?',
                 [
-                    Hash::make($validated['password']), 
-                    $user_id
+                    Hash::make($validated['password']),
+                    $user_id,
                 ]
             );
 
             if ($result === 0) {
                 throw new \Exception('Пароль не был обновлен');
             }
-            
-            \Log::info('result', ['result' => $result]);   
+
+            \Log::info('result', ['result' => $result]);
             \Log::info('=== END updateCredentials 200 ===', []);
 
             return response()->json([
@@ -196,27 +197,29 @@ class HomeController extends Controller
                 'message' => 'Пароль успешно обновлен',
                 'data' => [
                     'updated' => true,
-                    'user_id' => $user_id
-                ]
+                    'user_id' => $user_id,
+                ],
             ]);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             \Log::error('=== START ERROR updateCredentials 404 ===', []);
-            \Log::error('Error updating user credentials 404: ' . $e->getMessage());
+            \Log::error('Error updating user credentials 404: '.$e->getMessage());
             \Log::error('=== END ERROR updateCredentials 404 ===', []);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Пользователь не найден',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 404);
         } catch (\Exception $e) {
             \Log::error('=== START ERROR updateCredentials 500 ===', []);
-            \Log::error('Error updating user credentials 500: ' . $e->getMessage());
+            \Log::error('Error updating user credentials 500: '.$e->getMessage());
             \Log::error('=== END ERROR updateCredentials 500 ===', []);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при обновлении пароля',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -238,17 +241,18 @@ class HomeController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'roles' => $roles
-                ]
+                    'roles' => $roles,
+                ],
             ]);
         } catch (\Exception $e) {
             \Log::error('=== START ERROR getRoles 500 ===', []);
-            \Log::error('Error getting roles 500: ' . $e->getMessage());
+            \Log::error('Error getting roles 500: '.$e->getMessage());
             \Log::error('=== END ERROR getRoles 500 ===', []);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении списка ролей',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -259,7 +263,6 @@ class HomeController extends Controller
      * Метод выполняет отмену заявки, создает комментарий с причиной отмены
      * и обновляет статус заявки. Использует транзакции для обеспечения целостности данных.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function cancelRequest(Request $request)
@@ -267,7 +270,7 @@ class HomeController extends Controller
         try {
             $validated = $request->validate([
                 'request_id' => 'required|integer|exists:requests,id',
-                'reason' => 'required|string|max:1000'
+                'reason' => 'required|string|max:1000',
             ]);
 
             // Log
@@ -282,7 +285,7 @@ class HomeController extends Controller
                 ->where('id', $validated['request_id'])
                 ->first();
 
-            if (!$requestData) {
+            if (! $requestData) {
                 throw new \Exception('Заявка не найдена');
             }
 
@@ -296,34 +299,34 @@ class HomeController extends Controller
                 ->where('name', 'отменена')
                 ->first();
 
-            if (!$canceledStatus) {
+            if (! $canceledStatus) {
                 throw new \Exception('Статус "отменена" не найден в системе');
             }
 
             $status_color = $canceledStatus->color;
 
             // Создаем комментарий об отмене
-            $comment = "Заявка отменена. Причина: " . $validated['reason'];
+            $comment = 'Заявка отменена. Причина: '.$validated['reason'];
 
             // Добавляем комментарий
             $commentId = DB::table('comments')->insertGetId([
                 'comment' => $comment,
-                'created_at' => now()
+                'created_at' => now(),
             ]);
 
             // Привязываем комментарий к заявке
             DB::table('request_comments')->insert([
                 'request_id' => $validated['request_id'],
                 'comment_id' => $commentId,
-                'user_id'    => $request->user()->id,
-                'created_at' => now()
+                'user_id' => $request->user()->id,
+                'created_at' => now(),
             ]);
 
             // Обновляем статус заявки
             DB::table('requests')
                 ->where('id', $validated['request_id'])
                 ->update([
-                    'status_id' => $canceledStatus->id
+                    'status_id' => $canceledStatus->id,
                 ]);
 
             // Фиксируем изменения
@@ -343,27 +346,29 @@ class HomeController extends Controller
                 'message' => 'Заявка успешно отменена',
                 'comments_count' => $commentsCount,
                 'execution_date' => $requestData->execution_date,
-                'status_color' => $status_color
+                'status_color' => $status_color,
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('=== START ERROR cancelRequest 422 ===', []);
-            \Log::error('Ошибка при отмене заявки 422: ' . $e->getMessage());
+            \Log::error('Ошибка при отмене заявки 422: '.$e->getMessage());
             \Log::error('=== END ERROR cancelRequest 422 ===', []);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             // Откатываем транзакцию в случае ошибки
             DB::rollBack();
             \Log::error('=== START ERROR cancelRequest 500 ===', []);
-            \Log::error('Ошибка при отмене заявки 500: ' . $e->getMessage());
+            \Log::error('Ошибка при отмене заявки 500: '.$e->getMessage());
             \Log::error('=== END ERROR cancelRequest 500 ===', []);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -371,7 +376,6 @@ class HomeController extends Controller
     /**
      * Transfer a request to a new date
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function transferRequest(Request $request)
@@ -381,7 +385,7 @@ class HomeController extends Controller
                 'request_id' => 'required|integer|exists:requests,id',
                 'new_date' => 'required|date|after_or_equal:today',
                 'reason' => 'required|string|max:1000',
-                'transfer_to_planning' => 'required|boolean'
+                'transfer_to_planning' => 'required|boolean',
             ]);
 
             // Begin transaction
@@ -392,25 +396,25 @@ class HomeController extends Controller
                 ->where('id', $validated['request_id'])
                 ->first();
 
-            if (!$requestData) {
+            if (! $requestData) {
                 throw new \Exception('Заявка не найдена');
             }
 
             // Create a comment about the transfer
-            $comment = "Заявка перенесена с " . $requestData->execution_date . " на " . $validated['new_date'] . ". Причина: " . $validated['reason'];
+            $comment = 'Заявка перенесена с '.$requestData->execution_date.' на '.$validated['new_date'].'. Причина: '.$validated['reason'];
 
             // Add comment
             $commentId = DB::table('comments')->insertGetId([
                 'comment' => $comment,
-                'created_at' => now()
+                'created_at' => now(),
             ]);
 
             // Link comment to request
             DB::table('request_comments')->insert([
                 'request_id' => $validated['request_id'],
                 'comment_id' => $commentId,
-                'user_id'    => $request->user()->id,
-                'created_at' => now()
+                'user_id' => $request->user()->id,
+                'created_at' => now(),
             ]);
 
             // Update the request date and status
@@ -418,7 +422,7 @@ class HomeController extends Controller
                 ->where('id', $validated['request_id'])
                 ->update([
                     'execution_date' => $validated['new_date'],
-                    'status_id' => $validated['transfer_to_planning'] ? 6 : 3 // ID статуса 'перенесена'
+                    'status_id' => $validated['transfer_to_planning'] ? 6 : 3, // ID статуса 'перенесена'
                 ]);
 
             // Get comments count (including the one we just added)
@@ -434,7 +438,7 @@ class HomeController extends Controller
                 'comment' => $comment,
                 'request_id' => $validated['request_id'],
                 'comment_id' => $commentId,
-                'comments_count' => $commentsCount
+                'comments_count' => $commentsCount,
             ]);
             \Log::info('=== END transferRequest ===');
 
@@ -446,30 +450,33 @@ class HomeController extends Controller
                 'message' => 'Заявка успешно перенесена',
                 'execution_date' => $validated['new_date'],
                 'comments_count' => $commentsCount,
-                'isPlanning' => $validated['transfer_to_planning']
+                'isPlanning' => $validated['transfer_to_planning'],
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             \Log::error('=== START ERROR transferRequest 422 ===', []);
-            \Log::error('Ошибка при переносе заявки 422: ' . $e->getMessage());
+            \Log::error('Ошибка при переносе заявки 422: '.$e->getMessage());
             \Log::error('=== END ERROR transferRequest 422 ===', []);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('=== START ERROR transferRequest 500 ===', []);
-            \Log::error('Ошибка при переносе заявки 500: ' . $e->getMessage());
+            \Log::error('Ошибка при переносе заявки 500: '.$e->getMessage());
             \Log::error('=== END ERROR transferRequest 500 ===', []);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
+
     /**
      * Получить список всех адресов для формирования списка адресов
      *
@@ -485,6 +492,7 @@ class HomeController extends Controller
             AND p.name != 'оператор'
             ORDER BY e.fio
         ");
+
         return response()->json($employees);
     }
 
@@ -517,13 +525,12 @@ class HomeController extends Controller
 
     /**
      * Получить список всех адресов для формирования списка адресов
-     * 
-     * @param  \Illuminate\Http\Request  $request
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getAddressesPaginated(Request $request)
     {
-     
+
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
         $offset = ($page - 1) * $perPage;
@@ -532,7 +539,7 @@ class HomeController extends Controller
         $total = DB::table('addresses')->count();
 
         // Получаем данные с пагинацией
-        $sql = "
+        $sql = '
             SELECT
                 a.id,
                 a.street,
@@ -556,16 +563,16 @@ class HomeController extends Controller
             LEFT JOIN house_types ht ON a.house_type_id = ht.id
             ORDER BY c.name, a.street, a.houses
             LIMIT ? OFFSET ?
-        ";
+        ';
 
         $addresses = DB::select($sql, [$perPage, $offset]);
 
         return response()->json([
             'data' => $addresses,
             'total' => $total,
-            'per_page' => (int)$perPage,
-            'current_page' => (int)$page,
-            'last_page' => ceil($total / $perPage)
+            'per_page' => (int) $perPage,
+            'current_page' => (int) $page,
+            'last_page' => ceil($total / $perPage),
         ]);
     }
 
@@ -610,7 +617,7 @@ class HomeController extends Controller
         $brigades = DB::select('SELECT * FROM brigades');
 
         // Запрашиваем employees с паспортными данными и должностями
-        $employees = DB::select("
+        $employees = DB::select('
             SELECT
                 e.*,
                 p.series_number,
@@ -628,7 +635,7 @@ class HomeController extends Controller
             LEFT JOIN users u ON u.id = e.user_id
             WHERE e.is_deleted = false
             ORDER BY e.fio
-        ");
+        ');
 
         // Запрашиваем addresses
         $addresses = DB::select('SELECT * FROM addresses');
@@ -656,8 +663,8 @@ class HomeController extends Controller
             JOIN employees el ON el.id = b.leader_id
             WHERE b.is_deleted = FALSE AND el.is_deleted = FALSE;
         ";
-        
-        $employeesFilter = DB::select($sql); 
+
+        $employeesFilter = DB::select($sql);
 
         // Запрашиваем positions
         $positions = DB::select('SELECT * FROM positions');
@@ -684,7 +691,7 @@ class HomeController extends Controller
             LEFT JOIN employees el ON b.leader_id = el.id'
         );
 
-        $sql = "SELECT
+        $sql = 'SELECT
             b.id AS brigade_id,
             bm.employee_id,
             b.name AS brigade_name,
@@ -705,7 +712,7 @@ class HomeController extends Controller
         LEFT JOIN employees el ON b.leader_id = el.id
         WHERE b.is_deleted = false
         AND el.is_deleted = false
-        ORDER BY b.id, employee_name";
+        ORDER BY b.id, employee_name';
 
         $brigadeMembersWithDetails = DB::select($sql);
 
@@ -764,7 +771,7 @@ class HomeController extends Controller
                         'id' => $comment->comment_id,
                         'comment' => $comment->comment,
                         'created_at' => $comment->created_at,
-                        'author_name' => $comment->author_name
+                        'author_name' => $comment->author_name,
                     ];
                 })->toArray();
             });
@@ -830,8 +837,8 @@ class HomeController extends Controller
             AND rs.name != 'планирование'   
             ORDER BY r.id DESC";
 
-            if ($user->isFitter) {
-                $sql = "
+        if ($user->isFitter) {
+            $sql = "
                     SELECT
                         r.*,
                         c.fio AS client_fio,
@@ -882,15 +889,15 @@ class HomeController extends Controller
                     )
                     ORDER BY r.id DESC
                 ";
-            }
+        }
 
         $requests = DB::select($sql);
-        
+
         // Convert stdClass objects to arrays for the view
         // $requestsData = array_map(function($request) {
         //     return (array) $request;
         // }, $requests);
-        
+
         // Add requests data to the view
         // view()->share('requestsData', $requestsData);
 
@@ -906,7 +913,7 @@ class HomeController extends Controller
 
         // Получаем список городов для выпадающего списка
         $cities = DB::table('cities')->orderBy('name')->get();
-        
+
         // Получаем список регионов для выпадающего списка
         $regions = DB::table('regions')->orderBy('name')->get();
 
@@ -936,7 +943,7 @@ class HomeController extends Controller
             'isAdmin' => $user->isAdmin ?? false,
             'isUser' => $user->isUser ?? false,
             'isFitter' => $user->isFitter ?? false,
-            'sql' => $sql
+            'sql' => $sql,
         ];
 
         // $data = [
@@ -953,7 +960,7 @@ class HomeController extends Controller
         // \log::info('$user', (array)$user);
 
         // \Log::info('Content-Type: ' . $request->header('Content-Type'));
-        
+
         // \Log::info('=== КОНЕЦ СТРАНИЦЫ ===', []);
 
         return view('welcome', $viewData);
@@ -974,7 +981,7 @@ class HomeController extends Controller
                     'type' => $file->getMimeType(),
                     'extension' => $file->getClientOriginalExtension(),
                 ];
-                \Log::info("Файл #{$index}:", $filesInfo[count($filesInfo)-1]);
+                \Log::info("Файл #{$index}:", $filesInfo[count($filesInfo) - 1]);
             }
         }
 
@@ -988,16 +995,16 @@ class HomeController extends Controller
                     'type' => $photo->getMimeType(),
                     'extension' => $photo->getClientOriginalExtension(),
                 ];
-                \Log::info("Фото #{$index}:", $photosInfo[count($photosInfo)-1]);
+                \Log::info("Фото #{$index}:", $photosInfo[count($photosInfo) - 1]);
             }
         }
 
         // Логируем общую информацию
         \Log::info('=== ИНФОРМАЦИЯ О ЗАГРУЗКЕ ФАЙЛОВ ===');
-        \Log::info('Всего файлов: ' . count($filesInfo));
-        \Log::info('Всего фото: ' . count($photosInfo));
-        \Log::info('Комментарий: ' . $request->comment);
-        \Log::info('ID заявки: ' . $request->request_id);
+        \Log::info('Всего файлов: '.count($filesInfo));
+        \Log::info('Всего фото: '.count($photosInfo));
+        \Log::info('Комментарий: '.$request->comment);
+        \Log::info('ID заявки: '.$request->request_id);
 
         // Ответ для отладки
         // return response()->json([
@@ -1048,13 +1055,13 @@ class HomeController extends Controller
                     'max:65536',
                     function ($attribute, $value, $fail) {
                         $allowedMimeTypes = [
-                            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 
-                            'image/heic', 'image/heif', 'application/pdf', 'application/msword', 
+                            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff',
+                            'image/heic', 'image/heif', 'application/pdf', 'application/msword',
                             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                             'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                            'text/plain', 'text/html', 'application/zip', 'application/x-rar', 'application/x-rar-compressed', 
+                            'text/plain', 'text/html', 'application/zip', 'application/x-rar', 'application/x-rar-compressed',
                             'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv', 'video/x-matroska',
-                            'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4'
+                            'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4',
                         ];
 
                         // Логируем информацию о файле
@@ -1063,24 +1070,25 @@ class HomeController extends Controller
                             'расширение' => $value->getClientOriginalExtension(),
                             'mime_тип' => $value->getMimeType(),
                             'размер' => $value->getSize(),
-                            'валидный_тип' => in_array($value->getMimeType(), $allowedMimeTypes) ? 'да' : 'нет'
+                            'валидный_тип' => in_array($value->getMimeType(), $allowedMimeTypes) ? 'да' : 'нет',
                         ]);
 
                         // Для файлов с расширением .txt разрешаем text/html
                         if (strtolower($value->getClientOriginalExtension()) === 'txt' && $value->getMimeType() === 'text/html') {
                             \Log::info('Разрешён .txt файл с MIME-типом text/html');
+
                             return true;
                         }
 
-                        if (!in_array($value->getMimeType(), $allowedMimeTypes)) {
-                            $errorMessage = "Файл {$value->getClientOriginalName()} имеет недопустимый тип: " . $value->getMimeType() . 
-                                         ". Разрешенные типы: " . implode(', ', $allowedMimeTypes);
+                        if (! in_array($value->getMimeType(), $allowedMimeTypes)) {
+                            $errorMessage = "Файл {$value->getClientOriginalName()} имеет недопустимый тип: ".$value->getMimeType().
+                                         '. Разрешенные типы: '.implode(', ', $allowedMimeTypes);
                             \Log::error($errorMessage);
                             $fail($errorMessage);
                         }
-                    }
+                    },
                 ],
-                '_token' => 'required|string'
+                '_token' => 'required|string',
             ]);
 
             // \Log::info('Валидация пройдена успешно', $validated);
@@ -1098,10 +1106,10 @@ class HomeController extends Controller
             //     'exists' => $requestExists
             // ]);
 
-            if (!$requestExists) {
+            if (! $requestExists) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Заявка не найдена'
+                    'message' => 'Заявка не найдена',
                 ], 404);
             }
 
@@ -1111,7 +1119,6 @@ class HomeController extends Controller
 
             // Массив для хранения ID загруженных файлов
             $uploadedFileIds = [];
-            
 
             try {
                 // Получаем структуру таблицы requests, чтобы найти колонку с датой
@@ -1122,7 +1129,7 @@ class HomeController extends Controller
                      AND data_type IN ('timestamp without time zone', 'timestamp with time zone', 'date', 'datetime')"
                 );
 
-                if (!$tableInfo) {
+                if (! $tableInfo) {
                     throw new \Exception('Не удалось определить колонку с датой в таблице requests');
                 }
 
@@ -1156,7 +1163,7 @@ class HomeController extends Controller
                     [$comment, $createdAt]
                 );
 
-                if (!$result) {
+                if (! $result) {
                     throw new \Exception('Не удалось создать комментарий');
                 }
 
@@ -1181,48 +1188,48 @@ class HomeController extends Controller
                     [$requestId, $commentId, $userId, $createdAt]
                 );
 
-                if (!$result) {
+                if (! $result) {
                     throw new \Exception('Не удалось привязать комментарий к заявке');
                 }
 
                 // Обработка загруженных файлов
                 if ($request->hasFile('photos')) {
-                    foreach ($request->file('photos') as $file) {              
+                    foreach ($request->file('photos') as $file) {
                         try {
                             // Сохранить файл в папку storage/app/public/images
                             // Используем оригинальное имя файла
                             $fileName = $file->getClientOriginalName();
-                            
+
                             // Сохраняем файл напрямую в целевую директорию
                             $path = storage_path('app/public/images');
-                            if (!file_exists($path)) {
+                            if (! file_exists($path)) {
                                 mkdir($path, 0755, true);
                             }
                             $stored = file_put_contents(
-                                $path . '/' . $fileName,
+                                $path.'/'.$fileName,
                                 file_get_contents($file->getRealPath())
                             ) !== false;
-                            
+
                             if ($stored === false) {
-                                throw new \RuntimeException('Не удалось сохранить файл. Проверьте права на запись в директорию: ' . storage_path('app/public/images'));
+                                throw new \RuntimeException('Не удалось сохранить файл. Проверьте права на запись в директорию: '.storage_path('app/public/images'));
                             }
-                            
+
                             // Получить основную информацию о файле
                             $fileInfo = [
                                 'name' => $file->getClientOriginalName(),
                                 'type' => $file->getMimeType(),
                                 'extension' => $file->getClientOriginalExtension(),
                                 'size' => $file->getSize(),
-                                'path' => $path . '/' . $fileName,
-                                'url' => asset('storage/images/' . $fileName)
+                                'path' => $path.'/'.$fileName,
+                                'url' => asset('storage/images/'.$fileName),
                             ];
-                            
+
                         } catch (\Exception $e) {
                             \Log::error('Ошибка при сохранении файла:', [
                                 'error' => $e->getMessage(),
-                                'trace' => $e->getTraceAsString()
+                                'trace' => $e->getTraceAsString(),
                             ]);
-                            throw new \Exception('Не удалось сохранить файл: ' . $e->getMessage());
+                            throw new \Exception('Не удалось сохранить файл: '.$e->getMessage());
                         }
 
                         // return тестовый
@@ -1236,20 +1243,20 @@ class HomeController extends Controller
                         // ]);
 
                         if (strpos($fileInfo['type'], 'image/') === 0) {
-                            $relativePath = 'images/' . $fileInfo['name'];
-                            
+                            $relativePath = 'images/'.$fileInfo['name'];
+
                             // Проверяем, существует ли уже такая фотография
                             $existingPhoto = DB::table('photos')
                                 ->where('path', $relativePath)
                                 ->first();
-                            
+
                             if ($existingPhoto) {
                                 // Используем существующую фотографию
                                 $photoId = $existingPhoto->id;
                             } else {
                                 // Получаем размеры изображения
-                                list($width, $height) = @getimagesize($fileInfo['path']) ?: [null, null];
-                                
+                                [$width, $height] = @getimagesize($fileInfo['path']) ?: [null, null];
+
                                 $photoId = DB::table('photos')->insertGetId([
                                     'path' => $relativePath,
                                     'original_name' => $fileInfo['name'],
@@ -1270,7 +1277,7 @@ class HomeController extends Controller
                                 ->first();
 
                             // Если связи с заявкой еще нет - создаем
-                            if (!$existingRequestLink) {
+                            if (! $existingRequestLink) {
                                 DB::table('request_photos')->insert([
                                     'request_id' => $requestId,
                                     'photo_id' => $photoId,
@@ -1286,7 +1293,7 @@ class HomeController extends Controller
                                 ->first();
 
                             // Если связи с комментарием еще нет - создаем
-                            if (!$existingCommentLink) {
+                            if (! $existingCommentLink) {
                                 DB::table('comment_photos')->insert([
                                     'comment_id' => $commentId,
                                     'photo_id' => $photoId,
@@ -1299,42 +1306,42 @@ class HomeController extends Controller
                 }
 
                 if ($request->hasFile('files')) {
-                    foreach ($request->file('files') as $file) {              
+                    foreach ($request->file('files') as $file) {
                         try {
                             // Сохранить файл в папку storage/app/public/files
                             $fileName = $file->getClientOriginalName();
-                            
+
                             // Сохраняем файл напрямую в целевую директорию
                             $path = storage_path('app/public/files');
-                            if (!file_exists($path)) {
+                            if (! file_exists($path)) {
                                 mkdir($path, 0755, true);
                             }
                             $stored = file_put_contents(
-                                $path . '/' . $fileName,
+                                $path.'/'.$fileName,
                                 file_get_contents($file->getRealPath())
                             ) !== false;
-                            
+
                             if ($stored === false) {
-                                throw new \RuntimeException('Не удалось сохранить файл. Проверьте права на запись в директорию: ' . storage_path('app/public/files'));
+                                throw new \RuntimeException('Не удалось сохранить файл. Проверьте права на запись в директорию: '.storage_path('app/public/files'));
                             }
-                            
+
                             // Получить основную информацию о файле
                             $fileInfo = [
                                 'name' => $file->getClientOriginalName(),
                                 'type' => $file->getMimeType(),
                                 'extension' => $file->getClientOriginalExtension(),
                                 'size' => $file->getSize(),
-                                'path' => $path . '/' . $fileName,
-                                'url' => asset('storage/files/' . $fileName)
+                                'path' => $path.'/'.$fileName,
+                                'url' => asset('storage/files/'.$fileName),
                             ];
-                            
-                            $relativePath = 'files/' . $fileInfo['name'];
-                            
+
+                            $relativePath = 'files/'.$fileInfo['name'];
+
                             // Проверяем, существует ли уже такой файл
                             $existingFile = DB::table('files')
                                 ->where('path', $relativePath)
                                 ->first();
-                            
+
                             if ($existingFile) {
                                 // Используем существующий файл
                                 $fileId = $existingFile->id;
@@ -1348,24 +1355,24 @@ class HomeController extends Controller
                                     'extension' => $fileInfo['extension'],
                                     'created_by' => $userId,
                                     'created_at' => now(),
-                                    'updated_at' => now()
+                                    'updated_at' => now(),
                                 ]);
                             }
-                            
+
                             // Связываем файл с комментарием
                             DB::table('comment_files')->insert([
                                 'comment_id' => $commentId,
                                 'file_id' => $fileId,
                                 'created_at' => now(),
-                                'updated_at' => now()
+                                'updated_at' => now(),
                             ]);
-                            
+
                         } catch (\Exception $e) {
                             \Log::error('Ошибка при сохранении файла:', [
                                 'error' => $e->getMessage(),
-                                'trace' => $e->getTraceAsString()
+                                'trace' => $e->getTraceAsString(),
                             ]);
-                            throw new \Exception('Не удалось сохранить файл: ' . $e->getMessage());
+                            throw new \Exception('Не удалось сохранить файл: '.$e->getMessage());
                         }
                     }
                 }
@@ -1403,7 +1410,7 @@ class HomeController extends Controller
                     'message' => 'Комментарий успешно добавлен',
                     'comments' => $comments,
                     'commentId' => $commentId,
-                    'files' => $files
+                    'files' => $files,
                 ]);
             } catch (\Exception $e) {
                 // Откатываем изменения при ошибке
@@ -1417,17 +1424,17 @@ class HomeController extends Controller
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
                     'trace' => $e->getTraceAsString(),
-                    'sql_queries' => \DB::getQueryLog()
+                    'sql_queries' => \DB::getQueryLog(),
                 ];
                 \Log::error('Ошибка при добавлении комментария:', $errorInfo);
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Произошла ошибка при добавлении комментария: ' . $e->getMessage(),
+                    'message' => 'Произошла ошибка при добавлении комментария: '.$e->getMessage(),
                     'error_details' => [
                         'file' => $e->getFile(),
-                        'line' => $e->getLine()
-                    ]
+                        'line' => $e->getLine(),
+                    ],
                 ], 500);
             }
         } catch (\Exception $e) {
@@ -1435,12 +1442,12 @@ class HomeController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Критическая ошибка: ' . $e->getMessage()
+                'message' => 'Критическая ошибка: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -1454,17 +1461,17 @@ class HomeController extends Controller
             $user = auth()->user();
 
             // Загружаем роли пользователя
-            $sql = "SELECT roles.name FROM user_roles
+            $sql = 'SELECT roles.name FROM user_roles
                 JOIN roles ON user_roles.role_id = roles.id
-                WHERE user_roles.user_id = " . $user->id;
-            
+                WHERE user_roles.user_id = '.$user->id;
+
             $roles = DB::select($sql);
-            
+
             // Извлекаем только имена ролей из результатов запроса
-            $roleNames = array_map(function($role) {
+            $roleNames = array_map(function ($role) {
                 return $role->name;
             }, $roles);
-            
+
             // Устанавливаем роли и флаги
             $user->roles = $roleNames;
             $user->isAdmin = in_array('admin', $roleNames);
@@ -1475,14 +1482,14 @@ class HomeController extends Controller
 
             // Валидация даты
             $validator = validator(['date' => $date], [
-                'date' => 'required|date_format:Y-m-d'
+                'date' => 'required|date_format:Y-m-d',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Неверный формат даты. Ожидается YYYY-MM-DD',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -1617,7 +1624,7 @@ class HomeController extends Controller
             $requestIds = array_column($requests, 'id');
             $commentsByRequest = [];
 
-            if (!empty($requestIds)) {
+            if (! empty($requestIds)) {
                 // Загружаем комментарии для всех заявок одним запросом
                 $comments = DB::select("
                     SELECT
@@ -1628,7 +1635,7 @@ class HomeController extends Controller
                         'Система' as author_name
                     FROM request_comments rc
                     JOIN comments c ON rc.comment_id = c.id
-                    WHERE rc.request_id IN (" . implode(',', $requestIds) . ')
+                    WHERE rc.request_id IN (".implode(',', $requestIds).')
                     ORDER BY c.created_at DESC
                 ');
 
@@ -1638,7 +1645,7 @@ class HomeController extends Controller
                         'id' => $comment->id ?? null,
                         'comment' => $comment->comment ?? '',
                         'created_at' => $comment->created_at ?? now(),
-                        'author_name' => $comment->author_name ?? 'Система'
+                        'author_name' => $comment->author_name ?? 'Система',
                     ];
                     if (isset($comment->request_id)) {
                         $commentsByRequest[$comment->request_id][] = $commentData;
@@ -1662,7 +1669,7 @@ class HomeController extends Controller
             $brigadeMembers = [];
             $brigadeLeaders = [];
 
-            if (!empty($brigadeIds)) {
+            if (! empty($brigadeIds)) {
                 // Получаем всех членов бригад для загруженных заявок
                 $members_old = DB::select('
                     SELECT
@@ -1676,7 +1683,7 @@ class HomeController extends Controller
                     JOIN brigades b ON bm.brigade_id = b.id
                     JOIN employees e ON bm.employee_id = e.id
                     LEFT JOIN employees el ON b.leader_id = el.id
-                    WHERE bm.brigade_id IN (' . implode(',', $brigadeIds) . ')
+                    WHERE bm.brigade_id IN ('.implode(',', $brigadeIds).')
                 ');
 
                 $sql = "
@@ -1691,29 +1698,28 @@ class HomeController extends Controller
                     LEFT JOIN brigade_members bm ON bm.brigade_id = b.id
                     LEFT JOIN employees e ON bm.employee_id = e.id
                     LEFT JOIN employees el ON b.leader_id = el.id
-                    WHERE b.id IN (" . implode(',', $brigadeIds) . ")
+                    WHERE b.id IN (".implode(',', $brigadeIds).')
                     AND b.is_deleted = false
                     AND (el.id IS NULL OR el.is_deleted = false)
                     AND (e.id IS NULL OR e.is_deleted = false)
                     ORDER BY b.id, member_name
-                ";
-                
-                $members = DB::select($sql);
+                ';
 
+                $members = DB::select($sql);
 
                 // Группируем членов по ID бригады и сохраняем информацию о бригадире
                 $brigadeLeaders = [];
 
                 foreach ($members as $member) {
                     // Сохраняем информацию о бригадире
-                    if (!isset($brigadeLeaders[$member->brigade_id]) && $member->employee_leader_name) {
+                    if (! isset($brigadeLeaders[$member->brigade_id]) && $member->employee_leader_name) {
                         $brigadeLeaders[$member->brigade_id] = $member->employee_leader_name;
                     }
 
                     $brigadeMembers[$member->brigade_id][] = [
                         'name' => $member->member_name,
                         'phone' => $member->member_phone,
-                        'position_id' => $member->position_id
+                        'position_id' => $member->position_id,
                     ];
                 }
             }
@@ -1730,7 +1736,7 @@ class HomeController extends Controller
             $requestIds = array_column($requestByDate, 'id');
             $commentsByRequest = [];
 
-            if (!empty($requestIds)) {
+            if (! empty($requestIds)) {
                 // Получаем все комментарии для загруженных заявок
                 $comments = DB::select("
                     SELECT
@@ -1741,7 +1747,7 @@ class HomeController extends Controller
                         'Система' as author_name
                     FROM request_comments rc
                     JOIN comments c ON rc.comment_id = c.id
-                    WHERE rc.request_id IN (" . implode(',', $requestIds) . ')
+                    WHERE rc.request_id IN (".implode(',', $requestIds).')
                     ORDER BY c.created_at DESC
                 ');
 
@@ -1751,7 +1757,7 @@ class HomeController extends Controller
                         'id' => $comment->comment_id,
                         'comment' => $comment->comment,
                         'created_at' => $comment->created_at,
-                        'author_name' => $comment->author_name
+                        'author_name' => $comment->author_name,
                     ];
                 }
             }
@@ -1762,14 +1768,14 @@ class HomeController extends Controller
             // $sql = "SELECT roles.name FROM user_roles
             //     JOIN roles ON user_roles.role_id = roles.id
             //     WHERE user_roles.user_id = " . $user->id;
-            
+
             // $roles = DB::select($sql);
-            
+
             // // Извлекаем только имена ролей из результатов запроса
             // $roleNames = array_map(function($role) {
             //     return $role->name;
             // }, $roles);
-            
+
             // // Устанавливаем роли и флаги
             // $user->roles = $roleNames;
             // $user->isAdmin = in_array('admin', $roleNames);
@@ -1815,25 +1821,25 @@ class HomeController extends Controller
                 $request->sql = $user->sql;
                 $request->user_id = $user->id;
                 $request->brigadeMembersCurrentDay = $brigadeMembersCurrentDay;
-                
+
                 return $request;
             }, $requestByDate);
 
             return response()->json([
                 'success' => true,
                 'data' => $result,
-                'count' => count($result)
+                'count' => count($result),
             ]);
         } catch (\Exception $e) {
-            \Log::error('Ошибка при получении заявок: ' . $e->getMessage(), [
+            \Log::error('Ошибка при получении заявок: '.$e->getMessage(), [
                 'exception' => $e,
-                'date' => $date ?? null
+                'date' => $date ?? null,
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при получении заявок: ' . $e->getMessage(),
-                'trace' => config('app.debug') ? $e->getTraceAsString() : null
+                'message' => 'Ошибка при получении заявок: '.$e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
             ], 500);
         }
     }
@@ -1886,21 +1892,23 @@ class HomeController extends Controller
                 $date = new \DateTime($comment->created_at);
                 $comment->formatted_date = $date->format('d.m.Y H:i');
                 if ($comment->author_name === 'Система') {
-                    $comment->author_name = 'Система ' . $comment->formatted_date;
+                    $comment->author_name = 'Система '.$comment->formatted_date;
                 }
             }
 
             return response()->json($comments);
         } catch (\Exception $e) {
-            \Log::error('Ошибка при получении комментариев: ' . $e->getMessage());
+            \Log::error('Ошибка при получении комментариев: '.$e->getMessage());
+
             return response()->json([
                 'error' => 'Ошибка при загрузке комментариев',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
 
-    public function deleteRequest($id, Request $request) {
+    public function deleteRequest($id, Request $request)
+    {
         try {
             \Log::info('=== START deleteRequest ===', []);
 
@@ -1908,8 +1916,6 @@ class HomeController extends Controller
             $user->method = 'HomeController::deleteRequest';
             $employee = $user->employee;
             $employee_role = $user->roles[0];
-
-            
 
             $validated = $request->validate([
                 'request_id' => 'required|exists:requests,id',
@@ -1927,10 +1933,10 @@ class HomeController extends Controller
             //     'data' => $request_id
             // ]);
 
-            $sql = "update requests set status_id = 7 where id = ?";
+            $sql = 'update requests set status_id = 7 where id = ?';
             $result = DB::update($sql, [$request_id]);
 
-            \Log::info('=== Все выходные данные ===', ['sql' => 'update requests set status_id = 7 where id =' . $request_id, 'result' => $result]);
+            \Log::info('=== Все выходные данные ===', ['sql' => 'update requests set status_id = 7 where id ='.$request_id, 'result' => $result]);
 
             \Log::info('=== END deleteRequest ===', []);
 
@@ -1938,15 +1944,16 @@ class HomeController extends Controller
                 'success' => true,
                 'message' => 'Заявка удалена',
                 'data' => $result,
-                'request_id' => $request_id
+                'request_id' => $request_id,
             ]);
         } catch (\Exception $e) {
             \Log::error('=== START ERROR deleteRequest ===', []);
-            \Log::error('Ошибка при завершении заявки: ' . $e->getMessage());
+            \Log::error('Ошибка при завершении заявки: '.$e->getMessage());
             \Log::error('=== END ERROR deleteRequest ===', []);
+
             return response()->json([
                 'error' => 'Ошибка при завершении заявки',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -1971,14 +1978,13 @@ class HomeController extends Controller
             \Log::info('ID сотрудника', ['id' => $employee->id]);
             \Log::info('Роль сотрудника', ['role' => $employee_role]);
 
-
-            $sql = "select * from requests where id = ?";
+            $sql = 'select * from requests where id = ?';
             $result = DB::select($sql, [$id]);
             $operator_id = $result[0]->operator_id;
             $employee_id = $employee->id;
 
             // Проверяем, был ли текущий сотрудник членом бригады, выполнявшей данную заявку
-            $sql = "SELECT EXISTS (
+            $sql = 'SELECT EXISTS (
                 SELECT 1
                 FROM requests r
                 JOIN brigades b ON b.id = r.brigade_id
@@ -1989,13 +1995,13 @@ class HomeController extends Controller
                     OR b.leader_id   = :employee_id
                 )
             ) AS is_member;
-            ";
+            ';
             $memberRow = DB::selectOne($sql, [$id, $employee_id]);
             $isBrigadeMember = (bool) ($memberRow->is_member ?? false);
 
             // Роль user может закрывать заявки только заявки, где он раработал в составе бригады
 
-            if ($employee_role === 'user' && !$isBrigadeMember) {
+            if ($employee_role === 'user' && ! $isBrigadeMember) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Вы не можете закрыть заявку, так как она создана другим сотрудником',
@@ -2009,7 +2015,7 @@ class HomeController extends Controller
             }
 
             // Роль fitter может закрывать заявки только свои
-            if ($employee_role === 'fitter' && !$isBrigadeMember) {
+            if ($employee_role === 'fitter' && ! $isBrigadeMember) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Вы не можете закрыть заявку, так как она создана другим сотрудником',
@@ -2048,15 +2054,15 @@ class HomeController extends Controller
                 // Создаем комментарий
                 $commentId = DB::table('comments')->insertGetId([
                     'comment' => $request->input('comment', 'Заявка закрыта'),
-                    'created_at' => now()
+                    'created_at' => now(),
                 ]);
 
                 // Связываем комментарий с заявкой
                 DB::table('request_comments')->insert([
                     'request_id' => $id,
                     'comment_id' => $commentId,
-                    'user_id'    => $request->user()->id,
-                    'created_at' => now()
+                    'user_id' => $request->user()->id,
+                    'created_at' => now(),
                 ]);
 
                 // Если отмечен чекбокс "Недоделанные работы", добавляем запись в таблицу incomplete_works
@@ -2065,7 +2071,7 @@ class HomeController extends Controller
                         'request_id' => $id,
                         'description' => $request->input('comment', 'Недоделанные работы'),
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]);
 
                     // И создаем заявку на завтра с комментарием о недоделанных работах
@@ -2075,10 +2081,10 @@ class HomeController extends Controller
                         ->where('user_id', Auth::id())
                         ->value('id');
 
-                        //
+                    //
 
                     // Если не нашли сотрудника, используем ID по умолчанию
-                    if (!$employeeId) {
+                    if (! $employeeId) {
                         throw new \Exception('Не удалось найти сотрудника для текущего пользователя');
                     }
 
@@ -2087,7 +2093,7 @@ class HomeController extends Controller
 
                     // Генерируем номер заявки
                     $count = DB::table('requests')->count() + 1;
-                    $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                    $requestNumber = 'REQ-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
 
                     // Создаем новую заявку на завтра
                     $newRequestId = DB::table('requests')->insertGetId([
@@ -2098,7 +2104,7 @@ class HomeController extends Controller
                         'request_type_id' => DB::table('request_types')->where('name', 'монтаж')->first()->id,
                         'operator_id' => $employeeId, // Используем ID сотрудника
                         'execution_date' => now()->addDay()->toDateString(),
-                        'request_date' => now()->toDateString()
+                        'request_date' => now()->toDateString(),
                     ]);
 
                     // Получаем адрес текущей заявки
@@ -2110,7 +2116,7 @@ class HomeController extends Controller
                     if ($requestAddress) {
                         DB::table('request_addresses')->insert([
                             'request_id' => $newRequestId,
-                            'address_id' => $requestAddress->address_id
+                            'address_id' => $requestAddress->address_id,
                         ]);
                     }
                 }
@@ -2122,7 +2128,7 @@ class HomeController extends Controller
                 $response = [
                     'success' => true,
                     'message' => 'Заявка успешно закрыта',
-                    'comment_id' => $commentId
+                    'comment_id' => $commentId,
                 ];
 
                 // Если была создана новая заявка на недоделанные работы, добавляем её ID в ответ
@@ -2130,15 +2136,15 @@ class HomeController extends Controller
                     // Создаем комментарий
                     $newCommentId = DB::table('comments')->insertGetId([
                         'comment' => $request->input('comment', 'Создана новая заявка на недоделанные работы'),
-                        'created_at' => now()
+                        'created_at' => now(),
                     ]);
 
                     // Связываем комментарий с заявкой
                     DB::table('request_comments')->insert([
                         'request_id' => $newRequestId,
                         'comment_id' => $newCommentId,
-                        'user_id'    => Auth::id(), // ID пользователя из аутентификации
-                        'created_at' => now()
+                        'user_id' => Auth::id(), // ID пользователя из аутентификации
+                        'created_at' => now(),
                     ]);
 
                     $response['new_request_id'] = $newRequestId;
@@ -2149,7 +2155,7 @@ class HomeController extends Controller
                 \Log::info('Все выходные данные', [
                     'success' => $response['success'] ?? null,
                     'message' => $response['message'] ?? null,
-                    'new_request_id' => $response['new_request_id'] ?? null
+                    'new_request_id' => $response['new_request_id'] ?? null,
                 ]);
                 \Log::info('=== END closeRequest ===', []);
 
@@ -2158,12 +2164,12 @@ class HomeController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Не удалось обновить заявку'
+                'message' => 'Не удалось обновить заявку',
             ], 400);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка сервера: ' . $e->getMessage()
+                'message' => 'Ошибка сервера: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -2177,13 +2183,15 @@ class HomeController extends Controller
     {
         try {
             $types = DB::select('SELECT id, name, color FROM request_types ORDER BY name');
+
             return response()->json($types);
         } catch (\Exception $e) {
-            \Log::error('Error getting request types: ' . $e->getMessage());
+            \Log::error('Error getting request types: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении типов заявок',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -2197,13 +2205,15 @@ class HomeController extends Controller
     {
         try {
             $statuses = DB::select('SELECT id, name, color FROM request_statuses ORDER BY name');
+
             return response()->json($statuses);
         } catch (\Exception $e) {
-            \Log::error('Error getting request statuses: ' . $e->getMessage());
+            \Log::error('Error getting request statuses: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении статусов заявок',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -2217,13 +2227,15 @@ class HomeController extends Controller
     {
         try {
             $brigades = DB::select('SELECT id, name FROM brigades ORDER BY name');
+
             return response()->json($brigades);
         } catch (\Exception $e) {
-            \Log::error('Error getting brigades: ' . $e->getMessage());
+            \Log::error('Error getting brigades: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении списка бригад',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -2237,13 +2249,15 @@ class HomeController extends Controller
     {
         try {
             $operators = DB::select('SELECT id, fio FROM employees WHERE position_id = 1 and is_deleted = false ORDER BY fio');
+
             return response()->json($operators);
         } catch (\Exception $e) {
-            \Log::error('Error getting operators: ' . $e->getMessage());
+            \Log::error('Error getting operators: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении списка операторов',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -2265,7 +2279,7 @@ class HomeController extends Controller
             $cities = array_map(function ($city) {
                 return [
                     'id' => $city->id,
-                    'name' => $city->name
+                    'name' => $city->name,
                 ];
             }, $cities);
 
@@ -2274,12 +2288,13 @@ class HomeController extends Controller
 
             return response()->json($cities);
         } catch (\Exception $e) {
-            \Log::error('Ошибка при получении списка городов: ' . $e->getMessage());
-            \Log::error('Трассировка: ' . $e->getTraceAsString());
+            \Log::error('Ошибка при получении списка городов: '.$e->getMessage());
+            \Log::error('Трассировка: '.$e->getTraceAsString());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении списка городов',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -2287,7 +2302,7 @@ class HomeController extends Controller
     /**
      * Get comments count for a request
      *
-     * @param int $requestId
+     * @param  int  $requestId
      * @return \Illuminate\Http\JsonResponse
      */
     public function getCommentsCount($requestId)
@@ -2302,14 +2317,13 @@ class HomeController extends Controller
     /**
      * Обновление комментария
      *
-     * @param int $id ID комментария
-     * @param \Illuminate\Http\Request $request
+     * @param  int  $id  ID комментария
      * @return \Illuminate\Http\JsonResponse
      */
     public function updateComment($id, Request $request)
     {
         $user = Auth::user();
-        
+
         // Логируем входные данные
         \Log::info('Получен запрос на обновление комментария:', [
             'id' => $id,
@@ -2320,10 +2334,10 @@ class HomeController extends Controller
             // Проверяем, существует ли комментарий
             $comment = DB::table('comments')->where('id', $id)->first();
 
-            if (!$comment) {
+            if (! $comment) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Комментарий не найден'
+                    'message' => 'Комментарий не найден',
                 ], 404);
             }
 
@@ -2341,7 +2355,7 @@ class HomeController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'У вас нет прав на обновление комментария!',
-                    'comment' => $comment
+                    'comment' => $comment,
                 ], 403);
             }
 
@@ -2349,25 +2363,25 @@ class HomeController extends Controller
             DB::table('comments')
                 ->where('id', $id)
                 ->update([
-                    'comment' => $request->input('content')
+                    'comment' => $request->input('content'),
                 ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Комментарий успешно обновлен!',
-                'comment' => DB::table('comments')->where('id', $id)->first()
+                'comment' => DB::table('comments')->where('id', $id)->first(),
             ]);
 
         } catch (\Exception $e) {
             \Log::error('Ошибка при обновлении комментария:', [
                 'id' => $id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при обновлении комментария: ' . $e->getMessage()
+                'message' => 'Ошибка при обновлении комментария: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -2375,40 +2389,39 @@ class HomeController extends Controller
     /**
      * Store a new request
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function storeRequest(Request $request)
     {
         // Проверяем авторизацию пользователя
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Необходима авторизация',
-                'redirect' => '/login'
+                'redirect' => '/login',
             ], 401);
         }
 
         // Проверяем наличие необходимых ролей
         $user = auth()->user();
-        
+
         // Проверяем, загружены ли роли пользователя
-        if (!isset($user->roles) || !is_array($user->roles)) {
+        if (! isset($user->roles) || ! is_array($user->roles)) {
             // Если роли не загружены, загружаем их из базы
             $roles = DB::table('user_roles')
                 ->join('roles', 'user_roles.role_id', '=', 'roles.id')
                 ->where('user_roles.user_id', $user->id)
                 ->pluck('roles.name')
                 ->toArray();
-            
+
             $user->roles = $roles;
             $user->isAdmin = in_array('admin', $roles);
         }
-        
+
         // Проверяем права доступа
         $allowedRoles = ['admin'];
         $hasAllowedRole = false;
-        
+
         if (is_array($user->roles)) {
             foreach ($user->roles as $role) {
                 if (in_array($role, $allowedRoles)) {
@@ -2417,12 +2430,12 @@ class HomeController extends Controller
                 }
             }
         }
-        
-        if (!$hasAllowedRole) {
+
+        if (! $hasAllowedRole) {
             return response()->json([
                 'success' => false,
-                'message' => 'У вас недостаточно прав для создания заявки. Необходима одна из ролей: ' . implode(', ', $allowedRoles),
-                'user_roles' => $user->roles ?? []
+                'message' => 'У вас недостаточно прав для создания заявки. Необходима одна из ролей: '.implode(', ', $allowedRoles),
+                'user_roles' => $user->roles ?? [],
             ], 403);
         }
 
@@ -2474,7 +2487,7 @@ class HomeController extends Controller
                 'execution_time' => $input['execution_time'] ?? null,
                 'brigade_id' => $input['brigade_id'] ?? null,
                 'operator_id' => $employeeId,
-                'address_id' => $input['address_id'] ?? null
+                'address_id' => $input['address_id'] ?? null,
             ];
 
             // Используем ранее найденный employeeId или null
@@ -2497,7 +2510,7 @@ class HomeController extends Controller
                 'execution_time' => 'nullable|date_format:H:i',
                 'brigade_id' => 'nullable|exists:brigades,id',
                 'operator_id' => 'nullable|exists:employees,id',
-                'address_id' => 'required|exists:addresses,id'
+                'address_id' => 'required|exists:addresses,id',
             ];
 
             // Логируем входные данные для отладки
@@ -2511,10 +2524,11 @@ class HomeController extends Controller
 
             if ($validator->fails()) {
                 \Log::error('Ошибка валидации:', $validator->errors()->toArray());
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка валидации',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -2531,23 +2545,24 @@ class HomeController extends Controller
                 'fio' => $fio,
                 'phone' => $phone,
                 'email' => '', // Пустая строка, так как поле не может быть NULL
-                'organization' => $organization
+                'organization' => $organization,
             ];
 
             $clientRules = [
                 'fio' => 'string|max:255',
                 'phone' => 'string|max:50',
                 'email' => 'string|max:255',
-                'organization' => 'string|max:255'
+                'organization' => 'string|max:255',
             ];
 
             $clientValidator = Validator::make($clientData, $clientRules);
             if ($clientValidator->fails()) {
                 \Log::error('Ошибка валидации данных клиента:', $clientValidator->errors()->toArray());
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка валидации данных клиента',
-                    'errors' => $clientValidator->errors()
+                    'errors' => $clientValidator->errors(),
                 ], 422);
             }
 
@@ -2559,17 +2574,17 @@ class HomeController extends Controller
             $query = DB::table('clients');
             $foundClient = false;
 
-            if (!empty($clientData['fio'])) {
+            if (! empty($clientData['fio'])) {
                 if ($foundClient) {
                     $query->orWhere('fio', $clientData['fio']);
                 } else {
                     $query->where('fio', $clientData['fio']);
                     $foundClient = true;
                 }
-            } elseif (!empty($clientData['phone'])) {
+            } elseif (! empty($clientData['phone'])) {
                 $query->where('phone', $clientData['phone']);
                 $foundClient = true;
-            } elseif (!empty($clientData['organization'])) {
+            } elseif (! empty($clientData['organization'])) {
                 if ($foundClient) {
                     $query->orWhere('organization', $clientData['organization']);
                 } else {
@@ -2599,7 +2614,7 @@ class HomeController extends Controller
                             'fio' => $clientData['fio'],
                             'phone' => $clientData['phone'],
                             'email' => $clientData['email'],
-                            'organization' => $clientData['organization']
+                            'organization' => $clientData['organization'],
                         ]);
                     $clientId = $client->id;
                     $clientState = 'updated';
@@ -2610,17 +2625,18 @@ class HomeController extends Controller
                         'fio' => $clientData['fio'],
                         'phone' => $clientData['phone'],
                         'email' => $clientData['email'],
-                        'organization' => $clientData['organization']
+                        'organization' => $clientData['organization'],
                     ]);
                     $clientState = 'created';
                     // \Log::info('Создан новый клиент:', ['id' => $clientId]);
                 }
             } catch (\Exception $e) {
-                \Log::error('Ошибка при сохранении клиента: ' . $e->getMessage());
+                \Log::error('Ошибка при сохранении клиента: '.$e->getMessage());
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка при сохранении данных клиента',
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ], 500);
             }
 
@@ -2632,13 +2648,13 @@ class HomeController extends Controller
                 'execution_date' => $validated['execution_date'],
                 'execution_time' => $validated['execution_time'],
                 'brigade_id' => $validated['brigade_id'] ?? null,
-                'operator_id' => $validated['operator_id']
+                'operator_id' => $validated['operator_id'],
             ];
 
             // Генерируем номер заявки
             $countQuery = DB::table('requests');
             $count = $countQuery->count() + 1;
-            $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $requestNumber = 'REQ-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
             $requestData['number'] = $requestNumber;
 
             // Устанавливаем текущую дату (учитывая часовой пояс из конфига Laravel)
@@ -2657,7 +2673,7 @@ class HomeController extends Controller
                     $validated['brigade_id'] ?? null,
                     $employeeId,
                     $requestNumber,
-                    $currentDate
+                    $currentDate,
                 ]
             );
 
@@ -2676,13 +2692,13 @@ class HomeController extends Controller
             $commentText = trim($validated['comment'] ?? '');
             $newCommentId = null;
 
-            if (!empty($commentText)) {
+            if (! empty($commentText)) {
                 try {
                     // Вставляем комментарий без поля updated_at
-                    $commentSql = "INSERT INTO comments (comment, created_at) VALUES (?, ?) RETURNING id";
+                    $commentSql = 'INSERT INTO comments (comment, created_at) VALUES (?, ?) RETURNING id';
                     $bindings = [
                         $commentText,
-                        now()->toDateTimeString()
+                        now()->toDateTimeString(),
                     ];
 
                     // \Log::info('SQL для вставки комментария:', ['sql' => $commentSql, 'bindings' => $bindings]);
@@ -2690,7 +2706,7 @@ class HomeController extends Controller
                     $commentResult = DB::selectOne($commentSql, $bindings);
                     $newCommentId = $commentResult ? $commentResult->id : null;
 
-                    if (!$newCommentId) {
+                    if (! $newCommentId) {
                         throw new \Exception('Не удалось получить ID созданного комментария');
                     }
 
@@ -2700,8 +2716,8 @@ class HomeController extends Controller
                     DB::table('request_comments')->insert([
                         'request_id' => $requestId,
                         'comment_id' => $newCommentId,
-                        'user_id'    => $request->user()->id,
-                        'created_at' => now()->toDateTimeString()
+                        'user_id' => $request->user()->id,
+                        'created_at' => now()->toDateTimeString(),
                     ]);
 
                     // \Log::info('Связь между заявкой и комментарием создана', [
@@ -2709,7 +2725,7 @@ class HomeController extends Controller
                     //     'comment_id' => $newCommentId
                     // ]);
                 } catch (\Exception $e) {
-                    \Log::error('Ошибка при создании комментария: ' . $e->getMessage());
+                    \Log::error('Ошибка при создании комментария: '.$e->getMessage());
                     // Продолжаем выполнение, так как комментарий не является обязательным
                 }
             }
@@ -2720,14 +2736,14 @@ class HomeController extends Controller
             // Получаем информацию об адресе
             $address = DB::table('addresses')->find($addressId);
 
-            if (!$address) {
+            if (! $address) {
                 throw new \Exception('Указанный адрес не найден');
             }
 
             // Связываем адрес с заявкой без использования временных меток
             DB::table('request_addresses')->insert([
                 'request_id' => $requestId,
-                'address_id' => $addressId
+                'address_id' => $addressId,
                 // Убраны created_at и updated_at, так как их нет в таблице
             ]);
 
@@ -2765,12 +2781,12 @@ class HomeController extends Controller
                 LEFT JOIN request_addresses ra ON r.id = ra.request_id
                 LEFT JOIN addresses addr ON ra.address_id = addr.id
                 LEFT JOIN cities ct ON addr.city_id = ct.id
-                WHERE r.id = ' . $requestId . '
+                WHERE r.id = '.$requestId.'
             ');
 
             // Преобразуем результат запроса в объект, если это массив
-            if (is_array($requestById) && !empty($requestById)) {
-                $requestById = (object)$requestById[0];
+            if (is_array($requestById) && ! empty($requestById)) {
+                $requestById = (object) $requestById[0];
             }
 
             // Формируем ответ
@@ -2794,8 +2810,8 @@ class HomeController extends Controller
                         'fio' => $fio,
                         'phone' => $phone,
                         'organization' => $organization,
-                        'is_new' => !$isExistingClient,
-                        'state' => $clientState
+                        'is_new' => ! $isExistingClient,
+                        'state' => $clientState,
                     ] : null,
                     'address' => [
                         'id' => $address->id,
@@ -2805,18 +2821,18 @@ class HomeController extends Controller
                         'street' => $address->street,
                         'house' => $address->houses,
                         'district' => $address->district,
-                        'comment' => $address->comments ?? ''
+                        'comment' => $address->comments ?? '',
                     ],
                     'comment' => $newCommentId ? [
                         'id' => $newCommentId,
-                        'text' => $commentText
-                    ] : null
-                ]
+                        'text' => $commentText,
+                    ] : null,
+                ],
             ];
 
             // Фиксируем изменения, если все успешно
             DB::commit();
-            
+
             // Логируем основные данные о заявке
             \Log::info('Создана новая заявка:', [
                 'request' => [
@@ -2825,15 +2841,15 @@ class HomeController extends Controller
                     'type_id' => $validated['request_type_id'],
                     'status_id' => $validated['status_id'],
                     'execution_date' => $validated['execution_date'],
-                    'is_admin' => $user->isAdmin
+                    'is_admin' => $user->isAdmin,
                 ],
                 'client' => $clientId ? [
                     'id' => $clientId,
-                    'is_new' => !$isExistingClient
+                    'is_new' => ! $isExistingClient,
                 ] : 'Без привязки к клиенту',
                 'address_id' => $address->id ?? null,
-                'comment_id' => $newCommentId ?? null
-            ]); 
+                'comment_id' => $newCommentId ?? null,
+            ]);
 
             \Log::info('=== END storeRequest ===');
 
@@ -2842,7 +2858,7 @@ class HomeController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -2850,22 +2866,23 @@ class HomeController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при создании заявки: ' . $e->getMessage(),
+                'message' => 'Ошибка при создании заявки: '.$e->getMessage(),
                 'error' => [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                    'line' => $e->getLine(),
+                ],
             ], 500);
         }
     }
 
-    public function getRequestByEmployee() {
+    public function getRequestByEmployee()
+    {
         try {
             $employeeId = auth()->user()->employee_id;
 
@@ -2874,57 +2891,58 @@ class HomeController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Заявки успешно получены',
-                'data' => $requests
+                'data' => $requests,
             ]);
         } catch (\Exception $e) {
             \Log::error('Ошибка при получении заявок:', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при получении заявок: ' . $e->getMessage(),
+                'message' => 'Ошибка при получении заявок: '.$e->getMessage(),
                 'error' => [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                    'line' => $e->getLine(),
+                ],
             ], 500);
         }
     }
 
-    public function uploadPhotoComment(Request $request) {  
+    public function uploadPhotoComment(Request $request)
+    {
         try {
 
             // Для тестирования
             // return response()->json([
             //     'success' => true,
             //     'message' => 'Фотографии успешно загружены (test)',
-            //     '$request' => $request   
+            //     '$request' => $request
             // ], 200);
 
             $validated = $request->validate([
                 'request_id' => 'required|integer|exists:requests,id',
                 'photo_ids' => 'required|json', // Ожидаем JSON-строку с массивом ID
-                'comment' => 'required|integer|exists:comments,id'
+                'comment' => 'required|integer|exists:comments,id',
             ]);
-            
+
             // Декодируем JSON с ID фотографий
             $photoIds = json_decode($validated['photo_ids'], true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Неверный формат ID фотографий'
+                    'message' => 'Неверный формат ID фотографий',
                 ], 422);
             }
 
             $commentId = $validated['comment'];
             $requestId = $validated['request_id'];
             $now = now();
-            
+
             // Начинаем транзакцию
             DB::beginTransaction();
 
@@ -2952,19 +2970,20 @@ class HomeController extends Controller
             } catch (\Exception $e) {
                 // В случае ошибки откатываем транзакцию
                 DB::rollBack();
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка при привязке фотографий к комментарию',
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ], 500);
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -2972,17 +2991,17 @@ class HomeController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при загрузке фотографий: ' . $e->getMessage(),
+                'message' => 'Ошибка при загрузке фотографий: '.$e->getMessage(),
                 'error' => [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                    'line' => $e->getLine(),
+                ],
             ], 500);
         }
     }
@@ -2990,7 +3009,6 @@ class HomeController extends Controller
     /**
      * Загружает фотоотчет для заявки
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function uploadPhotoReport(Request $request)
@@ -3001,7 +3019,7 @@ class HomeController extends Controller
                 'request_id' => 'required|integer|exists:requests,id',
                 'photos' => 'required|array|min:1',
                 'photos.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // до 10MB
-                'comment' => 'nullable|string|max:1000'
+                'comment' => 'nullable|string|max:1000',
             ]);
 
             $requestId = $validated['request_id'];
@@ -3010,9 +3028,9 @@ class HomeController extends Controller
             $now = now();
 
             // Дополнительная проверка наличия файлов (на случай если PHP отбросил файлы из-за ограничений)
-            if (!$request->hasFile('photos')) {
+            if (! $request->hasFile('photos')) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'photos' => ['Не загружены файлы фотоотчета']
+                    'photos' => ['Не загружены файлы фотоотчета'],
                 ]);
             }
 
@@ -3048,11 +3066,11 @@ class HomeController extends Controller
                         'size' => $photo->getSize(),
                         'mime' => $photo->getMimeType(),
                         'disk' => 'public',
-                        'storage_path' => storage_path('app/public/images')
+                        'storage_path' => storage_path('app/public/images'),
                     ]);
 
                     // Убеждаемся, что каталог существует на диске public
-                    if (!\Storage::disk('public')->exists('images')) {
+                    if (! \Storage::disk('public')->exists('images')) {
                         \Storage::disk('public')->makeDirectory('images');
                     }
                     // Готовим имя файла: берем оригинальное, нормализуем и обеспечиваем уникальность
@@ -3060,40 +3078,42 @@ class HomeController extends Controller
                     $baseName = pathinfo($originalName, PATHINFO_FILENAME);
                     $extension = pathinfo($originalName, PATHINFO_EXTENSION);
                     $baseSlug = Str::slug($baseName, '_');
-                    if ($baseSlug === '') { $baseSlug = 'file'; }
+                    if ($baseSlug === '') {
+                        $baseSlug = 'file';
+                    }
                     $ext = strtolower($extension ?: ($photo->getClientOriginalExtension() ?: 'jpg'));
 
-                    $finalName = $baseSlug . '.' . $ext;
-                    $relativePath = 'images/' . $finalName;
+                    $finalName = $baseSlug.'.'.$ext;
+                    $relativePath = 'images/'.$finalName;
                     $counter = 1;
                     while (\Storage::disk('public')->exists($relativePath)) {
-                        $finalName = $baseSlug . '_' . $counter . '.' . $ext;
-                        $relativePath = 'images/' . $finalName;
+                        $finalName = $baseSlug.'_'.$counter.'.'.$ext;
+                        $relativePath = 'images/'.$finalName;
                         $counter++;
                     }
 
                     // Сохраняем с заданным именем
                     $stored = $photo->storeAs('images', $finalName, 'public');
                     if ($stored === false) {
-                        throw new \RuntimeException('Не удалось сохранить файл на диске public. Проверьте права на каталог: ' . storage_path('app/public/images'));
+                        throw new \RuntimeException('Не удалось сохранить файл на диске public. Проверьте права на каталог: '.storage_path('app/public/images'));
                     }
                     // Подтверждаем факт наличия на диске
-                    if (!\Storage::disk('public')->exists($relativePath)) {
-                        throw new \RuntimeException('Файл отсутствует на диске после сохранения: ' . $relativePath);
+                    if (! \Storage::disk('public')->exists($relativePath)) {
+                        throw new \RuntimeException('Файл отсутствует на диске после сохранения: '.$relativePath);
                     }
                     \Log::info('Файл сохранен', [
                         'relative_path' => $relativePath,
-                        'exists_public' => \Storage::disk('public')->exists($relativePath)
+                        'exists_public' => \Storage::disk('public')->exists($relativePath),
                     ]);
-                    
+
                     // Получаем метаданные файла
                     $fileSize = $photo->getSize();
                     $mimeType = $photo->getMimeType();
-                    
+
                     \Log::info('Получаем размеры изображения');
-                    list($width, $height) = getimagesize($photo->getRealPath());
+                    [$width, $height] = getimagesize($photo->getRealPath());
                     \Log::info('Размеры изображения', ['width' => $width, 'height' => $height]);
-                    
+
                     // Сохраняем информацию о фото в базу данных
                     $photoId = DB::table('photos')->insertGetId([
                         // Сохраняем относительный путь на диске public: images/...
@@ -3119,7 +3139,7 @@ class HomeController extends Controller
                     $uploadedPhotos[] = [
                         'id' => $photoId,
                         'url' => \Storage::disk('public')->url($relativePath),
-                        'path' => $relativePath
+                        'path' => $relativePath,
                     ];
                 }
             }
@@ -3134,35 +3154,35 @@ class HomeController extends Controller
                     'photos' => $uploadedPhotos,
                     'comment' => $comment ? [
                         'id' => $commentId,
-                        'text' => $comment
-                    ] : null
-                ]
+                        'text' => $comment,
+                    ] : null,
+                ],
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Ошибка при загрузке фотоотчета:', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при загрузке фотоотчета: ' . $e->getMessage(),
+                'message' => 'Ошибка при загрузке фотоотчета: '.$e->getMessage(),
                 'error' => [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                    'line' => $e->getLine(),
+                ],
             ], 500);
         }
     }
@@ -3173,7 +3193,7 @@ class HomeController extends Controller
             // Поддерживаем оба варианта: GET /api/photo-report/{requestId} и POST c полем request_id
             $requestId = $request->route('requestId') ?? $request->input('request_id');
 
-            if (!$requestId) {
+            if (! $requestId) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Не передан идентификатор заявки',
@@ -3206,6 +3226,7 @@ class HomeController extends Controller
                     // Фолбэк: если уже абсолютный путь в /storage или /uploads
                     $url = $row->path;
                 }
+
                 return [
                     'id' => $row->id,
                     'url' => $url,
@@ -3221,24 +3242,24 @@ class HomeController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Фотоотчет успешно получен',
-                'data' => $photos
+                'data' => $photos,
             ]);
         } catch (\Exception $e) {
             \Log::error('Ошибка при получении фотоотчета:', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при получении фотоотчета: ' . $e->getMessage(),
+                'message' => 'Ошибка при получении фотоотчета: '.$e->getMessage(),
                 'error' => [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                    'line' => $e->getLine(),
+                ],
             ], 500);
         }
     }
