@@ -1343,8 +1343,8 @@ function handleStatusFilterClick(statusId) {
 }
 
 // Функция для загрузки списка адресов
-function loadAddresses() {
-    const selectElement = document.getElementById('addresses_id');
+export function loadAddresses(selectId = 'addresses_id') {
+    const selectElement = document.getElementById(selectId);
     if (!selectElement) return;
 
     // Показываем индикатор загрузки
@@ -1382,13 +1382,13 @@ function loadAddresses() {
             function tryInitAddressesSelect(attempts = 0) {
                 if (typeof window.initCustomSelect === 'function') {
                     // console.log('Инициализация кастомного селекта для выбора адреса в форме');
-                    window.initCustomSelect("addresses_id", "Выберите адрес из списка");
+                    window.initCustomSelect(selectId, "Выберите адрес из списка");
                 } else {
-                    // console.log(`Попытка ${attempts + 1}: Функция initCustomSelect не найдена для addresses_id, повторная попытка через 500мс`);
+                    // console.log(`Попытка ${attempts + 1}: Функция initCustomSelect не найдена для ${selectId}, повторная попытка через 500мс`);
                     if (attempts < 5) { // Максимум 5 попыток
                         setTimeout(() => tryInitAddressesSelect(attempts + 1), 500);
                     } else {
-                        console.error('Не удалось найти функцию initCustomSelect для addresses_id после 5 попыток');
+                        console.error(`Не удалось найти функцию initCustomSelect для ${selectId} после 5 попыток`);
                     }
                 }
             }
@@ -2758,7 +2758,7 @@ export function initRequestButtons() {
 // Глобальная функция для инициализации кастомного выпадающего списка
 // Явно добавляем в глобальный объект window
 window.initCustomSelect = function(selectId, placeholder = "Выберите из списка") {
-    // console.log(`Инициализация кастомного выпадающего списка для ${selectId}...`);
+    // console.log(`Инициализация initCustomSelect для ${selectId}...`);
 
     const originalSelect = document.getElementById(selectId);
     // console.log('Оригинальный select:', originalSelect);
@@ -2838,7 +2838,7 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
 
     // Заполнить список
     function populateList(filter = "") {
-      // console.log('Заполнение списка с фильтром:', filter);
+      // console.log('populateList вызвана для', selectId, 'с фильтром:', filter);
       optionsList.innerHTML = "";
       const filtered = options.filter(option =>
         option.textContent.toLowerCase().includes(filter.toLowerCase())
@@ -2880,7 +2880,7 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
 
     // Открытие/закрытие
     input.addEventListener("click", (e) => {
-      // console.log('Клик по полю ввода');
+      // console.log('Клик по input для', selectId);
       if (optionsList.style.display === "block") {
         // console.log('Закрываем список');
         optionsList.style.display = "none";

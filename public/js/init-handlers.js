@@ -22,15 +22,16 @@ import {
     initPlanningRequestFormHandlers,
     initAddressEditButton
 } from './form-handlers.js';
-import { 
-    initializePage, 
-    initTooltips, 
+import {
+    initializePage,
+    initTooltips,
     initRequestButtons,
     initAllCustomSelects,
     setupBrigadeAttachment,
     handlerCreateBrigade,
     hanlerAddToBrigade,
-    handlerAddEmployee
+    handlerAddEmployee,
+    loadAddresses
 } from './handler.js';
 
 // Инициализация страницы при загрузке DOM

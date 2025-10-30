@@ -1,7 +1,7 @@
 // form-handlers.js
 
 import { showAlert, postData, fetchData, log, logInfo, logError, showModal, getElement, setValue, getValue } from './utils.js';
-import { loadAddressesPaginated, loadPlanningRequests } from './handler.js';
+import { loadAddresses, loadAddressesPaginated, loadPlanningRequests } from './handler.js';
 import { loadAddressesForPlanning } from './handler.js';
 import HouseNumberValidator from './validators/house-number-validator.js';
 
