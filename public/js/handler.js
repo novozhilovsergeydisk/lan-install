@@ -2785,6 +2785,7 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
 
     const input = document.createElement("input");
     input.type = "text";
+    input.id = "custom-select-input";
     input.className = "custom-select-input";
     input.placeholder = placeholder;
     input.readOnly = false; // Разрешаем редактировать для поиска

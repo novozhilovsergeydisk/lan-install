@@ -4,18 +4,6 @@
  * @typedef {'success'|'danger'|'warning'} AlertType
  */
 
-function log() {
-    console.log(...arguments);
-}
-
-function logInfo() {
-    console.info(...arguments);
-}
-
-function logError() {
-    console.error(...arguments);
-}
-
 function showModal(id) {
     const el = getElement(id);
     if (el) {
@@ -297,8 +285,26 @@ function linkifyPreservingAnchors(input) {
     }
 }
 
+// Вспомогательная функция для валидации поля
+function validateRequiredField(field, isRequired = false) {
+    if (isRequired) {
+        if (field.value.trim() === '' || field.value === '') {
+            field.classList.add('is-invalid');
+            field.classList.remove('is-valid');
+            return false;
+        } else {
+            field.classList.add('is-valid');
+            field.classList.remove('is-invalid');
+            return true;
+        }
+    } else {
+        field.classList.remove('is-invalid', 'is-valid');
+        return true;
+    }
+}
+
 // Экспорт для модулей
-export { showAlert, fetchData, postData, sendRequest, linkifyPreservingAnchors, makeEscapedPreview, log, logInfo, logError, showModal, getElement, setValue, getValue };
+export { showAlert, fetchData, postData, sendRequest, linkifyPreservingAnchors, makeEscapedPreview, showModal, getElement, setValue, getValue, validateRequiredField };
 
 // Экспорт глобально
 if (typeof window !== 'undefined') {
@@ -308,6 +314,7 @@ if (typeof window !== 'undefined') {
         postData,
         sendRequest,
         linkifyPreservingAnchors,
-        makeEscapedPreview
+        makeEscapedPreview,
+        validateRequiredField
     };
 }

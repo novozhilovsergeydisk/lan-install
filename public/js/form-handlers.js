@@ -1,6 +1,6 @@
 // form-handlers.js
 
-import { showAlert, postData, fetchData, log, logInfo, logError, showModal, getElement, setValue, getValue } from './utils.js';
+import { showAlert, postData, fetchData, getElement, getValue, validateRequiredField } from './utils.js';
 import { loadAddresses, loadAddressesPaginated, loadPlanningRequests } from './handler.js';
 import { loadAddressesForPlanning } from './handler.js';
 import HouseNumberValidator from './validators/house-number-validator.js';
@@ -44,56 +44,56 @@ async function initEditRequestHandler() {
                     console.log('Данные для заполнения:', data);
 
                     const clientNameEl = document.getElementById('editClientName');
-                    log({ clientNameEl });
+                    console.log({ clientNameEl });
                     if (clientNameEl) clientNameEl.value = data.client_fio || data.clientName || '';
-                    log(clientNameEl.value);
+                    console.log(clientNameEl.value);
 
                     const clientPhoneEl = document.getElementById('editClientPhone');
-                    log({ clientPhoneEl });
+                    console.log({ clientPhoneEl });
                     if (clientPhoneEl) clientPhoneEl.value = data.client_phone || data.clientPhone || '';
-                    log(clientPhoneEl.value);
+                    console.log(clientPhoneEl.value);
 
                     const clientOrgEl = document.getElementById('editClientOrganization');
-                    log({ clientOrgEl });
+                    console.log({ clientOrgEl });
                     if (clientOrgEl) clientOrgEl.value = data.client_organization || data.clientOrganization || '';
-                    log(clientOrgEl.value);
+                    console.log(clientOrgEl.value);
 
                     const requestTypeEl = document.getElementById('editRequestType');
-                    log({ requestTypeEl });
+                    console.log({ requestTypeEl });
                     if (requestTypeEl) requestTypeEl.value = data.request_type_id || data.requestTypeId || '';
-                    log(requestTypeEl.value);
+                    console.log(requestTypeEl.value);
 
                     const requestStatusEl = document.getElementById('editRequestStatus');
-                    log({ requestStatusEl });
+                    console.log({ requestStatusEl });
                     if (requestStatusEl) requestStatusEl.value = data.status_id || data.statusId || '';
-                    log(requestStatusEl.value);
+                    console.log(requestStatusEl.value);
 
                     const executionDateEl = document.getElementById('editExecutionDate');
-                    log({ executionDateEl });
+                    console.log({ executionDateEl });
                     if (executionDateEl) executionDateEl.value = data.execution_date || data.executionDate || '';
-                    log(executionDateEl.value);
+                    console.log(executionDateEl.value);
 
                     const executionTimeEl = document.getElementById('editExecutionTime');
-                    log({ executionTimeEl });
+                    console.log({ executionTimeEl });
                     if (executionTimeEl) executionTimeEl.value = data.execution_time || data.executionTime || '';
-                    log(executionTimeEl.value);
+                    console.log(executionTimeEl.value);
 
                     // Проверяем наличие элемента addressesId перед обращением к нему
                     const addressesIdEl = document.getElementById('editAddressesId');
-                    log({ addressesIdEl });
+                    console.log({ addressesIdEl });
                     if (addressesIdEl) {
                         addressesIdEl.value = data.addresses_id || '';
-                        log('Значение addressesId установлено:', addressesIdEl.value);
+                        console.log('Значение addressesId установлено:', addressesIdEl.value);
                     } else {
                         console.warn('Элемент с id "addressesId" не найден в DOM');
                     }
 
                     const commentEl = document.getElementById('editComment');
-                    log({ commentEl });
+                    console.log({ commentEl });
                     // if (commentEl) commentEl.value = data.comment || data.commentText || '';
                     // log(commentEl.value);
 
-                    log('Заполнение формы завершено');
+                    console.log('Заполнение формы завершено');
                     
                     // Инициализируем кастомный селект для адреса
                     if (typeof window.initCustomSelect === 'function') {
@@ -145,7 +145,7 @@ async function initEditRequestHandler() {
                 modal.show();
             }
         } catch (error) {
-            logError('Ошибка:', error);
+            console.error('Ошибка:', error);
             showAlert('Ошибка загрузки данных заявки', 'danger');
         }
     });
@@ -155,10 +155,51 @@ async function initEditRequestHandler() {
 async function initEditRequestFormHandler() {
     const updateRequest = document.getElementById('updateRequest');
     document.getElementById('updateRequest').addEventListener('click', async function() {
+        console.log('editAddressesId:', document.getElementById('editAddressesId'));
+
+        const editExecutionDate = document.getElementById('editExecutionDate');
+        const customSelectInput = document.getElementById('custom-select-input');
+
+        console.log('editExecutionDate:', editExecutionDate);
+        console.log('customSelectInput:', customSelectInput);
+
+        // Валидация обязательных полей
+        if (document.getElementById('editExecutionDate') && document.getElementById('editAddressesId')) {
+            const executionDate = document.getElementById('editExecutionDate').value.trim();
+            const addressesId = document.getElementById('editAddressesId').value.trim();
+
+            if (!executionDate || !addressesId) {
+                showAlert('Пожалуйста, заполните все обязательные поля: Дата выполнения и Адрес.', 'warning');
+
+                if (!executionDate) {
+                    document.getElementById('editExecutionDate').classList.add('is-invalid');
+                } else {
+                    document.getElementById('editExecutionDate').classList.remove('is-invalid');
+                    document.getElementById('editExecutionDate').classList.add('is-valid');
+                }
+
+                if (!addressesId) {
+                    document.getElementById('custom-select-wrapper-editAddressesId').classList.add('is-invalid');
+                    document.querySelector('#custom-select-wrapper-editAddressesId .custom-select-input').classList.add('is-invalid');
+                } else {
+                    document.getElementById('custom-select-wrapper-editAddressesId').classList.remove('is-invalid');
+                    document.querySelector('#custom-select-wrapper-editAddressesId .custom-select-input').classList.remove('is-invalid');
+                    document.getElementById('custom-select-wrapper-editAddressesId').classList.add('is-valid');
+                    document.querySelector('#custom-select-wrapper-editAddressesId .custom-select-input').classList.add('is-valid');
+                }
+
+                return;
+            }
+        }
+
+        // showAlert('test', 'warning');
+
+        // return;
+
         const formData = new FormData(document.getElementById('editRequestForm'));
         const requestId = getValue('editRequestId');
 
-        log(requestId);
+        console.log(requestId);
 
         // Логируем все поля формы
         const form = document.getElementById('editRequestForm');

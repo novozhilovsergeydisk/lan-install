@@ -3791,11 +3791,11 @@
                         <!-- <h6>Информация о клиенте</h6> -->
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="editClientName" class="form-label">Контактное лицо <span class="text-danger">*</span></label>
+                                <label for="editClientName" class="form-label">Контактное лицо</label>
                                 <input type="text" class="form-control" id="editClientName" name="client_name" />
                             </div>
                             <div class="col-md-6">
-                                <label for="editClientPhone" class="form-label">Телефон <span class="text-danger">*</span></label>
+                                <label for="editClientPhone" class="form-label">Телефон</label>
                                 <input type="tel" class="form-control" id="editClientPhone" name="client_phone" />
                             </div>
                             <div class="col-md-6">
@@ -3840,7 +3840,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <h6>Адрес</h6>
+                        <h6>Адрес <span class="text-danger">*</span></h6>
                         <div class="mb-3">
                              <select class="form-select" id="editAddressesId" name="addresses_id" required>
                                  <option value="" selected>Выберите адрес</option>

@@ -103,6 +103,19 @@ class HomeController extends Controller
             return response()->json(['success' => false, 'message' => 'Необходима авторизация'], 401);
         }
 
+        // Validation
+        $validated = $request->validate([
+            'request_id' => 'nullable|integer|exists:requests,id',
+            'client_name' => 'nullable|string|max:255',
+            'client_phone' => 'nullable|string|max:50',
+            'client_organization' => 'nullable|string|max:255',
+            'request_type_id' => 'nullable|integer|exists:request_types,id',
+            'status_id' => 'nullable|integer|exists:request_statuses,id',
+            'execution_date' => 'required|date|after_or_equal:today',
+            'execution_time' => 'nullable|date_format:H:i',
+            'addresses_id' => 'required|integer|exists:addresses,id'
+        ]);
+
         $user = auth()->user();
         if (! $user->isAdmin) {
             return response()->json(['success' => false, 'message' => 'Недостаточно прав'], 403);
@@ -110,30 +123,92 @@ class HomeController extends Controller
 
         DB::beginTransaction();
         try {
-            $input = $request->all();
+            // $input = $request->all();
 
-            // Update request
-            DB::table('requests')->where('id', $id)->update([
-                'client_fio' => $input['client_name'] ?? null,
-                'client_phone' => $input['client_phone'] ?? null,
-                'client_organization' => $input['client_organization'] ?? null,
-                'request_type_id' => $input['request_type_id'] ?? null,
-                'status_id' => $input['status_id'] ?? null,
-                'comment' => $input['comment'] ?? null,
-                'execution_date' => $input['execution_date'] ?? null,
-                'execution_time' => $input['execution_time'] ?? null,
-                'addresses_id' => $input['addresses_id'] ?? null,
-                'updated_at' => now(),
-            ]);
+            // Log incoming data for debugging
+            \Log::info('=== START updateRequest ===', ['validated' => $validated, 'request_id' => $id]);
 
+            // 1. Update or create client
+            $existingClient = DB::table('clients')
+                ->where('fio', $validated['client_name'])
+                ->where('phone', $validated['client_phone'])
+                ->first();
+
+            if ($existingClient) {
+                // Update existing client
+                DB::table('clients')->where('id', $existingClient->id)->update([
+                    'organization' => $validated['client_organization']
+                ]);
+                $clientId = $existingClient->id;
+            } else {
+                // Create new client
+                $clientId = DB::table('clients')->insertGetId([
+                    'fio' => $validated['client_name'],
+                    'phone' => $validated['client_phone'],
+                    'organization' => $validated['client_organization']
+                ]);
+            }
+
+            // 2. Update request_addresses table
+            // Check if the address link already exists
+            $existingAddressLink = DB::table('request_addresses')
+                ->where('request_id', $id)
+                ->where('address_id', $validated['addresses_id'])
+                ->first();
+
+            if (!$existingAddressLink) {
+                // Remove any existing address links for this request
+                DB::table('request_addresses')->where('request_id', $id)->delete();
+
+                // Add new address link
+                DB::table('request_addresses')->insert([
+                    'request_id' => $id,
+                    'address_id' => $validated['addresses_id']
+                ]);
+            }
+
+            // 3. Update requests table
+            $updateData = [
+                'client_id' => $clientId,
+                'execution_date' => $validated['execution_date']
+            ];
+
+            // Only update fields that were actually provided
+            if (isset($validated['request_type_id'])) {
+                $updateData['request_type_id'] = $validated['request_type_id'];
+            }
+            if (isset($validated['status_id'])) {
+                $updateData['status_id'] = $validated['status_id'];
+            }
+            if (isset($validated['execution_time'])) {
+                $updateData['execution_time'] = $validated['execution_time'];
+            }
+
+            DB::table('requests')->where('id', $id)->update($updateData);
+            \Log::info('=== END updateRequest ===', ['updated_id' => $id, 'client_id' => $clientId]);
             DB::commit();
 
             return response()->json(['success' => true, 'message' => 'Заявка обновлена']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+           \Log::error('=== VALIDATION ERROR updateRequest ===', ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Ошибка при обновлении заявки: '.$e->getMessage());
+            \Log::error('Ошибка при обновлении заявки: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_id' => $id
+            ]);
 
-            return response()->json(['success' => false, 'message' => 'Ошибка при обновлении'], 500);
+            return response()->json([
+                'success' => false, 
+                'message' => 'Ошибка при обновлении', 
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
