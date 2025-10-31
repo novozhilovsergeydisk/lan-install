@@ -968,6 +968,14 @@ async function applyFilters() {
                                             data-request-id="${request.id}">
                                         <i class="bi bi-x-circle"></i>
                                     </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-purple edit-request-btn p-1"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="left"
+                                            data-bs-title="Редактировать заявку"
+                                            data-request-id="${request.id}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                 ` : ''}
                                 </div>
                             </td>

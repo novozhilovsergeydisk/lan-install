@@ -18,7 +18,7 @@ use App\Http\Controllers\PhotoReportController;
 use App\Http\Controllers\CityController;
 
 // Update request
-Route::put('/requests/{request}', [HomeController::class, 'updateRequest'])->name('requests.update')->middleware('auth')->middleware(['auth', 'roles']);
+Route::match(['PUT'], '/requests/{id}', [HomeController::class, 'updateRequest'])->where('id', '[0-9]+')->name('requests.update')->middleware('auth')->middleware(['auth', 'roles']);
 
 Route::get('/brigades/date/{date}', [BrigadeController::class, 'getBrigadesByDate'])->name('brigades.date');
 
@@ -57,7 +57,7 @@ Route::post('/register', [RegisterController::class, 'register']);
 // home
 
 // Получение данных заявки для редактирования
-Route::get('/requests/{id}', [HomeController::class, 'getEditRequest'])->name('requests.getEditRequest')->middleware('auth');
+Route::get('/requests/{id}', [HomeController::class, 'getEditRequest'])->where('id', '[0-9]+')->name('requests.getEditRequest')->middleware('auth');
 
 // Главная страница
 Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['auth', 'roles']);

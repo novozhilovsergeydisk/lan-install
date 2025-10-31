@@ -96,27 +96,51 @@ class HomeController extends Controller
     public function updateRequest(Request $request, $id)
     {
 
-        return response()->json(['success' => true, 'message' => 'Заявка обновлена test', 'request' => $request]);
+        // return response()->json(['success' => true, 'message' => 'Заявка обновлена test', 'request' => $request]);
 
         // Check auth
         if (! auth()->check()) {
             return response()->json(['success' => false, 'message' => 'Необходима авторизация'], 401);
         }
 
+        // Log request data for debugging
+        \Log::info('UpdateRequest method: ' . $request->method());
+        \Log::info('UpdateRequest content-type: ' . $request->header('Content-Type'));
+        \Log::info('UpdateRequest data:', $request->all());
+
         // Validation
-        $validated = $request->validate([
-            'request_id' => 'nullable|integer|exists:requests,id',
-            'client_name' => 'nullable|string|max:255',
-            'client_phone' => 'nullable|string|max:50',
-            'client_organization' => 'nullable|string|max:255',
-            'request_type_id' => 'nullable|integer|exists:request_types,id',
-            'status_id' => 'nullable|integer|exists:request_statuses,id',
-            'execution_date' => 'required|date|after_or_equal:today',
-            'execution_time' => 'nullable|date_format:H:i',
-            'addresses_id' => 'required|integer|exists:addresses,id'
-        ]);
+        try {
+            $validated = $request->validate([
+                'request_id' => 'required|integer|exists:requests,id',
+                'client_name' => 'nullable|string|max:255',
+                'client_phone' => 'nullable|string|max:50',
+                'client_organization' => 'nullable|string|max:255',
+                'request_type_id' => 'nullable|integer|exists:request_types,id',
+                'status_id' => 'nullable|integer|exists:request_statuses,id',
+                'execution_date' => 'required|date',
+                'execution_time' => 'nullable|date_format:H:i',
+                'addresses_id' => 'required|integer|exists:addresses,id'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('=== START ERROR updateRequest 500 ===', []);
+            \Log::error('Error updating request 500: '.$e->getMessage());
+            \Log::error('=== END ERROR updateRequest 500 ===', []);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации при обновлении заявки',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
+        // return response()->json(['success' => true, 'message' => 'Заявка обновлена test', 'request' => $request]);
+
+        // Debug return
+        // return response()->json(['success' => true, 'message' => 'Validation passed', 'validated' => $validated, 'id' => $id]);
 
         $user = auth()->user();
+        \Log::info('User roles: ' . json_encode($user->roles ?? []));
+        \Log::info('User isAdmin: ' . ($user->isAdmin ? 'true' : 'false'));
         if (! $user->isAdmin) {
             return response()->json(['success' => false, 'message' => 'Недостаточно прав'], 403);
         }
@@ -174,13 +198,13 @@ class HomeController extends Controller
             ];
 
             // Only update fields that were actually provided
-            if (isset($validated['request_type_id'])) {
+            if (!empty($validated['request_type_id'])) {
                 $updateData['request_type_id'] = $validated['request_type_id'];
             }
-            if (isset($validated['status_id'])) {
+            if (!empty($validated['status_id'])) {
                 $updateData['status_id'] = $validated['status_id'];
             }
-            if (isset($validated['execution_time'])) {
+            if (!empty($validated['execution_time'])) {
                 $updateData['execution_time'] = $validated['execution_time'];
             }
 

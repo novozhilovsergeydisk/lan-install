@@ -3785,7 +3785,6 @@
             <div class="modal-body">
                 <form id="editRequestForm">
                     @csrf
-                    <input type="hidden" name="_method" value="PUT" />
                     <input type="hidden" id="editRequestId" name="request_id" />
                     <div class="mb-3">
                         <!-- <h6>Информация о клиенте</h6> -->

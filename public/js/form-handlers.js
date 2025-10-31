@@ -196,25 +196,36 @@ async function initEditRequestFormHandler() {
 
         // return;
 
-        const formData = new FormData(document.getElementById('editRequestForm'));
         const requestId = getValue('editRequestId');
 
         console.log(requestId);
+        console.log('Fetching URL:', `/requests/${requestId}`);
 
-        // Логируем все поля формы
-        const form = document.getElementById('editRequestForm');
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(el => console.log(`Поле формы: ${el.name} = ${el.value}`));
+        // Собираем данные вручную
+        const payload = {
+            _token: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            request_id: requestId,
+            client_name: getValue('editClientName'),
+            client_phone: getValue('editClientPhone'),
+            client_organization: getValue('editClientOrganization'),
+            request_type_id: getValue('editRequestType'),
+            status_id: getValue('editRequestStatus'),
+            execution_date: getValue('editExecutionDate'),
+            execution_time: getValue('editExecutionTime'),
+            addresses_id: getValue('editAddressesId'),
+        };
 
-        // Логируем содержимое FormData
-        formData.forEach((value, key) => console.log(`FormData: ${key} = ${value}`));
+        console.log('Sending data:', payload);
 
         try {
             const response = await fetch(`/requests/${requestId}`, {
                 method: 'PUT',
-                body: formData,
+                body: JSON.stringify(payload),
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             });
 
@@ -222,7 +233,9 @@ async function initEditRequestFormHandler() {
 
             console.log(data);
 
-            if (data.success) {
+
+
+            if (data && data.success) {     
                 const modalEl = getElement('editRequestModal');
                 console.log(modalEl);
                 if (modalEl) {
@@ -230,9 +243,9 @@ async function initEditRequestFormHandler() {
                     modal.hide();
                 }
 
-                showAlert('Функционал в разработке', 'warning');
+                // showAlert('Функционал в разработке', 'warning');
 
-                // location.reload(); // Или обновить строку таблицы
+                location.reload(); // Или обновить строку таблицы
             } else {
                 console.error('Ошибка:', data.message || 'Неизвестная ошибка');
                 showAlert(data.message || 'Ошибка', 'danger');
