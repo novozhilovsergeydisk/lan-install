@@ -66,6 +66,7 @@ class HomeController extends Controller
                 ->leftJoin('addresses', 'request_addresses.address_id', '=', 'addresses.id')
                 ->select(
                     'requests.*',
+                    'clients.id as client_id',
                     'clients.fio as client_fio',
                     'clients.phone as client_phone',
                     'clients.organization as client_organization',
@@ -112,6 +113,7 @@ class HomeController extends Controller
         try {
             $validated = $request->validate([
                 'request_id' => 'required|integer|exists:requests,id',
+                'client_id' => 'nullable|integer|exists:clients,id',
                 'client_name' => 'nullable|string|max:255',
                 'client_phone' => 'nullable|string|max:50',
                 'client_organization' => 'nullable|string|max:255',
@@ -153,24 +155,17 @@ class HomeController extends Controller
             \Log::info('=== START updateRequest ===', ['validated' => $validated, 'request_id' => $id]);
 
             // 1. Update or create client
-            $existingClient = DB::table('clients')
-                ->where('fio', $validated['client_name'])
-                ->where('phone', $validated['client_phone'])
-                ->first();
-
-            if ($existingClient) {
-                // Update existing client
-                DB::table('clients')->where('id', $existingClient->id)->update([
-                    'organization' => $validated['client_organization']
-                ]);
-                $clientId = $existingClient->id;
-            } else {
-                // Create new client
-                $clientId = DB::table('clients')->insertGetId([
-                    'fio' => $validated['client_name'],
-                    'phone' => $validated['client_phone'],
-                    'organization' => $validated['client_organization']
-                ]);
+            if (!empty($validated['client_id'])) {
+                // Use existing client
+                $clientId = $validated['client_id'];
+                // Optionally update organization if provided
+                if (!empty($validated['client_organization'])) {
+                    DB::table('clients')->where('id', $clientId)->update([
+                        'fio' => $validated['client_name'],
+                        'phone' => $validated['client_phone'],
+                        'organization' => $validated['client_organization']
+                    ]);
+                }
             }
 
             // 2. Update request_addresses table

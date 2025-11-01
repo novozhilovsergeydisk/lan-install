@@ -43,6 +43,15 @@ async function initEditRequestHandler() {
                     console.log('Доступные поля в data:', Object.keys(data));
                     console.log('Данные для заполнения:', data);
 
+                    const editClientIdEl = document.getElementById('editClientId');
+                    console.log({ editClientIdEl });
+                    if (!editClientIdEl) {
+                        console.error('Element with id "editClientId" not found');
+                        return;
+                    }
+                    editClientIdEl.value = data.client_id || data.clientId || '';
+                    console.log(editClientIdEl.value);
+
                     const clientNameEl = document.getElementById('editClientName');
                     console.log({ clientNameEl });
                     if (clientNameEl) clientNameEl.value = data.client_fio || data.clientName || '';
@@ -205,6 +214,7 @@ async function initEditRequestFormHandler() {
         const payload = {
             _token: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
             request_id: requestId,
+            client_id: getValue('editClientId'),
             client_name: getValue('editClientName'),
             client_phone: getValue('editClientPhone'),
             client_organization: getValue('editClientOrganization'),

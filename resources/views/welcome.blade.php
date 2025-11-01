@@ -3786,6 +3786,7 @@
                 <form id="editRequestForm">
                     @csrf
                     <input type="hidden" id="editRequestId" name="request_id" />
+                    <input type="hidden" id="editClientId" name="edit_client_id" />
                     <div class="mb-3">
                         <!-- <h6>Информация о клиенте</h6> -->
                         <div class="row g-3">
