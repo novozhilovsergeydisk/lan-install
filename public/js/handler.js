@@ -2799,10 +2799,12 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
     input.readOnly = false; // Разрешаем редактировать для поиска
 
     // Надежное отключение автозаполнения браузера
-    input.setAttribute('autocomplete', 'new-password'); // Самый надежный способ
+    input.setAttribute('autocomplete', 'nope');
     input.setAttribute('autocorrect', 'off');
     input.setAttribute('autocapitalize', 'off');
     input.setAttribute('spellcheck', 'false');
+    input.setAttribute('data-form-type', 'search');
+    input.name = 'search-' + Math.random().toString(36).substr(2, 9); // Уникальное имя для предотвращения автозаполнения
 
     // Проверяем, что атрибуты установлены
     // console.log('Создан input с атрибутами:', {
@@ -2895,7 +2897,7 @@ window.initCustomSelect = function(selectId, placeholder = "Выберите и�
         optionsList.style.display = "none";
       } else {
         // console.log('Открываем список');
-        populateList(input.value);
+        populateList(""); // Показываем все адреса при клике, без фильтра
         optionsList.style.display = "block";
       }
       e.stopPropagation(); // Предотвращаем всплытие события

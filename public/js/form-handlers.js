@@ -5,6 +5,41 @@ import { loadAddresses, loadAddressesPaginated, loadPlanningRequests } from './h
 import { loadAddressesForPlanning } from './handler.js';
 import HouseNumberValidator from './validators/house-number-validator.js';
 
+// Функция для установки значения в кастомный селект
+function setCustomSelectValue(selectId, value) {
+    const originalSelect = document.getElementById(selectId);
+    if (!originalSelect) {
+        console.error(`Не найден оригинальный select с id ${selectId}`);
+        return;
+    }
+
+    const wrapper = document.getElementById(`custom-select-wrapper-${selectId}`);
+    if (!wrapper) {
+        console.error(`Не найден wrapper кастомного селекта для ${selectId}`);
+        return;
+    }
+
+    const input = wrapper.querySelector('.custom-select-input');
+    if (!input) {
+        console.error(`Не найден input в кастомном селекте для ${selectId}`);
+        return;
+    }
+
+    // Устанавливаем значение в оригинальном select
+    originalSelect.value = value;
+
+    // Находим соответствующий option
+    const option = originalSelect.querySelector(`option[value="${value}"]`);
+    if (option) {
+        // Устанавливаем текст в input
+        input.value = option.textContent;
+        console.log(`Установлено значение в кастомный селект ${selectId}: ${value} - ${option.textContent}`);
+    } else {
+        console.warn(`Не найден option с value="${value}" в select ${selectId}`);
+        input.value = '';
+    }
+}
+
 // Обработчик кнопки редактирования заявки
 async function initEditRequestHandler() {
     document.addEventListener('click', async function(event) {
@@ -15,7 +50,8 @@ async function initEditRequestHandler() {
         document.getElementById('editRequestId').value = requestId;
 
         try {
-            const response = await fetch(`/requests/${requestId}`);
+            // [HomeController::class, 'getEditRequest']
+            const response = await fetch(`/requests/${requestId}`); 
             if (!response.ok) {
                 throw new Error('Ошибка загрузки');
             }
@@ -33,12 +69,7 @@ async function initEditRequestHandler() {
                 // Добавляем обработчик события показа модального окна
                 const fillForm = function() {
                     console.log('Начинаем заполнение формы');
-                    
-                    // Загружаем адреса для выпадающего списка
-                    if (typeof loadAddresses === 'function') {
-                        loadAddresses('editAddressesId');
-                    }
-                    
+
                     // Выводим все доступные поля из data
                     console.log('Доступные поля в data:', Object.keys(data));
                     console.log('Данные для заполнения:', data);
@@ -91,7 +122,7 @@ async function initEditRequestHandler() {
                     const addressesIdEl = document.getElementById('editAddressesId');
                     console.log({ addressesIdEl });
                     if (addressesIdEl) {
-                        addressesIdEl.value = data.addresses_id || '';
+                        addressesIdEl.value = data.address_id || '';
                         console.log('Значение addressesId установлено:', addressesIdEl.value);
                     } else {
                         console.warn('Элемент с id "addressesId" не найден в DOM');
@@ -103,31 +134,28 @@ async function initEditRequestHandler() {
                     // log(commentEl.value);
 
                     console.log('Заполнение формы завершено');
-                    
-                    // Инициализируем кастомный селект для адреса
-                    if (typeof window.initCustomSelect === 'function') {
-                        // Инициализируем кастомный селект с повторными попытками
-                        function tryInitEditAddressSelect(attempts = 0) {
-                            const editAddressesId = document.getElementById('editAddressesId');
-                            if (editAddressesId) {
-                                window.initCustomSelect('editAddressesId', 'Выберите адрес из списка');
-                                console.log('Кастомный селект для editAddressesId инициализирован');
-                            } else if (attempts < 5) {
-                                console.log(`Попытка ${attempts + 1}: Элемент editAddressesId не найден, повторная попытка через 100мс`);
-                                setTimeout(() => tryInitEditAddressSelect(attempts + 1), 100);
+
+                    // Загружаем адреса для выпадающего списка и устанавливаем значение в кастомный селект
+                    if (typeof loadAddresses === 'function') {
+                        loadAddresses('editAddressesId');
+                        // После загрузки адресов устанавливаем значение в кастомный селект с повторными попытками
+                        function trySetCustomSelectValue(attempts = 0) {
+                            const wrapper = document.getElementById('custom-select-wrapper-editAddressesId');
+                            if (wrapper) {
+                                setCustomSelectValue('editAddressesId', data.address_id || '');
+                                console.log('Значение в кастомный селект установлено');
+                            } else if (attempts < 10) {
+                                console.log(`Попытка ${attempts + 1}: Wrapper кастомного селекта не найден, повторная попытка через 200мс`);
+                                setTimeout(() => trySetCustomSelectValue(attempts + 1), 200);
                             } else {
-                                console.error('Не удалось найти элемент editAddressesId после 5 попыток');
+                                console.error('Не удалось установить значение в кастомный селект после 10 попыток');
                             }
                         }
-                        
-                        // Запускаем инициализацию с небольшой задержкой
-                        setTimeout(tryInitEditAddressSelect, 100);
-                    } else {
-                        console.error('Функция initCustomSelect не найдена');
+                        setTimeout(trySetCustomSelectValue, 500); // Начальная задержка 500ms
                     }
-                    
+
                     // Проверяем значения полей после заполнения
-                    const fields = ['editClientName', 'editClientPhone', 'editClientOrganization', 'editRequestType', 
+                    const fields = ['editClientName', 'editClientPhone', 'editClientOrganization', 'editRequestType',
                                  'editRequestStatus', 'execution_date', 'execution_time', 'editAddressesId', 'editComment'];
                     fields.forEach(field => {
                         const el = document.getElementById(field);

@@ -70,6 +70,7 @@ class HomeController extends Controller
                     'clients.fio as client_fio',
                     'clients.phone as client_phone',
                     'clients.organization as client_organization',
+                    'addresses.id as address_id',
                     'addresses.street',
                     'addresses.houses as house'
                 )

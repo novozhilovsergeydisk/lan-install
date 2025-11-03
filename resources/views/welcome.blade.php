@@ -3408,6 +3408,8 @@
 
     // Функция для загрузки и отображения списка адресов в выпадающем списке
     async function loadAddresses() {
+        console.log('Загрузка адресов');
+
         try {
             const addressesList = document.getElementById('addressesList');
             if (!addressesList) return;
