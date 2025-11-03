@@ -4,9 +4,9 @@
 LOGFILE="$HOME/logs/git-deploy.log"
 PROJECT_DIR="$(pwd)"
 TIMESTAMP=$(date "+%Y-%m-%d %T")
-SSH_KEY="~/.ssh/git_fursa"
-SERVER_PATH="lan-install.online"
-REMOTE_DIR="/var/www/www-root/data/www/lan-install.online"
+SSH_KEY="~/.ssh/git_lan_install"
+SERVER_PATH="lan-install"
+REMOTE_DIR="/var/www/lan-install"
 
 # === Цвета для вывода ===
 GREEN='\033[32m'
