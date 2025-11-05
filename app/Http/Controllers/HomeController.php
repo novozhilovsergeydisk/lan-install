@@ -155,18 +155,23 @@ class HomeController extends Controller
             // Log incoming data for debugging
             \Log::info('=== START updateRequest ===', ['validated' => $validated, 'request_id' => $id]);
 
-            // 1. Update or create client
-            if (!empty($validated['client_id'])) {
+            // 1. Find or create client by fio, phone, organization
+            $client = DB::table('clients')
+                ->where('fio', $validated['client_name'])
+                ->where('phone', $validated['client_phone'])
+                ->where('organization', $validated['client_organization'])
+                ->first();
+
+            if ($client) {
                 // Use existing client
-                $clientId = $validated['client_id'];
-                // Optionally update organization if provided
-                if (!empty($validated['client_organization'])) {
-                    DB::table('clients')->where('id', $clientId)->update([
-                        'fio' => $validated['client_name'],
-                        'phone' => $validated['client_phone'],
-                        'organization' => $validated['client_organization']
-                    ]);
-                }
+                $clientId = $client->id;
+            } else {
+                // Create new client
+                $clientId = DB::table('clients')->insertGetId([
+                    'fio' => $validated['client_name'],
+                    'phone' => $validated['client_phone'],
+                    'organization' => $validated['client_organization']
+                ]);
             }
 
             // 2. Update request_addresses table

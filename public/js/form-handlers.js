@@ -197,8 +197,8 @@ async function initEditRequestFormHandler() {
         const editExecutionDate = document.getElementById('editExecutionDate');
         const customSelectInput = document.getElementById('custom-select-input');
 
-        console.log('editExecutionDate:', editExecutionDate);
-        console.log('customSelectInput:', customSelectInput);
+        // console.log('editExecutionDate:', editExecutionDate);
+        // console.log('customSelectInput:', customSelectInput);
 
         // Валидация обязательных полей
         if (document.getElementById('editExecutionDate') && document.getElementById('editAddressesId')) {
@@ -256,6 +256,7 @@ async function initEditRequestFormHandler() {
         console.log('Sending data:', payload);
 
         try {
+            // [HomeController::class, 'updateRequest']
             const response = await fetch(`/requests/${requestId}`, {
                 method: 'PUT',
                 body: JSON.stringify(payload),
@@ -270,8 +271,6 @@ async function initEditRequestFormHandler() {
             const data = await response.json();
 
             console.log(data);
-
-
 
             if (data && data.success) {     
                 const modalEl = getElement('editRequestModal');
