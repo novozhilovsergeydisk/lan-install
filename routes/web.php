@@ -86,12 +86,12 @@ Route::get('/api/photo-report/{requestId}', [HomeController::class, 'getPhotoRep
 Route::post('/api/comments/{commentId}/photos', [CommentPhotoController::class, 'index'])->name('api.comments.photos')->middleware('auth');
 
 // Маршруты для работы со статусами заявок
-Route::prefix('statuses')->middleware('auth')->group(function () {
-    Route::get('/', [StatusController::class, 'index']);
-    Route::post('/', [StatusController::class, 'store']);
-    Route::put('/{id}', [StatusController::class, 'update']);
-    Route::delete('/{id}', [StatusController::class, 'destroy']);
-});
+// Route::prefix('statuses')->middleware('auth')->group(function () {
+//     Route::get('/', [StatusController::class, 'index']);
+//     Route::post('/', [StatusController::class, 'store']);
+//     Route::put('/{id}', [StatusController::class, 'update']);
+//     Route::delete('/{id}', [StatusController::class, 'destroy']);
+// });
 
 // Обработка комментариев
 Route::post('/requests/comment', [HomeController::class, 'addComment'])
