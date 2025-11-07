@@ -699,7 +699,7 @@ class HomeController extends Controller
     {
         // throw new \Exception('Test exception');
 
-        // \Log::info('=== СТАРТ СТРАНИЦЫ ===', []);
+        \Log::info('=== СТАРТ СТРАНИЦЫ ===', []);
         // Получаем текущего пользователя (проверка аутентификации уже выполнена в роутере)
         $user = auth()->user();
 
@@ -1057,11 +1057,11 @@ class HomeController extends Controller
         // Логируем данные для отладки
         // \Log::info('View data:', ['comments_by_request' => $comments_by_request]);
 
-        // \log::info('$user', (array)$user);
+        \log::info('$user', (array)$user);
 
         // \Log::info('Content-Type: ' . $request->header('Content-Type'));
 
-        // \Log::info('=== КОНЕЦ СТРАНИЦЫ ===', []);
+        \Log::info('=== КОНЕЦ СТРАНИЦЫ ===', []);
 
         return view('welcome', $viewData);
     }
