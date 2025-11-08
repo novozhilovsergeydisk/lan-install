@@ -112,7 +112,7 @@
 
 - **Backend**: Laravel Framework
 - **Frontend**: JavaScript, CSS, Bootstrap
-- **База данных**: MySQL
+- **База данных**: Postgresql
 - **Карты**: Яндекс.Карты API
 - **Файлы**: Загрузка Excel, фотоотчетов
 
