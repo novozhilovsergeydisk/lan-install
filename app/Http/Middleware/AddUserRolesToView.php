@@ -19,7 +19,8 @@ class AddUserRolesToView
      */
     public function handle(Request $request, Closure $next)
     {
-        \Log::info('AddUserRolesToView: Проверка аутентификации');
+        \Log::emergency('AddUserRolesToView: EMERGENCY Проверка аутентификации');
+        file_put_contents('/var/www/lan-install/storage/logs/middleware_test.log', 'middleware ' . now() . PHP_EOL, FILE_APPEND);
         
         if (Auth::check()) {
             $user = $request->user();

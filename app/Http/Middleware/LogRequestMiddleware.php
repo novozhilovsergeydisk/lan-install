@@ -41,13 +41,13 @@ class LogRequestMiddleware
                    'updated_at' => now(),
                ]);
 
-            // Дополнительно логируем в файл (опционально)
-            // Log::info('Request logged to database', [
-            //     'method' => $request->method(),
-            //     'url' => $request->fullUrl(),
-            //     'status' => $response->getStatusCode(),
-            //     'execution_time' => $executionTime . 'ms'
-            // ]);
+             // Дополнительно логируем в файл (опционально)
+             Log::info('Request logged to database', [
+                 'method' => $request->method(),
+                 'url' => $request->fullUrl(),
+                 'status' => $response->getStatusCode(),
+                 'execution_time' => $executionTime . 'ms'
+             ]);
         } catch (\Exception $e) {
             // В случае ошибки логируем её, но не прерываем выполнение приложения
             Log::error('Failed to log request to database: ' . $e->getMessage());

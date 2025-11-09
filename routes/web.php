@@ -17,6 +17,17 @@ use App\Http\Controllers\EmployeesFilterController;
 use App\Http\Controllers\PhotoReportController;
 use App\Http\Controllers\CityController;
 
+Route::get('/test-no-auth', function () {
+    Log::info('Тест в начале маршрута без аутентификации');
+    return 'OK';
+});
+
+Route::get('/testlog', function () {
+    Log::emergency('Test emergency from route /testlog');
+    file_put_contents('/var/www/lan-install/storage/logs/test_web.log', 'web log ' . now() . PHP_EOL, FILE_APPEND);
+    return 'OK';
+});
+
 // Update request
 Route::match(['PUT'], '/requests/{id}', [HomeController::class, 'updateRequest'])->where('id', '[0-9]+')->name('requests.update')->middleware('auth')->middleware(['auth', 'roles']);
 
@@ -87,10 +98,10 @@ Route::post('/api/comments/{commentId}/photos', [CommentPhotoController::class, 
 
 // Маршруты для работы со статусами заявок
 Route::prefix('statuses')->middleware('auth')->group(function () {
-    Route::get('/', [StatusController::class, 'index']);
-    Route::post('/', [StatusController::class, 'store']);
-    Route::put('/{id}', [StatusController::class, 'update']);
-    Route::delete('/{id}', [StatusController::class, 'destroy']);
+    //Route::get('/', [StatusController::class, 'index']);
+    //Route::post('/', [StatusController::class, 'store']);
+    //Route::put('/{id}', [StatusController::class, 'update']);
+    //Route::delete('/{id}', [StatusController::class, 'destroy']);
 });
 
 // Обработка комментариев
@@ -310,6 +321,16 @@ Route::post('/upload-excel', [CommentPhotoController::class, 'uploadExcel'])
     ->name('api.upload-excel')
     ->middleware('auth');
 
-
-
-
+Route::get('/test-log', function () {
+    Log::info('=== TEST LOG FROM ROUTE ===');
+    Log::debug('Debug level test');
+    Log::error('Error level test');
+    
+    return response()->json([
+        'log_channel' => config('logging.default'),
+        'log_level' => config('logging.channels.single.level'),
+        'log_path' => config('logging.channels.single.path'),
+        'log_file_exists' => file_exists(storage_path('logs/laravel.log')),
+        'log_file_writable' => is_writable(storage_path('logs/laravel.log')),
+    ]);
+});

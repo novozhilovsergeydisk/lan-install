@@ -10,7 +10,7 @@ class StatusController extends Controller
     /**
      * Получить список всех статусов
      */
-    public function index()
+    /*public function index()
     {
         $statuses = DB::table('request_statuses')
             ->leftJoin('requests', 'request_statuses.id', '=', 'requests.status_id')
@@ -24,12 +24,12 @@ class StatusController extends Controller
             ->get();
 
         return response()->json($statuses);
-    }
+    }*/
 
     /**
      * Создать новый статус
      */
-    public function store(Request $request)
+    /*public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:request_statuses,name',
@@ -48,12 +48,12 @@ class StatusController extends Controller
             'id' => $id,
             'message' => 'Статус успешно создан'
         ]);
-    }
+    }*/
 
     /**
      * Обновить существующий статус
      */
-    public function update(Request $request, $id)
+    /*public function update(Request $request, $id)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:request_statuses,name,' . $id,
@@ -79,12 +79,12 @@ class StatusController extends Controller
             'success' => false,
             'message' => 'Не удалось обновить статус'
         ], 400);
-    }
+    }*/
 
     /**
      * Удалить статус
      */
-    public function destroy($id)
+    /*public function destroy($id)
     {
         // Проверяем, есть ли заявки с этим статусом
         $hasRequests = DB::table('requests')
@@ -113,5 +113,5 @@ class StatusController extends Controller
             'success' => false,
             'message' => 'Не удалось удалить статус'
         ], 400);
-    }
+    }*/
 }

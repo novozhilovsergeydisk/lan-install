@@ -16,6 +16,7 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
+        \Log::emergency('== EMERGENCY START login ==');
         \Log::info('== START login ==', [
             'user_agent' => $request->userAgent(),
             'ip' => $request->ip(),
