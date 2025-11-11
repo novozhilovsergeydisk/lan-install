@@ -8,9 +8,197 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class PlanningRequestController extends Controller
 {
+
+    public function uploadRequestsExcel(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'requests_file' => 'required|file|mimes:xlsx,xls|max:10240',
+            ]);
+
+            $file = $request->file('requests_file');
+            $reader = IOFactory::createReaderForFile($file->getRealPath());
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($file->getRealPath());
+            $worksheet = $spreadsheet->getActiveSheet();
+            $data = $worksheet->toArray();
+
+            $data = array_filter($data, function($row) {
+                return !empty(array_filter($row, fn($value) => $value !== null && $value !== ''));
+            });
+
+            if (empty($data)) {
+                return response()->json(['success' => false, 'message' => 'Файл не содержит данных'], 400);
+            }
+
+            $headers = array_shift($data);
+            $expectedHeaders = ['client_fio', 'client_phone', 'client_organization', 'comment', 'city_name', 'district', 'street', 'houses'];
+            
+            // For case-insensitive and space-trimming header check
+            $normalizedHeaders = array_map(fn($h) => trim(strtolower($h)), $headers);
+            $normalizedExpectedHeaders = array_map(fn($h) => trim(strtolower($h)), $expectedHeaders);
+
+            if (count(array_intersect($normalizedExpectedHeaders, $normalizedHeaders)) !== count($normalizedExpectedHeaders)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Неверные заголовки в файле. Ожидаются: ' . implode(', ', $expectedHeaders),
+                    'headers_found' => $headers
+                ], 400);
+            }
+
+            DB::beginTransaction();
+            $createdRequests = [];
+
+            foreach ($data as $row) {
+                $rowData = array_combine($normalizedHeaders, array_pad($row, count($normalizedHeaders), null));
+
+                // 1. Find or create address
+                $addressId = $this->findOrCreateAddress($rowData);
+
+                // 2. Find or create client
+                $clientId = $this->findOrCreateClient($rowData);
+
+                // 3. Create request
+                $requestData = [
+                    'client_id' => $clientId,
+                    'address_id' => $addressId,
+                    'comment' => $rowData['comment'] ?? null,
+                ];
+                
+                $newRequest = $this->createPlanningRequest($requestData);
+                $createdRequests[] = $newRequest;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявки успешно загружены: ' . count($createdRequests) . ' шт.',
+                'data' => $createdRequests
+            ]);
+
+        } catch (\Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+            Log::error('Ошибка при загрузке заявок из Excel: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обработке файла: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function findOrCreateAddress($rowData)
+    {
+        $cityName = trim($rowData['city_name'] ?? '');
+        $district = trim($rowData['district'] ?? '');
+        $street = trim($rowData['street'] ?? '');
+        $houses = trim($rowData['houses'] ?? '');
+
+        if (empty($cityName) || empty($street) || empty($district) || empty($houses)) {
+            throw new \Exception('Недостаточно данных для адреса в одной из строк.');
+        }
+
+        $city = DB::table('cities')->where('name', 'ilike', $cityName)->first();
+        $cityId = $city ? $city->id : DB::table('cities')->insertGetId(['name' => $cityName, 'region_id' => 1]);
+
+        $address = DB::table('addresses')
+            ->where('city_id', $cityId)
+            ->where('street', $street)
+            ->where('district', $district)
+            ->where('houses', $houses)
+            ->first();
+
+        if ($address) {
+            return $address->id;
+        }
+
+        return DB::table('addresses')->insertGetId([
+            'city_id' => $cityId,
+            'street' => $street,
+            'district' => $district,
+            'houses' => $houses,
+        ]);
+    }
+
+    private function findOrCreateClient($rowData)
+    {
+        $fio = trim($rowData['client_fio'] ?? '');
+        $phone = trim($rowData['client_phone'] ?? '');
+        $organization = trim($rowData['client_organization'] ?? '');
+
+        if (empty($fio) && empty($phone) && empty($organization)) {
+            // Allow creating requests without a client
+            return null;
+        }
+
+        $query = DB::table('clients');
+        if (!empty($phone)) {
+            $query->where('phone', $phone);
+        } elseif (!empty($fio)) {
+            $query->where('fio', $fio);
+        } else {
+            $query->where('organization', $organization);
+        }
+        $client = $query->first();
+
+        if ($client) {
+            return $client->id;
+        }
+
+        return DB::table('clients')->insertGetId([
+            'fio' => $fio,
+            'phone' => $phone,
+            'organization' => $organization,
+            'email' => ''
+        ]);
+    }
+
+    private function createPlanningRequest($data)
+    {
+        $userId = auth()->id();
+        $employee = DB::table('employees')->where('user_id', $userId)->first();
+        $employeeId = $employee ? $employee->id : null;
+
+        $count = DB::table('requests')->count() + 1;
+        $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+
+        $requestId = DB::table('requests')->insertGetId([
+            'client_id' => $data['client_id'],
+            'request_type_id' => 1, // default
+            'status_id' => 6, // 'планирование'
+            'operator_id' => $employeeId,
+            'number' => $requestNumber,
+            'request_date' => now()->toDateString(),
+        ]);
+
+        if (!empty($data['comment'])) {
+            $commentId = DB::table('comments')->insertGetId([
+                'comment' => $data['comment'],
+                'created_at' => now(),
+            ]);
+
+            DB::table('request_comments')->insert([
+                'request_id' => $requestId,
+                'comment_id' => $commentId,
+                'user_id' => $userId,
+                'created_at' => now(),
+            ]);
+        }
+
+        DB::table('request_addresses')->insert([
+            'request_id' => $requestId,
+            'address_id' => $data['address_id'],
+        ]);
+
+        return DB::table('requests')->where('id', $requestId)->first();
+    }
+
 
     public function changePlanningRequestStatus(Request $request)
     {

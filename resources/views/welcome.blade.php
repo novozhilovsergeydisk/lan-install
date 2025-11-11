@@ -1165,6 +1165,9 @@
                             <button type="button" class="btn btn-primary" id="new-planning-request-button" data-bs-toggle="modal" data-bs-target="#newPlanningRequestModal">
                                 <i class="bi bi-plus-circle me-1"></i>Новая заявка
                             </button>
+                            <button type="button" class="btn btn-success" id="upload-requests-button">
+                                <i class="bi bi-upload me-1"></i>Загрузить заявки
+                            </button>
                         </div>
 
                         <div class="table-responsive t-custom">
@@ -1938,6 +1941,30 @@
 <script type="module" src="{{ asset('js/handler.js') }}"></script>
 
 <!-- Here modals -->
+
+<!-- Модальное окно для загрузки заявок -->
+<div class="modal fade" id="uploadRequestsModal" tabindex="-1" aria-labelledby="uploadRequestsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadRequestsModalLabel">Загрузка заявок из файла</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadRequestsForm">
+                    <div class="mb-3">
+                        <label for="requestsFile" class="form-label">Выберите файл с заявками</label>
+                        <input type="file" class="form-control" id="requestsFile" name="requests_file" accept=".xlsx, .xls, .csv">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="uploadRequestsSubmit">Загрузить</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Модальное окно комментариев -->
 <div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel" aria-hidden="true">

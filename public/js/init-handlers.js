@@ -20,7 +20,8 @@ import {
     initDeleteAddressHandlers,
     saveEmployeeChangesSystem,
     initPlanningRequestFormHandlers,
-    initAddressEditButton
+    initAddressEditButton,
+    initUploadRequestsHandler
 } from './form-handlers.js';
 import {
     initializePage,
@@ -57,6 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initPlanningRequestFormHandlers();
     initShowPhotosButton();
     initPhotoReportModal();
+    initUploadRequestsHandler();
 
     // Очищаем контейнер фотоотчета при закрытии модального окна комментариев
     const commentsModal = document.getElementById('commentsModal');

@@ -1789,6 +1789,29 @@ function getStatusColor(statusId) {
     return statusColors[statusId] || '#9E9E9E'; // По умолчанию серый
 }
 
+export function initUploadRequestsHandler() {
+    const uploadButton = document.getElementById('upload-requests-button');
+    if (uploadButton) {
+        uploadButton.addEventListener('click', () => {
+            console.log("Кнопка 'Загрузить заявки' нажата");
+            const modal = new bootstrap.Modal(document.getElementById('uploadRequestsModal'));
+            modal.show();
+        });
+    }
+
+    const uploadSubmitButton = document.getElementById('uploadRequestsSubmit');
+    if (uploadSubmitButton) {
+        uploadSubmitButton.addEventListener('click', () => {
+            const requestsFile = document.getElementById('requestsFile');
+            if (requestsFile && requestsFile.files.length > 0) {
+                console.log('Выбран файл для загрузки:', requestsFile.files[0].name);
+            } else {
+                console.log('Файл не выбран.');
+            }
+        });
+    }
+}
+
 // Глобальная переменная для хранения текущей даты
 export const currentDateState = {
     // Инициализируем текущей датой в формате DD.MM.YYYY
