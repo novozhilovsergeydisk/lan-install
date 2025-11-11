@@ -1001,36 +1001,36 @@ class HomeController extends Controller
      */
     public function addComment(Request $request)
     {
-        // Собираем информацию о файлах
-        $filesInfo = [];
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $index => $file) {
-                $filesInfo[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'size' => $file->getSize(),
-                    'type' => $file->getMimeType(),
-                    'extension' => $file->getClientOriginalExtension(),
-                ];
-            }
-        }
-
-        // Собираем информацию о фото
-        $photosInfo = [];
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $index => $photo) {
-                $photosInfo[] = [
-                    'name' => $photo->getClientOriginalName(),
-                    'size' => $photo->getSize(),
-                    'type' => $photo->getMimeType(),
-                    'extension' => $photo->getClientOriginalExtension(),
-                ];
-            }
-        }
-
-        // Включаем логирование SQL-запросов
-        \DB::enableQueryLog();
-
         try {
+            // Собираем информацию о файлах
+            $filesInfo = [];
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $index => $file) {
+                    $filesInfo[] = [
+                        'name' => $file->getClientOriginalName(),
+                        'size' => $file->getSize(),
+                        'type' => $file->getMimeType(),
+                        'extension' => $file->getClientOriginalExtension(),
+                    ];
+                }
+            }
+
+            // Собираем информацию о фото
+            $photosInfo = [];
+            if ($request->hasFile('photos')) {
+                foreach ($request->file('photos') as $index => $photo) {
+                    $photosInfo[] = [
+                        'name' => $photo->getClientOriginalName(),
+                        'size' => $photo->getSize(),
+                        'type' => $photo->getMimeType(),
+                        'extension' => $photo->getClientOriginalExtension(),
+                    ];
+                }
+            }
+
+            // Включаем логирование SQL-запросов
+            \DB::enableQueryLog();
+
             // Валидируем входные данные
             $validated = $request->validate([
                 'request_id' => 'required|exists:requests,id',
@@ -1359,6 +1359,7 @@ class HomeController extends Controller
                 ], 500);
             }
         } catch (\Exception $e) {
+            Log::error('Error in HomeController@addComment: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Критическая ошибка: '.$e->getMessage(),
