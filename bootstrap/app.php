@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Твой существующий middleware
         $middleware->append(\App\Http\Middleware\LogRequestMiddleware::class);
-        
+
         // Алиасы
         $middleware->alias([
             'roles' => \App\Http\Middleware\AddUserRolesToView::class,

@@ -33,19 +33,20 @@ class BrigadeController extends Controller
                 WHERE b.is_deleted = FALSE AND el.is_deleted = FALSE
                 ORDER BY brigade_id DESC";
             $brigades = DB::select($sql);
+
             return response()->json([
                 'success' => true,
                 'data' => $brigades,
-                'sql' => $sql
+                'sql' => $sql,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error in BrigadeController@getBrigadesByDate: ' . $e->getMessage());
+            \Log::error('Error in BrigadeController@getBrigadesByDate: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Произошла ошибка при получении списка бригад на указанную дату',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -56,11 +57,11 @@ class BrigadeController extends Controller
     public function index()
     {
         // \Log::info('BrigadeController@index called');
-        
+
         try {
             // Логируем SQL-запрос
             // \DB::enableQueryLog();
-            
+
             // Получаем список бригад с информацией о бригадире
             $brigades = DB::table('brigades')
                 ->leftJoin('employees', 'brigades.leader_id', '=', 'employees.id')
@@ -76,13 +77,14 @@ class BrigadeController extends Controller
                 ->where('brigades.is_deleted', false)
                 ->orderBy('brigades.name')
                 ->get();
-                
+
             // Разбиваем ФИО на составляющие для совместимости с фронтендом
             $brigades->each(function ($item) {
                 $fioParts = explode(' ', $item->leader_fio ?? '');
                 $item->leader_last_name = $fioParts[0] ?? '';
                 $item->leader_first_name = $fioParts[1] ?? '';
                 $item->leader_middle_name = $fioParts[2] ?? '';
+
                 return $item;
             });
 
@@ -90,42 +92,52 @@ class BrigadeController extends Controller
             // $query = \DB::getQueryLog();
             // \Log::info('SQL Query:', ['query' => $query]);
             // \Log::info('Brigades data:', ['count' => $brigades->count(), 'data' => $brigades->toArray()]);
-            
+
             $response = [
                 'success' => true,
-                'data' => $brigades->map(function($item) {
-                    return (array)$item; // Преобразуем объект в массив
-                })
+                'data' => $brigades->map(function ($item) {
+                    return (array) $item; // Преобразуем объект в массив
+                }),
             ];
-            
+
             // \Log::info('Response data:', $response);
-            
+
             return response()->json($response);
 
         } catch (\Exception $e) {
-            \Log::error('Error in BrigadeController@index: ' . $e->getMessage());
+            \Log::error('Error in BrigadeController@index: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Произошла ошибка при получении списка бригад',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
     public function create()
     {
-        // Получаем список всех сотрудников
-        $employees = DB::select("SELECT id, fio FROM employees ORDER BY fio");
+        try {
+            // Получаем список всех сотрудников
+            $employees = DB::select('SELECT id, fio FROM employees ORDER BY fio');
+        } catch (\Exception $e) {
+            Log::error('Error in BrigadeController@create: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при загрузке данных для создания бригады',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getCurrentDayBrigades()
     {
         try {
-        $today = now()->toDateString();
-        
-        $sql = "SELECT 
+            $today = now()->toDateString();
+
+            $sql = "SELECT 
                     e.id, b.id as brigade_id, b.name as brigade_name, e.fio AS leader_name, e.id as employee_id 
                 FROM 
                     brigades AS b 
@@ -133,26 +145,26 @@ class BrigadeController extends Controller
                     employees AS e ON b.leader_id = e.id 
                 WHERE 
                     DATE(b.formation_date) >= '{$today}' and b.is_deleted = false";
-        
-        $brigades = DB::select($sql);
-        
-        // \Log::info('Successfully retrieved current day brigades', ['count' => count($brigades)]);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $brigades
-        ]);
+
+            $brigades = DB::select($sql);
+
+            // \Log::info('Successfully retrieved current day brigades', ['count' => count($brigades)]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $brigades,
+            ]);
         } catch (\Exception $e) {
-            \Log::error('Error in BrigadeController@getCurrentDayBrigades: ' . $e->getMessage());
+            \Log::error('Error in BrigadeController@getCurrentDayBrigades: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Произошла ошибка при получении списка бригад на текущий день',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
-   }
+    }
 
     public function store(Request $request)
     {
@@ -172,7 +184,7 @@ class BrigadeController extends Controller
             DB::beginTransaction();
 
             // Вставка бригады
-            DB::insert("INSERT INTO brigades (name, leader_id, formation_date) VALUES (?, ?, CURRENT_DATE)", [
+            DB::insert('INSERT INTO brigades (name, leader_id, formation_date) VALUES (?, ?, CURRENT_DATE)', [
                 $validated['name'],
                 $validated['leader_id'],
             ]);
@@ -181,11 +193,11 @@ class BrigadeController extends Controller
 
             // Фильтруем участников, исключая бригадира
             $members = array_diff($validated['members'], [$validated['leader_id']]);
-            
+
             // Вставка участников бригады
-            if (!empty($members)) {
-                $values = array_map(fn($memberId) => "($brigadeId, $memberId)", $members);
-                DB::insert("INSERT INTO brigade_members (brigade_id, employee_id) VALUES " . implode(',', $values));
+            if (! empty($members)) {
+                $values = array_map(fn ($memberId) => "($brigadeId, $memberId)", $members);
+                DB::insert('INSERT INTO brigade_members (brigade_id, employee_id) VALUES '.implode(',', $values));
             }
 
             // Получаем данные о созданной бригаде
@@ -195,17 +207,17 @@ class BrigadeController extends Controller
                         (SELECT COUNT(*) FROM brigade_members WHERE brigade_id = ?) as members_count 
                  FROM brigades b 
                  LEFT JOIN employees e ON b.leader_id = e.id 
-                 WHERE b.id = ?", 
+                 WHERE b.id = ?",
                 [$brigadeId, $brigadeId]
             );
-            
+
             // Убедимся, что у нас есть объект бригады
-            if (!$brigade) {
-                $brigade = (object)[
+            if (! $brigade) {
+                $brigade = (object) [
                     'id' => $brigadeId,
                     'name' => $validated['name'],
                     'leader_name' => 'Ошибка загрузки данных',
-                    'members_count' => count($members)
+                    'members_count' => count($members),
                 ];
             }
 
@@ -214,17 +226,17 @@ class BrigadeController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Бригада успешно создана',
-                'brigade' => $brigade
+                'brigade' => $brigade,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Ошибка при создании бригады: ' . $e->getMessage());
-            
+            \Log::error('Ошибка при создании бригады: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Произошла ошибка при создании бригады',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -235,110 +247,109 @@ class BrigadeController extends Controller
     public function show(string $id)
     {
         // This can be used for a full page view if needed
-        return view('brigade.show', ['id' => $id]); 
+        return view('brigade.show', ['id' => $id]);
     }
-    
+
     /**
      * Delete a brigade
-     * 
-     * @param int $brigadeId ID of the brigade to delete
+     *
+     * @param  int  $brigadeId  ID of the brigade to delete
      * @return \Illuminate\Http\JsonResponse
      */
     /**
- * Удаляет бригаду и всех её участников, если бригада не назначена в заявках.
- *
- * @param int $brigadeId ID бригады
- * @return \Illuminate\Http\JsonResponse
- */
-public function deleteBrigade($brigadeId)
-{
-    // \Log::info('Попытка удаления бригады', ['brigadeId' => $brigadeId]);
+     * Удаляет бригаду и всех её участников, если бригада не назначена в заявках.
+     *
+     * @param  int  $brigadeId  ID бригады
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteBrigade($brigadeId)
+    {
+        // \Log::info('Попытка удаления бригады', ['brigadeId' => $brigadeId]);
 
-    try {
-        DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
-        // Проверяем, существует ли бригада
-        $brigadeExists = DB::table('brigades')
-            ->where('id', $brigadeId)
-            ->where('is_deleted', false) // если is_deleted — флаг удаления
-            ->exists();
+            // Проверяем, существует ли бригада
+            $brigadeExists = DB::table('brigades')
+                ->where('id', $brigadeId)
+                ->where('is_deleted', false) // если is_deleted — флаг удаления
+                ->exists();
 
-        if (!$brigadeExists) {
+            if (! $brigadeExists) {
+                DB::rollBack();
+                $error = 'Бригада не найдена или уже удалена';
+                \Log::error($error, ['brigadeId' => $brigadeId]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $error,
+                ], 404);
+            }
+
+            // Проверяем, назначена ли бригада в заявки
+            $isAssigned = DB::table('requests')
+                ->where('brigade_id', $brigadeId)
+                ->exists();
+
+            if ($isAssigned) {
+                DB::rollBack();
+                $error = 'Бригада назначена на одну или более заявок и не может быть удалена';
+                \Log::error($error, ['brigadeId' => $brigadeId]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $error,
+                ], 400);
+            }
+
+            // Удаляем всех участников бригады
+            $deletedMembers = DB::table('brigade_members')
+                ->where('brigade_id', $brigadeId)
+                ->delete();
+
+            // \Log::info('Удалено участников бригады', [
+            //     'brigadeId' => $brigadeId,
+            //     'deletedMembersCount' => $deletedMembers
+            // ]);
+
+            // Удаляем саму бригаду
+            $deleted = DB::table('brigades')
+                ->where('id', $brigadeId)
+                ->delete();
+
+            if ($deleted) {
+                DB::commit();
+                // \Log::info('Бригада успешно удалена', ['brigadeId' => $brigadeId]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Бригада и все участники успешно удалены',
+                ]);
+            } else {
+                DB::rollBack();
+                $error = 'Не удалось удалить бригаду из базы данных';
+                \Log::error($error, ['brigadeId' => $brigadeId]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $error,
+                ], 500);
+            }
+        } catch (\Exception $e) {
             DB::rollBack();
-            $error = 'Бригада не найдена или уже удалена';
-            \Log::error($error, ['brigadeId' => $brigadeId]);
-
-            return response()->json([
-                'success' => false,
-                'message' => $error
-            ], 404);
-        }
-
-        // Проверяем, назначена ли бригада в заявки
-        $isAssigned = DB::table('requests')
-            ->where('brigade_id', $brigadeId)
-            ->exists();
-
-        if ($isAssigned) {
-            DB::rollBack();
-            $error = 'Бригада назначена на одну или более заявок и не может быть удалена';
-            \Log::error($error, ['brigadeId' => $brigadeId]);
-
-            return response()->json([
-                'success' => false,
-                'message' => $error
-            ], 400);
-        }
-
-        // Удаляем всех участников бригады
-        $deletedMembers = DB::table('brigade_members')
-            ->where('brigade_id', $brigadeId)
-            ->delete();
-
-        // \Log::info('Удалено участников бригады', [
-        //     'brigadeId' => $brigadeId,
-        //     'deletedMembersCount' => $deletedMembers
-        // ]);
-
-        // Удаляем саму бригаду
-        $deleted = DB::table('brigades')
-            ->where('id', $brigadeId)
-            ->delete();
-
-        if ($deleted) {
-            DB::commit();
-            // \Log::info('Бригада успешно удалена', ['brigadeId' => $brigadeId]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Бригада и все участники успешно удалены'
+            \Log::error('Исключение при удалении бригады: '.$e->getMessage(), [
+                'brigadeId' => $brigadeId,
+                'exception' => $e,
             ]);
-        } else {
-            DB::rollBack();
-            $error = 'Не удалось удалить бригаду из базы данных';
-            \Log::error($error, ['brigadeId' => $brigadeId]);
 
             return response()->json([
                 'success' => false,
-                'message' => $error
+                'message' => 'Произошла ошибка при удалении бригады',
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Исключение при удалении бригады: ' . $e->getMessage(), [
-            'brigadeId' => $brigadeId,
-            'exception' => $e
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Произошла ошибка при удалении бригады',
-            'error' => config('app.debug') ? $e->getMessage() : null
-        ], 500);
     }
-}
 
-    
     /**
      * Get brigade data via API
      */
@@ -351,10 +362,10 @@ public function deleteBrigade($brigadeId)
                 ->where('id', $id)
                 ->first();
 
-            if (!$brigade) {
+            if (! $brigade) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Бригада не найдена'
+                    'message' => 'Бригада не найдена',
                 ], 404);
             }
 
@@ -387,10 +398,11 @@ public function deleteBrigade($brigadeId)
                     DB::raw("split_part(employees.fio, ' ', 3) as middle_name")
                 )
                 ->get();
-            
+
             // Добавляем информацию о том, кто является лидером в списке участников
-            $members = $members->map(function($member) use ($brigade) {
+            $members = $members->map(function ($member) use ($brigade) {
                 $member->is_leader = ($member->id == $brigade->leader_id);
+
                 return $member;
             });
 
@@ -398,15 +410,16 @@ public function deleteBrigade($brigadeId)
                 'success' => true,
                 'brigade' => $brigade,
                 'leader' => $leader,
-                'members' => $members
+                'members' => $members,
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error getting brigade data: ' . $e->getMessage());
+            \Log::error('Error getting brigade data: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Произошла ошибка при получении данных бригады',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -416,7 +429,17 @@ public function deleteBrigade($brigadeId)
      */
     public function update(Request $request, string $id)
     {
-        //
+        try {
+            //
+        } catch (\Exception $e) {
+            Log::error('Error in BrigadeController@update: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при обновлении бригады',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -424,6 +447,16 @@ public function deleteBrigade($brigadeId)
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            //
+        } catch (\Exception $e) {
+            Log::error('Error in BrigadeController@destroy: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при удалении бригады',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

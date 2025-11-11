@@ -6,8 +6,8 @@ class StringHelper
 {
     /**
      * Сокращает полное имя до фамилии и инициала
-     * 
-     * @param string|null $fullName Полное имя
+     *
+     * @param  string|null  $fullName  Полное имя
      * @return string Сокращенное имя
      */
     public static function shortenName(?string $fullName): string
@@ -15,16 +15,16 @@ class StringHelper
         if (empty($fullName)) {
             return '';
         }
-        
+
         $parts = explode(' ', $fullName);
         if (count($parts) < 2) {
             return $fullName;
         }
-        
+
         $lastName = $parts[0];
         $firstName = $parts[1];
-        
-        return $lastName . ' ' . mb_substr($firstName, 0, 1) . '.';
+
+        return $lastName.' '.mb_substr($firstName, 0, 1).'.';
     }
 
     /**
@@ -32,8 +32,6 @@ class StringHelper
      * Возвращает массив: 'html' — уже ЭКРАНИРОВАННЫЙ текст (можно выводить через {!! !!}),
      * 'ellipsis' — строка с многоточием ("..." либо пустая строка).
      *
-     * @param string|null $comment
-     * @param int $wordLimit
      * @return array{html:string, ellipsis:string}
      */
     public static function makeEscapedPreview(?string $comment, int $wordLimit = 4): array
@@ -50,8 +48,9 @@ class StringHelper
             function ($m) {
                 $href = $m[1] ?? '';
                 $inner = trim(strip_tags($m[2] ?? ''));
+
                 // Если внутри есть текст, сохраним его после URL, иначе только URL
-                return $href . ($inner !== '' ? (' ' . $inner) : '');
+                return $href.($inner !== '' ? (' '.$inner) : '');
             },
             $decoded
         );
@@ -63,7 +62,7 @@ class StringHelper
         $textOnly = preg_replace('/\s+/u', ' ', trim($textOnly));
 
         $words = $textOnly === '' ? [] : preg_split('/\s+/u', $textOnly);
-        if (!is_array($words)) {
+        if (! is_array($words)) {
             $words = [];
         }
         $limit = max(0, $wordLimit);
@@ -82,8 +81,8 @@ class StringHelper
                 // Добавляем экранированный текст до URL
                 $result .= e(substr($snippetText, $offset, $start - $offset));
                 // Формируем безопасный href
-                $href = stripos($url, 'http') === 0 ? $url : ('http://' . $url);
-                $result .= '<a href="' . e($href) . '" target="_blank" rel="noopener noreferrer">' . e($url) . '</a>';
+                $href = stripos($url, 'http') === 0 ? $url : ('http://'.$url);
+                $result .= '<a href="'.e($href).'" target="_blank" rel="noopener noreferrer">'.e($url).'</a>';
                 $offset = $start + strlen($url);
             }
             // Хвост после последнего URL
@@ -102,7 +101,6 @@ class StringHelper
      * Безопасно экранирует полный комментарий и превращает URL'ы в кликабельные ссылки.
      * Не выполняет усечение по словам.
      *
-     * @param string|null $comment
      * @return string HTML-строка, безопасная для вывода через {!! !!}
      */
     public static function linkifyFullEscaped(?string $comment): string
@@ -117,7 +115,8 @@ class StringHelper
             function ($m) {
                 $href = $m[1] ?? '';
                 $inner = trim(strip_tags($m[2] ?? ''));
-                return $href . ($inner !== '' ? (' ' . $inner) : '');
+
+                return $href.($inner !== '' ? (' '.$inner) : '');
             },
             $decoded
         );
@@ -136,8 +135,8 @@ class StringHelper
                 $url = $m[0];
                 $start = $m[1];
                 $result .= e(substr($textOnly, $offset, $start - $offset));
-                $href = stripos($url, 'http') === 0 ? $url : ('http://' . $url);
-                $result .= '<a href="' . e($href) . '" target="_blank" rel="noopener noreferrer">' . e($url) . '</a>';
+                $href = stripos($url, 'http') === 0 ? $url : ('http://'.$url);
+                $result .= '<a href="'.e($href).'" target="_blank" rel="noopener noreferrer">'.e($url).'</a>';
                 $offset = $start + strlen($url);
             }
             $result .= e(substr($textOnly, $offset));

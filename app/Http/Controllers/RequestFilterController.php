@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RequestFilterController extends Controller
 {
@@ -12,15 +13,25 @@ class RequestFilterController extends Controller
      */
     public function getStatuses()
     {
-        $statuses = DB::table('request_statuses')
-            ->select('id', 'name', 'color')
-            ->orderBy('id')
-            ->get();
+        try {
+            $statuses = DB::table('request_statuses')
+                ->select('id', 'name', 'color')
+                ->orderBy('id')
+                ->get();
 
-        return response()->json([
-            'success' => true,
-            'statuses' => $statuses
-        ]);
+            return response()->json([
+                'success' => true,
+                'statuses' => $statuses,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in RequestFilterController@getStatuses: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении статусов заявок',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -28,18 +39,19 @@ class RequestFilterController extends Controller
      */
     public function filterByStatuses(Request $request)
     {
-        $statusIds = $request->input('statuses', []);
+        try {
+            $statusIds = $request->input('statuses', []);
 
-        if (!is_array($statusIds) || empty($statusIds)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Не указаны ID статусов'
-            ], 400);
-        }
+            if (! is_array($statusIds) || empty($statusIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Не указаны ID статусов',
+                ], 400);
+            }
 
-        $placeholders = implode(',', array_fill(0, count($statusIds), '?'));
+            $placeholders = implode(',', array_fill(0, count($statusIds), '?'));
 
-        $requests = DB::select("
+            $requests = DB::select("
             SELECT
                 r.*,
                 rs.name AS status_name,
@@ -50,10 +62,18 @@ class RequestFilterController extends Controller
             ORDER BY r.id DESC
         ", $statusIds);
 
-        return response()->json([
-            'success' => true,
-            'requests' => $requests
-        ]);
+            return response()->json([
+                'success' => true,
+                'requests' => $requests,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in RequestFilterController@filterByStatuses: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при фильтрации заявок по статусам',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
-

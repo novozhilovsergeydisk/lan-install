@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RequestTeamFilterController extends Controller
 {
@@ -12,18 +13,19 @@ class RequestTeamFilterController extends Controller
      */
     public function filterByTeams(Request $request)
     {
-        $teamIds = $request->input('brigades', []);
+        try {
+            $teamIds = $request->input('brigades', []);
 
-        if (!is_array($teamIds) || empty($teamIds)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Не указаны ID бригад'
-            ], 400);
-        }
+            if (! is_array($teamIds) || empty($teamIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Не указаны ID бригад',
+                ], 400);
+            }
 
-        $placeholders = implode(',', array_fill(0, count($teamIds), '?'));
+            $placeholders = implode(',', array_fill(0, count($teamIds), '?'));
 
-        $requests = DB::select("
+            $requests = DB::select("
             SELECT
                 r.*,
                 c.fio AS client_fio,
@@ -40,17 +42,27 @@ class RequestTeamFilterController extends Controller
             ORDER BY r.id DESC
         ", $teamIds);
 
-        return response()->json([
-            'success' => true,
-            'requests' => $requests
-        ]);
+            return response()->json([
+                'success' => true,
+                'requests' => $requests,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in RequestTeamFilterController@filterByTeams: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при фильтрации заявок по бригадам',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function brigadesInfoCurrentDay()
     {
-        $today = now()->toDateString();
+        try {
+            $today = now()->toDateString();
 
-        $sql = "SELECT
+            $sql = "SELECT
             b.id AS brigade_id,
             b.name AS brigade_name,
             b.formation_date,
@@ -85,14 +97,23 @@ class RequestTeamFilterController extends Controller
             ORDER BY 
                 b.name;";
 
-        $brigadesInfoCurrentDay = DB::select($sql);
+            $brigadesInfoCurrentDay = DB::select($sql);
 
-        return response()->json([
-            'success' => true,
-            '$today' => $today,
-            '$sql' => $sql,
-            '$brigadesInfoCurrentDay' => $brigadesInfoCurrentDay
-        ]);
+            return response()->json([
+                'success' => true,
+                '$today' => $today,
+                '$sql' => $sql,
+                '$brigadesInfoCurrentDay' => $brigadesInfoCurrentDay,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in RequestTeamFilterController@brigadesInfoCurrentDay: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении информации о бригадах',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -100,18 +121,28 @@ class RequestTeamFilterController extends Controller
      */
     public function brigadesCurrentDay()
     {
-        $today = now()->toDateString();
+        try {
+            $today = now()->toDateString();
 
-        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE b.is_deleted = false and DATE(b.formation_date) >= '{$today}'";
+            $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE b.is_deleted = false and DATE(b.formation_date) >= '{$today}'";
 
-        $leaders = DB::select($sql);
+            $leaders = DB::select($sql);
 
-        return response()->json([
-            'success' => true,
-            '$today' => $today,
-            '$sql' => $sql,
-            '$leaders' => $leaders
-        ]);
+            return response()->json([
+                'success' => true,
+                '$today' => $today,
+                '$sql' => $sql,
+                '$leaders' => $leaders,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in RequestTeamFilterController@brigadesCurrentDay: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении бригад на текущий день',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -119,18 +150,27 @@ class RequestTeamFilterController extends Controller
      */
     public function getBrigadeLeaders()
     {
-        $today = now()->toDateString();
+        try {
+            $today = now()->toDateString();
 
-        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE b.is_deleted = false and DATE(b.formation_date) >= '{$today}'";
+            $sql = "SELECT e.id, b.id as brigade_id, e.fio AS name FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE b.is_deleted = false and DATE(b.formation_date) >= '{$today}'";
 
-        $leaders = DB::select($sql);
+            $leaders = DB::select($sql);
 
-        return response()->json([
-            'success' => true,
-            '$today' => $today,
-            '$sql' => $sql,
-            '$leaders' => $leaders
-        ]);
+            return response()->json([
+                'success' => true,
+                '$today' => $today,
+                '$sql' => $sql,
+                '$leaders' => $leaders,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in RequestTeamFilterController@getBrigadeLeaders: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении бригадиров',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
-

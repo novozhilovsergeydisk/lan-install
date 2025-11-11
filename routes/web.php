@@ -1,30 +1,32 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\CommentPhotoController;
 use App\Http\Controllers\BrigadeController;
+use App\Http\Controllers\CityController;
+use App\Http\Controllers\CommentPhotoController;
+use App\Http\Controllers\EmployeesFilterController;
+use App\Http\Controllers\EmployeesUserPositionPassportController;
+use App\Http\Controllers\EmployeeUserController;
+use App\Http\Controllers\GeoController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PhotoReportController;
+use App\Http\Controllers\PlanningRequestController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RequestFilterController;
 use App\Http\Controllers\RequestTeamFilterController;
-use App\Http\Controllers\GeoController;
-use App\Http\Controllers\PlanningRequestController; 
-use App\Http\Controllers\EmployeeUserController;
-use App\Http\Controllers\EmployeesUserPositionPassportController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\EmployeesFilterController;
-use App\Http\Controllers\PhotoReportController;
-use App\Http\Controllers\CityController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/test-no-auth', function () {
     Log::info('Тест в начале маршрута без аутентификации');
+
     return 'OK';
 });
 
 Route::get('/testlog', function () {
     Log::emergency('Test emergency from route /testlog');
-    file_put_contents('/var/www/lan-install/storage/logs/test_web.log', 'web log ' . now() . PHP_EOL, FILE_APPEND);
+    file_put_contents('/var/www/lan-install/storage/logs/test_web.log', 'web log '.now().PHP_EOL, FILE_APPEND);
+
     return 'OK';
 });
 
@@ -38,8 +40,8 @@ Route::post('/cities/store', [CityController::class, 'store'])
     ->middleware('auth')
     ->name('cities.store');
 
- // Получение саписка регионов
-Route::get('/regions', [CityController::class, 'getRegions'])->name('regions.index');   
+// Получение саписка регионов
+Route::get('/regions', [CityController::class, 'getRegions'])->name('regions.index');
 
 // Photo reports
 Route::post('/photo-list', [PhotoReportController::class, 'index'])->name('photo-list.index')->middleware('auth');
@@ -59,6 +61,7 @@ Route::post('/login', [LoginController::class, 'login']);
 
 Route::post('/logout', function () {
     Auth::logout();
+
     return redirect('/login');
 })->name('logout')->middleware('auth');
 
@@ -74,10 +77,10 @@ Route::get('/requests/{id}', [HomeController::class, 'getEditRequest'])->where('
 Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['auth', 'roles']);
 
 // Close request
-Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth')->middleware(['auth', 'roles']);;
+Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth')->middleware(['auth', 'roles']);
 
 // Завершить заявку
-Route::post('/requests/{request}/delete', [HomeController::class, 'deleteRequest'])->name('requests.delete')->middleware('auth')->middleware(['auth', 'roles']);;
+Route::post('/requests/{request}/delete', [HomeController::class, 'deleteRequest'])->name('requests.delete')->middleware('auth')->middleware(['auth', 'roles']);
 
 // Transfer request
 Route::post('/api/requests/transfer', [HomeController::class, 'transferRequest'])->name('requests.transfer')->middleware('auth');
@@ -98,10 +101,10 @@ Route::post('/api/comments/{commentId}/photos', [CommentPhotoController::class, 
 
 // Маршруты для работы со статусами заявок
 Route::prefix('statuses')->middleware('auth')->group(function () {
-    //Route::get('/', [StatusController::class, 'index']);
-    //Route::post('/', [StatusController::class, 'store']);
-    //Route::put('/{id}', [StatusController::class, 'update']);
-    //Route::delete('/{id}', [StatusController::class, 'destroy']);
+    // Route::get('/', [StatusController::class, 'index']);
+    // Route::post('/', [StatusController::class, 'store']);
+    // Route::put('/{id}', [StatusController::class, 'update']);
+    // Route::delete('/{id}', [StatusController::class, 'destroy']);
 });
 
 // Обработка комментариев
@@ -175,18 +178,18 @@ Route::prefix('api/users')->middleware('auth')->group(function () {
     Route::put('/{id}/credentials', [HomeController::class, 'updateCredentials'])->name('api.users.update-credentials');
 });
 
-// Report Routes    
+// Report Routes
 Route::prefix('reports')->middleware('auth')->group(function () {
     // Address and employee data
     Route::get('/addresses', [ReportController::class, 'getAddresses'])->name('reports.addresses');
     Route::get('/employees', [ReportController::class, 'getEmployees'])->name('reports.employees');
-    
+
     // All period reports
     Route::post('requests/all-period', [ReportController::class, 'getAllPeriod'])->name('reports.requests.all-period');
     Route::post('requests/by-employee-all-period', [ReportController::class, 'getAllPeriodByEmployee'])->name('reports.requests.by-employee-all-period');
     Route::post('requests/by-address-all-period', [ReportController::class, 'getAllPeriodByAddress'])->name('reports.requests.by-address-all-period');
     Route::post('requests/by-employee-address-all-period', [ReportController::class, 'getAllPeriodByEmployeeAndAddress'])->name('reports.requests.by-employee-address-all-period');
-    
+
     // Date range reports
     Route::post('requests/by-date', [ReportController::class, 'getRequestsByDateRange'])->name('reports.requests.by-date');
     Route::post('requests/by-employee-date', [ReportController::class, 'getRequestsByEmployeeAndDateRange'])->name('reports.requests.by-employee-date');
@@ -198,19 +201,20 @@ Route::prefix('reports')->middleware('auth')->group(function () {
 Route::prefix('api')->middleware('auth')->group(function () {
     // Get comment photos
     Route::get('/comments/{commentId}/photos', [\App\Http\Controllers\CommentPhotoController::class, 'index'])->name('api.comments.photos');
-    
+
     // Test log route
-    Route::get('/test-log', function() {
+    Route::get('/test-log', function () {
         \Log::info('TEST message from route');
+
         return 'Logged!';
     })->name('test.log');
-    
+
     // Get comment files
     Route::get('/comments/{commentId}/files', [\App\Http\Controllers\CommentPhotoController::class, 'getCommentFiles'])->name('api.comments.files');
-    
+
     // Get addresses for select
     Route::get('/addresses', [HomeController::class, 'getAddresses'])->name('api.addresses');
-    
+
     // Get paginated addresses
     Route::get('/addresses/paginated', [HomeController::class, 'getAddressesPaginated'])->name('api.addresses.paginated');
 
@@ -269,56 +273,55 @@ Route::post('/api/employees/filter', [EmployeesFilterController::class, 'filterB
     ->middleware('auth');
 
 Route::post('/employees/store', [EmployeeUserController::class, 'store'])
-->name('employees.store')
-->middleware('auth');
+    ->name('employees.store')
+    ->middleware('auth');
 
 Route::post('/employee/update', [EmployeeUserController::class, 'update'])
-->name('employee.update')
-->middleware('auth');
+    ->name('employee.update')
+    ->middleware('auth');
 
 Route::get('/employee/get', [EmployeeUserController::class, 'getEmployee'])
-->name('employee.get')
-->middleware('auth');
+    ->name('employee.get')
+    ->middleware('auth');
 
 // API для получения списка ролей
 Route::get('/api/roles', [EmployeeUserController::class, 'getRoles'])
-->name('api.roles')
-->middleware('auth');
+    ->name('api.roles')
+    ->middleware('auth');
 
 Route::post('/employee/filter', [EmployeeUserController::class, 'filterEmployee'])
-->name('employee.filter')
-->middleware('auth');
+    ->name('employee.filter')
+    ->middleware('auth');
 
 Route::post('/employee/delete', [EmployeeUserController::class, 'deleteEmployee'])
-->name('employee.delete')
-->middleware('auth'); 
+    ->name('employee.delete')
+    ->middleware('auth');
 
 // Delete routes
 // Delete brigade member
 Route::post('/brigade/delete/{id}', [BrigadeController::class, 'deleteBrigade'])
-->name('brigade.delete')
-->middleware('auth');
-
+    ->name('brigade.delete')
+    ->middleware('auth');
 
 Route::post('/planning-requests', [PlanningRequestController::class, 'store'])
-->name('planning-requests.store')
-->middleware('auth');
+    ->name('planning-requests.store')
+    ->middleware('auth');
 
 Route::post('/planning-requests/upload-excel', [PlanningRequestController::class, 'uploadRequestsExcel'])
-->name('planning-requests.upload-excel')
-->middleware('auth');
+    ->name('planning-requests.upload-excel')
+    ->middleware('auth');
 
 Route::post('/get-planning-requests', [PlanningRequestController::class, 'getPlanningRequests'])
-->name('get-planning-requests')
-->middleware('auth');
+    ->name('get-planning-requests')
+    ->middleware('auth');
 
 Route::post('/change-planning-request-status', [PlanningRequestController::class, 'changePlanningRequestStatus'])
-->name('change-planning-request-status')
-->middleware('auth');
+    ->name('change-planning-request-status')
+    ->middleware('auth');
 
 Route::post('/download-all-photos', [CommentPhotoController::class, 'downloadAllPhotos'])
-->name('download-all-photos')
-->middleware('auth');
+    ->name('download-all-photos')
+    ->middleware('auth');
 
 // Загрузка Excel файлов
 Route::post('/upload-excel', [CommentPhotoController::class, 'uploadExcel'])
@@ -329,7 +332,7 @@ Route::get('/test-log', function () {
     Log::info('=== TEST LOG FROM ROUTE ===');
     Log::debug('Debug level test');
     Log::error('Error level test');
-    
+
     return response()->json([
         'log_channel' => config('logging.default'),
         'log_level' => config('logging.channels.single.level'),

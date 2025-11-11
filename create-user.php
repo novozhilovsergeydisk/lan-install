@@ -31,4 +31,4 @@ echo "✅ Пользователь создан!\n";
 echo "Имя: $name\n";
 echo "Email: $email\n";
 echo "Пароль: $password\n";
-echo "Можете войти по адресу: https://lan-install.online/login\n"; 
+echo "Можете войти по адресу: https://lan-install.online/login\n";

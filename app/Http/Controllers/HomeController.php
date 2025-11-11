@@ -102,7 +102,7 @@ class HomeController extends Controller
                 'status_id' => 'nullable|integer|exists:request_statuses,id',
                 'execution_date' => 'required|date',
                 'execution_time' => 'nullable|date_format:H:i',
-                'addresses_id' => 'required|integer|exists:addresses,id'
+                'addresses_id' => 'required|integer|exists:addresses,id',
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -134,7 +134,7 @@ class HomeController extends Controller
                 $clientId = DB::table('clients')->insertGetId([
                     'fio' => $validated['client_name'],
                     'phone' => $validated['client_phone'],
-                    'organization' => $validated['client_organization']
+                    'organization' => $validated['client_organization'],
                 ]);
             }
 
@@ -145,31 +145,31 @@ class HomeController extends Controller
                 ->where('address_id', $validated['addresses_id'])
                 ->first();
 
-            if (!$existingAddressLink) {
+            if (! $existingAddressLink) {
                 // Remove any existing address links for this request
                 DB::table('request_addresses')->where('request_id', $id)->delete();
 
                 // Add new address link
                 DB::table('request_addresses')->insert([
                     'request_id' => $id,
-                    'address_id' => $validated['addresses_id']
+                    'address_id' => $validated['addresses_id'],
                 ]);
             }
 
             // 3. Update requests table
             $updateData = [
                 'client_id' => $clientId,
-                'execution_date' => $validated['execution_date']
+                'execution_date' => $validated['execution_date'],
             ];
 
             // Only update fields that were actually provided
-            if (!empty($validated['request_type_id'])) {
+            if (! empty($validated['request_type_id'])) {
                 $updateData['request_type_id'] = $validated['request_type_id'];
             }
-            if (!empty($validated['status_id'])) {
+            if (! empty($validated['status_id'])) {
                 $updateData['status_id'] = $validated['status_id'];
             }
-            if (!empty($validated['execution_time'])) {
+            if (! empty($validated['execution_time'])) {
                 $updateData['execution_time'] = $validated['execution_time'];
             }
 
@@ -179,17 +179,19 @@ class HomeController extends Controller
             return response()->json(['success' => true, 'message' => 'Заявка обновлена']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
-                'success' => false, 
-                'message' => 'Ошибка при обновлении', 
-                'error' => $e->getMessage()
+                'success' => false,
+                'message' => 'Ошибка при обновлении',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -460,6 +462,7 @@ class HomeController extends Controller
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
@@ -467,6 +470,7 @@ class HomeController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -481,7 +485,8 @@ class HomeController extends Controller
      */
     public function getEmployees()
     {
-        $employees = DB::select("
+        try {
+            $employees = DB::select("
             SELECT e.* 
             FROM employees e
             LEFT JOIN positions p ON e.position_id = p.id
@@ -490,7 +495,16 @@ class HomeController extends Controller
             ORDER BY e.fio
         ");
 
-        return response()->json($employees);
+            return response()->json($employees);
+        } catch (\Exception $e) {
+            Log::error('Error in HomeController@getEmployees: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении списка сотрудников',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -500,7 +514,8 @@ class HomeController extends Controller
      */
     public function getAddresses()
     {
-        $sql = "
+        try {
+            $sql = "
             SELECT
                 a.id,
                 CONCAT(a.street, ', ', a.houses, ' [', CASE WHEN a.district = 'Не указан' THEN 'Район не указан' ELSE a.district END, '][', c.name, ']') as full_address,
@@ -515,9 +530,18 @@ class HomeController extends Controller
             ORDER BY a.street, a.houses
         ";
 
-        $addresses = DB::select($sql);
+            $addresses = DB::select($sql);
 
-        return response()->json($addresses);
+            return response()->json($addresses);
+        } catch (\Exception $e) {
+            Log::error('Error in HomeController@getAddresses: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении списка адресов',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -527,16 +551,16 @@ class HomeController extends Controller
      */
     public function getAddressesPaginated(Request $request)
     {
+        try {
+            $perPage = $request->input('per_page', 10);
+            $page = $request->input('page', 1);
+            $offset = ($page - 1) * $perPage;
 
-        $perPage = $request->input('per_page', 10);
-        $page = $request->input('page', 1);
-        $offset = ($page - 1) * $perPage;
+            // Общее количество записей
+            $total = DB::table('addresses')->count();
 
-        // Общее количество записей
-        $total = DB::table('addresses')->count();
-
-        // Получаем данные с пагинацией
-        $sql = '
+            // Получаем данные с пагинацией
+            $sql = '
             SELECT
                 a.id,
                 a.street,
@@ -562,15 +586,24 @@ class HomeController extends Controller
             LIMIT ? OFFSET ?
         ';
 
-        $addresses = DB::select($sql, [$perPage, $offset]);
+            $addresses = DB::select($sql, [$perPage, $offset]);
 
-        return response()->json([
-            'data' => $addresses,
-            'total' => $total,
-            'per_page' => (int) $perPage,
-            'current_page' => (int) $page,
-            'last_page' => ceil($total / $perPage),
-        ]);
+            return response()->json([
+                'data' => $addresses,
+                'total' => $total,
+                'per_page' => (int) $perPage,
+                'current_page' => (int) $page,
+                'last_page' => ceil($total / $perPage),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in HomeController@getAddressesPaginated: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении адресов',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -580,38 +613,49 @@ class HomeController extends Controller
      */
     public function getCurrentBrigades()
     {
-        $today = now()->toDateString();
+        try {
+            $today = now()->toDateString();
 
-        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS leader_name, e.id as employee_id
+            $sql = "SELECT e.id, b.id as brigade_id, e.fio AS leader_name, e.id as employee_id
                 FROM brigades AS b
                 JOIN employees AS e ON b.leader_id = e.id
                 WHERE DATE(b.formation_date) >= '{$today}' and b.is_deleted = false";
 
-        $brigades = DB::select($sql);
+            $brigades = DB::select($sql);
 
-        return response()->json($brigades);
+            return response()->json($brigades);
+        } catch (\Exception $e) {
+            Log::error('Error in HomeController@getCurrentBrigades: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении текущих бригад',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function index()
     {
-        // Получаем текущего пользователя (проверка аутентификации уже выполнена в роутере)
-        $user = auth()->user();
+        try {
+            // Получаем текущего пользователя (проверка аутентификации уже выполнена в роутере)
+            $user = auth()->user();
 
-        // Запрашиваем users
-        // $users = DB::query('start transaction');
-        $users = DB::select('SELECT * FROM users');
-        // $users = DB::query('commit');
+            // Запрашиваем users
+            // $users = DB::query('start transaction');
+            $users = DB::select('SELECT * FROM users');
+            // $users = DB::query('commit');
 
-        $roles = DB::select('SELECT * FROM roles');
+            $roles = DB::select('SELECT * FROM roles');
 
-        // Запрашиваем clients
-        $clients = DB::select('SELECT * FROM clients');
+            // Запрашиваем clients
+            $clients = DB::select('SELECT * FROM clients');
 
-        // Запрашиваем brigades
-        $brigades = DB::select('SELECT * FROM brigades');
+            // Запрашиваем brigades
+            $brigades = DB::select('SELECT * FROM brigades');
 
-        // Запрашиваем employees с паспортными данными и должностями
-        $employees = DB::select('
+            // Запрашиваем employees с паспортными данными и должностями
+            $employees = DB::select('
             SELECT
                 e.*,
                 p.series_number,
@@ -631,11 +675,11 @@ class HomeController extends Controller
             ORDER BY e.fio
         ');
 
-        // Запрашиваем addresses
-        $addresses = DB::select('SELECT * FROM addresses');
+            // Запрашиваем addresses
+            $addresses = DB::select('SELECT * FROM addresses');
 
-        // Запрашиваем employees для фильтрации заявок
-        $sql = "
+            // Запрашиваем employees для фильтрации заявок
+            $sql = "
             WITH today_brigades AS (
             SELECT DISTINCT r.brigade_id
             FROM requests r
@@ -658,14 +702,14 @@ class HomeController extends Controller
             WHERE b.is_deleted = FALSE AND el.is_deleted = FALSE;
         ";
 
-        $employeesFilter = DB::select($sql);
+            $employeesFilter = DB::select($sql);
 
-        // Запрашиваем positions
-        $positions = DB::select('SELECT * FROM positions');
+            // Запрашиваем positions
+            $positions = DB::select('SELECT * FROM positions');
 
-        // Комплексный запрос для получения информации о членах бригад с данными о бригадах
-        $brigadeMembersWithDetails_ = DB::select(
-            'SELECT
+            // Комплексный запрос для получения информации о членах бригад с данными о бригадах
+            $brigadeMembersWithDetails_ = DB::select(
+                'SELECT
                 bm.*,
                 b.name as brigade_name,
                 b.leader_id,
@@ -683,9 +727,9 @@ class HomeController extends Controller
             JOIN brigades b ON bm.brigade_id = b.id
             LEFT JOIN employees e ON bm.employee_id = e.id
             LEFT JOIN employees el ON b.leader_id = el.id'
-        );
+            );
 
-        $sql = 'SELECT
+            $sql = 'SELECT
             b.id AS brigade_id,
             bm.employee_id,
             b.name AS brigade_name,
@@ -708,9 +752,9 @@ class HomeController extends Controller
         AND el.is_deleted = false
         ORDER BY b.id, employee_name';
 
-        $brigadeMembersWithDetails = DB::select($sql);
+            $brigadeMembersWithDetails = DB::select($sql);
 
-        $sql = "WITH today_brigades AS (
+            $sql = "WITH today_brigades AS (
             SELECT DISTINCT r.brigade_id
             FROM requests r
             JOIN request_statuses rs ON rs.id = r.status_id
@@ -732,19 +776,19 @@ class HomeController extends Controller
             WHERE b.is_deleted = FALSE AND el.is_deleted = FALSE
             ORDER BY brigade_id DESC";
 
-        $brigadeMembersCurrentDay = DB::select($sql);
+            $brigadeMembersCurrentDay = DB::select($sql);
 
-        // dd($brigadeMembersWithDetails);`
+            // dd($brigadeMembersWithDetails);`
 
-        // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
+            // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
 
-        // Выводим содержимое для отладки
-        // dd($brigadeMembersWithDetails);
+            // Выводим содержимое для отладки
+            // dd($brigadeMembersWithDetails);
 
-        $brigade_members = DB::select('SELECT * FROM brigade_members');  // Оставляем старый запрос для обратной совместимости
+            $brigade_members = DB::select('SELECT * FROM brigade_members');  // Оставляем старый запрос для обратной совместимости
 
-        // Запрашиваем комментарии с привязкой к заявкам
-        $requestComments = DB::select("
+            // Запрашиваем комментарии с привязкой к заявкам
+            $requestComments = DB::select("
             SELECT
                 rc.request_id,
                 c.id as comment_id,
@@ -756,40 +800,40 @@ class HomeController extends Controller
             ORDER BY rc.request_id, c.created_at
         ");
 
-        // Группируем комментарии по ID заявки
-        $commentsByRequest = collect($requestComments)
-            ->groupBy('request_id')
-            ->map(function ($comments) {
-                return collect($comments)->map(function ($comment) {
-                    return (object) [
-                        'id' => $comment->comment_id,
-                        'comment' => $comment->comment,
-                        'created_at' => $comment->created_at,
-                        'author_name' => $comment->author_name,
-                    ];
-                })->toArray();
-            });
+            // Группируем комментарии по ID заявки
+            $commentsByRequest = collect($requestComments)
+                ->groupBy('request_id')
+                ->map(function ($comments) {
+                    return collect($comments)->map(function ($comment) {
+                        return (object) [
+                            'id' => $comment->comment_id,
+                            'comment' => $comment->comment,
+                            'created_at' => $comment->created_at,
+                            'author_name' => $comment->author_name,
+                        ];
+                    })->toArray();
+                });
 
-        // Преобразуем коллекцию в массив для передачи в представление
-        $comments_by_request = $commentsByRequest->toArray();
+            // Преобразуем коллекцию в массив для передачи в представление
+            $comments_by_request = $commentsByRequest->toArray();
 
-        // Запрашиваем request_addresses
-        $request_addresses = DB::select('SELECT * FROM request_addresses');
+            // Запрашиваем request_addresses
+            $request_addresses = DB::select('SELECT * FROM request_addresses');
 
-        // Запрашиваем request_statuses
-        $request_statuses = DB::select('SELECT * FROM request_statuses ORDER BY id');
+            // Запрашиваем request_statuses
+            $request_statuses = DB::select('SELECT * FROM request_statuses ORDER BY id');
 
-        // Запрашиваем request_types
-        $requests_types = DB::select('SELECT * FROM request_types ORDER BY id');
+            // Запрашиваем request_types
+            $requests_types = DB::select('SELECT * FROM request_types ORDER BY id');
 
-        $today = now()->toDateString();
+            $today = now()->toDateString();
 
-        $sql = "SELECT e.id, b.id as brigade_id, e.fio AS leader_name, e.id as employee_id FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE DATE(b.formation_date) >= '{$today}'";
+            $sql = "SELECT e.id, b.id as brigade_id, e.fio AS leader_name, e.id as employee_id FROM brigades AS b JOIN employees AS e ON b.leader_id = e.id WHERE DATE(b.formation_date) >= '{$today}'";
 
-        $brigadesCurrentDay = DB::select($sql);
+            $brigadesCurrentDay = DB::select($sql);
 
-        // 🔽 Комплексный запрос получения списка заявок с подключением к employees
-        $sql = "SELECT
+            // 🔽 Комплексный запрос получения списка заявок с подключением к employees
+            $sql = "SELECT
                 r.*,
                 c.fio AS client_fio,
                 c.phone AS client_phone,
@@ -831,8 +875,8 @@ class HomeController extends Controller
             AND rs.name != 'планирование'   
             ORDER BY r.id DESC";
 
-        if ($user->isFitter) {
-            $sql = "
+            if ($user->isFitter) {
+                $sql = "
                     SELECT
                         r.*,
                         c.fio AS client_fio,
@@ -883,64 +927,73 @@ class HomeController extends Controller
                     )
                     ORDER BY r.id DESC
                 ";
+            }
+
+            $requests = DB::select($sql);
+
+            // Convert stdClass objects to arrays for the view
+            // $requestsData = array_map(function($request) {
+            //     return (array) $request;
+            // }, $requests);
+
+            // Add requests data to the view
+            // view()->share('requestsData', $requestsData);
+
+            $flags = [
+                'new' => 'new',
+                'in_work' => 'in_work',
+                'waiting_for_client' => 'waiting_for_client',
+                'completed' => 'completed',
+                'cancelled' => 'cancelled',
+                'under_review' => 'under_review',
+                'on_hold' => 'on_hold',
+            ];
+
+            // Получаем список городов для выпадающего списка
+            $cities = DB::table('cities')->orderBy('name')->get();
+
+            // Получаем список регионов для выпадающего списка
+            $regions = DB::table('regions')->orderBy('name')->get();
+
+            // Собираем все переменные для передачи в представление
+            $viewData = [
+                'user' => $user,
+                'users' => $users,
+                'clients' => $clients,
+                'request_statuses' => $request_statuses,
+                'requests' => $requests,
+                'brigades' => $brigades,
+                'employees' => $employees,
+                'employeesFilter' => $employeesFilter,
+                'addresses' => $addresses,
+                'brigade_members' => $brigade_members,
+                'comments_by_request' => $comments_by_request,
+                'request_addresses' => $request_addresses,
+                'requests_types' => $requests_types,
+                'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+                'brigadeMembersCurrentDay' => $brigadeMembersCurrentDay,
+                'brigadesCurrentDay' => $brigadesCurrentDay,
+                'flags' => $flags,
+                'positions' => $positions,
+                'roles' => $roles,
+                'cities' => $cities, // Добавляем список городов
+                'regions' => $regions, // Добавляем список регионов
+                'isAdmin' => $user->isAdmin ?? false,
+                'isUser' => $user->isUser ?? false,
+                'isFitter' => $user->isFitter ?? false,
+                'sql' => $sql,
+            ];
+
+            return view('welcome', $viewData);
+        } catch (\Exception $e) {
+            Log::error('Error in HomeController@index: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при загрузке главной страницы',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        $requests = DB::select($sql);
-
-        // Convert stdClass objects to arrays for the view
-        // $requestsData = array_map(function($request) {
-        //     return (array) $request;
-        // }, $requests);
-
-        // Add requests data to the view
-        // view()->share('requestsData', $requestsData);
-
-        $flags = [
-            'new' => 'new',
-            'in_work' => 'in_work',
-            'waiting_for_client' => 'waiting_for_client',
-            'completed' => 'completed',
-            'cancelled' => 'cancelled',
-            'under_review' => 'under_review',
-            'on_hold' => 'on_hold',
-        ];
-
-        // Получаем список городов для выпадающего списка
-        $cities = DB::table('cities')->orderBy('name')->get();
-
-        // Получаем список регионов для выпадающего списка
-        $regions = DB::table('regions')->orderBy('name')->get();
-
-        // Собираем все переменные для передачи в представление
-        $viewData = [
-            'user' => $user,
-            'users' => $users,
-            'clients' => $clients,
-            'request_statuses' => $request_statuses,
-            'requests' => $requests,
-            'brigades' => $brigades,
-            'employees' => $employees,
-            'employeesFilter' => $employeesFilter,
-            'addresses' => $addresses,
-            'brigade_members' => $brigade_members,
-            'comments_by_request' => $comments_by_request,
-            'request_addresses' => $request_addresses,
-            'requests_types' => $requests_types,
-            'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
-            'brigadeMembersCurrentDay' => $brigadeMembersCurrentDay,
-            'brigadesCurrentDay' => $brigadesCurrentDay,
-            'flags' => $flags,
-            'positions' => $positions,
-            'roles' => $roles,
-            'cities' => $cities, // Добавляем список городов
-            'regions' => $regions, // Добавляем список регионов
-            'isAdmin' => $user->isAdmin ?? false,
-            'isUser' => $user->isUser ?? false,
-            'isFitter' => $user->isFitter ?? false,
-            'sql' => $sql,
-        ];
-
-        return view('welcome', $viewData);
     }
 
     /**

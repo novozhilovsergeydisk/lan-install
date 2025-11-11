@@ -4,18 +4,30 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class GeoController extends Controller
 {
     public function getAddressesYandex()
     {
-        // view
-        return view('geo.addresses-yandex');
+        try {
+            // view
+            return view('geo.addresses-yandex');
+        } catch (\Exception $e) {
+            Log::error('Error in GeoController@getAddressesYandex: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при загрузке страницы с картой',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getAddress($id)
     {
-        $address = DB::selectOne("
+        try {
+            $address = DB::selectOne('
             SELECT 
                 a.id, 
                 a.street, 
@@ -32,26 +44,36 @@ class GeoController extends Controller
             JOIN cities c ON a.city_id = c.id
             LEFT JOIN regions r ON c.region_id = r.id
             WHERE a.id = ?
-        ", [$id]);
+        ', [$id]);
 
-        if (!$address) {
-            return response()->json(['success' => false, 'message' => 'Address not found'], 404);
+            if (! $address) {
+                return response()->json(['success' => false, 'message' => 'Address not found'], 404);
+            }
+
+            return response()->json(['success' => true, 'data' => $address]);
+        } catch (\Exception $e) {
+            Log::error('Error in GeoController@getAddress: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении адреса',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json(['success' => true, 'data' => $address]);
     }
 
     public function getAddressesPaginated(Request $request)
     {
-        $perPage = $request->input('per_page', 30);
-        $page = $request->input('page', 1);
-        $offset = ($page - 1) * $perPage;
+        try {
+            $perPage = $request->input('per_page', 30);
+            $page = $request->input('page', 1);
+            $offset = ($page - 1) * $perPage;
 
-        // Get total count
-        $total = DB::selectOne('SELECT COUNT(*) as count FROM addresses')->count;
+            // Get total count
+            $total = DB::selectOne('SELECT COUNT(*) as count FROM addresses')->count;
 
-        // Get paginated data
-        $data = DB::select("
+            // Get paginated data
+            $data = DB::select('
             SELECT 
                 a.id, 
                 a.street, 
@@ -69,20 +91,30 @@ class GeoController extends Controller
             LEFT JOIN regions r ON c.region_id = r.id
             ORDER BY c.name, a.street, a.houses
             LIMIT ? OFFSET ?
-        ", [$perPage, $offset]);
+        ', [$perPage, $offset]);
 
-        return response()->json([
-            'data' => $data,
-            'total' => $total,
-            'per_page' => (int)$perPage,
-            'current_page' => (int)$page,
-            'last_page' => ceil($total / $perPage)
-        ]);
+            return response()->json([
+                'data' => $data,
+                'total' => $total,
+                'per_page' => (int) $perPage,
+                'current_page' => (int) $page,
+                'last_page' => ceil($total / $perPage),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in GeoController@getAddressesPaginated: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении адресов',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getAddresses()
     {
-        $data = DB::select("
+        try {
+            $data = DB::select('
             SELECT 
                 a.id, 
                 a.street, 
@@ -98,21 +130,52 @@ class GeoController extends Controller
             JOIN cities c ON a.city_id = c.id
             LEFT JOIN regions r ON c.region_id = r.id
             ORDER BY c.name, a.street, a.houses
-        ");
+        ');
 
-        return response()->json($data);
+            return response()->json($data);
+        } catch (\Exception $e) {
+            Log::error('Error in GeoController@getAddresses: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении адресов',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getCities()
     {
-        $cities = DB::select('SELECT id, name FROM cities ORDER BY name');
-        return response()->json($cities);
+        try {
+            $cities = DB::select('SELECT id, name FROM cities ORDER BY name');
+
+            return response()->json($cities);
+        } catch (\Exception $e) {
+            Log::error('Error in GeoController@getCities: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении списка городов',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getRegions()
     {
-        $regions = DB::select('SELECT id, name FROM regions ORDER BY name');
-        return response()->json($regions);
+        try {
+            $regions = DB::select('SELECT id, name FROM regions ORDER BY name');
+
+            return response()->json($regions);
+        } catch (\Exception $e) {
+            Log::error('Error in GeoController@getRegions: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении списка регионов',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function updateAddress(Request $request, $id)
@@ -128,14 +191,14 @@ class GeoController extends Controller
                 'nullable',
                 'numeric',
                 'between:-90,90',
-                'regex:/^-?(90(\.0{1,7})?|([0-8]?[0-9])(\.\d{1,7})?)$/'
+                'regex:/^-?(90(\.0{1,7})?|([0-8]?[0-9])(\.\d{1,7})?)$/',
             ],
             'longitudeEdit' => [
                 'nullable',
                 'numeric',
                 'between:-180,180',
-                'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/'
-            ]
+                'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/',
+            ],
         ], [
             'latitudeEdit.regex' => 'Некорректный формат широты. Допустимый формат: от -90 до 90, до 7 знаков после точки',
             'longitudeEdit.regex' => 'Некорректный формат долготы. Допустимый формат: от -180 до 180, до 7 знаков после точки',
@@ -145,11 +208,11 @@ class GeoController extends Controller
 
         try {
             // Проверяем, что если одно поле координат заполнено, то и второе тоже
-            if ((isset($validated['latitudeEdit']) && !isset($validated['longitudeEdit'])) || 
-                (!isset($validated['latitudeEdit']) && isset($validated['longitudeEdit']))) {
+            if ((isset($validated['latitudeEdit']) && ! isset($validated['longitudeEdit'])) ||
+                (! isset($validated['latitudeEdit']) && isset($validated['longitudeEdit']))) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Необходимо заполнить оба поля координат'
+                    'message' => 'Необходимо заполнить оба поля координат',
                 ], 422);
             }
 
@@ -161,8 +224,8 @@ class GeoController extends Controller
                 'city_id' => $validated['city_id'],
                 'responsible_person' => $validated['responsible_person'] ?? null,
                 'comments' => $validated['comments'] ?? null,
-                'latitude' => isset($validated['latitudeEdit']) ? (float)$validated['latitudeEdit'] : null,
-                'longitude' => isset($validated['longitudeEdit']) ? (float)$validated['longitudeEdit'] : null
+                'latitude' => isset($validated['latitudeEdit']) ? (float) $validated['latitudeEdit'] : null,
+                'longitude' => isset($validated['longitudeEdit']) ? (float) $validated['longitudeEdit'] : null,
             ];
 
             $updated = DB::update(
@@ -190,24 +253,24 @@ class GeoController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Адрес успешно обновлен',
-                    'data' => $address
+                    'data' => $address,
                 ]);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Не удалось обновить адрес'
+                'message' => 'Не удалось обновить адрес',
             ], 500);
 
         } catch (\Exception $e) {
-            \Log::error('Ошибка при обновлении адреса: ' . $e->getMessage(), [
+            \Log::error('Ошибка при обновлении адреса: '.$e->getMessage(), [
                 'exception' => $e,
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при обновлении адреса: ' . $e->getMessage()
+                'message' => 'Ошибка при обновлении адреса: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -228,14 +291,14 @@ class GeoController extends Controller
                     'nullable',
                     'numeric',
                     'between:-90,90',
-                    'regex:/^-?(90(\.0{1,7})?|([0-8]?[0-9])(\.\d{1,7})?)$/'
+                    'regex:/^-?(90(\.0{1,7})?|([0-8]?[0-9])(\.\d{1,7})?)$/',
                 ],
                 'longitude' => [
                     'nullable',
                     'numeric',
                     'between:-180,180',
-                    'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/'
-                ]
+                    'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/',
+                ],
             ], [
                 'latitude.regex' => 'Некорректный формат широты. Допустимый формат: от -90 до 90, до 7 знаков после точки',
                 'longitude.regex' => 'Некорректный формат долготы. Допустимый формат: от -180 до 180, до 7 знаков после точки',
@@ -246,11 +309,11 @@ class GeoController extends Controller
             \Log::info('=== Все входные данные ===', $validated);
 
             // Проверка, что если одно поле координат заполнено, то и второе тоже
-            if (($request->has('latitude') && !$request->has('longitude')) || 
-                (!$request->has('latitude') && $request->has('longitude'))) {
+            if (($request->has('latitude') && ! $request->has('longitude')) ||
+                (! $request->has('latitude') && $request->has('longitude'))) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Необходимо заполнить оба поля координат'
+                    'message' => 'Необходимо заполнить оба поля координат',
                 ], 422);
             }
 
@@ -261,7 +324,7 @@ class GeoController extends Controller
                 'district' => $request->district,
                 'city_id' => $request->city_id,
                 'responsible_person' => $request->responsible_person,
-                'comments' => $request->comments
+                'comments' => $request->comments,
             ];
 
             // Добавляем координаты, если они есть
@@ -272,12 +335,12 @@ class GeoController extends Controller
 
             DB::beginTransaction();
             $addressId = DB::table('addresses')->insertGetId($addressData);
-            DB::commit();    
-                
+            DB::commit();
+
             // Получаем информацию о городе
             $city = DB::table('cities')->where('id', $request->city_id)->first();
             $cityName = $city ? $city->name : '';
-            
+
             // Создаем объект с информацией о добавленном адресе
             $addressInfo = [
                 'id' => $addressId,
@@ -288,60 +351,80 @@ class GeoController extends Controller
                 'responsible_person' => $request->responsible_person,
                 'comments' => $request->comments,
                 'latitude' => $request->latitude,
-                'longitude' => $request->longitude
+                'longitude' => $request->longitude,
             ];
 
             \Log::info('=== Все выходные данные ===', $addressInfo);
             \Log::info('=== END addAddress ===', []);
 
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => 'Адрес добавлен',
-                'address' => $addressInfo
+                'address' => $addressInfo,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::info('=== END addAddress ===', []);  
-            \Log::info('=== START error addAddress ===', []); 
-            \Log::error('Ошибка при добавлении адреса: ' . $e->getMessage(), [
+            \Log::info('=== END addAddress ===', []);
+            \Log::info('=== START error addAddress ===', []);
+            \Log::error('Ошибка при добавлении адреса: '.$e->getMessage(), [
                 'exception' => $e,
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
-            \Log::info('=== END error addAddress ===', []); 
-            
+            \Log::info('=== END error addAddress ===', []);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при добавлении адреса: ' . $e->getMessage()
+                'message' => 'Ошибка при добавлении адреса: '.$e->getMessage(),
             ], 500);
         }
     }
 
     public function addCity(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'region_id' => 'required|exists:regions,id'
-        ]);
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'region_id' => 'required|exists:regions,id',
+            ]);
 
-        DB::insert('INSERT INTO cities (name, region_id) VALUES (?, ?)', [
-            $request->name,
-            $request->region_id
-        ]);
+            DB::insert('INSERT INTO cities (name, region_id) VALUES (?, ?)', [
+                $request->name,
+                $request->region_id,
+            ]);
 
-        return response()->json(['success' => true, 'message' => 'Город добавлен']);
+            return response()->json(['success' => true, 'message' => 'Город добавлен']);
+        } catch (\Exception $e) {
+            Log::error('Error in GeoController@addCity: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при добавлении города',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function addRegion(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255'
-        ]);
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+            ]);
 
-        DB::insert('INSERT INTO regions (name) VALUES (?)', [
-            $request->name
-        ]);
+            DB::insert('INSERT INTO regions (name) VALUES (?)', [
+                $request->name,
+            ]);
 
-        return response()->json(['success' => true, 'message' => 'Регион добавлен']);
+            return response()->json(['success' => true, 'message' => 'Регион добавлен']);
+        } catch (\Exception $e) {
+            Log::error('Error in GeoController@addRegion: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при добавлении региона',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function deleteAddress($id)
@@ -349,11 +432,11 @@ class GeoController extends Controller
         try {
             // Проверяем существование адреса
             $address = DB::table('addresses')->where('id', $id)->first();
-            
-            if (!$address) {
+
+            if (! $address) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Адрес не найден'
+                    'message' => 'Адрес не найден',
                 ], 404);
             }
 
@@ -365,7 +448,7 @@ class GeoController extends Controller
             if ($hasReferences) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Невозможно удалить адрес: существуют связанные заявки'
+                    'message' => 'Невозможно удалить адрес: существуют связанные заявки',
                 ], 400);
             }
 
@@ -375,23 +458,22 @@ class GeoController extends Controller
             if ($deleted) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Адрес успешно удален'
+                    'message' => 'Адрес успешно удален',
                 ]);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Не удалось удалить адрес'
+                    'message' => 'Не удалось удалить адрес',
                 ], 500);
             }
 
         } catch (\Exception $e) {
-            \Log::error('Ошибка при удалении адреса: ' . $e->getMessage());
-            
+            \Log::error('Ошибка при удалении адреса: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Произошла ошибка при удалении адреса: ' . $e->getMessage()
+                'message' => 'Произошла ошибка при удалении адреса: '.$e->getMessage(),
             ], 500);
         }
     }
 }
-

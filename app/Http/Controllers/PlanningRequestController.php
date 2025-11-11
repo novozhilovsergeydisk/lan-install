@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class PlanningRequestController extends Controller
 {
-
     public function uploadRequestsExcel(Request $request)
     {
         try {
@@ -27,8 +24,8 @@ class PlanningRequestController extends Controller
             $worksheet = $spreadsheet->getActiveSheet();
             $data = $worksheet->toArray();
 
-            $data = array_filter($data, function($row) {
-                return !empty(array_filter($row, fn($value) => $value !== null && $value !== ''));
+            $data = array_filter($data, function ($row) {
+                return ! empty(array_filter($row, fn ($value) => $value !== null && $value !== ''));
             });
 
             if (empty($data)) {
@@ -37,16 +34,16 @@ class PlanningRequestController extends Controller
 
             $headers = array_shift($data);
             $expectedHeaders = ['client_fio', 'client_phone', 'client_organization', 'comment', 'city_name', 'district', 'street', 'houses'];
-            
+
             // For case-insensitive and space-trimming header check
-            $normalizedHeaders = array_map(fn($h) => trim(strtolower($h)), $headers);
-            $normalizedExpectedHeaders = array_map(fn($h) => trim(strtolower($h)), $expectedHeaders);
+            $normalizedHeaders = array_map(fn ($h) => trim(strtolower($h)), $headers);
+            $normalizedExpectedHeaders = array_map(fn ($h) => trim(strtolower($h)), $expectedHeaders);
 
             if (count(array_intersect($normalizedExpectedHeaders, $normalizedHeaders)) !== count($normalizedExpectedHeaders)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Неверные заголовки в файле. Ожидаются: ' . implode(', ', $expectedHeaders),
-                    'headers_found' => $headers
+                    'message' => 'Неверные заголовки в файле. Ожидаются: '.implode(', ', $expectedHeaders),
+                    'headers_found' => $headers,
                 ], 400);
             }
 
@@ -68,7 +65,7 @@ class PlanningRequestController extends Controller
                     'address_id' => $addressId,
                     'comment' => $rowData['comment'] ?? null,
                 ];
-                
+
                 $newRequest = $this->createPlanningRequest($requestData);
                 $createdRequests[] = $newRequest;
             }
@@ -77,18 +74,19 @@ class PlanningRequestController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Заявки успешно загружены: ' . count($createdRequests) . ' шт.',
-                'data' => $createdRequests
+                'message' => 'Заявки успешно загружены: '.count($createdRequests).' шт.',
+                'data' => $createdRequests,
             ]);
 
         } catch (\Exception $e) {
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
-            Log::error('Ошибка при загрузке заявок из Excel: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Ошибка при загрузке заявок из Excel: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при обработке файла: ' . $e->getMessage()
+                'message' => 'Ошибка при обработке файла: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -138,9 +136,9 @@ class PlanningRequestController extends Controller
         }
 
         $query = DB::table('clients');
-        if (!empty($phone)) {
+        if (! empty($phone)) {
             $query->where('phone', $phone);
-        } elseif (!empty($fio)) {
+        } elseif (! empty($fio)) {
             $query->where('fio', $fio);
         } else {
             $query->where('organization', $organization);
@@ -155,7 +153,7 @@ class PlanningRequestController extends Controller
             'fio' => $fio,
             'phone' => $phone,
             'organization' => $organization,
-            'email' => ''
+            'email' => '',
         ]);
     }
 
@@ -166,7 +164,7 @@ class PlanningRequestController extends Controller
         $employeeId = $employee ? $employee->id : null;
 
         $count = DB::table('requests')->count() + 1;
-        $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        $requestNumber = 'REQ-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
 
         $requestId = DB::table('requests')->insertGetId([
             'client_id' => $data['client_id'],
@@ -177,7 +175,7 @@ class PlanningRequestController extends Controller
             'request_date' => now()->toDateString(),
         ]);
 
-        if (!empty($data['comment'])) {
+        if (! empty($data['comment'])) {
             $commentId = DB::table('comments')->insertGetId([
                 'comment' => $data['comment'],
                 'created_at' => now(),
@@ -199,10 +197,9 @@ class PlanningRequestController extends Controller
         return DB::table('requests')->where('id', $requestId)->first();
     }
 
-
     public function changePlanningRequestStatus(Request $request)
     {
-        // response для тестирования 
+        // response для тестирования
         // $response = [
         //     'success' => true,
         //     'message' => 'Статус заявки успешно изменен  - режим тестирования',
@@ -214,96 +211,97 @@ class PlanningRequestController extends Controller
         // Validate request data
         $validator = Validator::make($request->all(), [
             'planning_request_id' => 'required|exists:requests,id',
-            'planning_execution_date' => 'required|date'
+            'planning_execution_date' => 'required|date',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $requestId = $request->input('planning_request_id');
         $planningExecutionDate = $request->input('planning_execution_date');
 
-        $sql_update = "UPDATE requests SET status_id = 6, execution_date = ? WHERE id = ?";
+        $sql_update = 'UPDATE requests SET status_id = 6, execution_date = ? WHERE id = ?';
 
         // Начинаем транзакцию
         DB::beginTransaction();
-        
+
         try {
             // Получаем текущие данные заявки
             $currentRequest = DB::table('requests')->find($requestId);
             \Log::info('=== START planninginWorkRequest ===', [
                 'request' => $currentRequest,
                 'request_id' => $requestId,
-                'execution_date' => $planningExecutionDate
+                'execution_date' => $planningExecutionDate,
             ]);
-            
+
             // Выполняем обновление с помощью прямого SQL
-            $sql = "UPDATE requests SET status_id = 1, execution_date = ? WHERE id = ?";
+            $sql = 'UPDATE requests SET status_id = 1, execution_date = ? WHERE id = ?';
             $bindings = [$planningExecutionDate, $requestId];
-            
+
             // Логируем SQL-запрос для отладки
-            $fullSql = \Illuminate\Support\Str::replaceArray('?', array_map(function($param) {
+            $fullSql = \Illuminate\Support\Str::replaceArray('?', array_map(function ($param) {
                 return is_string($param) ? "'$param'" : $param;
             }, $bindings), $sql);
-            
+
             // \Log::info('Executing SQL:', ['sql' => $fullSql]);
-            
+
             $result = DB::update($sql, $bindings);
-            
+
             // Принудительно получаем обновленные данные
-            $updatedRequest = DB::selectOne("SELECT * FROM requests WHERE id = ?", [$requestId]);
-            
+            $updatedRequest = DB::selectOne('SELECT * FROM requests WHERE id = ?', [$requestId]);
+
             // Проверяем, изменился ли статус
-            $statusChanged = $updatedRequest && $currentRequest && 
+            $statusChanged = $updatedRequest && $currentRequest &&
                            $updatedRequest->status_id == 1;
-            
+
             if ($statusChanged) {
                 // Фиксируем изменения, если статус изменился
                 DB::commit();
 
                 \Log::info('=== END planninginWorkRequest ===', []);
-                
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Статус заявки успешно изменен',
                     'status_changed' => true,
                     'new_status_id' => $updatedRequest->status_id,
-                    'fullSql' => $fullSql
+                    'fullSql' => $fullSql,
                 ]);
             } else {
                 // Откатываем, если статус не изменился
                 DB::rollBack();
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Не удалось изменить статус заявки. Возможно, неверный ID заявки или проблема с правами доступа.',
-                    'status_changed' => false
+                    'status_changed' => false,
                 ], 400);
             }
-            
+
         } catch (\Exception $e) {
             // Откатываем изменения в случае ошибки
             DB::rollBack();
             \Log::error('Update error:', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при обновлении заявки: ' . $e->getMessage()
+                'message' => 'Ошибка при обновлении заявки: '.$e->getMessage(),
             ], 500);
         }
     }
 
     public function getPlanningRequests()
     {
-        $sql = "
+        try {
+            $sql = "
             SELECT
                 r.id,
                 TO_CHAR(r.request_date, 'DD.MM.YYYY') AS request_date,
@@ -350,20 +348,28 @@ class PlanningRequestController extends Controller
                 rs.color    
             ORDER BY r.id DESC";
 
-        $result = DB::select($sql);
+            $result = DB::select($sql);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'planningRequests' => $result
-            ]
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'planningRequests' => $result,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in PlanningRequestController@getPlanningRequests: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении запланированных заявок',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
      * Store a newly created planning request in storage.
      *
-     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
@@ -379,20 +385,20 @@ class PlanningRequestController extends Controller
             'status_id' => 'required|exists:request_statuses,id',
             'execution_time' => 'nullable|date_format:H:i',
             'brigade_id' => 'nullable|exists:brigades,id',
-            'operator_id' => 'nullable|exists:employees,id'
+            'operator_id' => 'nullable|exists:employees,id',
         ];
 
         // Логируем все входящие данные для отладки
         // \Log::info('Incoming request data:', $request->all());
-        
+
         // Нормализуем входные данные
         $input = $request->all();
-        
+
         // Приводим к единому формату поле адреса
-        if (isset($input['address_id']) && !isset($input['addresses_planning_request_id'])) {
+        if (isset($input['address_id']) && ! isset($input['addresses_planning_request_id'])) {
             $input['addresses_planning_request_id'] = $input['address_id'];
         }
-        
+
         // Валидируем входные данные
         $validator = Validator::make($input, [
             'client_name_planning_request' => 'nullable|string|max:255',
@@ -400,34 +406,34 @@ class PlanningRequestController extends Controller
             'client_organization_planning_request' => 'nullable|string|max:255',
             'planning_request_comment' => 'required|string',
             'addresses_planning_request_id' => 'required|exists:addresses,id',
-            'address_id' => 'sometimes|exists:addresses,id'
+            'address_id' => 'sometimes|exists:addresses,id',
         ]);
 
         if ($validator->fails()) {
             $errorDetails = [
                 'errors' => $validator->errors()->toArray(),
                 'input' => $request->all(),
-                'request_headers' => $request->headers->all()
+                'request_headers' => $request->headers->all(),
             ];
-            
+
             // \Log::error('Validation failed', $errorDetails);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
                 'errors' => $validator->errors(),
                 'debug' => [
                     'received_address_id' => $request->get('address_id'),
-                    'received_addresses_planning_request_id' => $request->get('addresses_planning_request_id')
-                ]
+                    'received_addresses_planning_request_id' => $request->get('addresses_planning_request_id'),
+                ],
             ], 422);
         }
 
         // Уже получили $input из предыдущего шага
-        
+
         // Получаем ID адреса из нормализованных данных
         $addressId = $input['addresses_planning_request_id'];
-        
+
         // Логируем данные для отладки
         // \Log::info('Processing planning request with data:', [
         //     'address_id' => $addressId,
@@ -436,34 +442,34 @@ class PlanningRequestController extends Controller
         //     'client_organization' => $input['client_organization_planning_request'] ?? null,
         //     'comment' => $input['planning_request_comment'] ?? null
         // ]);
-        
-        if (!$addressId) {
-            $errorMessage = 'Не удалось определить ID адреса. Полученные данные: ' . json_encode($input);
+
+        if (! $addressId) {
+            $errorMessage = 'Не удалось определить ID адреса. Полученные данные: '.json_encode($input);
             // \Log::error($errorMessage);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Не удалось определить ID адреса',
                 'debug' => [
                     'received_data' => $input,
-                    'available_keys' => array_keys($input)
-                ]
+                    'available_keys' => array_keys($input),
+                ],
             ], 422);
         }
-        
+
         // Проверяем существование адреса
         $address = DB::table('addresses')
             ->where('id', $addressId)
             ->first();
-            
-        if (!$address) {
+
+        if (! $address) {
             return response()->json([
                 'success' => false,
                 'message' => 'Указанный адрес не найден',
-                'address_id' => $addressId
+                'address_id' => $addressId,
             ], 404);
         }
-        
+
         // Подготавливаем данные для сохранения
         $validationData = [
             'client_name' => $input['client_name_planning_request'] ?? null,
@@ -473,9 +479,9 @@ class PlanningRequestController extends Controller
             'address_id' => $addressId,
             'request_type_id' => 1, // Значение по умолчанию
             'status_id' => 6, // Значение по умолчанию
-            'user_id' => auth()->id()
+            'user_id' => auth()->id(),
         ];
-        
+
         // Валидируем подготовленные данные
         $validator = Validator::make($validationData, [
             'client_name' => 'nullable|string|max:255',
@@ -485,23 +491,23 @@ class PlanningRequestController extends Controller
             'address_id' => 'required|exists:addresses,id',
             'request_type_id' => 'required|exists:request_types,id',
             'status_id' => 'required|exists:request_statuses,id',
-            'user_id' => 'required|exists:users,id'
+            'user_id' => 'required|exists:users,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         // Проверяем авторизацию пользователя
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Необходима авторизация',
-                'redirect' => '/login'
+                'redirect' => '/login',
             ], 401);
         }
 
@@ -509,7 +515,7 @@ class PlanningRequestController extends Controller
         $user = auth()->user();
 
         // Проверяем, загружены ли роли пользователя
-        if (!isset($user->roles) || !is_array($user->roles)) {
+        if (! isset($user->roles) || ! is_array($user->roles)) {
             // Если роли не загружены, загружаем их из базы
             $roles = DB::table('user_roles')
                 ->join('roles', 'user_roles.role_id', '=', 'roles.id')
@@ -534,11 +540,11 @@ class PlanningRequestController extends Controller
             }
         }
 
-        if (!$hasAllowedRole) {
+        if (! $hasAllowedRole) {
             return response()->json([
                 'success' => false,
-                'message' => 'У вас недостаточно прав для создания заявки. Необходима одна из ролей: ' . implode(', ', $allowedRoles),
-                'user_roles' => $user->roles ?? []
+                'message' => 'У вас недостаточно прав для создания заявки. Необходима одна из ролей: '.implode(', ', $allowedRoles),
+                'user_roles' => $user->roles ?? [],
             ], 403);
         }
 
@@ -595,7 +601,7 @@ class PlanningRequestController extends Controller
 
             \Log::info('Используем для заявки operator_id:', [
                 'user_id' => $userId,
-                'employee_id' => $employeeId
+                'employee_id' => $employeeId,
             ]);
 
             // Правила валидации
@@ -610,7 +616,7 @@ class PlanningRequestController extends Controller
                 'execution_time' => 'nullable|date_format:H:i',
                 'brigade_id' => 'nullable|exists:brigades,id',
                 'operator_id' => 'nullable|exists:employees,id',
-                'address_id' => 'required|exists:addresses,id'
+                'address_id' => 'required|exists:addresses,id',
             ];
 
             // Логируем входные данные для отладки
@@ -624,10 +630,11 @@ class PlanningRequestController extends Controller
 
             if ($validator->fails()) {
                 \Log::error('Ошибка валидации:', $validator->errors()->toArray());
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка валидации',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -644,23 +651,24 @@ class PlanningRequestController extends Controller
                 'fio' => $fio,
                 'phone' => $phone,
                 'email' => '', // Пустая строка, так как поле не может быть NULL
-                'organization' => $organization
+                'organization' => $organization,
             ];
 
             $clientRules = [
                 'fio' => 'string|max:255',
                 'phone' => 'string|max:50',
                 'email' => 'string|max:255',
-                'organization' => 'string|max:255'
+                'organization' => 'string|max:255',
             ];
 
             $clientValidator = Validator::make($clientData, $clientRules);
             if ($clientValidator->fails()) {
                 \Log::error('Ошибка валидации данных клиента:', $clientValidator->errors()->toArray());
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка валидации данных клиента',
-                    'errors' => $clientValidator->errors()
+                    'errors' => $clientValidator->errors(),
                 ], 422);
             }
 
@@ -672,17 +680,17 @@ class PlanningRequestController extends Controller
             $query = DB::table('clients');
             $foundClient = false;
 
-            if (!empty($clientData['fio'])) {
+            if (! empty($clientData['fio'])) {
                 if ($foundClient) {
                     $query->orWhere('fio', $clientData['fio']);
                 } else {
                     $query->where('fio', $clientData['fio']);
                     $foundClient = true;
                 }
-            } elseif (!empty($clientData['phone'])) {
+            } elseif (! empty($clientData['phone'])) {
                 $query->where('phone', $clientData['phone']);
                 $foundClient = true;
-            } elseif (!empty($clientData['organization'])) {
+            } elseif (! empty($clientData['organization'])) {
                 if ($foundClient) {
                     $query->orWhere('organization', $clientData['organization']);
                 } else {
@@ -712,7 +720,7 @@ class PlanningRequestController extends Controller
                             'fio' => $clientData['fio'],
                             'phone' => $clientData['phone'],
                             'email' => $clientData['email'],
-                            'organization' => $clientData['organization']
+                            'organization' => $clientData['organization'],
                         ]);
                     $clientId = $client->id;
                     $clientState = 'updated';
@@ -723,17 +731,18 @@ class PlanningRequestController extends Controller
                         'fio' => $clientData['fio'],
                         'phone' => $clientData['phone'],
                         'email' => $clientData['email'],
-                        'organization' => $clientData['organization']
+                        'organization' => $clientData['organization'],
                     ]);
                     $clientState = 'created';
                     // \Log::info('Создан новый клиент:', ['id' => $clientId]);
                 }
             } catch (\Exception $e) {
-                \Log::error('Ошибка при сохранении клиента: ' . $e->getMessage());
+                \Log::error('Ошибка при сохранении клиента: '.$e->getMessage());
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка при сохранении данных клиента',
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ], 500);
             }
 
@@ -745,13 +754,13 @@ class PlanningRequestController extends Controller
                 'execution_date' => $validated['execution_date'],
                 'execution_time' => $validated['execution_time'],
                 'brigade_id' => $validated['brigade_id'] ?? null,
-                'operator_id' => $validated['operator_id']
+                'operator_id' => $validated['operator_id'],
             ];
 
             // Генерируем номер заявки
             $countQuery = DB::table('requests');
             $count = $countQuery->count() + 1;
-            $requestNumber = 'REQ-' . date('Ymd') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $requestNumber = 'REQ-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
             $requestData['number'] = $requestNumber;
 
             // Устанавливаем текущую дату (учитывая часовой пояс из конфига Laravel)
@@ -770,7 +779,7 @@ class PlanningRequestController extends Controller
                     $validated['brigade_id'] ?? null,
                     $employeeId,
                     $requestNumber,
-                    $currentDate
+                    $currentDate,
                 ]
             );
 
@@ -788,7 +797,7 @@ class PlanningRequestController extends Controller
             // 4. Создаем комментарий, только если он не пустой
             $commentText = trim($validated['comment'] ?? '');
             $newCommentId = null;
-            
+
             // Логируем данные комментария для отладки
             // \Log::info('Данные комментария перед созданием:', [
             //     'comment_text' => $commentText,
@@ -796,13 +805,13 @@ class PlanningRequestController extends Controller
             //     'validated_data' => $validated
             // ]);
 
-            if (!empty($commentText)) {
+            if (! empty($commentText)) {
                 try {
                     // Вставляем комментарий без поля updated_at
-                    $commentSql = "INSERT INTO comments (comment, created_at) VALUES (?, ?) RETURNING id";
+                    $commentSql = 'INSERT INTO comments (comment, created_at) VALUES (?, ?) RETURNING id';
                     $bindings = [
                         $commentText,
-                        now()->toDateTimeString()
+                        now()->toDateTimeString(),
                     ];
 
                     // \Log::info('SQL для вставки комментария:', ['sql' => $commentSql, 'bindings' => $bindings]);
@@ -810,7 +819,7 @@ class PlanningRequestController extends Controller
                     $commentResult = DB::selectOne($commentSql, $bindings);
                     $newCommentId = $commentResult ? $commentResult->id : null;
 
-                    if (!$newCommentId) {
+                    if (! $newCommentId) {
                         throw new \Exception('Не удалось получить ID созданного комментария');
                     }
 
@@ -821,7 +830,7 @@ class PlanningRequestController extends Controller
                         'request_id' => $requestId,
                         'comment_id' => $newCommentId,
                         'user_id' => $request->user()->id,
-                        'created_at' => now()->toDateTimeString()
+                        'created_at' => now()->toDateTimeString(),
                     ]);
 
                     // \Log::info('Связь между заявкой и комментарием создана', [
@@ -829,7 +838,7 @@ class PlanningRequestController extends Controller
                     //     'comment_id' => $newCommentId
                     // ]);
                 } catch (\Exception $e) {
-                    \Log::error('Ошибка при создании комментария: ' . $e->getMessage());
+                    \Log::error('Ошибка при создании комментария: '.$e->getMessage());
                     // Продолжаем выполнение, так как комментарий не является обязательным
                 }
             }
@@ -840,14 +849,14 @@ class PlanningRequestController extends Controller
             // Получаем информацию об адресе
             $address = DB::table('addresses')->find($addressId);
 
-            if (!$address) {
+            if (! $address) {
                 throw new \Exception('Указанный адрес не найден');
             }
 
             // Связываем адрес с заявкой без использования временных меток
             DB::table('request_addresses')->insert([
                 'request_id' => $requestId,
-                'address_id' => $addressId
+                'address_id' => $addressId,
                 // Убраны created_at и updated_at, так как их нет в таблице
             ]);
 
@@ -883,12 +892,12 @@ class PlanningRequestController extends Controller
                 LEFT JOIN request_addresses ra ON r.id = ra.request_id
                 LEFT JOIN addresses addr ON ra.address_id = addr.id
                 LEFT JOIN cities ct ON addr.city_id = ct.id
-                WHERE r.id = ' . $requestId . '
+                WHERE r.id = '.$requestId.'
             ');
 
             // Преобразуем результат запроса в объект, если это массив
-            if (is_array($requestById) && !empty($requestById)) {
-                $requestById = (object)$requestById[0];
+            if (is_array($requestById) && ! empty($requestById)) {
+                $requestById = (object) $requestById[0];
             }
 
             // Формируем ответ
@@ -912,8 +921,8 @@ class PlanningRequestController extends Controller
                         'fio' => $fio,
                         'phone' => $phone,
                         'organization' => $organization,
-                        'is_new' => !$isExistingClient,
-                        'state' => $clientState
+                        'is_new' => ! $isExistingClient,
+                        'state' => $clientState,
                     ] : null,
                     'address' => [
                         'id' => $address->id,
@@ -923,23 +932,24 @@ class PlanningRequestController extends Controller
                         'street' => $address->street,
                         'house' => $address->houses,
                         'district' => $address->district,
-                        'comment' => $address->comments ?? ''
+                        'comment' => $address->comments ?? '',
                     ],
                     'comment' => $newCommentId ? [
                         'id' => $newCommentId,
-                        'text' => $commentText
-                    ] : null
-                ]
+                        'text' => $commentText,
+                    ] : null,
+                ],
             ];
 
             // Фиксируем изменения, если все успешно
             DB::commit();
+
             return response()->json($response);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -947,17 +957,17 @@ class PlanningRequestController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при создании заявки: ' . $e->getMessage(),
+                'message' => 'Ошибка при создании заявки: '.$e->getMessage(),
                 'error' => [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                    'line' => $e->getLine(),
+                ],
             ], 500);
         }
     }

@@ -60,6 +60,7 @@ class EmployeesFilterController extends Controller
             ";
 
             $rows = DB::select($sql, [$date]);
+
             return response()->json($rows);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -69,6 +70,7 @@ class EmployeesFilterController extends Controller
             ], 422);
         } catch (\Exception $e) {
             Log::error('Ошибка EmployeesFilterController@filterByDate: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Внутренняя ошибка сервера',

@@ -25,18 +25,18 @@ try {
     ];
 
     // SQL-запрос
-    $sql = "INSERT INTO clients (fio, email, phone) VALUES (:fio, :email, :phone)";
+    $sql = 'INSERT INTO clients (fio, email, phone) VALUES (:fio, :email, :phone)';
 
     foreach ($clients as $client) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':fio' => $client['fio'],
             ':email' => $client['email'],
-            ':phone' => $client['phone']
+            ':phone' => $client['phone'],
         ]);
         echo "Добавлен клиент: {$client['fio']} <{$client['email']}>\n";
     }
 
 } catch (PDOException $e) {
-    die("❌ Ошибка подключения или выполнения запроса: " . $e->getMessage());
+    exit('❌ Ошибка подключения или выполнения запроса: '.$e->getMessage());
 }

@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class EmployeesUserPositionPassportController extends Controller
 {
     public function index()
     {
-        // Получаем данные о сотрудниках с паспортными данными и должностями
-        $employees = DB::select("
+        try {
+            // Получаем данные о сотрудниках с паспортными данными и должностями
+            $employees = DB::select("
             SELECT 
                 e.fio,
                 e.phone,
@@ -36,13 +37,22 @@ class EmployeesUserPositionPassportController extends Controller
             ORDER BY e.fio
         ");
 
-        // Преобразуем null значения в пустые строки для корректного отображения
-        $employees = array_map(function($employee) {
-            return (object)array_map(function($value) {
-                return $value ?? '';
-            }, (array)$employee);
-        }, $employees);
+            // Преобразуем null значения в пустые строки для корректного отображения
+            $employees = array_map(function ($employee) {
+                return (object) array_map(function ($value) {
+                    return $value ?? '';
+                }, (array) $employee);
+            }, $employees);
 
-        return view('welcome', compact('employees'));
+            return view('welcome', compact('employees'));
+        } catch (\Exception $e) {
+            Log::error('Error in EmployeesUserPositionPassportController@index: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении данных о сотрудниках',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

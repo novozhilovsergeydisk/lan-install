@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
 
 class EmployeeUserController extends Controller
 {
@@ -28,17 +28,17 @@ class EmployeeUserController extends Controller
             'date' => 'required|date',
         ]);
 
-        if (!$validated) {
+        if (! $validated) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при фильтрации сотрудников',
-                'error' => $validated->errors()
+                'error' => $validated->errors(),
             ], 400);
         }
 
         try {
             $employeeId = $request->input('employee_id');
-            
+
             $sql = "SELECT
                 (select id from employees where id = bm.employee_id) as member_id,
                 (select fio from employees where id = bm.employee_id) as member,
@@ -71,36 +71,35 @@ class EmployeeUserController extends Controller
             ORDER BY r.id DESC ";
 
             $requests = DB::select($sql);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Заявки успешно получены',
-                'data' => $requests
+                'data' => $requests,
             ]);
         } catch (\Exception $e) {
             \Log::error('Ошибка при получении заявок при фильтрации сотрудников:', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при получении заявок при фильтрации сотрудников: ' . $e->getMessage(),
+                'message' => 'Ошибка при получении заявок при фильтрации сотрудников: '.$e->getMessage(),
                 'error' => [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ]
+                    'line' => $e->getLine(),
+                ],
             ], 500);
-        }  
+        }
     }
 
     /**
      * Получает данные сотрудника по ID
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function getEmployee(Request $request)
@@ -108,10 +107,10 @@ class EmployeeUserController extends Controller
         try {
             $employeeId = $request->input('employee_id');
 
-            if (!$employeeId) {
+            if (! $employeeId) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'ID сотрудника не указан'
+                    'message' => 'ID сотрудника не указан',
                 ], 400);
             }
 
@@ -144,30 +143,30 @@ class EmployeeUserController extends Controller
                 ->where('employees.is_deleted', false)
                 ->first();
 
-            if (!$employee) {
+            if (! $employee) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Сотрудник не найден'
+                    'message' => 'Сотрудник не найден',
                 ], 404);
             }
 
             // Преобразуем данные паспорта и автомобиля в отдельные объекты для сохранения совместимости с фронтендом
             $passport = null;
             if ($employee->series_number) {
-                $passport = (object)[
+                $passport = (object) [
                     'series_number' => $employee->series_number,
                     'issued_by' => $employee->issued_by,
                     'issued_at' => $employee->issued_at,
-                    'department_code' => $employee->department_code
+                    'department_code' => $employee->department_code,
                 ];
             }
 
             $car = null;
             if ($employee->brand) {
-                $car = (object)[
+                $car = (object) [
                     'brand' => $employee->brand,
                     'license_plate' => $employee->license_plate,
-                    'registered_at' => $employee->registered_at
+                    'registered_at' => $employee->registered_at,
                 ];
             }
 
@@ -188,17 +187,17 @@ class EmployeeUserController extends Controller
                     'employee' => $employee,
                     'passport' => $passport,
                     'car' => $car,
-                    'role' => $role
-                ]
+                    'role' => $role,
+                ],
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Ошибка при получении данных сотрудника: ' . $e->getMessage());
+            Log::error('Ошибка при получении данных сотрудника: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении данных сотрудника',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -259,54 +258,54 @@ class EmployeeUserController extends Controller
             ]);
 
             // Вставка сотрудника с user_id и position_id
-            DB::insert("
+            DB::insert('
                 INSERT INTO employees (fio, phone, birth_date, birth_place, user_id, position_id, registration_place)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            ", [
+            ', [
                 $request->fio,
                 $request->phone,
                 $request->birth_date,
                 $request->birth_place,
                 $user->id,
                 $request->position_id,
-                $request->registration_place
+                $request->registration_place,
             ]);
 
             $employeeId = DB::getPdo()->lastInsertId();
 
-            //insert into user_roles
+            // insert into user_roles
 
             DB::select(
                 'INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)',
                 [
                     $user->id,
-                    $request->role_id
+                    $request->role_id,
                 ]
-            );  
+            );
 
             // Паспорт (если заполнен)
             if ($request->passport_series) {
-                DB::insert("
+                DB::insert('
                     INSERT INTO passports (employee_id, series_number, issued_by, issued_at, department_code)
                     VALUES (?, ?, ?, ?, ?)
-                ", [
+                ', [
                     $employeeId,
                     $request->passport_series,
                     $request->passport_issued_by,
                     $request->passport_issued_at,
-                    $request->passport_department_code
+                    $request->passport_department_code,
                 ]);
             }
 
             // Машина (если заполнена)
             if ($request->car_brand && $request->car_plate) {
-                DB::insert("
+                DB::insert('
                     INSERT INTO cars (employee_id, brand, license_plate)
                     VALUES (?, ?, ?)
-                ", [
+                ', [
                     $employeeId,
                     $request->car_brand,
-                    $request->car_plate
+                    $request->car_plate,
                 ]);
             }
 
@@ -352,12 +351,12 @@ class EmployeeUserController extends Controller
                         'series_number' => $passport->series_number,
                         'issued_by' => $passport->issued_by,
                         'issued_at' => $passport->issued_at,
-                        'department_code' => $passport->department_code
+                        'department_code' => $passport->department_code,
                     ] : null,
                     'car' => $car ? [
                         'brand' => $car->brand,
-                        'license_plate' => $car->license_plate
-                    ] : null
+                        'license_plate' => $car->license_plate,
+                    ] : null,
                 ], 201);
             }
 
@@ -370,13 +369,13 @@ class EmployeeUserController extends Controller
                 return response()->json([
                     'message' => 'Ошибка при создании сотрудника',
                     'error' => $e->getMessage(),
-                    'errors' => ['general' => $e->getMessage()]
+                    'errors' => ['general' => $e->getMessage()],
                 ], 422);
             }
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Ошибка: ' . $e->getMessage());
+                ->with('error', 'Ошибка: '.$e->getMessage());
         }
     }
 
@@ -416,7 +415,7 @@ class EmployeeUserController extends Controller
 
             // Обновление данных сотрудника
             DB::update(
-                "UPDATE employees SET fio = ?, phone = ?, birth_date = ?, birth_place = ?, registration_place = ?, position_id = ? WHERE id = ?",
+                'UPDATE employees SET fio = ?, phone = ?, birth_date = ?, birth_place = ?, registration_place = ?, position_id = ? WHERE id = ?',
                 [
                     $request->fio,
                     $request->phone,
@@ -424,7 +423,7 @@ class EmployeeUserController extends Controller
                     $request->birth_place,
                     $request->registration_place,
                     $request->position_id,
-                    $employee_id
+                    $employee_id,
                 ]
             );
 
@@ -432,11 +431,11 @@ class EmployeeUserController extends Controller
             $employeeId = $employee_id;
 
             // Проверяем, что сотрудник существует
-            $employee = DB::selectOne("SELECT * FROM employees WHERE (is_deleted IS NULL OR is_deleted = false) AND id = ?", [$employeeId]);
-            
+            $employee = DB::selectOne('SELECT * FROM employees WHERE (is_deleted IS NULL OR is_deleted = false) AND id = ?', [$employeeId]);
+
             // return $employee;
-            
-            if (!$employee) {
+
+            if (! $employee) {
                 throw new \Exception('Сотрудник не найден');
             }
 
@@ -451,7 +450,7 @@ class EmployeeUserController extends Controller
             $sqlUpdateRole = "UPDATE user_roles SET role_id = $request->role_id_update WHERE user_id = ($sqlEmployee)";
 
             $sqlRole_1 = "SELECT ur.role_id, r.name AS role_name FROM user_roles ur LEFT JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = ($sqlEmployee)";
-            
+
             $sqlRole = "
                 SELECT ur.role_id, r.name AS role_name, u.email user_email  
                 FROM user_roles ur
@@ -471,34 +470,34 @@ class EmployeeUserController extends Controller
             );
 
             // Проверяем наличие существующей записи паспорта
-            $passportExists = DB::selectOne("SELECT id FROM passports WHERE employee_id = ?", [$employeeId]);
+            $passportExists = DB::selectOne('SELECT id FROM passports WHERE employee_id = ?', [$employeeId]);
 
             // Обновление или создание паспортных данных
             if ($passportExists) {
                 // Обновляем существующий паспорт
                 DB::update(
-                    "UPDATE passports SET
+                    'UPDATE passports SET
                         series_number = ?,
                         issued_by = ?,
                         issued_at = ?,
                         department_code = ?,
                         updated_at = ?
-                    WHERE employee_id = ?",
+                    WHERE employee_id = ?',
                     [
                         $request->passport_series,
                         $request->passport_issued_by,
                         $request->passport_issued_at,
                         $request->passport_department_code,
                         now(),
-                        $employeeId
+                        $employeeId,
                     ]
                 );
             } else {
                 // Создаем новую запись паспорта
                 DB::insert(
-                    "INSERT INTO passports
+                    'INSERT INTO passports
                         (employee_id, series_number, issued_by, issued_at, department_code, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    VALUES (?, ?, ?, ?, ?, ?, ?)',
                     [
                         $employeeId,
                         $request->passport_series,
@@ -506,46 +505,46 @@ class EmployeeUserController extends Controller
                         $request->passport_issued_at,
                         $request->passport_department_code,
                         now(),
-                        now()
+                        now(),
                     ]
                 );
             }
 
-            $sqlTestUpdateCars = "";
-            $sqlTestInsertCars = "";
+            $sqlTestUpdateCars = '';
+            $sqlTestInsertCars = '';
 
             // Проверяем наличие существующей записи автомобиля
-            $carExists = DB::selectOne("SELECT id FROM cars WHERE employee_id = ? LIMIT 1", [$employeeId]);
+            $carExists = DB::selectOne('SELECT id FROM cars WHERE employee_id = ? LIMIT 1', [$employeeId]);
 
             // Обновление или создание данных об автомобиле
             if ($carExists) {
                 $sqlTestUpdateCars = "UPDATE cars SET brand = $request->car_brand, license_plate = $request->car_plate, registered_at = $request->car_registered_at WHERE employee_id = $employeeId";
 
                 DB::update(
-                    "UPDATE cars SET
+                    'UPDATE cars SET
                         brand = ?,
                         license_plate = ?,
                         registered_at = ?
-                    WHERE employee_id = ?",
+                    WHERE employee_id = ?',
                     [
                         $request->car_brand,
                         $request->car_plate,
                         $request->car_registered_at,
-                        $employeeId
+                        $employeeId,
                     ]
                 );
-            } else {                    
+            } else {
                 $sqlTestInsertCars = "INSERT INTO cars (employee_id, brand, license_plate, registered_at) VALUES ($employeeId, $request->car_brand, $request->car_plate, $request->car_registered_at)";
 
                 DB::insert(
-                    "INSERT INTO cars
+                    'INSERT INTO cars
                         (employee_id, brand, license_plate, registered_at)
-                    VALUES (?, ?, ?, ?)",
+                    VALUES (?, ?, ?, ?)',
                     [
                         $employeeId,
                         $request->car_brand,
                         $request->car_plate,
-                        $request->car_registered_at
+                        $request->car_registered_at,
                     ]
                 );
             }
@@ -554,8 +553,8 @@ class EmployeeUserController extends Controller
 
             if ($request->wantsJson()) {
                 // Получаем данные паспорта и автомобиля для ответа
-                $passport = DB::selectOne("SELECT * FROM passports WHERE employee_id = ?", [$employeeId]);
-                $car = DB::selectOne("SELECT * FROM cars WHERE employee_id = ?", [$employeeId]);
+                $passport = DB::selectOne('SELECT * FROM passports WHERE employee_id = ?', [$employeeId]);
+                $car = DB::selectOne('SELECT * FROM cars WHERE employee_id = ?', [$employeeId]);
 
                 return response()->json([
                     'success' => true,
@@ -583,13 +582,30 @@ class EmployeeUserController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Ошибка при обновлении данных: ' . $e->getMessage(),
+                    'message' => 'Ошибка при обновлении данных: '.$e->getMessage(),
                 ], 422);
             }
 
             return redirect()->back()
-                ->with('error', 'Ошибка при обновлении данных: ' . $e->getMessage())
+                ->with('error', 'Ошибка при обновлении данных: '.$e->getMessage())
                 ->withInput();
+        }
+    }
+
+    public function getRoles()
+    {
+        try {
+            $roles = DB::table('roles')->get();
+
+            return response()->json($roles);
+        } catch (\Exception $e) {
+            Log::error('Error in EmployeeUserController@getRoles: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении списка ролей',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -603,33 +619,33 @@ class EmployeeUserController extends Controller
                 'employee_id' => 'required|exists:employees,id',
             ]);
 
-            if (!$validated) {
+            if (! $validated) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Ошибка при удалении сотрудника',
-                    'error' => $validated->errors()
+                    'error' => $validated->errors(),
                 ], 400);
             }
 
             $employeeId = $request->input('employee_id');
 
             DB::commit();
-            
-            $employee = DB::selectOne("SELECT * FROM employees WHERE id = ?", [$employeeId]);
-            
+
+            $employee = DB::selectOne('SELECT * FROM employees WHERE id = ?', [$employeeId]);
+
             $user_id = $employee->user_id;
 
             if ($user_id === Auth::user()->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Нельзя удалить самого себя',
-                    'error' => 'Ошибка при удалении сотрудника'
+                    'error' => 'Ошибка при удалении сотрудника',
                 ], 200);
-            } 
-            
+            }
+
             DB::beginTransaction();
 
-            $user_exists = DB::select("SELECT * FROM users WHERE id = ?", [$user_id]);
+            $user_exists = DB::select('SELECT * FROM users WHERE id = ?', [$user_id]);
 
             // Тестовый response
             // return response()->json([
@@ -643,26 +659,26 @@ class EmployeeUserController extends Controller
             //     'Auth::user()->id' => Auth::user()->id
             // ], 200);
 
-            $user_employee = DB::update("UPDATE employees SET is_deleted = true WHERE id = ?", [$employeeId]);
+            $user_employee = DB::update('UPDATE employees SET is_deleted = true WHERE id = ?', [$employeeId]);
 
-            if (!$user_exists) {
-                $res_user_employee = DB::update("UPDATE users SET password = null WHERE id = ?", [$user_id]);
+            if (! $user_exists) {
+                $res_user_employee = DB::update('UPDATE users SET password = null WHERE id = ?', [$user_id]);
             }
 
             DB::commit();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Сотрудник успешно удален',
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Ошибка при удалении сотрудника: ' . $e->getMessage());
+            \Log::error('Ошибка при удалении сотрудника: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при удалении сотрудника: ' . $e->getMessage(),
+                'message' => 'Ошибка при удалении сотрудника: '.$e->getMessage(),
             ], 500);
         }
     }
 }
-

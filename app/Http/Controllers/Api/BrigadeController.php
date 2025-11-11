@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BrigadeController extends Controller
 {
@@ -12,7 +13,17 @@ class BrigadeController extends Controller
      */
     public function index()
     {
-        //
+        try {
+            //
+        } catch (\Exception $e) {
+            Log::error('Error in Api\BrigadeController@index: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -20,7 +31,17 @@ class BrigadeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try {
+            //
+        } catch (\Exception $e) {
+            Log::error('Error in Api\BrigadeController@store: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -28,7 +49,17 @@ class BrigadeController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try {
+            //
+        } catch (\Exception $e) {
+            Log::error('Error in Api\BrigadeController@show: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -36,7 +67,17 @@ class BrigadeController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        try {
+            //
+        } catch (\Exception $e) {
+            Log::error('Error in Api\BrigadeController@update: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -44,6 +85,16 @@ class BrigadeController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            //
+        } catch (\Exception $e) {
+            Log::error('Error in Api\BrigadeController@destroy: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
