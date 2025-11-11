@@ -27,23 +27,19 @@ class LogRequestMiddleware
         $executionTime = (int) ((microtime(true) - $startTime) * 1000); // в миллисекундах
 
         try {
-            // Записываем информацию о запросе в базу данных
-            DB::table('request_logs')->insert([
+            // Записываем информацию о запросе в лог-файл
+            Log::info('Request handled', [
                 'method' => $request->method(),
                 'url' => $request->fullUrl(),
-                'ip_address' => $request->ip(),
+                'status' => $response->getStatusCode(),
+                'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
-                'request_headers' => json_encode($request->headers->all()),
-                'request_body' => $request->getContent() ? json_encode($request->all()) : null,
-                'response_status' => $response->getStatusCode(),
-                'execution_time' => $executionTime,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'execution_time_ms' => $executionTime,
             ]);
 
         } catch (\Exception $e) {
             // В случае ошибки логируем её, но не прерываем выполнение приложения
-            Log::error('Failed to log request to database: '.$e->getMessage());
+            Log::error('Failed to log request: '.$e->getMessage());
         }
 
         return $response;

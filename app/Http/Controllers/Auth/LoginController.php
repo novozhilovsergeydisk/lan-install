@@ -53,6 +53,7 @@ class LoginController extends Controller
             ]);
 
             if (Auth::attempt([$fieldType => $login, 'password' => $password], $request->filled('remember'))) {
+                \Log::info('Пользователь успешно авторизован.');
                 \Log::info('Authentication successful', [
                     'user_id' => Auth::id(),
                     'user_agent' => $request->userAgent(),
