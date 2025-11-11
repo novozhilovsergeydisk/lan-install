@@ -19,45 +19,26 @@ class AddUserRolesToView
      */
     public function handle(Request $request, Closure $next)
     {
-        \Log::emergency('AddUserRolesToView: EMERGENCY Проверка аутентификации');
-        file_put_contents('/var/www/lan-install/storage/logs/middleware_test.log', 'middleware ' . now() . PHP_EOL, FILE_APPEND);
-        
         if (Auth::check()) {
             $user = $request->user();
-            \Log::info('AddUserRolesToView: Пользователь аутентифицирован', [
-                'user_id' => $user->id,
-                'email' => $user->email
-            ]);
 
             if (!isset($user->employee)) {
-                // \Log::info('AddUserRolesToView: Связанный сотрудник не найден');
-                
                 $employee = DB::table('employees')
                     ->where('user_id', $user->id)
                     ->first();
                 
                 if ($employee) {
                     $user->employee = $employee;
-                    // \Log::info('AddUserRolesToView: Поиск связанного сотрудника завершен');
-                } else {
-                    // \Log::warning('AddUserRolesToView: Пользователь не имеет связанного сотрудника');
                 }
             }
             
             // Загружаем роли, если они еще не загружены
             if (!isset($user->roles)) {
-                // \Log::info('AddUserRolesToView: Роли не загружены, загружаем из базы');
-                
                 $roles = DB::table('user_roles')
                     ->join('roles', 'user_roles.role_id', '=', 'roles.id')
                     ->where('user_roles.user_id', $user->id)
                     ->pluck('roles.name')
                     ->toArray();
-                
-                // \Log::info('AddUserRolesToView: Загружены роли из базы', [
-                //     'user_id' => $user->id,
-                //     'roles' => $roles
-                // ]);
                 
                 // Устанавливаем роли и флаги
                 $user->roles = $roles;
@@ -66,25 +47,10 @@ class AddUserRolesToView
                 $user->isFitter = in_array('fitter', $roles);
                 $user->employee = $employee;
                 $user->test = 'proxima';
-                
-                // \Log::info('AddUserRolesToView: Установлены флаги ролей', [
-                //     'user_id' => $user->id,
-                //     'isAdmin' => $user->isAdmin,
-                //     'isUser' => $user->isUser,
-                //     'isFitter' => $user->isFitter
-                // ]);
-            } else {
-                // \Log::info('AddUserRolesToView: Роли уже загружены', [
-                //     'user_id' => $user->id,
-                //     'roles' => $user->roles
-                // ]);
             }
             
             // Делаем пользователя доступным во всех представлениях
             view()->share('user', $user);
-            // \Log::info('AddUserRolesToView: Пользователь добавлен в шаблоны');
-        } else {
-            \Log::info('AddUserRolesToView: Пользователь не аутентифицирован');
         }
 
         $response = $next($request);
