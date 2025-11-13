@@ -75,7 +75,7 @@ class PlanningRequestController extends Controller
                 $contactString = $rowData['контакт'] ?? '';
                 $phone = '';
                 $fio = $contactString;
-                if (preg_match('/(\+7|8)[\s\(]?\d{3}[\s\)]?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/', $contactString, $matches)) {
+                if (preg_match('/((?:\+7|8)[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})/', $contactString, $matches)) {
                     $phone = $matches[0];
                     $fio = trim(str_replace($phone, '', $fio));
                 }
@@ -85,6 +85,15 @@ class PlanningRequestController extends Controller
 
                 // 4. Get Comment
                 $comment = $rowData['комментарии к монтажу'] ?? '';
+                $panelCount = $row[3] ?? ''; // Assuming 4th column is index 3
+                $panelLocation = $row[4] ?? ''; // Assuming 5th column is index 4
+
+                if (!empty($panelCount)) {
+                    $comment .= (!empty($comment) ? ', ' : '') . 'количество панелей: ' . $panelCount;
+                }
+                if (!empty($panelLocation)) {
+                    $comment .= (!empty($comment) ? ', ' : '') . 'место установки панели (кабинет): ' . $panelLocation;
+                }
 
                 $parsedRowData = [
                     'city_name' => $cityName,
@@ -167,31 +176,8 @@ class PlanningRequestController extends Controller
         $phone = trim($rowData['phone'] ?? '');
         $organization = trim($rowData['organization'] ?? '');
 
-        if (empty($fio) && empty($phone) && empty($organization)) {
-            return null;
-        }
-
-        $conditions = [];
-        if (!empty($organization)) {
-            $conditions['organization'] = $organization;
-        }
-        if (!empty($fio)) {
-            $conditions['fio'] = $fio;
-        }
-        if (!empty($phone)) {
-            $conditions['phone'] = $phone;
-        }
-
-        if (empty($conditions)) {
-            return null;
-        }
-
-        $client = DB::table('clients')->where($conditions)->first();
-
-        if ($client) {
-            return $client->id;
-        }
-
+        // Для каждой строки в Excel-файле создается новый клиент.
+        // Это гарантирует, что каждая заявка получает уникальный client_id.
         return DB::table('clients')->insertGetId([
             'fio' => $fio,
             'phone' => $phone,

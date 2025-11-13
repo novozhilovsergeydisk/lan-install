@@ -1802,8 +1802,8 @@ export function initUploadRequestsHandler() {
     const uploadSubmitButton = document.getElementById('uploadRequestsSubmit');
     if (uploadSubmitButton) {
         uploadSubmitButton.addEventListener('click', async () => {
-            showAlert('Функция загрузки заявок из Excel в разработке', 'warning');
-            return;
+            // showAlert('Функция загрузки заявок из Excel в разработке', 'warning');
+            // return;
             const requestsFileElement = document.getElementById('requestsFile');
             if (requestsFileElement && requestsFileElement.files.length > 0) {
                 const file = requestsFileElement.files[0];
