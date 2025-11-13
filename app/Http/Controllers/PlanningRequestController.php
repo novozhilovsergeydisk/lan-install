@@ -25,7 +25,7 @@ class PlanningRequestController extends Controller
             $data = $worksheet->toArray();
 
             $data = array_filter($data, function ($row) {
-                return ! empty(array_filter($row, fn ($value) => $value !== null && $value !== ''));
+                return !empty(array_filter($row, fn($value) => $value !== null && $value !== ''));
             });
 
             if (empty($data)) {
@@ -33,16 +33,22 @@ class PlanningRequestController extends Controller
             }
 
             $headers = array_shift($data);
-            $expectedHeaders = ['client_fio', 'client_phone', 'client_organization', 'comment', 'city_name', 'district', 'street', 'houses'];
+            
+            $normalizedHeaders = array_map(function($h) {
+                return trim(mb_strtolower($h));
+            }, $headers);
 
-            // For case-insensitive and space-trimming header check
-            $normalizedHeaders = array_map(fn ($h) => trim(strtolower($h)), $headers);
-            $normalizedExpectedHeaders = array_map(fn ($h) => trim(strtolower($h)), $expectedHeaders);
+            $expectedHeaders = [
+                'гбоу',
+                'адрес организации',
+                'контакт',
+                'комментарии к монтажу'
+            ];
 
-            if (count(array_intersect($normalizedExpectedHeaders, $normalizedHeaders)) !== count($normalizedExpectedHeaders)) {
+            if (count(array_intersect($expectedHeaders, $normalizedHeaders)) !== count($expectedHeaders)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Неверные заголовки в файле. Ожидаются: '.implode(', ', $expectedHeaders),
+                    'message' => 'Неверные заголовки в файле. Обязательные колонки: ' . implode(', ', $expectedHeaders),
                     'headers_found' => $headers,
                 ], 400);
             }
@@ -50,20 +56,52 @@ class PlanningRequestController extends Controller
             DB::beginTransaction();
             $createdRequests = [];
 
-            foreach ($data as $row) {
-                $rowData = array_combine($normalizedHeaders, array_pad($row, count($normalizedHeaders), null));
+            $headerMap = array_flip($normalizedHeaders);
 
-                // 1. Find or create address
-                $addressId = $this->findOrCreateAddress($rowData);
+            foreach ($data as $rowIndex => $row) {
+                $rowData = [];
+                foreach ($headerMap as $normalizedHeader => $index) {
+                    $rowData[$normalizedHeader] = $row[$index] ?? null;
+                }
 
-                // 2. Find or create client
-                $clientId = $this->findOrCreateClient($rowData);
+                // 1. Parse Address
+                $addressString = $rowData['адрес организации'] ?? '';
+                $addressParts = explode(',', $addressString, 2);
+                $cityString = trim($addressParts[0] ?? '');
+                $streetString = trim($addressParts[1] ?? '');
+                $cityName = str_replace('город ', '', $cityString);
 
-                // 3. Create request
+                // 2. Parse Contact
+                $contactString = $rowData['контакт'] ?? '';
+                $phone = '';
+                $fio = $contactString;
+                if (preg_match('/(\+7|8)[\s\(]?\d{3}[\s\)]?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/', $contactString, $matches)) {
+                    $phone = $matches[0];
+                    $fio = trim(str_replace($phone, '', $fio));
+                }
+
+                // 3. Get Organization
+                $organization = $rowData['гбоу'] ?? '';
+
+                // 4. Get Comment
+                $comment = $rowData['комментарии к монтажу'] ?? '';
+
+                $parsedRowData = [
+                    'city_name' => $cityName,
+                    'street' => $streetString,
+                    'fio' => $fio,
+                    'phone' => $phone,
+                    'organization' => $organization,
+                    'comment' => $comment,
+                ];
+
+                $addressId = $this->findOrCreateAddress($parsedRowData);
+                $clientId = $this->findOrCreateClient($parsedRowData);
+
                 $requestData = [
                     'client_id' => $clientId,
                     'address_id' => $addressId,
-                    'comment' => $rowData['comment'] ?? null,
+                    'comment' => $parsedRowData['comment'],
                 ];
 
                 $newRequest = $this->createPlanningRequest($requestData);
@@ -74,7 +112,7 @@ class PlanningRequestController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Заявки успешно загружены: '.count($createdRequests).' шт.',
+                'message' => 'Заявки успешно загружены: ' . count($createdRequests) . ' шт.',
                 'data' => $createdRequests,
             ]);
 
@@ -82,11 +120,11 @@ class PlanningRequestController extends Controller
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
-            Log::error('Ошибка при загрузке заявок из Excel: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Ошибка при загрузке заявок из Excel: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при обработке файла: '.$e->getMessage(),
+                'message' => 'Ошибка при обработке файла: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -94,22 +132,21 @@ class PlanningRequestController extends Controller
     private function findOrCreateAddress($rowData)
     {
         $cityName = trim($rowData['city_name'] ?? '');
-        $district = trim($rowData['district'] ?? '');
         $street = trim($rowData['street'] ?? '');
-        $houses = trim($rowData['houses'] ?? '');
 
-        if (empty($cityName) || empty($street) || empty($district) || empty($houses)) {
-            throw new \Exception('Недостаточно данных для адреса в одной из строк.');
+        if (empty($cityName) || empty($street)) {
+            throw new \Exception('Недостаточно данных для адреса в одной из строк. Обязательные поля: город, улица.');
         }
 
         $city = DB::table('cities')->where('name', 'ilike', $cityName)->first();
-        $cityId = $city ? $city->id : DB::table('cities')->insertGetId(['name' => $cityName, 'region_id' => 1]);
+        if (!$city) {
+            throw new \Exception("Город '{$cityName}' не найден в базе данных.");
+        }
+        $cityId = $city->id;
 
         $address = DB::table('addresses')
             ->where('city_id', $cityId)
             ->where('street', $street)
-            ->where('district', $district)
-            ->where('houses', $houses)
             ->first();
 
         if ($address) {
@@ -119,31 +156,37 @@ class PlanningRequestController extends Controller
         return DB::table('addresses')->insertGetId([
             'city_id' => $cityId,
             'street' => $street,
-            'district' => $district,
-            'houses' => $houses,
+            'district' => '', // Not provided in the new spec
+            'houses' => '',   // Not provided in the new spec
         ]);
     }
 
     private function findOrCreateClient($rowData)
     {
-        $fio = trim($rowData['client_fio'] ?? '');
-        $phone = trim($rowData['client_phone'] ?? '');
-        $organization = trim($rowData['client_organization'] ?? '');
+        $fio = trim($rowData['fio'] ?? '');
+        $phone = trim($rowData['phone'] ?? '');
+        $organization = trim($rowData['organization'] ?? '');
 
         if (empty($fio) && empty($phone) && empty($organization)) {
-            // Allow creating requests without a client
             return null;
         }
 
-        $query = DB::table('clients');
-        if (! empty($phone)) {
-            $query->where('phone', $phone);
-        } elseif (! empty($fio)) {
-            $query->where('fio', $fio);
-        } else {
-            $query->where('organization', $organization);
+        $conditions = [];
+        if (!empty($organization)) {
+            $conditions['organization'] = $organization;
         }
-        $client = $query->first();
+        if (!empty($fio)) {
+            $conditions['fio'] = $fio;
+        }
+        if (!empty($phone)) {
+            $conditions['phone'] = $phone;
+        }
+
+        if (empty($conditions)) {
+            return null;
+        }
+
+        $client = DB::table('clients')->where($conditions)->first();
 
         if ($client) {
             return $client->id;
@@ -173,9 +216,10 @@ class PlanningRequestController extends Controller
             'operator_id' => $employeeId,
             'number' => $requestNumber,
             'request_date' => now()->toDateString(),
+            'execution_date' => null, // Not provided in the new spec
         ]);
 
-        if (! empty($data['comment'])) {
+        if (!empty($data['comment'])) {
             $commentId = DB::table('comments')->insertGetId([
                 'comment' => $data['comment'],
                 'created_at' => now(),

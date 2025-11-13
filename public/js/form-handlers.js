@@ -1801,12 +1801,57 @@ export function initUploadRequestsHandler() {
 
     const uploadSubmitButton = document.getElementById('uploadRequestsSubmit');
     if (uploadSubmitButton) {
-        uploadSubmitButton.addEventListener('click', () => {
-            const requestsFile = document.getElementById('requestsFile');
-            if (requestsFile && requestsFile.files.length > 0) {
-                console.log('Выбран файл для загрузки:', requestsFile.files[0].name);
+        uploadSubmitButton.addEventListener('click', async () => {
+            showAlert('Функция загрузки заявок из Excel в разработке', 'warning');
+            return;
+            const requestsFileElement = document.getElementById('requestsFile');
+            if (requestsFileElement && requestsFileElement.files.length > 0) {
+                const file = requestsFileElement.files[0];
+                console.log('Выбран файл для загрузки:', file.name);
+
+                const formData = new FormData();
+                formData.append('requests_file', file);
+
+                // Add loading indicator
+                uploadSubmitButton.disabled = true;
+                uploadSubmitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
+
+                try {
+                    const response = await fetch('/planning-requests/upload-excel', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        showAlert('Файл успешно загружен и обработан.', 'success');
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('uploadRequestsModal'));
+                        modal.hide();
+                        // Optionally, reload the page or update the requests list
+                        if (typeof loadPlanningRequests === "function") {
+                            loadPlanningRequests();
+                        } else {
+                            location.reload();
+                        }
+                    } else {
+                        showAlert(data.message || 'Произошла ошибка при загрузке файла.', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Ошибка при загрузке файла:', error);
+                    showAlert('Произошла ошибка сети.', 'danger');
+                } finally {
+                    // Restore button state
+                    uploadSubmitButton.disabled = false;
+                    uploadSubmitButton.innerHTML = 'Загрузить';
+                }
+
             } else {
-                console.log('Файл не выбран.');
+                showAlert('Файл не выбран.', 'warning');
             }
         });
     }
