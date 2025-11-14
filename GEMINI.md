@@ -1,98 +1,114 @@
 # GEMINI.md
 
-## Project Overview
+## Обзор проекта
 
-This is a Laravel-based web application named **lan-install.online**. Its primary purpose is to manage installation and maintenance requests for LAN networks. The application includes features for managing work brigades, tracking service requests, generating reports, and handling geographical data using Yandex.Maps.
+Это веб-приложение на базе Laravel 12 под названием **lan-install.online**. Его основная цель — управление заявками на установку и обслуживание 
+локальных сетей, установки систем видеонаблюдения (видеокамеры) и монипторинга (панелт) в учебных учреждениях и других организациях разного 
+профиля. Приложение включает в себя функции управления рабочими бригадами, создания, редактирования и отслеживания заявок на обслуживание, 
+создания отчетов и обработки географических данных с помощью Яндекс.Карт.
 
-### Key Technologies:
+## Ключевые рекомендации
 
-*   **Backend:** Laravel (PHP)
-*   **Frontend:** JavaScript, Vite, Tailwind CSS, Bootstrap
-*   **Database:** Postgresql (inferred from `README.md`)
-*   **APIs:** Yandex.Maps
+* Отвечай на все мои вопросы на русском языке
+* Выполнять при необходимости (в том числе при редактировании контроллеров) команду для определения структуры базы данных lan_install, 
+используемой в проекте
+```bash
+sudo psql -U postgres -d lan_install -c "\d
+```
+* Команду git выполнять только, когда я тебя об этом попрошу
+* Новые обработчики JavaScript следует добавлять в `public/js/form-handlers.js`.
+* Не размещать код обработчика JS непосредственно в Blade-файлах, таких как `welcome.blade.php`.
+* Файл `public/js/init.js` используеть для инициализации обработчиков и другого кода после полной загрузки DOM.
 
-### Architecture:
+## Ключевые технологии:
 
-The project follows a standard Laravel MVC (Model-View-Controller) architecture.
+* **Бэкенд:** Laravel 12 (PHP)
+* **Фронтенд:** JavaScript, Tailwind CSS, Bootstrap
+* **База данных:** Postgresql
+* **API:** Яндекс.Карты
+* **bash скрипты для автоматизации прикладных задач и просмотра логов
 
-*   **Models:** Located in `app/Models/`, they interact with the database.
-*   **Views:** Blade templates located in `resources/views/`, responsible for the presentation layer.
-*   **Controllers:** Located in `app/Http/Controllers/`, they handle user requests and business logic.
-*   **Routes:** Defined in `routes/web.php` and `routes/api.php`, mapping URLs to controller actions.
-*   **Frontend Assets:** Managed by Vite and located in `resources/js/` and `resources/css/`.
+## Архитектура:
 
-## Building and Running
+Проект следует стандартной архитектуре Laravel MVC (модель-представление-контроллер).
 
-### Prerequisites:
+* **Модели:** Не используюся в проекте, применются нативные sql запросы и фасад DB для доступа к объектам базы данных. 
+* **Представления:** Шаблоны Blade, расположенные в каталоге `resources/views/`, отвечают за уровень представления.
+* **Контроллеры:** Расположены в каталоге `app/Http/Controllers/`, обрабатывают пользовательские запросы и бизнес-логику.
+* **Маршруты:** Определены в каталогах `routes/web.php` и `routes/api.php`, сопоставляют URL-адреса с действиями контроллера.
 
-*   PHP 8.2 or higher
-*   Composer
-*   Node.js and npm
-*   Postgresql
+## Сборка и запуск
 
-### Setup and Execution:
+### Необходимые условия:
 
-1.  **Install PHP dependencies:**
-    ```bash
-    composer install
-    ```
+* PHP 8.2 или выше
+* Composer
+* Node.js и npm
+* Postgresql
 
-2.  **Install JavaScript dependencies:**
-    ```bash
-    npm install
-    ```
+### Настройка и запуск:
 
-3.  **Configure environment:**
-    Copy `.env.example` to `.env` and fill in your database credentials and other settings.
-    ```bash
-    cp .env.example .env
-    ```
+1. **Установите зависимости PHP:**
+```bash
+Composer install
+```
 
-4.  **Generate application key:**
-    ```bash
-    php artisan key:generate
-    ```
+2. **Установите зависимости JavaScript:**
+```bash
+npm install
+```
 
-5.  **Run database migrations:**
-    ```bash
-    php artisan migrate
-    ```
+3. **Настройте окружение:**
 
-6.  **Seed the database (optional):**
-    ```bash
-    php artisan db:seed
-    ```
+Скопируйте `.env.example` в `.env` и заполните учётные данные вашей базы данных и другие настройки. ```bash
+cp .env.example .env
+```
 
-7.  **Build frontend assets:**
-    ```bash
-    npm run build
-    ```
+4. **Сгенерировать ключ приложения:**
+```bash
+php artisan key:generate
+```
 
-8.  **Run the development server:**
-    ```bash
-    php artisan serve
-    ```
-    Alternatively, for a complete development environment including the queue listener and logs, use:
-    ```bash
-    composer run dev
-    ```
+5. **Запустить миграцию базы данных (только системные таблицы):**
+```bash
+php artisan migrate
+```
 
-## Development Conventions
+6. **Заполнить базу данных (необязательно):**
+```bash
+php artisan db:seed
+```
 
-### Testing:
+7. **Сборка ресурсов фронтенда:**
+```bash
+npm run build
+```
 
-*   Run the test suite using the following command:
-    ```bash
-    composer run test
-    ```
+8. **Запустить сервер разработки:**
+```bash
+php artisan serve
+```
+Альтернативно, для создания полноценной среды разработки, включая прослушиватель очереди и журналы, используйте:
+```bash
+composer run dev
+```
 
-### Code Style:
+## Соглашения о разработке
 
-*   The project uses `laravel/pint` for PHP code style. To format the code, run:
-    ```bash
-    vendor/bin/pint --fix
-    ```
+### Тестирование:
+
+* Запустите набор тестов с помощью следующей команды:
+```bash
+Composer run test
+```
+
+### Стиль кода:
+
+* В проекте используется стиль PHP-кода `laravel/pint`. Чтобы отформатировать код, выполните:
+```bash
+vendor/bin/pint
+```
 
 ### API:
 
-*   API documentation is available in `docs/API.md`.
+* Документация по API доступна в `docs/API.md`.

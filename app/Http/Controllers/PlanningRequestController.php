@@ -25,7 +25,7 @@ class PlanningRequestController extends Controller
             $data = $worksheet->toArray();
 
             $data = array_filter($data, function ($row) {
-                return !empty(array_filter($row, fn($value) => $value !== null && $value !== ''));
+                return ! empty(array_filter($row, fn ($value) => $value !== null && $value !== ''));
             });
 
             if (empty($data)) {
@@ -33,8 +33,8 @@ class PlanningRequestController extends Controller
             }
 
             $headers = array_shift($data);
-            
-            $normalizedHeaders = array_map(function($h) {
+
+            $normalizedHeaders = array_map(function ($h) {
                 return trim(mb_strtolower($h));
             }, $headers);
 
@@ -42,13 +42,13 @@ class PlanningRequestController extends Controller
                 'гбоу',
                 'адрес организации',
                 'контакт',
-                'комментарии к монтажу'
+                'комментарии к монтажу',
             ];
 
             if (count(array_intersect($expectedHeaders, $normalizedHeaders)) !== count($expectedHeaders)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Неверные заголовки в файле. Обязательные колонки: ' . implode(', ', $expectedHeaders),
+                    'message' => 'Неверные заголовки в файле. Обязательные колонки: '.implode(', ', $expectedHeaders),
                     'headers_found' => $headers,
                 ], 400);
             }
@@ -88,11 +88,11 @@ class PlanningRequestController extends Controller
                 $panelCount = $row[3] ?? ''; // Assuming 4th column is index 3
                 $panelLocation = $row[4] ?? ''; // Assuming 5th column is index 4
 
-                if (!empty($panelCount)) {
-                    $comment .= (!empty($comment) ? ', ' : '') . 'количество панелей: ' . $panelCount;
+                if (! empty($panelCount)) {
+                    $comment .= (! empty($comment) ? ', ' : '').'количество панелей: '.$panelCount;
                 }
-                if (!empty($panelLocation)) {
-                    $comment .= (!empty($comment) ? ', ' : '') . 'место установки панели (кабинет): ' . $panelLocation;
+                if (! empty($panelLocation)) {
+                    $comment .= (! empty($comment) ? ', ' : '').'место установки панели (кабинет): '.$panelLocation;
                 }
 
                 $parsedRowData = [
@@ -121,7 +121,7 @@ class PlanningRequestController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Заявки успешно загружены: ' . count($createdRequests) . ' шт.',
+                'message' => 'Заявки успешно загружены: '.count($createdRequests).' шт.',
                 'data' => $createdRequests,
             ]);
 
@@ -129,11 +129,11 @@ class PlanningRequestController extends Controller
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
-            Log::error('Ошибка при загрузке заявок из Excel: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Ошибка при загрузке заявок из Excel: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при обработке файла: ' . $e->getMessage(),
+                'message' => 'Ошибка при обработке файла: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -148,7 +148,7 @@ class PlanningRequestController extends Controller
         }
 
         $city = DB::table('cities')->where('name', 'ilike', $cityName)->first();
-        if (!$city) {
+        if (! $city) {
             throw new \Exception("Город '{$cityName}' не найден в базе данных.");
         }
         $cityId = $city->id;
@@ -205,7 +205,7 @@ class PlanningRequestController extends Controller
             'execution_date' => null, // Not provided in the new spec
         ]);
 
-        if (!empty($data['comment'])) {
+        if (! empty($data['comment'])) {
             $commentId = DB::table('comments')->insertGetId([
                 'comment' => $data['comment'],
                 'created_at' => now(),
