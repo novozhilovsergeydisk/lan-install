@@ -1778,6 +1778,11 @@ class HomeController extends Controller
                     c.created_at AS formatted_date,
                     (
                         SELECT COUNT(*)::int
+                        FROM comment_edits ce
+                        WHERE ce.comment_id = c.id
+                    ) AS edits_count,
+                    (
+                        SELECT COUNT(*)::int
                         FROM comment_photos cp
                         WHERE cp.comment_id = c.id
                     ) AS photos_count,
@@ -3198,6 +3203,26 @@ class HomeController extends Controller
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
                 ],
+            ], 500);
+        }
+    }
+    public function getCommentHistory($commentId)
+    {
+        try {
+            $history = DB::table('comment_edits as ce')
+                ->join('users as u', 'ce.edited_by_user_id', '=', 'u.id')
+                ->leftJoin('employees as e', 'u.id', '=', 'e.user_id')
+                ->where('ce.comment_id', $commentId)
+                ->select('ce.old_comment', 'ce.edited_at', 'u.name as user_name', 'e.fio as employee_fio')
+                ->orderBy('ce.edited_at', 'desc')
+                ->get();
+
+            return response()->json(['success' => true, 'data' => $history]);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при получении истории правок комментария: '.$e->getMessage());
+            return response()->json([
+                'success' => false, 
+                'message' => 'Ошибка при получении истории правок'
             ], 500);
         }
     }

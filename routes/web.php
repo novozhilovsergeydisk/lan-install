@@ -341,3 +341,4 @@ Route::get('/test-log', function () {
         'log_file_writable' => is_writable(storage_path('logs/laravel.log')),
     ]);
 });
+Route::get('/api/comments/{commentId}/history', [App\Http\Controllers\HomeController::class, 'getCommentHistory'])->name('api.comments.history');

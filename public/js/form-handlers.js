@@ -5886,3 +5886,47 @@ export function initCommentEditHandlers() {
     }
 }
 
+
+export function initCommentHistoryModalHandler() {
+    const historyModal = document.getElementById('commentHistoryModal');
+    if (historyModal) {
+        historyModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const commentId = button.getAttribute('data-comment-id');
+            const historyContainer = document.getElementById('commentHistoryContainer');
+
+            // Show spinner while loading
+            historyContainer.innerHTML = `<div class="text-center my-4">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Загрузка...</span>
+                                                </div>
+                                                <p class="mt-2">Загрузка истории...</p>
+                                            </div>`;
+
+            fetch(`/api/comments/${commentId}/history`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.data.length > 0) {
+                        let html = '<ul class="list-group list-group-flush">';
+                        result.data.forEach(edit => {
+                            const formattedDate = new Date(edit.edited_at).toLocaleString('ru-RU');
+                            const editorName = edit.employee_fio || edit.user_name || 'Неизвестный';
+                            html += `<li class="list-group-item">
+                                        <p class="mb-1"><strong>Старая версия:</strong></p>
+                                        <div class="p-2 bg-body-secondary border rounded mb-2">${edit.old_comment}</div>
+                                        <small class="text-muted">Отредактировано: ${editorName} - ${formattedDate}</small>
+                                     </li>`;
+                        });
+                        html += '</ul>';
+                        historyContainer.innerHTML = html;
+                    } else {
+                        historyContainer.innerHTML = '<div class="alert alert-info">История изменений для этого комментария отсутствует.</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при загрузке истории комментариев:', error);
+                    historyContainer.innerHTML = '<div class="alert alert-danger">Не удалось загрузить историю изменений.</div>';
+                });
+        });
+    }
+}

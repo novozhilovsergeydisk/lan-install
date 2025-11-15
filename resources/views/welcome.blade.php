@@ -1286,11 +1286,12 @@
 
 <!-- Импортируем необходимые функции из form-handlers.js -->
 <script type="module">
-    import { initEmployeeButtons } from "{{ asset('js/form-handlers.js') }}";
+    import { initEmployeeButtons, initCommentHistoryModalHandler } from "{{ asset('js/form-handlers.js') }}";
     
     // Инициализируем кнопки при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
         initEmployeeButtons();
+        initCommentHistoryModalHandler();
     });
 </script>
 
@@ -1796,21 +1797,29 @@
                                                         return '';
                                                     }
 
+                                                    let editButton = '';
                                                     if (index === comments.length - 1) {
                                                         // For the last comment, keep the special button
-                                                        return `<button class="btn btn-sm btn-outline-primary edit-comment-btn">
+                                                        editButton = `<button class="btn btn-sm btn-outline-primary edit-comment-btn">
                                                                     Редактировать
                                                                 </button>`;
                                                     } else {
                                                         // For older comments, use the new modal-triggering button
                                                         if (window.App.user.isAdmin || (isAuthor && isToday)) {
-                                                            return `<button class="btn btn-sm btn-outline-secondary edit-older-comment-btn" data-comment-id="${comment.id}">
+                                                            editButton = `<button class="btn btn-sm btn-outline-secondary edit-older-comment-btn" data-comment-id="${comment.id}">
                                                                         Редактировать
                                                                     </button>`;
-                                                        } else {
-                                                            return '';
                                                         }
                                                     }
+
+                                                    let historyButton = '';
+                                                    if (comment.edits_count > 0 && window.App.user.isAdmin) {
+                                                        historyButton = `<button type="button" class="btn btn-sm btn-outline-info view-comment-history-btn" data-bs-toggle="modal" data-bs-target="#commentHistoryModal" data-comment-id="${comment.id}">
+                                                                            История
+                                                                        </button>`;
+                                                    }
+
+                                                    return editButton + historyButton;
                                                 })()}
                                             </div>
                                         </div>
@@ -2064,6 +2073,29 @@
                     <div id="photoReportContainer"></div>
                 </div>
                 
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно истории комментариев -->
+<div class="modal fade" id="commentHistoryModal" tabindex="-1" aria-labelledby="commentHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="commentHistoryModalLabel">История изменений комментария</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="commentHistoryContainer">
+                <!-- История будет загружена сюда -->
+                <div class="text-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
             </div>
         </div>
     </div>
@@ -4118,3 +4150,4 @@
 </body>
 
 </html>
+
