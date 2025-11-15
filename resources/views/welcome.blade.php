@@ -121,6 +121,7 @@
         // Экспортируем роль и флаги ролей в JS
         window.App = window.App || {};
         window.App.user = {
+            id: @json($user->id ?? null),
             roles: @json($user->roles ?? []),
             isAdmin: @json($user->isAdmin ?? false),
             isUser: @json($user->isUser ?? false),
@@ -1786,11 +1787,27 @@
                                             </div>
 
                                             <div class="d-flex flex-wrap align-items-center mt-2" style="gap: 0.5rem;">
-                                                ${index === comments.length - 1 ? 
-                                                    `<button class="btn btn-sm btn-outline-primary edit-comment-btn">
-                                                        Редактировать
-                                                    </button>` : ''
-                                                }
+                                                ${(() => {
+                                                    const isAuthor = window.App.user.id && comment.user_id == window.App.user.id;
+                                                    const isToday = new Date(comment.created_at).toDateString() === new Date().toDateString();
+                                                    const canEdit = window.App.user.isAdmin || (isAuthor && isToday);
+
+                                                    if (!canEdit) {
+                                                        return '';
+                                                    }
+
+                                                    if (index === comments.length - 1) {
+                                                        // For the last comment, keep the special button
+                                                        return `<button class="btn btn-sm btn-outline-primary edit-comment-btn">
+                                                                    Редактировать
+                                                                </button>`;
+                                                    } else {
+                                                        // For older comments, use the new modal-triggering button
+                                                        return `<button class="btn btn-sm btn-outline-secondary edit-older-comment-btn" data-comment-id="${comment.id}">
+                                                                    Редактировать
+                                                                </button>`;
+                                                    }
+                                                })()}
                                             </div>
                                         </div>
                                     </div>`;
@@ -4059,6 +4076,31 @@
     </div>
 </div>
 
+<!-- Modal for Editing Comments -->
+<div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editCommentModalLabel">Редактировать комментарий</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editCommentForm">
+          <input type="hidden" id="editCommentId" name="comment_id">
+          <div class="mb-3">
+            <label for="editCommentContent" class="form-label">Текст комментария</label>
+            <textarea class="form-control" id="editCommentContent" name="content" rows="5" required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="saveCommentChangesBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Подключаем скрипт для работы с модальными окнами -->
 <script type="module" src="{{ asset('js/modals.js') }}"></script>
 <script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
@@ -4067,6 +4109,7 @@
 <!--
 <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
 -->
+
 
 </body>
 

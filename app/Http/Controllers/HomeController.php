@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -1359,7 +1360,8 @@ class HomeController extends Controller
                 ], 500);
             }
         } catch (\Exception $e) {
-            Log::error('Error in HomeController@addComment: ' . $e->getMessage());
+            Log::error('Error in HomeController@addComment: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Критическая ошибка: '.$e->getMessage(),
@@ -1770,6 +1772,7 @@ class HomeController extends Controller
                     c.id,
                     c.comment,
                     c.created_at,
+                    rc.user_id,
                     COALESCE(u.name, 'Система') AS author_name,
                     COALESCE(e.fio, '') AS employee_full_name,
                     c.created_at AS formatted_date,
@@ -2238,48 +2241,67 @@ class HomeController extends Controller
     public function updateComment($id, Request $request)
     {
         $user = Auth::user();
+        $content = $request->input('content');
 
-        // Логируем входные данные
         \Log::info('Получен запрос на обновление комментария:', [
-            'id' => $id,
-            'content' => $request->input('content'),
+            'comment_id' => $id,
+            'user_id' => $user->id,
+            'content' => $content,
         ]);
 
+        DB::beginTransaction();
+        \Log::info('Transaction started.');
+
         try {
-            // Проверяем, существует ли комментарий
-            $comment = DB::table('comments')->where('id', $id)->first();
+            // Получаем комментарий и информацию о его авторе
+            $commentQuery = DB::table('comments as c')
+                ->join('request_comments as rc', 'c.id', '=', 'rc.comment_id')
+                ->select('c.id', 'c.comment', 'c.created_at', 'rc.user_id')
+                ->where('c.id', $id);
+
+            $comment = $commentQuery->first();
+            \Log::info('Comment fetched:', (array) $comment);
 
             if (! $comment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Комментарий не найден',
-                ], 404);
+                DB::rollBack();
+                \Log::warning('Comment not found, transaction rolled back.');
+
+                return response()->json(['success' => false, 'message' => 'Комментарий не найден'], 404);
             }
 
-            $sql = "SELECT * FROM user_roles WHERE user_id = {$user->id}";
-            $role = DB::select($sql);
+            // Проверяем права доступа
+            $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
+            $isAdmin = DB::table('user_roles')->where('user_id', $user->id)->where('role_id', $adminRoleId)->exists();
+            $isAuthor = ($comment->user_id == $user->id);
+            $isToday = Carbon::parse($comment->created_at)->isToday();
 
-            // return response()->json([
-            //     'success' => true,
-            //     'message' => 'Роль пользователя (тестовый режим)',
-            //     'sql' => $sql,
-            //     'role' => $role
-            // ], 200);
+            \Log::info('Permission check:', ['isAdmin' => $isAdmin, 'isAuthor' => $isAuthor, 'isToday' => $isToday]);
 
-            if ($role[0]->role_id != 1) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'У вас нет прав на обновление комментария!',
-                    'comment' => $comment,
-                ], 403);
+            if (! ($isAdmin || ($isAuthor && $isToday))) {
+                DB::rollBack();
+                \Log::warning('Permission denied, transaction rolled back.');
+
+                return response()->json(['success' => false, 'message' => 'У вас нет прав на обновление этого комментария'], 403);
             }
 
-            // Обновляем комментарий
-            DB::table('comments')
-                ->where('id', $id)
-                ->update([
-                    'comment' => $request->input('content'),
-                ]);
+            \Log::info('About to insert into comment_edits.');
+            // Сохраняем старую версию комментария
+            DB::table('comment_edits')->insert([
+                'comment_id' => $comment->id,
+                'old_comment' => $comment->comment ?? '', // Use empty string if null
+                'edited_by_user_id' => $user->id,
+                'edited_at' => now(),
+            ]);
+            \Log::info('Insert into comment_edits executed.');
+
+            \Log::info('About to update comments table.');
+            // Обновляем комментарий с помощью сырого SQL-запроса, чтобы избежать автоматического добавления 'updated_at'
+            DB::update('UPDATE comments SET comment = ? WHERE id = ?', [$content, $id]);
+            \Log::info('Update of comments table executed.');
+
+            \Log::info('About to commit transaction.');
+            DB::commit();
+            \Log::info('Transaction committed.');
 
             return response()->json([
                 'success' => true,
@@ -2288,7 +2310,8 @@ class HomeController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Ошибка при обновлении комментария:', [
+            DB::rollBack();
+            \Log::error('Ошибка при обновлении комментария, transaction rolled back:', [
                 'id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

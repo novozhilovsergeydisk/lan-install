@@ -5801,3 +5801,88 @@ export {
     initEmployeeButtons,
     loadCommentPhotos
 };
+
+export function initCommentEditHandlers() {
+    const commentsModalBody = document.getElementById('commentsContainer');
+    const editModalEl = document.getElementById('editCommentModal');
+    
+    if (!editModalEl) {
+        console.warn('Edit comment modal not found, handlers not initialized.');
+        return;
+    }
+
+    const editModal = new bootstrap.Modal(editModalEl);
+    let currentRequestIdForEdit = null;
+
+    // 1. Event listener for showing the edit modal
+    if (commentsModalBody) {
+        commentsModalBody.addEventListener('click', function (event) {
+            if (event.target.classList.contains('edit-older-comment-btn')) {
+                const button = event.target;
+                const commentId = button.dataset.commentId;
+                
+                const commentDiv = button.closest('.list-group-item').querySelector(`div[data-comment-id="${commentId}"]`);
+                
+                if (commentDiv) {
+                    const commentText = commentDiv.innerHTML.replace(/<br\s*[\/]?>/gi, "\n").replace(/<a[^>]*>|<\/a>/g, "");
+
+                    document.getElementById('editCommentId').value = commentId;
+                    document.getElementById('editCommentContent').value = commentText.trim();
+                    
+                    currentRequestIdForEdit = document.getElementById('commentRequestId').value;
+                    
+                    editModal.show();
+                }
+            }
+        });
+    }
+
+    // 2. Event listener for the "Save" button in the edit modal
+    const saveButton = document.getElementById('saveCommentChangesBtn');
+    if (saveButton) {
+        saveButton.addEventListener('click', function () {
+            const commentId = document.getElementById('editCommentId').value;
+            const content = document.getElementById('editCommentContent').value;
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+
+            fetch(`/api/comments/${commentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ content: content })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Комментарий успешно обновлен', 'success');
+                    editModal.hide();
+                    if (currentRequestIdForEdit) {
+                        if (typeof window.loadComments === 'function') {
+                            window.loadComments(currentRequestIdForEdit);
+                        } else {
+                            console.warn('Global function loadComments not found. Reloading page as a fallback.');
+                            location.reload();
+                        }
+                    }
+                } else {
+                    showAlert(data.message || 'Ошибка при обновлении', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating comment:', error);
+                showAlert('Произошла ошибка.', 'danger');
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = 'Сохранить';
+            });
+        });
+    }
+}
+
