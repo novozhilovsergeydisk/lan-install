@@ -1790,7 +1790,7 @@
                                                 ${(() => {
                                                     const isAuthor = window.App.user.id && comment.user_id == window.App.user.id;
                                                     const isToday = new Date(comment.created_at).toDateString() === new Date().toDateString();
-                                                    const canEdit = window.App.user.isAdmin || (isAuthor && isToday);
+                                                    const canEdit = window.App.user.isAdmin || isAuthor;
 
                                                     if (!canEdit) {
                                                         return '';
@@ -1803,9 +1803,13 @@
                                                                 </button>`;
                                                     } else {
                                                         // For older comments, use the new modal-triggering button
-                                                        return `<button class="btn btn-sm btn-outline-secondary edit-older-comment-btn" data-comment-id="${comment.id}">
-                                                                    Редактировать
-                                                                </button>`;
+                                                        if (window.App.user.isAdmin || (isAuthor && isToday)) {
+                                                            return `<button class="btn btn-sm btn-outline-secondary edit-older-comment-btn" data-comment-id="${comment.id}">
+                                                                        Редактировать
+                                                                    </button>`;
+                                                        } else {
+                                                            return '';
+                                                        }
                                                     }
                                                 })()}
                                             </div>
