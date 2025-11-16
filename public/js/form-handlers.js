@@ -329,6 +329,19 @@ export function initOpenRequestHandler() {
     });
 }
 
+// Обработчик кнопки дополнительного задания
+export function initOpenAdditionalTaskRequestHandler() {
+    document.addEventListener('click', async function(event) {
+        if (!event.target.closest('.open-additional-task-request-btn')) return;
+
+        const button = event.target.closest('.open-additional-task-request-btn');
+        const requestId = button.dataset.requestId;
+
+        // Тестовый вывод в консоль
+        console.log('Кнопка "Дополнительное задание" нажата для заявки ID:', requestId);
+    });
+}
+
 // Функция для форматирования даты
 export function DateFormated(date) {
     return date.split('.').reverse().join('-');
