@@ -158,6 +158,17 @@
     display: none;
 }
 
+.btn-custom-green {
+    color: #138B45 !important;
+    border-color: #138B45 !important;
+    background-color: transparent !important;
+}
+
+.btn-custom-green:hover, .btn-custom-green:hover i {
+    color: white !important;
+    background-color: #138B45 !important;
+}
+
 .btn-custom-brown {
     color: #8B4513 !important;
     border-color: #8B4513 !important;

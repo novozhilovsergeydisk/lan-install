@@ -2098,6 +2098,101 @@ class HomeController extends Controller
     }
 
     /**
+     * Open a specified request.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function openRequest($id, Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            // Загружаем роли пользователя
+            $sql = 'SELECT roles.name FROM user_roles
+                JOIN roles ON user_roles.role_id = roles.id
+                WHERE user_roles.user_id = '.$user->id;
+
+            $roles = DB::select($sql);
+
+            // Извлекаем только имена ролей из результатов запроса
+            $roleNames = array_map(function ($role) {
+                return $role->name;
+            }, $roles);
+
+            if (! in_array('admin', $roleNames)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'У вас нет прав для выполнения этого действия',
+                ], 403);
+            }
+
+            \Log::info('=== START openRequest ===', []);
+            \Log::info('ID заявки', ['id' => $id]);
+
+            $request_to_open = DB::table('requests')->where('id', $id)->first();
+
+            if (! $request_to_open) {
+                return response()->json(['success' => false, 'message' => 'Заявка не найдена'], 404);
+            }
+
+            // Check if the request was created today
+            $request_date = Carbon::parse($request_to_open->request_date)->toDateString();
+            $today = Carbon::now()->toDateString();
+
+            if ($request_date !== $today) {
+                return response()->json(['success' => false, 'message' => 'Открыть можно только заявку, созданную сегодня'], 403);
+            }
+
+            // Check if the request status is 'completed' (status_id = 4)
+            if ($request_to_open->status_id != 4) {
+                return response()->json(['success' => false, 'message' => 'Открыть можно только выполненную заявку'], 403);
+            }
+
+            DB::beginTransaction();
+
+            // Update request status to 'new' (status_id = 1)
+            $updated = DB::table('requests')
+                ->where('id', $id)
+                ->update(['status_id' => 1]);
+
+            if ($updated) {
+                // Create a system comment
+                $commentId = DB::table('comments')->insertGetId([
+                    'comment' => 'Заявка была повторно открыта',
+                    'created_at' => now(),
+                ]);
+
+                // Link the comment to the request
+                DB::table('request_comments')->insert([
+                    'request_id' => $id,
+                    'comment_id' => $commentId,
+                    'user_id' => $user->id,
+                    'created_at' => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            \Log::info('=== END openRequest ===', []);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявка успешно открыта',
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('=== ERROR openRequest ===', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при открытии заявки: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Get list of request types
      *
      * @return \Illuminate\Http\JsonResponse

@@ -458,7 +458,17 @@
                                                         </button>
                                                     @endif
 
-                                                    
+                                                    @php
+                                                        $isToday = $request->request_date && now()->isSameDay(\Carbon\Carbon::parse($request->request_date));
+                                                        $showButton = $request->status_name == 'выполнена' && $isToday && ($user->isAdmin ?? false);
+                                                    @endphp
+                                                    @if($showButton)
+                                                        <button data-request-id="{{ $request->id }}" type="button"
+                                                                class="btn btn-sm btn-custom-green p-1 open-request-btn"
+                                                                title="Доступно только в день создания заявки">
+                                                            Открыть заявку
+                                                        </button>
+                                                    @endif
                                                 </div>
                                             @endif
                                         </td>

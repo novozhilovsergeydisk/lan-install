@@ -22,7 +22,8 @@ import {
     initPlanningRequestFormHandlers,
     initAddressEditButton,
     initUploadRequestsHandler,
-    initCommentEditHandlers
+    initCommentEditHandlers,
+    initOpenRequestHandler
 } from './form-handlers.js';
 import {
     initializePage,
@@ -61,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initPhotoReportModal();
     initUploadRequestsHandler();
     initCommentEditHandlers();
+    initOpenRequestHandler();
 
     // Очищаем контейнер фотоотчета при закрытии модального окна комментариев
     const commentsModal = document.getElementById('commentsModal');

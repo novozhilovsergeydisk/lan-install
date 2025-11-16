@@ -294,6 +294,41 @@ async function initEditRequestFormHandler() {
     });
 }
 
+// Обработчик кнопки открытия заявки
+export function initOpenRequestHandler() {
+    document.addEventListener('click', async function(event) {
+        if (!event.target.closest('.open-request-btn')) return;
+
+        const button = event.target.closest('.open-request-btn');
+        const requestId = button.dataset.requestId;
+
+        if (confirm('Вы уверены, что хотите снова открыть заявку #' + requestId + '?')) {
+            try {
+                const response = await fetch(`/requests/${requestId}/open`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Заявка успешно открыта.', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message || 'Ошибка при открытии заявки', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Произошла ошибка при отправке запроса', 'danger');
+            }
+        }
+    });
+}
+
 // Функция для форматирования даты
 export function DateFormated(date) {
     return date.split('.').reverse().join('-');
