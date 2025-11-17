@@ -52,6 +52,12 @@ export function initAdditionalTaskModal() {
         if (modal) {
             const bsModal = new bootstrap.Modal(modal);
             bsModal.show();
+            // Устанавливаем текущую дату по умолчанию
+            const today = new Date().toISOString().split('T')[0];
+            const dateField = document.getElementById('additionalExecutionDate');
+            if (dateField) {
+                dateField.value = today;
+            }
             // Загружаем адреса для дополнительной формы
             loadAddressesForAdditional();
         }
@@ -60,6 +66,20 @@ export function initAdditionalTaskModal() {
     // Обработчик для кнопки "Создать задание"
     document.addEventListener('click', function(e) {
         if (e.target.id === 'submitAdditionalTask') {
+            // Синхронизируем содержимое WYSIWYG-редактора с textarea перед сбором данных
+            const editor = document.getElementById('additionalCommentEditor');
+            const textarea = document.getElementById('additionalComment');
+            if (editor && textarea) {
+                textarea.value = editor.innerHTML;
+            }
+
+            // Выводим входные данные формы в консоль
+            const form = document.getElementById('additionalTaskForm');
+            if (form) {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData);
+                console.log('Входные данные формы дополнительного задания:', data);
+            }
             showAlert('Функционал добавления дополнительного задания в разработке');
         }
     });
