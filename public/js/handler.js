@@ -1447,7 +1447,7 @@ export async function loadAddressesForAdditional(selectId = 'additionalAddresses
         addresses.forEach(address => {
             const option = document.createElement('option');
             option.value = address.id;
-            option.textContent = `${address.city}, ${address.district}, ул. ${address.street}, д. ${address.houses}`;
+            option.textContent = `${address.street}, ${address.houses} [${address.district}] [${address.city}]`;
             selectElement.appendChild(option);
         });
 
