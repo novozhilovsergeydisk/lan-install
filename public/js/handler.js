@@ -1451,6 +1451,11 @@ export async function loadAddressesForAdditional(selectId = 'additionalAddresses
             selectElement.appendChild(option);
         });
 
+        // Инициализируем кастомный селект с поиском
+        if (typeof window.initCustomSelect === 'function') {
+            window.initCustomSelect(selectId, "Выберите адрес из списка");
+        }
+
     } catch (error) {
         console.error('Ошибка при загрузке адресов для дополнительной формы:', error);
     }
