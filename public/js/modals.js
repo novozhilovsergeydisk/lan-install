@@ -59,15 +59,50 @@ export function initAdditionalTaskModal() {
         if (modal) {
             const bsModal = new bootstrap.Modal(modal);
             bsModal.show();
-            // Устанавливаем текущую дату по умолчанию и минимальную дату
+            // Загружаем данные заявки и заполняем форму
+            if (requestId) {
+                fetch('/requests/' + requestId, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Данные заявки с сервера:', data);
+                    if (data.success && data.data) {
+                        const request = data.data;
+                        console.log('Объект request:', request);
+                        // Заполняем поля формы данными заявки
+                        document.getElementById('additionalClientName').value = request.client_fio || '';
+                        document.getElementById('additionalClientPhone').value = request.client_phone || '';
+                        document.getElementById('additionalClientOrganization').value = request.client_organization || '';
+                        document.getElementById('additionalRequestType').value = request.request_type_id || '';
+                        document.getElementById('additionalRequestStatus').value = request.status_id || '';
+                        document.getElementById('additionalExecutionDate').value = request.execution_date || '';
+                        document.getElementById('additionalExecutionTime').value = request.execution_time || '';
+                        // Для комментария - заполняем WYSIWYG
+                        const commentEditor = document.getElementById('additionalCommentEditor');
+                        const commentTextarea = document.getElementById('additionalComment');
+                        if (commentEditor && commentTextarea && request.comment) {
+                            commentEditor.innerHTML = request.comment;
+                            commentTextarea.value = request.comment;
+                        }
+
+                        // Загружаем адреса для дополнительной формы с выбранным значением
+                        loadAddressesForAdditional('additionalAddressesId', request.address_id);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при загрузке данных заявки:', error);
+                });
+            }
+            // Устанавливаем текущую дату по умолчанию и минимальную дату (если не заполнено)
             const today = new Date().toISOString().split('T')[0];
             const dateField = document.getElementById('additionalExecutionDate');
-            if (dateField) {
+            if (dateField && !dateField.value) {
                 dateField.value = today;
                 dateField.min = today;
             }
-            // Загружаем адреса для дополнительной формы
-            loadAddressesForAdditional();
         }
     });
 

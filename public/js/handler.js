@@ -1413,7 +1413,7 @@ export function loadAddresses(selectId = 'addresses_id') {
 
 // Функция для загрузки списка адресов для заявок на планирование
 // Функция для загрузки адресов в select для дополнительной формы
-export async function loadAddressesForAdditional(selectId = 'additionalAddressesId') {
+export async function loadAddressesForAdditional(selectId = 'additionalAddressesId', selectedValue = null) {
     const selectElement = document.getElementById(selectId);
     if (!selectElement) return;
 
@@ -1450,6 +1450,11 @@ export async function loadAddressesForAdditional(selectId = 'additionalAddresses
             option.textContent = `${address.street}, ${address.houses} [${address.district}] [${address.city}]`;
             selectElement.appendChild(option);
         });
+
+        // Устанавливаем selected value, если передан
+        if (selectedValue) {
+            selectElement.value = selectedValue;
+        }
 
         // Инициализируем кастомный селект с поиском
         if (typeof window.initCustomSelect === 'function') {
