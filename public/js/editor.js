@@ -522,8 +522,8 @@ function initWysiwygEditor() {
 let wysiwygEditorInstance = null;
 
 // Функция для сброса редактора
-function resetWysiwygEditor() {
-  const container = document.querySelector('.my-wysiwyg');
+function resetWysiwygEditor(my_wysiwyg) {
+  const container = my_wysiwyg; // document.querySelector(my_wysiwyg);
   if (!container) {
     console.error('WYSIWYG: контейнер редактора не найден');
     return null;
@@ -582,7 +582,7 @@ function destroyWysiwygEditor() {
   }
   
   // Полностью пересоздаем редактор
-  const newEditor = resetWysiwygEditor();
+  const newEditor = resetWysiwygEditor(document.querySelector('.my-wysiwyg'));
   
   console.log('WYSIWYG: редактор уничтожен и пересоздан');
   

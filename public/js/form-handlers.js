@@ -4668,6 +4668,26 @@ export function initFormHandlers() {
         newRequestModal.addEventListener('show.bs.modal', handleModalShow);
         newRequestModal.addEventListener('hidden.bs.modal', handleModalHide);
     }
+
+    // Явная инициализация модала newRequestModal для корректного закрытия
+    const newRequestModalEl = document.getElementById('newRequestModal');
+    console.log('newRequestModalEl:', newRequestModalEl);
+    if (newRequestModalEl) {
+        window.newRequestModalInstance = new bootstrap.Modal(newRequestModalEl);
+        console.log('newRequestModalInstance created:', window.newRequestModalInstance);
+    } else {
+        console.log('newRequestModalEl not found');
+    }
+
+    // Инициализация модала additionalTaskModal (если существует)
+    const additionalTaskModalEl = document.getElementById('additionalTaskModal');
+    if (additionalTaskModalEl) {
+        try {
+            window.additionalTaskModalInstance = new bootstrap.Modal(additionalTaskModalEl);
+        } catch (error) {
+            console.error('Error initializing additionalTaskModal:', error);
+        }
+    }
 }
 
 // Функция для обновления списка адресов
@@ -4901,6 +4921,7 @@ async function submitRequestForm(event) {
         const result = await postData('/api/requests', requestData);
 
         console.log('Ответ от сервера:', result);
+        console.log('Result success:', result.success);
 
         if (result.success) {
             showAlert('Заявка успешно создана!', 'success');
@@ -4929,8 +4950,14 @@ async function submitRequestForm(event) {
                 displayEmployeeInfo(result.data.employee);
             }
 
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newRequestModal'));
-            modal.hide();
+            const modal = window.newRequestModalInstance;
+            console.log('Modal instance:', modal);
+            if (modal) {
+                console.log('Hiding modal');
+                modal.hide();
+            } else {
+                console.log('Modal instance is null');
+            }
 
             // Сохраняем текущую дату перед сбросом формы
             const currentDate = document.getElementById('executionDate').value;

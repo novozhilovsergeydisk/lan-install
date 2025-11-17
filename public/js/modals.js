@@ -38,6 +38,30 @@ function initAddressEditModal() {
 }
 
 /**
+ * Инициализирует модальное окно для дополнительного задания
+ */
+export function initAdditionalTaskModal() {
+    document.addEventListener('click', function(e) {
+        if (!e.target.matches('.open-additional-task-request-btn')) return;
+
+        e.preventDefault();
+
+        const modal = document.getElementById('additionalTaskModal');
+        if (modal) {
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        }
+    });
+
+    // Обработчик для кнопки "Создать задание"
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'submitAdditionalTask') {
+            showAlert('Функционал добавления дополнительного задания в разработке');
+        }
+    });
+}
+
+/**
  * Инициализирует модальное окно для загрузки фотоотчета
  */
  export function initPhotoReportModal() {
