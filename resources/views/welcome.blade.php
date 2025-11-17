@@ -2057,7 +2057,7 @@
 					<div class="mb-3">
 						<h6>Адрес</h6>
 						<div class="mb-3">
-							<select class="form-select" id="additionalAddressesId" name="addresses_id" required>
+							<select class="form-select" id="additionalAddressesId" name="address_id" required>
 								<option value="" disabled selected>Выберите адрес</option>
 								<!-- Will be populated by JavaScript -->
 							</select>

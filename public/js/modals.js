@@ -43,6 +43,27 @@ import { loadAddressesForAdditional } from './handler.js';
  * Инициализирует модальное окно для дополнительного задания
  */
 export function initAdditionalTaskModal() {
+    // Обработчик закрытия модала для сброса формы
+    const modal = document.getElementById('additionalTaskModal');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('additionalTaskForm');
+            if (form) {
+                form.reset();
+                // Сброс WYSIWYG редактора
+                const editor = document.getElementById('additionalCommentEditor');
+                if (editor) {
+                    editor.innerHTML = '';
+                }
+                // Очистка селекта адресов
+                const addressSelect = document.getElementById('additionalAddressesId');
+                if (addressSelect) {
+                    addressSelect.innerHTML = '<option value="">Выберите адрес</option>';
+                }
+            }
+        });
+    }
+
     document.addEventListener('click', function(e) {
         if (!e.target.matches('.open-additional-task-request-btn')) return;
 
@@ -55,7 +76,6 @@ export function initAdditionalTaskModal() {
             requestIdField.value = requestId;
         }
 
-        const modal = document.getElementById('additionalTaskModal');
         if (modal) {
             const bsModal = new bootstrap.Modal(modal);
             bsModal.show();
@@ -107,8 +127,10 @@ export function initAdditionalTaskModal() {
     });
 
     // Обработчик для кнопки "Создать задание"
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', async function(e) {
         if (e.target.id === 'submitAdditionalTask') {
+            e.preventDefault();
+
             // Синхронизируем содержимое WYSIWYG-редактора с textarea перед сбором данных
             const editor = document.getElementById('additionalCommentEditor');
             const textarea = document.getElementById('additionalComment');
@@ -116,15 +138,88 @@ export function initAdditionalTaskModal() {
                 textarea.value = editor.innerHTML;
             }
 
-            // Выводим входные данные формы в консоль
             const form = document.getElementById('additionalTaskForm');
-            if (form) {
-                const formData = new FormData(form);
-                const data = Object.fromEntries(formData);
-                console.log('Входные данные формы дополнительного задания:', data);
-                console.log('Request ID:', data.request_id);
+            if (!form) return;
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            // Устанавливаем тип заявки по умолчанию (предположим id=1), если не выбран
+            if (!data.request_type_id) {
+                data.request_type_id = '1';
+                formData.set('request_type_id', '1');
             }
-            showAlert('Функционал добавления дополнительного задания в разработке');
+
+            // Устанавливаем статус по умолчанию "новая" (id=1), если не выбран
+            if (!data.status_id) {
+                data.status_id = '1';
+                formData.set('status_id', '1');
+            }
+
+            // Валидация обязательных полей
+            const errors = [];
+            if (!data.client_name || data.client_name.trim().length === 0) {
+                errors.push('Контактное лицо обязательно для заполнения');
+            }
+            if (!data.client_phone || data.client_phone.trim().length === 0) {
+                errors.push('Телефон обязателен для заполнения');
+            }
+            if (!data.request_type_id) {
+                errors.push('Тип заявки обязателен для выбора');
+            }
+            if (!data.execution_date) {
+                errors.push('Дата выполнения обязательна для заполнения');
+            }
+            if (!data.address_id) {
+                errors.push('Адрес обязателен для выбора');
+            }
+            if (!data.comment || data.comment.trim().length < 3) {
+                errors.push('Комментарий обязателен и должен содержать минимум 3 символа');
+            }
+
+            if (errors.length > 0) {
+                console.log('Ошибки валидации:', errors);
+                showAlert('Пожалуйста, исправьте следующие ошибки:\n' + errors.join('\n'), 'warning');
+                return;
+            }
+
+            // Выводим входные данные формы в консоль
+            console.log('Входные данные формы дополнительного задания:', data);
+            console.log('Request ID:', data.request_id);
+
+            try {
+                // Отправка данных на сервер
+                const response = await fetch('/api/requests', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('Дополнительное задание успешно создано!', 'success');
+
+                    // Закрываем модал
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('additionalTaskModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+
+                    // Обновляем таблицу заявок, если функция существует
+                    if (typeof window.updateRequestsTable === 'function') {
+                        window.updateRequestsTable();
+                    }
+                } else {
+                    showAlert(result.message || 'Ошибка при создании дополнительного задания', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка при отправке формы:', error);
+                showAlert('Произошла ошибка при создании дополнительного задания', 'error');
+            }
         }
     });
 }
