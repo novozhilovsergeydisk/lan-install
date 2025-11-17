@@ -48,6 +48,13 @@ export function initAdditionalTaskModal() {
 
         e.preventDefault();
 
+        // Получаем request_id из data-атрибута кнопки
+        const requestId = e.target.getAttribute('data-request-id');
+        const requestIdField = document.getElementById('additionalTaskRequestId');
+        if (requestIdField && requestId) {
+            requestIdField.value = requestId;
+        }
+
         const modal = document.getElementById('additionalTaskModal');
         if (modal) {
             const bsModal = new bootstrap.Modal(modal);
@@ -80,6 +87,7 @@ export function initAdditionalTaskModal() {
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData);
                 console.log('Входные данные формы дополнительного задания:', data);
+                console.log('Request ID:', data.request_id);
             }
             showAlert('Функционал добавления дополнительного задания в разработке');
         }
