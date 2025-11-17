@@ -1993,6 +1993,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         initAdditionalTaskModal();
+        window.initAdditionalWysiwygEditor();
     });
 </script>
 

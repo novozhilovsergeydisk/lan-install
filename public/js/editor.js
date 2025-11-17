@@ -601,6 +601,523 @@ window.initWysiwygEditor = function() {
   return wysiwygEditorInstance;
 };
 
+// Функция для инициализации дополнительного WYSIWYG-редактора
+function initAdditionalWysiwygEditor() {
+  // Настройки для дополнительного редактора
+  const allowedTags = ['B','STRONG','I','EM','A','BR','P','DIV','SPAN']; // разрешаем только базовые теги
+  const editorId = 'additionalCommentEditor';
+  const codeId = 'additionalCommentCode';
+  const textareaId = 'additionalComment'; // НЕ МЕНЯТЬ
+  const toggleHtmlBtnId = 'additionalToggleCode';
+
+  const editor = document.getElementById(editorId);
+  const codeArea = document.getElementById(codeId);
+  const textarea = document.getElementById(textareaId);
+  const toggleBtn = document.getElementById(toggleHtmlBtnId);
+  const toolbar = document.querySelector('.wysiwyg-toolbar-additional');
+
+  if (!editor) {
+    console.error('WYSIWYG Additional: не найден элемент редактора с id', editorId);
+    return;
+  }
+  if (!textarea) {
+    console.error('WYSIWYG Additional: не найден textarea с id', textareaId);
+    return;
+  }
+  if (!toolbar) {
+    console.error('WYSIWYG Additional: не найдена панель инструментов с классом wysiwyg-toolbar-additional');
+    return;
+  }
+
+  console.log('WYSIWYG Additional: редактор инициализирован', { editor, textarea, toolbar });
+
+  // Инициализация: заполнить редактор содержимым textarea (если есть)
+  editor.innerHTML = textarea.value || '';
+
+  // Удаляем пустые пробелы и <br> в начале содержимого
+  if (editor.innerHTML.trim() === '' || editor.innerHTML === '<br>') {
+    editor.innerHTML = '';
+  }
+
+  // Скопировать атрибуты required/minlength/maxlength если нужно (мы будем валидировать вручную)
+  const attrMin = textarea.getAttribute('minlength');
+  const attrMax = textarea.getAttribute('maxlength');
+  const attrReq = textarea.hasAttribute('required');
+
+  // Убираем видимость оригинального textarea, но оставляем в DOM
+  textarea.style.display = 'none';
+
+  // Функция для обновления содержимого textarea
+  function updateTextarea() {
+    textarea.value = editor.innerHTML;
+  }
+
+  // Функция для переключения между HTML и визуальным режимом
+  function toggleHtmlMode() {
+    if (editor.style.display === 'none') {
+      // Переключаемся на визуальный режим
+      codeArea.style.display = 'none';
+      editor.style.display = '';
+
+      // Обновляем содержимое редактора из codeArea (сырой HTML)
+      editor.innerHTML = codeArea.value;
+
+      // Обновляем содержимое textarea
+      updateTextarea();
+
+      return 'HTML';
+    } else {
+      // Переключаемся в режим HTML
+      editor.style.display = 'none';
+      codeArea.style.display = '';
+
+      // Обновляем содержимое textarea перед показом HTML
+      updateTextarea();
+
+      // Устанавливаем содержимое textarea в codeArea, сохраняя всю разметку
+      codeArea.value = textarea.value;
+
+      return 'Код';
+    }
+  }
+
+  // Добавляем обработчик для кнопки переключения режима
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      const newText = toggleHtmlMode();
+      this.textContent = newText === 'HTML' ? 'HTML' : 'Код';
+    });
+  }
+
+  // --- Функции утилиты ---
+
+  // Простая санитизация HTML: оставляем только allowedTags и атрибут href для A
+  function sanitizeHTML(html) {
+    // Удаляем HTML-комментарии (как обычные, так и экранированные)
+    html = html.replace(/&lt;!--[\s\S]*?--&gt;|<!--[\s\S]*?-->/g, '');
+
+    // Создаём контейнер и парсим
+    const frag = document.createElement('div');
+    frag.innerHTML = html;
+
+    function clean(node) {
+      // Проверяем, что узел валиден
+      if (!node) return;
+
+      // Пройти рекурсивно по копии коллекции дочерних узлов
+      // чтобы избежать проблем при изменении DOM во время итерации
+      const children = Array.from(node.childNodes);
+      for (const ch of children) {
+        // Пропускаем текстовые узлы
+        if (ch.nodeType === Node.TEXT_NODE) {
+          continue;
+        }
+
+        // Обрабатываем только элементы
+        if (ch.nodeType === Node.ELEMENT_NODE) {
+          // Узел-элемент
+
+          const tag = ch.tagName.toUpperCase();
+
+          // Если тег не в списке разрешённых
+          if (!allowedTags.includes(tag)) {
+            // Создаём фрагмент с содержимым тега
+            const inner = document.createDocumentFragment();
+            while (ch.firstChild) {
+              inner.appendChild(ch.firstChild);
+            }
+
+            // Заменяем тег на его содержимое
+            try {
+              if (ch.parentNode) {
+                ch.parentNode.replaceChild(inner, ch);
+                // Продолжаем с родительского узла, так как DOM изменился
+                clean(node);
+                break;
+              }
+            } catch (e) {
+              console.error('Ошибка при замене тега:', e);
+              continue;
+            }
+          } else {
+            // Разрешённый тег - очищаем атрибуты
+            const attrs = Array.from(ch.attributes || []);
+            for (const at of attrs) {
+              // Для ссылок оставляем только безопасные атрибуты
+              if (ch.tagName.toUpperCase() === 'A') {
+                if (at.name !== 'href' && at.name !== 'target' && at.name !== 'rel') {
+                  ch.removeAttribute(at.name);
+                }
+              } else {
+                ch.removeAttribute(at.name);
+              }
+            }
+
+            // Обработка ссылок
+            if (ch.tagName.toUpperCase() === 'A') {
+              const href = ch.getAttribute('href') || '';
+              if (/^\s*javascript:/i.test(href)) {
+                ch.removeAttribute('href');
+              } else {
+                ch.setAttribute('rel', 'noopener noreferrer');
+                ch.setAttribute('target', '_blank');
+              }
+            }
+
+            // Рекурсивная очистка дочерних элементов
+            if (ch.childNodes.length > 0) {
+              clean(ch);
+            }
+          }
+        } else if (ch.parentNode) {
+          // Удаляем другие типы узлов, если они всё ещё в DOM
+          try {
+            ch.parentNode.removeChild(ch);
+          } catch (e) {
+            console.error('Ошибка при удалении узла:', e);
+          }
+        }
+      }
+    }
+
+    clean(frag);
+    // Удалим пустые <div> которые только оборачивают текст? Оставим как есть — браузер корректно покажет.
+    return frag.innerHTML;
+  }
+
+  // Экранировать HTML-спецсимволы в тексте
+  function escapeHTML(str) {
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Преобразовать URL в <a> ссылки (http/https и www.*)
+  function linkify(text) {
+    if (!text) return '';
+    const urlRegex = /((https?:\/\/)[^\s<]+)|(\bwww\.[^\s<]+)/gi;
+    return text.replace(urlRegex, (match) => {
+      let href = match;
+      if (!/^https?:\/\//i.test(href)) {
+        href = 'https://' + href; // нормализуем www.*
+      }
+      const safeHref = href; // href уже из текста, без HTML
+      const safeLabel = match; // показываем как есть (экранировано заранее)
+      return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${safeLabel}</a>`;
+    });
+  }
+
+  // Экспорт утилит глобально для переиспользования
+  try {
+    window.WYSIUtils = window.WYSIUtils || {};
+    window.WYSIUtils.escapeHTML = escapeHTML;
+    window.WYSIUtils.linkify = linkify;
+  } catch (e) {
+    console.warn('Не удалось экспортировать WYSIUtils', e);
+  }
+
+  // Возвращает plain text (видимый текст) из editor
+  function getEditorPlainText() {
+    return editor.innerText.replace(/\u00A0/g, ' ').trim();
+  }
+
+  // Проверка валидации по видимому тексту
+  function validateEditor() {
+    const txt = getEditorPlainText();
+    if (attrReq && txt.length === 0) {
+      textarea.setCustomValidity('Пожалуйста, заполните поле.');
+      return false;
+    }
+    if (attrMin && txt.length < Number(attrMin)) {
+      textarea.setCustomValidity(`Минимум ${attrMin} символов (сейчас ${txt.length}).`);
+      return false;
+    }
+    if (attrMax && txt.length > Number(attrMax)) {
+      textarea.setCustomValidity(`Максимум ${attrMax} символов (сейчас ${txt.length}).`);
+      return false;
+    }
+    textarea.setCustomValidity('');
+    return true;
+  }
+
+  // Update state кнопок (active) — использует document.queryCommandState (работает в большинстве браузеров)
+  function updateToolbarState() {
+    const btns = toolbar.querySelectorAll('button[data-cmd]');
+    btns.forEach(btn => {
+      const cmd = btn.getAttribute('data-cmd');
+      if (cmd === 'createLink' || cmd === 'unlink') {
+        // handled separately
+        btn.classList.remove('active');
+      } else {
+        try {
+          const state = document.queryCommandState(cmd);
+          btn.classList.toggle('active', !!state);
+        } catch (e) {
+          btn.classList.remove('active');
+        }
+      }
+    });
+  }
+
+  // Вставить HTML в текущую позицию курсора (вставляем sanitized html)
+  function insertHTMLAtCursor(html) {
+    console.log('WYSIWYG Additional: вставка HTML', { before: editor.innerHTML, html });
+
+    // Удаляем HTML-комментарии перед вставкой
+    const sanitizedHtml = html.replace(/&lt;!--[\s\S]*?--&gt;|<!--[\s\S]*?-->/g, '');
+
+    // Вставляем санитизированный HTML
+    document.execCommand('insertHTML', false, sanitizedHtml);
+
+    // Удаляем лишние <br> в начале и конце содержимого
+    if (editor.innerHTML.startsWith('<br>')) {
+      editor.innerHTML = editor.innerHTML.replace(/^<br>/, '');
+    }
+    if (editor.innerHTML.endsWith('<br>')) {
+      editor.innerHTML = editor.innerHTML.replace(/<br>$/i, '');
+    }
+
+    console.log('WYSIWYG Additional: после вставки', { after: editor.innerHTML });
+  }
+
+  // --- Обработчики тулбара ---
+  toolbar.addEventListener('click', function (e) {
+    console.log('WYSIWYG Additional: клик по тулбару', e.target);
+    const btn = e.target.closest('button[data-cmd]');
+    if (!btn) {
+      console.log('WYSIWYG Additional: клик не по кнопке с data-cmd');
+      return;
+    }
+    const cmd = btn.getAttribute('data-cmd');
+    console.log('WYSIWYG Additional: выполнение команды', cmd);
+
+    if (cmd === 'createLink') {
+      let url = prompt('Введите URL (например https://example.com):', 'https://');
+      if (!url) return;
+      // если пользователь ввёл текст в виде "example.com", приведём к httpS
+      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
+        url = 'https://' + url;
+      }
+      document.execCommand('createLink', false, url);
+    } else if (cmd === 'unlink') {
+      document.execCommand('unlink', false, null);
+    } else {
+      // bold/italic - toggle
+      console.log('WYSIWYG Additional: выполнение команды форматирования', cmd);
+      const beforeHTML = editor.innerHTML;
+      document.execCommand(cmd, false, null);
+      console.log('WYSIWYG Additional: результат форматирования', {
+        command: cmd,
+        before: beforeHTML,
+        after: editor.innerHTML
+      });
+    }
+
+    // обновить state кнопок
+    updateToolbarState();
+    editor.focus();
+  });
+
+  // Обновлять активные состояния кнопок при изменении выделения/курсор-перемещении
+  console.log('WYSIWYG Additional: добавление обработчиков событий для редактора');
+  editor.addEventListener('keyup', function(e) {
+    console.log('WYSIWYG Additional: keyup в редакторе');
+    updateToolbarState();
+  });
+  editor.addEventListener('mouseup', function(e) {
+    console.log('WYSIWYG Additional: mouseup в редакторе');
+    updateToolbarState();
+  });
+  editor.addEventListener('focus', function(e) {
+    console.log('WYSIWYG Additional: редактор получил фокус');
+    updateToolbarState();
+  });
+  editor.addEventListener('blur', function(e) {
+    console.log('WYSIWYG Additional: редактор потерял фокус');
+  });
+
+  // Обработчик для санитизации HTML при любом изменении содержимого
+  editor.addEventListener('input', function(e) {
+    // Получаем текущее содержимое
+    let currentHTML = editor.innerHTML;
+
+    // Удаляем пустые пробелы и <br> в начале содержимого
+    if (currentHTML.trim() === '' || currentHTML === '<br>') {
+      currentHTML = '';
+      editor.innerHTML = '';
+      return;
+    }
+
+    // Санитизируем HTML
+    const sanitizedHTML = sanitizeHTML(currentHTML);
+
+    // Если содержимое изменилось после санитизации
+    if (currentHTML !== sanitizedHTML) {
+      // Сохраняем позицию курсора
+      const selection = window.getSelection();
+      const range = selection.getRangeAt(0);
+      const offset = range.startOffset;
+
+      // Обновляем содержимое
+      editor.innerHTML = sanitizedHTML;
+
+      // Восстанавливаем позицию курсора
+      const newRange = document.createRange();
+      const textNode = document.createTextNode('');
+      editor.appendChild(textNode);
+      newRange.setStart(textNode, Math.min(offset, textNode.length));
+      newRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
+  });
+
+  // --- Paste handling: sanitize, respect code-mode ---
+  editor.addEventListener('paste', function (e) {
+    e.preventDefault();
+
+    console.log('WYSIWYG Additional: вставка');
+    console.log(e.clipboardData);
+    console.log(window.clipboardData);
+    console.log('-----------------------------------');
+
+    const clipboard = (e.clipboardData || window.clipboardData);
+    if (!clipboard) return;
+
+    if (codeArea.style.display !== 'none') {
+      // В режиме кода вставляем как текст
+      const text = clipboard.getData('text/plain');
+      document.execCommand('insertText', false, text);
+      return;
+    }
+
+    // rich mode
+    const html = clipboard.getData('text/html');
+    const text = clipboard.getData('text/plain');
+
+    if (html) {
+      // сохраним только разрешенные теги
+      const safe = sanitizeHTML(html);
+      insertHTMLAtCursor(safe);
+    } else if (text) {
+      // Вставим plain text: экранируем, превращаем URL в ссылки, переводы строк в <br>
+      const escaped = escapeHTML(text);
+      const linked = linkify(escaped);
+      const withBreaks = linked.replace(/\r?\n/g, '<br>');
+      insertHTMLAtCursor(withBreaks);
+    } else {
+      // fallback
+      const fallback = clipboard.getData('text');
+      document.execCommand('insertText', false, fallback || '');
+    }
+    updateToolbarState();
+  });
+
+  // Обработка вставки в режиме кода
+  codeArea.addEventListener('paste', function (e) {
+    e.preventDefault();
+
+    // Получаем данные из буфера обмена
+    const clipboard = (e.clipboardData || window.clipboardData || {});
+    if (!clipboard) return;
+
+    // Пробуем получить текст в формате plain/text
+    let text = '';
+    try {
+      text = clipboard.getData('text/plain');
+
+      // Если не удалось получить как plain/text, пробуем text
+      if (!text) {
+        text = clipboard.getData('text');
+      }
+
+      // Если все еще нет текста, выходим
+      if (!text) {
+        console.warn('Не удалось получить текст из буфера обмена');
+        return;
+      }
+
+      // Сохраняем текущее выделение
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      const currentValue = this.value;
+
+      // Вставляем текст в текущую позицию курсора
+      this.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+
+      // Устанавливаем курсор после вставленного текста
+      const newCursorPos = start + text.length;
+      this.setSelectionRange(newCursorPos, newCursorPos);
+
+      // Триггерим событие input для обновления состояния
+      const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+      this.dispatchEvent(inputEvent);
+
+      // Также триггерим change на случай, если есть подписчики на это событие
+      const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+      this.dispatchEvent(changeEvent);
+
+    } catch (error) {
+      console.error('Ошибка при вставке текста:', error);
+    }
+  });
+
+  // При смене фокуса в код-редакторе — можно обновлять превью (опционально)
+  codeArea.addEventListener('input', function () {
+    // не менять сразу editor, только при переключении обратно (чтобы не ломать код-редактирование)
+  });
+
+  // --- Перед отправкой формы: копируем html в textarea и проверяем валидацию по plain text ---
+  // Найдём родительскую форму (если есть)
+  function attachFormHandler() {
+    let form = textarea.closest('form');
+    if (!form) {
+      // Попробуем обойтись: слушаем submit на document (мало шансов)
+      return;
+    }
+
+    form.addEventListener('submit', function (e) {
+      // Проверка видимого текста
+      if (!validateEditor()) {
+        // показать стандартные ошибки:
+        textarea.reportValidity();
+        e.preventDefault();
+        return;
+      }
+      // Скопировать HTML в textarea
+      textarea.value = sanitizeHTML(editor.innerHTML);
+      // дальше форма отправится обычным способом
+    });
+  }
+  attachFormHandler();
+
+  // Если кто-то прямо меняет textarea (не должно), синхронизировать:
+  const observer = new MutationObserver(() => {
+    // если textarea.value изменили извне, обновим визуальный редактор
+    if (textarea.value !== editor.innerHTML) {
+      editor.innerHTML = textarea.value || '';
+    }
+  });
+
+  observer.observe(textarea, { attributes: true, childList: true, characterData: true });
+
+  // Инициализация — очистка потенциально опасного HTML в textarea при старте
+  textarea.value = sanitizeHTML(textarea.value || '');
+
+  // Возвращаем методы для управления редактором
+  return {
+    updateToolbarState: updateToolbarState,
+    destroy: function() {
+      observer.disconnect();
+      // Здесь можно добавить отписку от других событий при необходимости
+    }
+  };
+}
+
 // Добавляем глобальные методы для управления редактором
 window.resetWysiwygEditor = resetWysiwygEditor;
 window.destroyWysiwygEditor = destroyWysiwygEditor;
+window.initAdditionalWysiwygEditor = initAdditionalWysiwygEditor;
