@@ -470,7 +470,7 @@
                                                          </button>
                                                      @endif
 
-                                                    @if($request->status_name == 'выполнена')
+                                                    @if($request->status_name == 'выполнена' && $showButton)
                                                         <button data-request-id="{{ $request->id }}" type="button"
                                                                 class="btn btn-sm btn-custom-green-dark p-1 open-additional-task-request-btn">
                                                             Дополнительное задание
