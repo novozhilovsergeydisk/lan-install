@@ -1412,6 +1412,50 @@ export function loadAddresses(selectId = 'addresses_id') {
 }
 
 // Функция для загрузки списка адресов для заявок на планирование
+// Функция для загрузки адресов в select для дополнительной формы
+export async function loadAddressesForAdditional(selectId = 'additionalAddressesId') {
+    const selectElement = document.getElementById(selectId);
+    if (!selectElement) return;
+
+    console.log('Загрузка адресов для дополнительной формы');
+
+    try {
+        const response = await fetch('/api/geo/addresses', {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при загрузке адресов');
+        }
+
+        const addresses = await response.json();
+
+        // Очищаем список и добавляем заглушку
+        selectElement.innerHTML = '<option value="" disabled selected>Выберите адрес</option>';
+
+        // Сортируем адреса по городу, району и улице
+        addresses.sort((a, b) => {
+            if (a.city !== b.city) return a.city.localeCompare(b.city);
+            if (a.district !== b.district) return a.district.localeCompare(b.district);
+            if (a.street !== b.street) return a.street.localeCompare(b.street);
+            return a.houses.localeCompare(b.houses);
+        });
+
+        // Добавляем адреса в выпадающий список
+        addresses.forEach(address => {
+            const option = document.createElement('option');
+            option.value = address.id;
+            option.textContent = `${address.city}, ${address.district}, ул. ${address.street}, д. ${address.houses}`;
+            selectElement.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('Ошибка при загрузке адресов для дополнительной формы:', error);
+    }
+}
+
 export async function loadAddressesForPlanning() {
     const selectElement = document.getElementById('addressesPlanningRequest');
     if (!selectElement) {

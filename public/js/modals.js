@@ -37,6 +37,8 @@ function initAddressEditModal() {
     }
 }
 
+import { loadAddressesForAdditional } from './handler.js';
+
 /**
  * Инициализирует модальное окно для дополнительного задания
  */
@@ -50,6 +52,8 @@ export function initAdditionalTaskModal() {
         if (modal) {
             const bsModal = new bootstrap.Modal(modal);
             bsModal.show();
+            // Загружаем адреса для дополнительной формы
+            loadAddressesForAdditional();
         }
     });
 

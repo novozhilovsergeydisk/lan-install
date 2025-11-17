@@ -3619,6 +3619,8 @@
         return `Город: ${address.city || '-'}, Район: ${address.district || '-'}, Улица: ${address.street || '-'}, Дом: ${address.houses || '-'}`;
     }
 
+
+
     // Функция для загрузки и отображения списка адресов в выпадающем списке
     async function loadAddresses() {
         console.log('Загрузка адресов');
