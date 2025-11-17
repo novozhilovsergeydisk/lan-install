@@ -52,11 +52,12 @@ export function initAdditionalTaskModal() {
         if (modal) {
             const bsModal = new bootstrap.Modal(modal);
             bsModal.show();
-            // Устанавливаем текущую дату по умолчанию
+            // Устанавливаем текущую дату по умолчанию и минимальную дату
             const today = new Date().toISOString().split('T')[0];
             const dateField = document.getElementById('additionalExecutionDate');
             if (dateField) {
                 dateField.value = today;
+                dateField.min = today;
             }
             // Загружаем адреса для дополнительной формы
             loadAddressesForAdditional();
