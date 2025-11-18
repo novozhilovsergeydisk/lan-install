@@ -823,6 +823,22 @@ async function applyFilters() {
                                 </a>`;
                             }
 
+                            const isAdmin = window.App.role == 'admin' ?? false;
+                            const statusName = request.status_name;
+                            const executionDate = request.execution_date;
+                            const today = new Date().toISOString().split('T')[0];
+                            // const showButton = statusName == 'выполнена' && isAdmin && isToday;
+
+                            console.log('START');
+                            console.log('executionDate', executionDate);
+                            console.log('today', today);
+                            // console.log('request.status_name', request.status_name);
+                            console.log('statusName', statusName);
+                            console.log('isAdmin', isAdmin);
+                            
+                            // console.log('showButton', showButton);
+                            // console.log('window.App.role', window.App.role);
+                            console.log('--------------------------');
 
                             // Создаем HTML строки таблицы
                             const row = document.createElement('tr');
@@ -852,7 +868,7 @@ async function applyFilters() {
                                 let firstCommentText = '';
                                 
                                 if (Array.isArray(request.comments) && request.comments.length > 0) {
-                                    console.log(typeof request.comments);
+                                    // console.log(typeof request.comments);
                                     const firstComment = request.comments[request.comments.length - 1];
                                     firstCommentText = firstComment.text || firstComment.comment || firstComment.content || JSON.stringify(firstComment);
                                 }
@@ -977,7 +993,21 @@ async function applyFilters() {
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                 ` : ''}
-                                </div>
+
+                                ${isAdmin && statusName == 'выполнена' && (today === executionDate) ? `
+                                    <button data-request-id="${request.id}" type="button"
+                                            class="btn btn-sm btn-custom-green p-1 open-request-btn"
+                                            title="Доступно только в день выполнения заявки">
+                                        Открыть заявку
+                                    </button>
+                                ` : ''}
+
+                                ${isAdmin && statusName == 'выполнена' ? `
+                                    <button data-request-id="${request.id}" type="button"
+                                            class="btn btn-sm btn-custom-green-dark p-1 open-additional-task-request-btn">
+                                        Дополнительное задание
+                                    </button>
+                                ` : ''}
                             </td>
                             ` : ''}
                         `;

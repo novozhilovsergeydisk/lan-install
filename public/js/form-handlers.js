@@ -3536,7 +3536,7 @@ export function initPlanningRequestFormHandlers() {
                 client_organization_planning_request: clientOrganization,
                 _token: _token
             };
-
+            
             console.log('Отправляемые данные:', formDataObj);
 
             const response = await fetch('/planning-requests', {
