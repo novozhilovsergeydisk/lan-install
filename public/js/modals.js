@@ -65,12 +65,13 @@ export function initAdditionalTaskModal() {
     }
 
     document.addEventListener('click', function(e) {
-        if (!e.target.matches('.open-additional-task-request-btn')) return;
+        if (!e.target.closest('.open-additional-task-request-btn')) return;
 
         e.preventDefault();
 
+        const button = e.target.closest('.open-additional-task-request-btn');
         // Получаем request_id из data-атрибута кнопки
-        const requestId = e.target.getAttribute('data-request-id');
+        const requestId = button.getAttribute('data-request-id');
         const requestIdField = document.getElementById('additionalTaskRequestId');
         if (requestIdField && requestId) {
             requestIdField.value = requestId;
