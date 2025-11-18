@@ -997,15 +997,20 @@ async function applyFilters() {
                                 ${isAdmin && statusName == 'выполнена' && (today === executionDate) ? `
                                     <button data-request-id="${request.id}" type="button"
                                             class="btn btn-sm btn-custom-green p-1 open-request-btn"
-                                            title="Доступно только в день выполнения заявки">
-                                        Открыть заявку
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="left"
+                                            data-bs-title="Открыть заявку">
+                                        <i class="bi bi-eye"></i>
                                     </button>
                                 ` : ''}
 
                                 ${isAdmin && statusName == 'выполнена' ? `
                                     <button data-request-id="${request.id}" type="button"
-                                            class="btn btn-sm btn-custom-green-dark p-1 open-additional-task-request-btn">
-                                        Дополнительное задание
+                                            class="btn btn-sm btn-custom-green-dark p-1 open-additional-task-request-btn"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="left"
+                                            data-bs-title="Дополнительное задание">
+                                        <i class="bi bi-plus-circle"></i> 
                                     </button>
                                 ` : ''}
                             </td>
