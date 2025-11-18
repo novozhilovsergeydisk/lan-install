@@ -706,6 +706,15 @@ function renderReportTable(data) {
         // Комментарии
         const commentCell = document.createElement('td');
         let commentHtml = '';
+
+        const isAdmin = window.App.role == 'admin' ?? false;
+        const statusName = request.status_name;
+
+        // console.log('START reports');
+        // console.log('isAdmin', isAdmin);
+        // console.log('statusName', statusName);
+        // console.log('========================');
+
         
         if (comments_by_request[request.id] && comments_by_request[request.id].length > 0) {
             commentHtml = `
@@ -738,6 +747,16 @@ function renderReportTable(data) {
                             ${comments_by_request[request.id].length}
                         </span>
                     </button>
+
+                    ${isAdmin && statusName == 'выполнена' ? `
+                        <button data-request-id="${request.id}" type="button" style="min-width: 3rem;"
+                                class="btn btn-sm btn-custom-green-dark p-1 open-additional-task-request-btn"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="right"
+                                data-bs-title="Дополнительное задание">
+                            <i class="bi bi-plus-circle"></i> 
+                        </button>
+                    ` : ''}
                 </div>
                 
                 `;
