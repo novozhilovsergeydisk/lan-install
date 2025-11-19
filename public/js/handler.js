@@ -904,10 +904,10 @@ async function applyFilters() {
 
                             row.innerHTML = `
                             <!-- Номер заявки -->
-                            <td class=" col-number" style="width: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rowNumber}</td>
+                            <td class=" col-number">${rowNumber}</td>
 
                             <!-- Клиент -->
-                            <td class="col-address" style_="width: 12rem; max-width: 12rem; overflow: hidden; text-overflow: ellipsis;">
+                            <td class="col-address">
                                 <div class="text-dark col-address__organization" style_="font-size: 0.8rem;">${request.client_organization}</div>
                                 <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" title="${request.address || address}">
                                     ${request.city_name && request.city_name !== 'Москва' ? `<strong>${request.city_name}</strong>, ` : ''}<strong>ул. ${request.address || address}</strong>
@@ -919,7 +919,7 @@ async function applyFilters() {
                             </td>
 
                             <!-- Комментарий -->
-                            <td class="col-comments" style_="commentsContainer">
+                            <td class="col-comments">
                                 <div class="col-date__date">${formattedDate} | ${requestNumber}</div>
                                 ${commentsSectionHtml}
                                 <!-- Кнопка комментариев -->
@@ -949,7 +949,7 @@ async function applyFilters() {
 
                             <!-- Состав бригады -->
                             <td class="col-brigade" data-col-brigade-id="${request.brigade_id}">
-                                <div data-name="brigadeMembers" class="col-brigade__div" style="font-size: 0.75rem; line-height: 1.2;">
+                                <div data-name="brigadeMembers">
                                     ${brigadeMembers}
                                 </div>
                             </td>
