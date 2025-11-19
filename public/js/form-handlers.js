@@ -3539,6 +3539,8 @@ export function initPlanningRequestFormHandlers() {
             
             console.log('Отправляемые данные:', formDataObj);
 
+            submitButton.disabled = true;
+
             const response = await fetch('/planning-requests', {
                 method: 'POST',
                 headers: {
@@ -3570,13 +3572,15 @@ export function initPlanningRequestFormHandlers() {
 
                 // Загружаем запланированные заявки
                 loadPlanningRequests();
-                
+                submitButton.disabled = false;
             } else {
                 throw new Error(result.message || 'Ошибка при создании заявки');
+                submitButton.disabled = false;
             }
         } catch (error) {
             console.error('Ошибка при создании заявки:', error);
             showAlert(error.message || 'Произошла ошибка при создании заявки', 'danger');
+            submitButton.disabled = false;
         }
     });
 }
