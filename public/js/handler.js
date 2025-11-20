@@ -949,7 +949,7 @@ async function applyFilters() {
 
                             <!-- Состав бригады -->
                             <td class="col-brigade" data-col-brigade-id="${request.brigade_id}">
-                                <div data-name="brigadeMembers">
+                                <div data-name="brigadeMembers" class="col-brigade__div">
                                     ${brigadeMembers}
                                 </div>
                             </td>

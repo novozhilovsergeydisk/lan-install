@@ -405,7 +405,8 @@
                                             <div class="text-dark font-size-0-8rem"><i>{{ $request->client_fio }}</i></div>
                                             <small class="text-black d-block font-size-0-8rem">
                                                     <i>{{ $request->client_phone ?? 'Нет телефона' }}</i>
-                                            </small>                              
+                                            </small>  
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 other-requests-btn" data-request-id="{{ $request->id }} " data-bs-toggle="tooltip" title="По этому адресу" data-bs-placement="bottom">Другие заявки</button>                            
                                         </td>
 
                                         <!-- Комментарий -->

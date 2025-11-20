@@ -2000,13 +2000,6 @@ export const selectedRequestState = {
         this.brigade_id = null;
     },
 
-    updateStatus(newStatus, newColor = null) {
-        this.status_name = newStatus;
-        if (newColor) {
-            this.status_color = newColor;
-        }
-    },
-
     updateExecutionDate(newDate) {
         this.execution_date = newDate;
     },
@@ -6009,3 +6002,19 @@ export function initCommentHistoryModalHandler() {
         });
     }
 }
+
+// Обработчик кнопки other-requests-btn
+export function initOtherRequestsBtnHandler() {
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.other-requests-btn')) return;
+
+        showAlert('Функционал в разработке', 'warning');
+
+        console.log('Test output for other-requests-btn');
+    });
+}
+
+// Инициализация обработчика при загрузке DOM
+document.addEventListener('DOMContentLoaded', function() {
+    initOtherRequestsBtnHandler();
+});
