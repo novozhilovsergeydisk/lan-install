@@ -217,6 +217,7 @@
 
     .comment-preview-text {
         font-size: clamp(0.7rem, 1vw, 1.2rem) !important;
+        width: 12rem !important;
     }
 
     #requestsTable .col-number {
