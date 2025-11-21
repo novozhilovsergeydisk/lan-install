@@ -3,6 +3,7 @@
 import { showAlert, postData, fetchData, getElement, getValue, validateRequiredField } from './utils.js';
 import { loadAddresses, loadAddressesPaginated, loadPlanningRequests } from './handler.js';
 import { loadAddressesForPlanning } from './handler.js';
+import { renderReportTable } from './report-handler.js';
 import HouseNumberValidator from './validators/house-number-validator.js';
 
 // Функция для установки значения в кастомный селект
@@ -2740,14 +2741,53 @@ document.addEventListener('click', function(event) {
     const button = event.target.closest('.other-requests-btn');
     const addressId = button.dataset.addressId;
 
+    // Переключаемся на вкладку "Отчеты"
+    const reportsTab = document.getElementById('reports-tab');
+    if (reportsTab) {
+        const tab = new bootstrap.Tab(reportsTab);
+        tab.show();
+    }
+
     if (addressId) {
-        const result = fetch('/reports/address/' + addressId)
+        // Показываем индикатор загрузки
+        const tbody = document.getElementById('requestsReportBody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="100%" class="text-center" style="height: 200px; vertical-align: middle;">
+                        <div class="d-flex justify-content-center align-items-center w-100 h-100">
+                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                            <span class="ms-3 fs-5">Загрузка заявок...</span>
+                        </div>
+                    </td>
+                </tr>`;
+        }
+
+        fetch('/reports/address/' + addressId)
             .then(response => response.json())
             .then(data => {
                 console.log(data);
+                // Заполняем таблицу данными
+                if (data.requests) {
+                    renderReportTable({ requests: data.requests });
+                } else {
+                    console.error('No requests data');
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="100%" class="text-center py-4">
+                                <div class="alert alert-danger m-0">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Ошибка загрузки данных
+                                </div>
+                            </td>
+                        </tr>`;
+                }
             });
         console.log('Клик other-requests-btn', addressId);
         // window.open('/reports/address/' + addressId, '_blank');

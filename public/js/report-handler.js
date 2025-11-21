@@ -499,7 +499,7 @@ function shortenName(fullName) {
  * Renders the report data in the table
  * @param {Array} data - Array of request objects
  */
-function renderReportTable(data) {
+export function renderReportTable(data) {
     console.log('Полученные данные в data:', data);
     const exportBtn = document.getElementById('export-report-btn');
 
@@ -515,9 +515,9 @@ function renderReportTable(data) {
         exportBtn.classList.remove('d-none');
     }
     
-    const tbody = document.querySelector('#requestsReportTable tbody');
+    const tbody = document.getElementById('requestsReportBody');
     if (!tbody) {
-        console.error('Table body not found. Looking for: #requestsReportTable tbody');
+        console.error('Table body not found. Looking for: #requestsReportBody');
         return;
     }
 
