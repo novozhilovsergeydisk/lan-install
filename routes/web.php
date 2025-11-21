@@ -187,6 +187,9 @@ Route::prefix('reports')->middleware('auth')->group(function () {
     Route::get('/addresses', [ReportController::class, 'getAddresses'])->name('reports.addresses');
     Route::get('/employees', [ReportController::class, 'getEmployees'])->name('reports.employees');
 
+    // Show address reports page
+    Route::get('/address/{addressId}', [ReportController::class, 'showAddressReports'])->name('reports.address.show');
+
     // All period reports
     Route::post('requests/all-period', [ReportController::class, 'getAllPeriod'])->name('reports.requests.all-period');
     Route::post('requests/by-employee-all-period', [ReportController::class, 'getAllPeriodByEmployee'])->name('reports.requests.by-employee-all-period');

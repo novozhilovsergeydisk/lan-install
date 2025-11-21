@@ -392,13 +392,78 @@ class ReportController extends Controller
     }
 
     /**
+     * Отображение страницы с отчетами по адресу
+     */
+    public function showAddressReports($addressId)
+    {
+        try {
+            // Получить данные адреса
+            $address = DB::table('addresses')
+                ->join('cities', 'addresses.city_id', '=', 'cities.id')
+                ->where('addresses.id', $addressId)
+                ->select('addresses.*', 'cities.name as city_name')
+                ->first();
+
+            if (!$address) {
+                abort(404, 'Адрес не найден');
+            }
+
+            // Получить заявки по адресу за весь период
+            $requests = DB::table('requests as r')
+                ->selectRaw("
+                r.*,
+                c.fio AS client_fio,
+                c.phone AS client_phone,
+                c.organization AS client_organization,
+                rs.name AS status_name,
+                rs.color AS status_color,
+                b.name AS brigade_name,
+                e.fio AS brigade_lead,
+                op.fio AS operator_name,
+                addr.street,
+                addr.houses,
+                addr.district,
+                addr.city_id,
+                ct.name AS city_name,
+                ct.postal_code AS city_postal_code
+            ")
+                ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
+                ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+                ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
+                ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
+                ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
+                ->leftJoin('request_addresses AS ra', 'r.id', '=', 'ra.request_id')
+                ->leftJoin('addresses AS addr', 'ra.address_id', '=', 'addr.id')
+                ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
+                ->where(function ($query) {
+                    $query->where('b.is_deleted', false)
+                        ->orWhereNull('b.id');
+                })
+                ->where('addr.id', $addressId)
+                ->orderBy('r.execution_date', 'DESC')
+                ->orderBy('r.id', 'DESC')
+                ->get();
+
+            return response()->json([
+                'address' => $address,
+                'requests' => $requests,
+            ]);
+
+            // return view('reports.address', compact('address', 'requests'));
+        } catch (\Exception $e) {
+            Log::error('Error in ReportController@showAddressReports: '.$e->getMessage());
+            abort(500, 'Произошла ошибка при получении отчетов');
+        }
+    }
+
+    /**
      * Получение списка адресов для отчетов
      */
     public function getAddresses()
     {
         try {
             $addresses = DB::select('
-            SELECT 
+            SELECT
                 addresses.id,
                 addresses.city_id,
                 addresses.street,
@@ -410,8 +475,8 @@ class ReportController extends Controller
                 cities.name as city_name,
                 cities.region_id,
                 cities.postal_code
-            FROM addresses 
-            JOIN cities ON addresses.city_id = cities.id 
+            FROM addresses
+            JOIN cities ON addresses.city_id = cities.id
             ORDER BY cities.name, addresses.street
         ');
 

@@ -2733,6 +2733,21 @@ function initSaveAddressChanges() {
     }
 }
 
+// Обработчик для кнопки "Другие заявки"
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.other-requests-btn')) return;
+
+    const button = event.target.closest('.other-requests-btn');
+    const addressId = button.dataset.addressId;
+
+    if (addressId) {
+        console.log('Клик other-requests-btn', addressId);
+        // window.open('/reports/address/' + addressId, '_blank');
+    } else {
+        console.error('Address ID not found');
+    }
+});
+
 // Делаем функции доступными глобально
 window.submitRequestForm = submitRequestForm;
 window.displayEmployeeInfo = displayEmployeeInfo;
