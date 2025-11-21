@@ -2741,6 +2741,14 @@ document.addEventListener('click', function(event) {
     const addressId = button.dataset.addressId;
 
     if (addressId) {
+        const result = fetch('/reports/address/' + addressId)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         console.log('Клик other-requests-btn', addressId);
         // window.open('/reports/address/' + addressId, '_blank');
     } else {
