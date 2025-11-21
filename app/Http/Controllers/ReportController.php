@@ -404,13 +404,13 @@ class ReportController extends Controller
                 ->select('addresses.*', 'cities.name as city_name')
                 ->first();
 
-            if (!$address) {
+            if (! $address) {
                 abort(404, 'Адрес не найден');
             }
 
             // Получить заявки по адресу за весь период
             $requests = DB::table('requests as r')
-                ->selectRaw("
+                ->selectRaw('
                 r.*,
                 c.fio AS client_fio,
                 c.phone AS client_phone,
@@ -426,7 +426,7 @@ class ReportController extends Controller
                 addr.city_id,
                 ct.name AS city_name,
                 ct.postal_code AS city_postal_code
-            ")
+            ')
                 ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
                 ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
                 ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')

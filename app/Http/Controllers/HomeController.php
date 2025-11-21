@@ -3303,6 +3303,7 @@ class HomeController extends Controller
             ], 500);
         }
     }
+
     public function getCommentHistory($commentId)
     {
         try {
@@ -3317,9 +3318,10 @@ class HomeController extends Controller
             return response()->json(['success' => true, 'data' => $history]);
         } catch (\Exception $e) {
             \Log::error('Ошибка при получении истории правок комментария: '.$e->getMessage());
+
             return response()->json([
-                'success' => false, 
-                'message' => 'Ошибка при получении истории правок'
+                'success' => false,
+                'message' => 'Ошибка при получении истории правок',
             ], 500);
         }
     }
