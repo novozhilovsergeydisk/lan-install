@@ -6065,19 +6065,3 @@ export function initCommentHistoryModalHandler() {
         });
     }
 }
-
-// Обработчик кнопки other-requests-btn
-export function initOtherRequestsBtnHandler() {
-    document.addEventListener('click', function(event) {
-        if (!event.target.closest('.other-requests-btn')) return;
-
-        showAlert('Функционал в разработке', 'warning');
-
-        console.log('Test output for other-requests-btn');
-    });
-}
-
-// Инициализация обработчика при загрузке DOM
-document.addEventListener('DOMContentLoaded', function() {
-    initOtherRequestsBtnHandler();
-});

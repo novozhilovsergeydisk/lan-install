@@ -8,6 +8,7 @@
 
 - Обработчики элементов формы нужно размещать в файле `public/js/form-handlers.js`
 - JavaScript - не размещать js код в файлах Blade
+- Обработчики событий: пишите функции инициализации в виде `init*****Handler` в файле `form-handlers.js` и инициализируйте их через единую конструкцию `document.addEventListener('DOMContentLoaded', function() {...})` в том же файле или в `init-handlers.js` для избежания дублирования
 - Проверка колонок таблиц - используйте SQL:
 
 ````SELECT column_name FROM information_schema.columns WHERE table_name = 'requests' ORDER BY ordinal_position;````
