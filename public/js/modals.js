@@ -70,6 +70,10 @@ export function initAdditionalTaskModal() {
         e.preventDefault();
 
         const button = e.target.closest('.open-additional-task-request-btn');
+
+        // Скрываем tooltip при клике
+        const tooltip = bootstrap.Tooltip.getInstance(button);
+        if (tooltip) tooltip.hide();
         // Получаем request_id из data-атрибута кнопки
         const requestId = button.getAttribute('data-request-id');
         const requestIdField = document.getElementById('additionalTaskRequestId');
