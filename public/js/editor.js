@@ -244,24 +244,44 @@ function initWysiwygEditor() {
     return true;
   }
 
-  // Update state кнопок (active) — использует document.queryCommandState (работает в большинстве браузеров)
-  function updateToolbarState() {
-    const btns = toolbar.querySelectorAll('button[data-cmd]');
-    btns.forEach(btn => {
-      const cmd = btn.getAttribute('data-cmd');
-      if (cmd === 'createLink' || cmd === 'unlink') {
-        // handled separately
-        btn.classList.remove('active');
-      } else {
-        try {
-          const state = document.queryCommandState(cmd);
-          btn.classList.toggle('active', !!state);
-        } catch (e) {
-          btn.classList.remove('active');
-        }
-      }
-    });
-  }
+   // Update state кнопок (active)
+   function updateToolbarState() {
+     const btns = toolbar.querySelectorAll('button[data-cmd]');
+     btns.forEach(btn => {
+       const cmd = btn.getAttribute('data-cmd');
+       if (cmd === 'createLink' || cmd === 'unlink') {
+         // handled separately
+         btn.classList.remove('active');
+       } else if (cmd === 'bold' || cmd === 'italic') {
+         // Проверяем, находится ли курсор внутри соответствующего тега
+         const tagName = cmd === 'bold' ? 'STRONG' : 'EM';
+         const selection = window.getSelection();
+         let isActive = false;
+         if (selection.rangeCount > 0) {
+           const range = selection.getRangeAt(0);
+           let node = range.commonAncestorContainer;
+           if (node.nodeType === Node.TEXT_NODE) {
+             node = node.parentNode;
+           }
+           while (node && node !== editor) {
+             if (node.tagName === tagName) {
+               isActive = true;
+               break;
+             }
+             node = node.parentNode;
+           }
+         }
+         btn.classList.toggle('active', isActive);
+       } else {
+         try {
+           const state = document.queryCommandState(cmd);
+           btn.classList.toggle('active', !!state);
+         } catch (e) {
+           btn.classList.remove('active');
+         }
+       }
+     });
+   }
 
   // Вставить HTML в текущую позицию курсора (вставляем sanitized html)
   function insertHTMLAtCursor(html) {
@@ -284,43 +304,91 @@ function initWysiwygEditor() {
     console.log('WYSIWYG: после вставки', { after: editor.innerHTML });
   }
 
-  // --- Обработчики тулбара ---
-  toolbar.addEventListener('click', function (e) {
-    console.log('WYSIWYG: клик по тулбару', e.target);
-    const btn = e.target.closest('button[data-cmd]');
-    if (!btn) {
-      console.log('WYSIWYG: клик не по кнопке с data-cmd');
-      return;
-    }
-    const cmd = btn.getAttribute('data-cmd');
-    console.log('WYSIWYG: выполнение команды', cmd);
+   // Функция для форматирования текста с помощью Selection API
+   function formatText(tagName) {
+     const selection = window.getSelection();
+     if (selection.rangeCount === 0) return;
 
-    if (cmd === 'createLink') {
-      let url = prompt('Введите URL (например https://example.com):', 'https://');
-      if (!url) return;
-      // если пользователь ввёл текст в виде "example.com", приведём к httpS
-      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
-        url = 'https://' + url;
-      }
-      document.execCommand('createLink', false, url);
-    } else if (cmd === 'unlink') {
-      document.execCommand('unlink', false, null);
-    } else {
-      // bold/italic - toggle
-      console.log('WYSIWYG: выполнение команды форматирования', cmd);
-      const beforeHTML = editor.innerHTML;
-      document.execCommand(cmd, false, null);
-      console.log('WYSIWYG: результат форматирования', { 
-        command: cmd, 
-        before: beforeHTML, 
-        after: editor.innerHTML 
-      });
+     const range = selection.getRangeAt(0);
+     const selectedText = range.toString();
+     if (!selectedText) return;
+
+     const element = document.createElement(tagName);
+     element.textContent = selectedText;
+
+     range.deleteContents();
+     range.insertNode(element);
+
+     // Переместить курсор после элемента
+     range.setStartAfter(element);
+     range.setEndAfter(element);
+     selection.removeAllRanges();
+     selection.addRange(range);
     }
 
-    // обновить state кнопок
-    updateToolbarState();
-    editor.focus();
-  });
+    // Функция для форматирования текста с помощью Selection API
+    function formatText(tagName) {
+      const selection = window.getSelection();
+      if (selection.rangeCount === 0) return;
+
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+      if (!selectedText) return;
+
+      const element = document.createElement(tagName);
+      element.textContent = selectedText;
+
+      range.deleteContents();
+      range.insertNode(element);
+
+      // Переместить курсор после элемента
+      range.setStartAfter(element);
+      range.setEndAfter(element);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    // --- Обработчики тулбара ---
+   toolbar.addEventListener('click', function (e) {
+     console.log('WYSIWYG: клик по тулбару', e.target);
+     const btn = e.target.closest('button[data-cmd]');
+     if (!btn) {
+       console.log('WYSIWYG: клик не по кнопке с data-cmd');
+       return;
+     }
+     const cmd = btn.getAttribute('data-cmd');
+     console.log('WYSIWYG: выполнение команды', cmd);
+
+     if (cmd === 'createLink') {
+       let url = prompt('Введите URL (например https://example.com):', 'https://');
+       if (!url) return;
+       // если пользователь ввёл текст в виде "example.com", приведём к httpS
+       if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
+         url = 'https://' + url;
+       }
+       document.execCommand('createLink', false, url);
+     } else if (cmd === 'unlink') {
+       document.execCommand('unlink', false, null);
+     } else if (cmd === 'bold') {
+       formatText('strong');
+     } else if (cmd === 'italic') {
+       formatText('em');
+     } else {
+       // другие команды, если есть
+       console.log('WYSIWYG: выполнение команды форматирования', cmd);
+       const beforeHTML = editor.innerHTML;
+       document.execCommand(cmd, false, null);
+       console.log('WYSIWYG: результат форматирования', {
+         command: cmd,
+         before: beforeHTML,
+         after: editor.innerHTML
+       });
+     }
+
+     // обновить state кнопок
+     updateToolbarState();
+     editor.focus();
+   });
 
   // Обновлять активные состояния кнопок при изменении выделения/курсор-перемещении
   console.log('WYSIWYG: добавление обработчиков событий для редактора');
@@ -843,24 +911,44 @@ function initAdditionalWysiwygEditor() {
     return true;
   }
 
-  // Update state кнопок (active) — использует document.queryCommandState (работает в большинстве браузеров)
-  function updateToolbarState() {
-    const btns = toolbar.querySelectorAll('button[data-cmd]');
-    btns.forEach(btn => {
-      const cmd = btn.getAttribute('data-cmd');
-      if (cmd === 'createLink' || cmd === 'unlink') {
-        // handled separately
-        btn.classList.remove('active');
-      } else {
-        try {
-          const state = document.queryCommandState(cmd);
-          btn.classList.toggle('active', !!state);
-        } catch (e) {
-          btn.classList.remove('active');
-        }
-      }
-    });
-  }
+   // Update state кнопок (active)
+   function updateToolbarState() {
+     const btns = toolbar.querySelectorAll('button[data-cmd]');
+     btns.forEach(btn => {
+       const cmd = btn.getAttribute('data-cmd');
+       if (cmd === 'createLink' || cmd === 'unlink') {
+         // handled separately
+         btn.classList.remove('active');
+       } else if (cmd === 'bold' || cmd === 'italic') {
+         // Проверяем, находится ли курсор внутри соответствующего тега
+         const tagName = cmd === 'bold' ? 'STRONG' : 'EM';
+         const selection = window.getSelection();
+         let isActive = false;
+         if (selection.rangeCount > 0) {
+           const range = selection.getRangeAt(0);
+           let node = range.commonAncestorContainer;
+           if (node.nodeType === Node.TEXT_NODE) {
+             node = node.parentNode;
+           }
+           while (node && node !== editor) {
+             if (node.tagName === tagName) {
+               isActive = true;
+               break;
+             }
+             node = node.parentNode;
+           }
+         }
+         btn.classList.toggle('active', isActive);
+       } else {
+         try {
+           const state = document.queryCommandState(cmd);
+           btn.classList.toggle('active', !!state);
+         } catch (e) {
+           btn.classList.remove('active');
+         }
+       }
+     });
+   }
 
   // Вставить HTML в текущую позицию курсора (вставляем sanitized html)
   function insertHTMLAtCursor(html) {
@@ -881,11 +969,33 @@ function initAdditionalWysiwygEditor() {
     }
 
     console.log('WYSIWYG Additional: после вставки', { after: editor.innerHTML });
-  }
+    }
 
-  // --- Обработчики тулбара ---
-  toolbar.addEventListener('click', function (e) {
-    console.log('WYSIWYG Additional: клик по тулбару', e.target);
+    // Функция для форматирования текста с помощью Selection API
+    function formatText(tagName) {
+      const selection = window.getSelection();
+      if (selection.rangeCount === 0) return;
+
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+      if (!selectedText) return;
+
+      const element = document.createElement(tagName);
+      element.textContent = selectedText;
+
+      range.deleteContents();
+      range.insertNode(element);
+
+      // Переместить курсор после элемента
+      range.setStartAfter(element);
+      range.setEndAfter(element);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    // --- Обработчики тулбара ---
+    toolbar.addEventListener('click', function (e) {
+      console.log('WYSIWYG Additional: клик по тулбару', e.target);
     const btn = e.target.closest('button[data-cmd]');
     if (!btn) {
       console.log('WYSIWYG Additional: клик не по кнопке с data-cmd');
@@ -894,27 +1004,31 @@ function initAdditionalWysiwygEditor() {
     const cmd = btn.getAttribute('data-cmd');
     console.log('WYSIWYG Additional: выполнение команды', cmd);
 
-    if (cmd === 'createLink') {
-      let url = prompt('Введите URL (например https://example.com):', 'https://');
-      if (!url) return;
-      // если пользователь ввёл текст в виде "example.com", приведём к httpS
-      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
-        url = 'https://' + url;
-      }
-      document.execCommand('createLink', false, url);
-    } else if (cmd === 'unlink') {
-      document.execCommand('unlink', false, null);
-    } else {
-      // bold/italic - toggle
-      console.log('WYSIWYG Additional: выполнение команды форматирования', cmd);
-      const beforeHTML = editor.innerHTML;
-      document.execCommand(cmd, false, null);
-      console.log('WYSIWYG Additional: результат форматирования', {
-        command: cmd,
-        before: beforeHTML,
-        after: editor.innerHTML
-      });
-    }
+     if (cmd === 'createLink') {
+       let url = prompt('Введите URL (например https://example.com):', 'https://');
+       if (!url) return;
+       // если пользователь ввёл текст в виде "example.com", приведём к httpS
+       if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
+         url = 'https://' + url;
+       }
+       document.execCommand('createLink', false, url);
+     } else if (cmd === 'unlink') {
+       document.execCommand('unlink', false, null);
+     } else if (cmd === 'bold') {
+       formatText('strong');
+     } else if (cmd === 'italic') {
+       formatText('em');
+     } else {
+       // другие команды, если есть
+       console.log('WYSIWYG Additional: выполнение команды форматирования', cmd);
+       const beforeHTML = editor.innerHTML;
+       document.execCommand(cmd, false, null);
+       console.log('WYSIWYG Additional: результат форматирования', {
+         command: cmd,
+         before: beforeHTML,
+         after: editor.innerHTML
+       });
+     }
 
     // обновить state кнопок
     updateToolbarState();
