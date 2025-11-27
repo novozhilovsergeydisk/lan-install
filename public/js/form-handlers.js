@@ -2226,7 +2226,7 @@ function addRequestToTable(result) {
             <small class="text-black d-block font-size-0-8rem">
                 <i>${clientData.phone || requestData.client_phone || 'Нет телефона'}</i>
             </small>
-            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 other-requests-btn" data-request-id="${requestData.id}" data-address-id="${addressData.id}" data-bs-toggle="tooltip" title="По этому адресу" data-bs-placement="bottom">Другие заявки</button>                            
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 other-requests-btn" data-request-id="${requestData.id}" data-address-id="${addressData.id}" data-bs-toggle="tooltip" title="Все заявку по адресу" data-bs-placement="right">Другие заявки</button>                            
         </td>
         <!-- Комментарий -->
         <td class="col-comment">
