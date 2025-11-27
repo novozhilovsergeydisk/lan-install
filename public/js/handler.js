@@ -109,6 +109,7 @@ export async function loadPlanningRequests() {
             row.setAttribute('data-request-id', request.id);
             row.dataset.requestNumber = request.number || '';
             row.dataset.requestStatus = request.status_id || 'status';
+            row.dataset.statusName = request.status_name || '';
             row.dataset.address = fullAddress;
             row.className = 'align-middle status-row welcome-blade';
             row.style.setProperty('--status-color', request.color || '#e2e0e6');
@@ -159,9 +160,9 @@ export async function loadPlanningRequests() {
                                  </button>
                              </div>
                          ` : ''}
-                     ` : '<div class="text-muted small">Нет комментариев</div>'}
-                 </td>
-                 <td style="width: 10%; vertical-align: top">
+                      ` : '<div class="text-muted small">Нет комментариев</div>'}
+                  </td>
+                  <td style="width: 10%; vertical-align: top">
                     <div class="d-flex align-items-start mt-4">
                         <div class="btn-group btn-group-sm" role="group">
                             <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
@@ -919,36 +920,36 @@ async function applyFilters() {
                                 </small>
                             </td>
 
-                            <!-- Комментарий -->
-                            <td class="col-comments">
-                                <div class="col-date__date">${formattedDate} | ${requestNumber}</div>
-                                ${commentsSectionHtml}
-                                <!-- Кнопка комментариев -->
-                                <div class="mt-1">
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#commentsModal"
-                                            data-request-id="${request.id}"
-                                            style="position: relative; z-index: 1;"
-                                            ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ? '' : 'disabled'}>
-                                        <i class="bi bi-chat-left-text me-1"></i>
-                                        ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ?
-                                    `<span class="badge bg-primary rounded-pill ms-1">
-                                                ${request.comments_count || (request.comments ? request.comments.length : 0)}
-                                            </span>` :
-                                    ''
-                                }
-                                    </button>
-                                    ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
-                                        <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                                            Закрыть заявку
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </td>
+                             <!-- Комментарий -->
+                             <td class="col-comments">
+                                 <div class="col-date__date">${formattedDate} | ${requestNumber}</div>
+                                 ${commentsSectionHtml}
+                                 <!-- Кнопка комментариев -->
+                                 <div class="mt-1">
+                                     <button type="button"
+                                             class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#commentsModal"
+                                             data-request-id="${request.id}"
+                                             style="position: relative; z-index: 1;"
+                                             ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ? '' : 'disabled'}>
+                                         <i class="bi bi-chat-left-text me-1"></i>
+                                         ${(request.comments_count > 0 || (request.comments && request.comments.length > 0)) ?
+                                     `<span class="badge bg-primary rounded-pill ms-1">
+                                                 ${request.comments_count || (request.comments ? request.comments.length : 0)}
+                                             </span>` :
+                                     ''
+                                 }
+                                     </button>
+                                     ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
+                                         <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                                             Закрыть заявку
+                                         </button>
+                                     ` : ''}
+                                 </div>
+                             </td>
 
-                            <!-- Состав бригады -->
+                             <!-- Состав бригады -->
                             <td class="col-brigade" data-col-brigade-id="${request.brigade_id}">
                                 <div data-name="brigadeMembers" class="col-brigade__div">
                                     ${brigadeMembers}

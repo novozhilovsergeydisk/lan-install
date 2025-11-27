@@ -346,8 +346,9 @@ class PlanningRequestController extends Controller
                 c.fio,
                 c.phone,
                 c.organization,
-                rs.color,
-                jsonb_agg(
+                 rs.name AS status_name,
+                 rs.color,
+                 jsonb_agg(
                     jsonb_build_object(
                         'comment', co.comment,
                         'created_at', TO_CHAR(co.created_at, 'DD.MM.YYYY HH24:MI'),

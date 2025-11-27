@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Хранилище направлений сортировки per тип
-    const sortDirections = { number: false, address: true, organization: true };
+    const sortDirections = { number: false, address: true, organization: true, status: false };
 
     // Функция для сортировки строк
     function sortTable(sortType) {
@@ -38,6 +38,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 aVal = a.querySelector('.col-address__organization')?.textContent.trim() || '';
                 bVal = b.querySelector('.col-address__organization')?.textContent.trim() || '';
                 return sortAscending ? aVal.localeCompare(bVal, 'ru') : bVal.localeCompare(aVal, 'ru');
+            } else if (sortType === 'status') {
+                // Сортировка по статусу (из dataset) с кастомным порядком
+                const statusOrder = ['выполнена', 'новая', 'отменена', 'перенесена', 'планирование', 'удалена'];
+                aVal = a.dataset.statusName || '';
+                bVal = b.dataset.statusName || '';
+                // Если statusName пустой, используем id для маппинга
+                if (!aVal) {
+                    const statusIdToName = { '1': 'новая', '3': 'перенесена', '4': 'выполнена', '5': 'отменена', '6': 'планирование', '7': 'удалена' };
+                    aVal = statusIdToName[a.dataset.requestStatus] || '';
+                }
+                if (!bVal) {
+                    const statusIdToName = { '1': 'новая', '3': 'перенесена', '4': 'выполнена', '5': 'отменена', '6': 'планирование', '7': 'удалена' };
+                    bVal = statusIdToName[b.dataset.requestStatus] || '';
+                }
+                const aIndex = statusOrder.indexOf(aVal);
+                const bIndex = statusOrder.indexOf(bVal);
+                return sortAscending ? aIndex - bIndex : bIndex - aIndex;
             }
 
             return 0;

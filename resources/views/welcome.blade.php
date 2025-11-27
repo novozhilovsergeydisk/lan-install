@@ -371,15 +371,16 @@
                                      <th class="line-height-20 font-smaller">
                                          Адрес
                                          <span class="dropdown-toggle ms-1" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>
-                                         <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                                             <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру</a></li>
-                                             <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
-                                             <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
-                                         </ul>
+                                          <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                                              <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру</a></li>
+                                              <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
+                                              <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
+                                              <li><a class="dropdown-item" href="#" data-sort="status">Сортировать по статусу</a></li>
+                                          </ul>
                                      </th>
-                                     <th class="line-height-20 font-smaller">Комментарии</th>
+                                      <th class="line-height-20 font-smaller">Комментарии</th>
 
-                                     <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
+                                      <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
                                      @if($user->isAdmin)
                                      <th class="line-height-20 font-smaller" colspan="2">Действия</th>
                                      @endif
@@ -459,6 +460,7 @@
                                                         <span class="badge bg-primary rounded-pill ms-1">
                                                             {{ count($comments_by_request[$request->id]) }}
                                                         </span>
+                                                        
                                                     </button>
 
                                                     @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
@@ -1215,14 +1217,15 @@
                                      <th class="line-height-20 font-smaller">
                                          Адрес
                                          <span class="dropdown-toggle ms-1" id="planningSortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>
-                                         <ul class="dropdown-menu" aria-labelledby="planningSortDropdown">
-                                             <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру</a></li>
-                                             <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
-                                             <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
-                                         </ul>
+                                           <ul class="dropdown-menu" aria-labelledby="planningSortDropdown">
+                                               <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру</a></li>
+                                               <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
+                                               <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
+                                               <li><a class="dropdown-item" href="#" data-sort="status">Сортировать по статусу</a></li>
+                                           </ul>
                                      </th>
-                                     <th class="line-height-20 font-smaller">Комментарии</th>
-                                     <th class="line-height-20 font-smaller">Действия</th>
+                                      <th class="line-height-20 font-smaller">Комментарии</th>
+                                      <th class="line-height-20 font-smaller">Действия</th>
                                  </tr>
                                  </thead>
                                 <tbody>
