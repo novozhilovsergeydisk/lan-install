@@ -2264,30 +2264,38 @@ function addRequestToTable(result) {
         <!-- Action Buttons Group -->
         <td class="col-actions text-nowrap">
             <div class="col-actions__div d-flex flex-column gap-1">
-                <button type="button" 
-                        class="btn btn-sm btn-outline-primary assign-team-btn p-1" 
-                        data-bs-toggle="tooltip" 
-                        data-bs-placement="left" 
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary assign-team-btn p-1"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="left"
                         data-bs-title="Назначить бригаду"
                         data-request-id="${requestData.id}">
                     <i class="bi bi-people"></i>
                 </button>
-                <button type="button" 
+                <button type="button"
                         class="btn btn-sm btn-outline-success transfer-request-btn p-1"
-                        data-bs-toggle="tooltip" 
-                        data-bs-placement="left" 
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="left"
                         data-bs-title="Перенести заявку"
                         style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;"
                         data-request-id="${requestData.id}">
                     <i class="bi bi-arrow-left-right"></i>
                 </button>
-                <button type="button" 
-                        class="btn btn-sm btn-outline-danger cancel-request-btn p-1" 
-                        data-bs-toggle="tooltip" 
-                        data-bs-placement="left" 
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger cancel-request-btn p-1"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="left"
                         data-bs-title="Отменить заявку"
                         data-request-id="${requestData.id}">
                     <i class="bi bi-x-circle"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-sm btn-outline-purple edit-request-btn p-1"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="left"
+                        data-bs-title="Редактировать заявку"
+                        data-request-id="${requestData.id}">
+                    <i class="bi bi-pencil"></i>
                 </button>
             </div>
         </td>
