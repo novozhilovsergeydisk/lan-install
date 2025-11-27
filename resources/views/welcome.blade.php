@@ -3426,6 +3426,7 @@
 <script src="{{ asset('js/calendar.js') }}"></script>
 <script src="{{ asset('js/brigade-sort.js') }}"></script>
 <script src="{{ asset('js/table-sort.js') }}"></script>
+<script src="{{ asset('js/table-planning-sort.js') }}"></script>
 <link rel="stylesheet" href="{{ asset('css/brigade-sort.css') }}">
 
 <!-- Stack for pushed scripts -->

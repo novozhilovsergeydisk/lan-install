@@ -106,6 +106,7 @@ export async function loadPlanningRequests() {
             // Создаем строку таблицы
             const row = document.createElement('tr');
             row.id = `request-${request.id}`;
+            row.setAttribute('data-request-id', request.id);
             row.dataset.requestNumber = request.number || '';
             row.dataset.requestStatus = request.status_id || 'status';
             row.dataset.address = fullAddress;
