@@ -2226,6 +2226,7 @@ function addRequestToTable(result) {
             <small class="text-black d-block font-size-0-8rem">
                 <i>${clientData.phone || requestData.client_phone || 'Нет телефона'}</i>
             </small>
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 other-requests-btn" data-request-id="${requestData.id}" data-address-id="${requestData.address_id}" data-bs-toggle="tooltip" title="По этому адресу" data-bs-placement="bottom">Другие заявки</button>                            
         </td>
         <!-- Комментарий -->
         <td class="col-comment">
@@ -2771,7 +2772,11 @@ document.addEventListener('click', function(event) {
                 console.log(data);
                 // Заполняем таблицу данными
                 if (data.requests) {
-                    renderReportTable({ requests: data.requests });
+                    renderReportTable({
+                        requests: data.requests,
+                        brigadeMembers: data.brigadeMembers || [],
+                        comments_by_request: data.comments_by_request || {}
+                    });
                 } else {
                     console.error('No requests data');
                 }

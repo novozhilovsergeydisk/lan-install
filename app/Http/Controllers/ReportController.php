@@ -444,9 +444,77 @@ class ReportController extends Controller
                 ->orderBy('r.id', 'DESC')
                 ->get();
 
+            // Получить данные о членах бригад для заявок
+            $brigadeIds = $requests->pluck('brigade_id')->filter()->unique();
+            $brigadeMembers = [];
+            if ($brigadeIds->isNotEmpty()) {
+                $brigadeMembers = DB::table('brigade_members as bm')
+                    ->join('brigades as b', 'bm.brigade_id', '=', 'b.id')
+                    ->leftJoin('employees as e', 'bm.employee_id', '=', 'e.id')
+                    ->whereIn('bm.brigade_id', $brigadeIds)
+                    ->where('b.is_deleted', false)
+                    ->select(
+                        'bm.brigade_id',
+                        'e.fio as employee_name',
+                        'e.id as employee_id'
+                    )
+                    ->get()
+                    ->groupBy('brigade_id')
+                    ->map(function ($members, $brigadeId) {
+                        return [
+                            'brigade_id' => $brigadeId,
+                            'members' => $members->map(function ($member) {
+                                return [
+                                    'fio' => $member->employee_name,
+                                    'id' => $member->employee_id
+                                ];
+                            })->toArray()
+                        ];
+                    })->values()->toArray();
+            }
+
+            // Получить комментарии для заявок
+            $requestIds = $requests->pluck('id');
+            $commentsByRequest = [];
+            if ($requestIds->isNotEmpty()) {
+                $commentsByRequest = DB::table('request_comments as rc')
+                    ->join('comments as c', 'rc.comment_id', '=', 'c.id')
+                    ->leftJoin('users as u', 'rc.user_id', '=', 'u.id')
+                    ->leftJoin('employees as e', 'u.id', '=', 'e.user_id')
+                    ->whereIn('rc.request_id', $requestIds)
+                    ->select(
+                        'rc.request_id',
+                        'c.id as comment_id',
+                        'c.comment',
+                        'c.created_at',
+                        DB::raw("CASE
+                            WHEN e.fio IS NOT NULL THEN e.fio
+                            WHEN u.name IS NOT NULL THEN u.name
+                            WHEN u.email IS NOT NULL THEN u.email
+                            ELSE 'Система'
+                        END as author_name")
+                    )
+                    ->orderBy('rc.request_id')
+                    ->orderBy('c.created_at')
+                    ->get()
+                    ->groupBy('request_id')
+                    ->map(function ($comments) {
+                        return $comments->map(function ($comment) {
+                            return (object) [
+                                'id' => $comment->comment_id,
+                                'comment' => $comment->comment,
+                                'created_at' => $comment->created_at,
+                                'author_name' => $comment->author_name,
+                            ];
+                        })->toArray();
+                    })->toArray();
+            }
+
             return response()->json([
                 'address' => $address,
                 'requests' => $requests,
+                'brigadeMembers' => $brigadeMembers,
+                'comments_by_request' => $commentsByRequest,
             ]);
 
             // return view('reports.address', compact('address', 'requests'));
