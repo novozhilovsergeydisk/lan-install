@@ -372,7 +372,7 @@
                                          Адрес
                                          <span class="dropdown-toggle ms-1" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>
                                          <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                                             <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру заявки</a></li>
+                                             <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру</a></li>
                                              <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
                                              <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
                                          </ul>
@@ -403,7 +403,7 @@
                                             <div class="text-dark col-address__organization">{{ $request->client_organization }}</div>
                                             @if(!empty($request->street))
                                             <small class="text-dark d-block col-address__street"
-                                                    data-bs-toggle="tooltip"
+                                                    data-bs-toggle=""
                                                     title="ул. {{ $request->street }}, д. {{ $request->houses }} ({{ $request->district }})">
                                                     @if($request->city_name && $request->city_name !== 'Москва')<strong>{{ $request->city_name }}, </strong>@endif <strong>ул. {{ $request->street }}, д. {{ $request->houses }}</strong>
                                             </small>
@@ -1216,7 +1216,7 @@
                                          Адрес
                                          <span class="dropdown-toggle ms-1" id="planningSortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>
                                          <ul class="dropdown-menu" aria-labelledby="planningSortDropdown">
-                                             <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру заявки</a></li>
+                                             <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру</a></li>
                                              <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
                                              <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
                                          </ul>
