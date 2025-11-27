@@ -364,28 +364,36 @@
                                 </div>
                             @endif
 
-                            <table id="requestsTable" class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
-                                <thead class="bg-dark">
-                                <tr>
-                                    <th class="line-height-20 font-smaller"></th>
-                                    <th class="line-height-20 font-smaller">Адрес</th>
-                                    <th class="line-height-20 font-smaller">Комментарии</th>
+                             <table id="requestsTable" class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
+                                 <thead class="bg-dark">
+                                 <tr>
+                                     <th class="line-height-20 font-smaller"></th>
+                                     <th class="line-height-20 font-smaller">
+                                         Адрес
+                                         <span class="dropdown-toggle ms-1" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>
+                                         <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                                             <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру заявки</a></li>
+                                             <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
+                                             <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
+                                         </ul>
+                                     </th>
+                                     <th class="line-height-20 font-smaller">Комментарии</th>
 
-                                    <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
-                                    @if($user->isAdmin)
-                                    <th class="line-height-20 font-smaller" colspan="2">Действия</th>
-                                    @endif
-                                </tr>
-                                </thead>
+                                     <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
+                                     @if($user->isAdmin)
+                                     <th class="line-height-20 font-smaller" colspan="2">Действия</th>
+                                     @endif
+                                 </tr>
+                                 </thead>
                                 <tbody>
                                 @foreach ($requests as $index => $request)
                                     @php
                                         $rowNumber = $loop->iteration; 
                                         // Get the current loop iteration (1-based index)
                                     @endphp
-                                    <tr id="request-{{ $request->id }}" data-request-status="{{ $request->status_id }}" data-request-number="{{ $request->number }}" data-address="{{ ($request->city_name && $request->city_name !== 'Москва' ? $request->city_name . ', ' : '') . ' ул. ' . $request->street . ', ' . $request->houses }}" class="align-middle status-row welcome-blade"
-                                        style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
-                                        data-request-id="{{ $request->id }}">
+                                     <tr id="request-{{ $request->id }}" data-request-status="{{ $request->status_id }}" data-request-number="{{ $request->number }}" data-address="{{ ($request->city_name && $request->city_name !== 'Москва' ? $request->city_name . ', ' : '') . ' ул. ' . $request->street . ', ' . $request->houses }}" class="align-middle status-row welcome-blade"
+                                         style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
+                                         data-request-id="{{ $request->id }}">
 
                                         <!-- Номер заявки -->
                                         <td class="col-number">{{ $rowNumber }}</td>
@@ -461,9 +469,9 @@
                                                     @endif
                                                 </div>
                                             @endif
-                                        </td>
+                                         </td>
 
-                                        <!-- Состав бригады -->
+                                         <!-- Состав бригады -->
                                         <td class="col-brigade" data-col-brigade-id="{{ $request->brigade_id }}">
                                             <div data-name="brigadeMembers" class="col-brigade__div">
                                                 @if($request->brigade_id)
@@ -1200,15 +1208,23 @@
 
                             </div>
 
-                            <table id="requestsPlanningTable" class="table table-hover align-middle mb-0" style="">
-                                <thead class="bg-dark">
-                                <tr>
-                                    <th class="line-height-20 font-smaller"></th>
-                                    <th class="line-height-20 font-smaller">Адрес</th>
-                                    <th class="line-height-20 font-smaller">Комментарии</th>
-                                    <th class="line-height-20 font-smaller">Действия</th>
-                                </tr>
-                                </thead>
+                             <table id="requestsPlanningTable" class="table table-hover align-middle mb-0" style="">
+                                 <thead class="bg-dark">
+                                 <tr>
+                                     <th class="line-height-20 font-smaller"></th>
+                                     <th class="line-height-20 font-smaller">
+                                         Адрес
+                                         <span class="dropdown-toggle ms-1" id="planningSortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>
+                                         <ul class="dropdown-menu" aria-labelledby="planningSortDropdown">
+                                             <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру заявки</a></li>
+                                             <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
+                                             <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
+                                         </ul>
+                                     </th>
+                                     <th class="line-height-20 font-smaller">Комментарии</th>
+                                     <th class="line-height-20 font-smaller">Действия</th>
+                                 </tr>
+                                 </thead>
                                 <tbody>
                                     <!-- Заполнение таблицы происходит динамически -->
                                 </tbody>
@@ -3409,6 +3425,7 @@
 <script src="{{ asset('js/brigades.js') }}"></script>
 <script src="{{ asset('js/calendar.js') }}"></script>
 <script src="{{ asset('js/brigade-sort.js') }}"></script>
+<script src="{{ asset('js/table-sort.js') }}"></script>
 <link rel="stylesheet" href="{{ asset('css/brigade-sort.css') }}">
 
 <!-- Stack for pushed scripts -->

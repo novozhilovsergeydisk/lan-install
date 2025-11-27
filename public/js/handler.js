@@ -114,53 +114,53 @@ export async function loadPlanningRequests() {
             row.style.setProperty('--bs-table-bg', request.color, 'important');
             row.style.backgroundColor = request.color;
             row.style.color = '#000000'; // Устанавливаем черный цвет текста
-            row.innerHTML = `
-                <td style="width: 5%">
-                    <div class="form-check">
-                        ${index + 1}
-                    </div>
-                </td>
-                <td style="width: 35%">
-                    <div class="d-flex flex-column">
-                        <div class="text-dark col-address__organization">${request.organization || 'Не указан'}</div>
-                        <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" data-bs-original-title="${fullAddress}">
-                            <strong>${fullAddress}</strong>
-                        </small>
-                        <div class="text-dark font-size-0-8rem"><i>${request.fio || ''}</i></div>
-                        <small class="text-black d-block font-size-0-8rem">
-                            <i>${request.phone || 'Нет телефона'}</i>
-                        </small>
-                    </div>
-                </td>
-                <td style="width: 50%">
-                    <div class="col-date__date">${request.request_date} | ${request.number}</div>
-                    ${commentsContent.length > 0 ? `
-                        <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
-                            <p class="comment-preview-title">Печатный комментарий:</p>
-                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${commentsContent}</div>
-                        </div>
-                        ${commentsCount >= 1 ? `
-                            <div class="mb-0">
-                                ${(() => { const p = makeEscapedPreview(commentsContent, 4); return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${comments[0].created_at} | ${comments[0].author_fio}<br>${p.html}${p.ellipsis}</p>`; })()}
-                            </div>
-                            <div class="mt-1">
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#commentsModal"
-                                        data-request-id="${request.id}"
-                                        style="position: relative; z-index: 1;">
-                                    <i class="bi bi-chat-left-text me-1"></i><span class="text-comment"> </span>
-                                    Все комментарии
-                                    <span class="badge bg-primary rounded-pill ms-1">
-                                        ${comments.length}
-                                    </span>
-                                </button>
-                            </div>
-                        ` : ''}
-                    ` : '<div class="text-muted small">Нет комментариев</div>'}
-                </td>
-                <td style="width: 10%; vertical-align: top">
+             row.innerHTML = `
+                 <td style="width: 5%" class="col-number">
+                     <div class="form-check">
+                         ${index + 1}
+                     </div>
+                 </td>
+                 <td style="width: 30%" class="col-address">
+                     <div class="d-flex flex-column">
+                         <div class="text-dark col-address__organization">${request.organization || 'Не указан'}</div>
+                         <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" data-bs-original-title="${fullAddress}">
+                             <strong>${fullAddress}</strong>
+                         </small>
+                         <div class="text-dark font-size-0-8rem"><i>${request.fio || ''}</i></div>
+                         <small class="text-black d-block font-size-0-8rem">
+                             <i>${request.phone || 'Нет телефона'}</i>
+                         </small>
+                     </div>
+                 </td>
+                 <td style="width: 40%" class="col-comments">
+                     <div class="col-date__date">${request.request_date} | ${request.number}</div>
+                     ${commentsContent.length > 0 ? `
+                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
+                             <p class="comment-preview-title">Печатный комментарий:</p>
+                             <div data-comment-request-id="${request.id}" class="comment-preview-text">${commentsContent}</div>
+                         </div>
+                         ${commentsCount >= 1 ? `
+                             <div class="mb-0">
+                                 ${(() => { const p = makeEscapedPreview(commentsContent, 4); return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${comments[0].created_at} | ${comments[0].author_fio}<br>${p.html}${p.ellipsis}</p>`; })()}
+                             </div>
+                             <div class="mt-1">
+                                 <button type="button"
+                                         class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                                         data-bs-toggle="modal"
+                                         data-bs-target="#commentsModal"
+                                         data-request-id="${request.id}"
+                                         style="position: relative; z-index: 1;">
+                                     <i class="bi bi-chat-left-text me-1"></i><span class="text-comment"> </span>
+                                     Все комментарии
+                                     <span class="badge bg-primary rounded-pill ms-1">
+                                         ${comments.length}
+                                     </span>
+                                 </button>
+                             </div>
+                         ` : ''}
+                     ` : '<div class="text-muted small">Нет комментариев</div>'}
+                 </td>
+                 <td style="width: 10%; vertical-align: top">
                     <div class="d-flex align-items-start mt-4">
                         <div class="btn-group btn-group-sm" role="group">
                             <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
