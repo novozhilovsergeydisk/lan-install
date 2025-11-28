@@ -466,9 +466,9 @@ class ReportController extends Controller
                             'members' => $members->map(function ($member) {
                                 return [
                                     'fio' => $member->employee_name,
-                                    'id' => $member->employee_id
+                                    'id' => $member->employee_id,
                                 ];
-                            })->toArray()
+                            })->toArray(),
                         ];
                     })->values()->toArray();
             }

@@ -286,15 +286,21 @@
                                     </button>
                                 </div>
 
-                                <div class="d-flex justify-content-start" style="flex: 1;">
-                                    <label for="employeeFilter" class="form-label">Фильтр по сотрудникам в бригаде:</label>
-                                    <select name="employee_filter" id="employeeFilter" class="form-select w-50 ms-2" style="margin-top: -0.4rem;">
-                                        <option value="">Все сотрудники</option>
-                                        @foreach ($employeesFilter as $employee)
-                                            <option value="{{ $employee->id }}" data-fio="{{ $employee->fio }}">{{ $employee->fio }}</option>
-                                        @endforeach 
-                                    </select>
-                                </div>
+                                 <div class="d-flex justify-content-start" style="flex: 1;">
+                                     <label for="employeeFilter" class="form-label">Фильтр по сотрудникам в бригаде:</label>
+                                     <select name="employee_filter" id="employeeFilter" class="form-select w-50 ms-2" style="margin-top: -0.4rem;">
+                                         <option value="">Все сотрудники</option>
+                                         @foreach ($employeesFilter as $employee)
+                                             <option value="{{ $employee->id }}" data-fio="{{ $employee->fio }}">{{ $employee->fio }}</option>
+                                         @endforeach
+                                     </select>
+                                     <div class="form-check ms-3" style="margin-top: -0.4rem;">
+                                         <input class="form-check-input" type="checkbox" id="unassignedBrigadesFilter">
+                                         <label class="form-check-label" for="unassignedBrigadesFilter">
+                                             Неназначенные бригады
+                                         </label>
+                                     </div>
+                                 </div>
 
                                 @if($user->isAdmin)
                                 <div class="d-flex justify-content-end" style="flex: 1;">
@@ -2659,63 +2665,80 @@
     // Функция для фильтрации строк таблицы по сотруднику
     document.addEventListener('DOMContentLoaded', function() {
         const employeeFilter = document.getElementById('employeeFilter');
-        
+        const unassignedBrigadesFilter = document.getElementById('unassignedBrigadesFilter');
+
         // Функция для сокращения ФИО до формата "Фамилия И."
         function shortenNameJs(fullName) {
             if (!fullName) return '';
-            
+
             const parts = fullName.split(' ');
             if (parts.length < 2) return fullName;
-            
+
             const lastName = parts[0];
             const firstName = parts[1];
-            
+
             // Using the same logic as the PHP backend
             return lastName + ' ' + firstName.charAt(0) + '.';
+        }
+
+        // Функция для применения фильтров
+        function applyFilters() {
+            const requestRows = document.querySelectorAll('#requestsTable tbody tr.status-row');
+            const noRequestsRow = document.getElementById('no-requests-row');
+            let visibleRowsCount = 0;
+
+            const isUnassignedFilterChecked = unassignedBrigadesFilter && unassignedBrigadesFilter.checked;
+            const selectedEmployeeValue = employeeFilter ? employeeFilter.value : '';
+            const selectedOption = employeeFilter ? employeeFilter.options[employeeFilter.selectedIndex] : null;
+            const selectedFio = selectedOption ? selectedOption.getAttribute('data-fio') : '';
+            const shortenedSelectedFio = shortenNameJs(selectedFio);
+
+            requestRows.forEach(row => {
+                let showRow = true;
+
+                // Фильтр по неназначенным бригадам
+                if (isUnassignedFilterChecked) {
+                    const brigadeCell = row.querySelector('td.col-brigade');
+                    if (brigadeCell && brigadeCell.getAttribute('data-col-brigade-id')) {
+                        showRow = false;
+                    }
+                }
+
+                // Фильтр по сотруднику (только если не фильтр по неназначенным)
+                if (showRow && selectedEmployeeValue && !isUnassignedFilterChecked) {
+                    const brigadeCell = row.querySelector('td:nth-child(5)');
+                    if (brigadeCell) {
+                        const brigadeCellText = brigadeCell.textContent;
+                        if (!brigadeCellText.includes(shortenedSelectedFio)) {
+                            showRow = false;
+                        }
+                    } else {
+                        showRow = false;
+                    }
+                }
+
+                row.style.display = showRow ? '' : 'none';
+                if (showRow) visibleRowsCount++;
+            });
+
+            // Показываем или скрываем сообщение об отсутствии заявок
+            if (visibleRowsCount === 0) {
+                noRequestsRow.classList.remove('d-none');
+            } else {
+                noRequestsRow.classList.add('d-none');
+            }
         }
         
         if (employeeFilter) {
             employeeFilter.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                const selectedFio = selectedOption.getAttribute('data-fio');
-                const shortenedSelectedFio = shortenNameJs(selectedFio);
-                const requestRows = document.querySelectorAll('#requestsTable tbody tr.status-row');
-                const noRequestsRow = document.getElementById('no-requests-row');
-                let visibleRowsCount = 0;
-                
-                // Если выбрано "Все сотрудники", показываем все строки
-                if (!this.value) {
-                    requestRows.forEach(row => {
-                        row.style.display = '';
-                        visibleRowsCount++;
-                    });
-                } else {
-                    // Иначе фильтруем по сокращенному ФИО сотрудника
-                    requestRows.forEach(row => {
-                        // Получаем текст ячейки с составом бригады
-                        const brigadeCell = row.querySelector('td:nth-child(5)');
-                        if (brigadeCell) {
-                            const brigadeCellText = brigadeCell.textContent;
-                            
-                            // Проверяем, содержит ли состав бригады сокращенное ФИО
-                            if (brigadeCellText.includes(shortenedSelectedFio)) {
-                                row.style.display = '';
-                                visibleRowsCount++;
-                            } else {
-                                row.style.display = 'none';
-                            }
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
-                }
-                
-                // Показываем или скрываем сообщение об отсутствии заявок
-                if (visibleRowsCount === 0) {
-                    noRequestsRow.classList.remove('d-none');
-                } else {
-                    noRequestsRow.classList.add('d-none');
-                }
+                applyFilters();
+            });
+        }
+
+        // Обработчик для чекбокса "Неназначенные бригады"
+        if (unassignedBrigadesFilter) {
+            unassignedBrigadesFilter.addEventListener('change', function() {
+                applyFilters();
             });
         }
     });
