@@ -2731,6 +2731,12 @@
         
         if (employeeFilter) {
             employeeFilter.addEventListener('change', function() {
+                if (this.value) {
+                    // Сбрасываем чекбокс "Неназначенные бригады"
+                    if (unassignedBrigadesFilter) {
+                        unassignedBrigadesFilter.checked = false;
+                    }
+                }
                 applyFilters();
             });
         }
@@ -2738,6 +2744,12 @@
         // Обработчик для чекбокса "Неназначенные бригады"
         if (unassignedBrigadesFilter) {
             unassignedBrigadesFilter.addEventListener('change', function() {
+                if (this.checked) {
+                    // Сбрасываем фильтр по сотруднику
+                    if (employeeFilter) {
+                        employeeFilter.value = '';
+                    }
+                }
                 applyFilters();
             });
         }
