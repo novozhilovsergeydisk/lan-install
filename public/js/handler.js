@@ -3698,13 +3698,27 @@ if (saveBtn) {
 // Обработчик добавления сотрудника в бригаду
 export function hanlerAddToBrigade() {
     const addToBrigadeBtn = document.getElementById('addToBrigadeBtn');
-    
+    const employeesSelect = document.getElementById('employeesSelect');
+
     // Проверяем, существует ли кнопка на странице
     if (!addToBrigadeBtn) {
         console.log('Кнопка добавления в бригаду не найдена на странице');
         return;
     }
-    
+
+    // Добавляем двойной клик для быстрого добавления сотрудника
+    if (employeesSelect) {
+        employeesSelect.addEventListener('dblclick', function (e) {
+            const option = e.target;
+            if (option.tagName === 'OPTION') {
+                // Выбираем опцию
+                option.selected = true;
+                // Симулируем клик по кнопке добавления
+                addToBrigadeBtn.click();
+            }
+        });
+    }
+
     addToBrigadeBtn.addEventListener('click', function () {
         const select = document.getElementById('employeesSelect');
         const brigadeMembers = document.getElementById('brigadeMembers');
