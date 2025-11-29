@@ -616,26 +616,29 @@ export function renderReportTable(data) {
         if (request.brigade_id) {
             // Find brigade members for this request
             const brigadeGroup = brigadeMembers.filter(m => m.brigade_id == request.brigade_id);
-            
+            console.log('Brigade group for request', request.id, ':', brigadeGroup);
+
             if (brigadeGroup.length > 0) {
                 const brigade = brigadeGroup[0];
-                const members = brigadeGroup
-                    .filter(m => m.employee_name && m.employee_name !== brigade.employee_leader_name)
-                    .map(m => shortenName(m.employee_name));
-                
+                const allMembers = brigade.members ? brigade.members.map(m => m.fio).filter(fio => fio) : [];
+                const leaderName = request.brigade_leader_name || request.brigade_lead;
+                const leaderShort = leaderName ? shortenName(leaderName) : '';
+                const otherMembers = allMembers.filter(fio => shortenName(fio) !== leaderShort).map(shortenName);
+
                 brigadeInfo = `
                     <div style="font-size: 0.75rem; line-height: 1.2;">
                         <div class="mb-1"><i>${brigade.brigade_name || 'Бригада'}</i></div>
-                        ${brigade.employee_leader_name ? 
-                            `<div><strong>${shortenName(brigade.employee_leader_name)}</strong>${members.length ? ', ' + members.join(', ') : ''}</div>` : 
-                            ''}
+                        ${leaderName ?
+                            `<div><strong>${leaderShort}</strong>${otherMembers.length ? ', ' + otherMembers.join(', ') : ''}</div>` :
+                            `<div>${allMembers.map(shortenName).join(', ')}</div>`
+                        }
                     </div>
-                    <a href="#" 
+                    <a href="#"
                        class="hover-text-gray-700 hover-underline view-brigade-btn"
                        style="color: #000; text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
                        onmouseover="this.style.textDecoration='underline'"
                        onmouseout="this.style.textDecoration='none'"
-                       data-bs-toggle="modal" 
+                       data-bs-toggle="modal"
                        data-bs-target="#brigadeModal"
                        data-brigade-id="${request.brigade_id}">
                         подробнее...
@@ -648,12 +651,12 @@ export function renderReportTable(data) {
                         <div class="mb-1"><i>${request.brigade_name || 'Бригада'}</i></div>
                         ${request.brigade_lead ? `<div><strong>${shortenName(request.brigade_lead)}</strong></div>` : ''}
                     </div>
-                    <a href="#" 
+                    <a href="#"
                        class="hover-text-gray-700 hover-underline view-brigade-btn"
                        style="color: #000; text-decoration: none; font-size: 0.75rem; line-height: 1.2;"
                        onmouseover="this.style.textDecoration='underline'"
                        onmouseout="this.style.textDecoration='none'"
-                       data-bs-toggle="modal" 
+                       data-bs-toggle="modal"
                        data-bs-target="#brigadeModal"
                        data-brigade-id="${request.brigade_id}">
                         подробнее...
