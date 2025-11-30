@@ -303,6 +303,10 @@ Route::post('/employee/delete', [EmployeeUserController::class, 'deleteEmployee'
     ->name('employee.delete')
     ->middleware('auth');
 
+Route::post('/employee/export', [EmployeeUserController::class, 'exportEmployees'])
+    ->name('employee.export')
+    ->middleware('auth');
+
 Route::post('/employee/restore', [HomeController::class, 'restoreEmployee'])
     ->name('employee.restore')
     ->middleware(['auth', 'roles']);

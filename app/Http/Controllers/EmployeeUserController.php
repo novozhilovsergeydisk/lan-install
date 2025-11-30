@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\EmployeesExport;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EmployeeUserController extends Controller
 {
@@ -678,6 +680,53 @@ class EmployeeUserController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при удалении сотрудника: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function exportEmployees(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'employee_ids' => 'required|array',
+                'employee_ids.*' => 'integer|exists:employees,id',
+            ]);
+
+            $employeeIds = $validated['employee_ids'];
+
+            // Получаем данные сотрудников с паспортными данными и автомобилями
+            $employees = DB::table('employees')
+                ->select(
+                    'employees.fio',
+                    DB::raw("TO_CHAR(employees.birth_date, 'DD.MM.YYYY') as birth_date"),
+                    'employees.birth_place',
+                    DB::raw("CONCAT(passports.series_number, ' ', passports.issued_by, ' ', TO_CHAR(passports.issued_at, 'DD.MM.YYYY')) as passport_info"),
+                    'employees.registration_place',
+                    DB::raw("CONCAT(cars.brand, ' ', cars.license_plate) as car_info")
+                )
+                ->leftJoin('passports', 'employees.id', '=', 'passports.employee_id')
+                ->leftJoin('cars', 'employees.id', '=', 'cars.employee_id')
+                ->whereIn('employees.id', $employeeIds)
+                ->where('employees.is_deleted', false)
+                ->orderBy('employees.fio')
+                ->get();
+
+            // Используем Laravel Excel для экспорта
+            return Excel::download(new EmployeesExport($employees), 'список_сотрудников_' . now()->format('Y-m-d_H-i-s') . '.xlsx');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при экспорте сотрудников: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при экспорте сотрудников',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

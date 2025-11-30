@@ -740,6 +740,7 @@
                         <div class="row">
                             @if($user->isAdmin)
                             <div class="mb-3 text-end">
+                                <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#exportEmployeesModal">Выгрузить списки</button>
                                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newEmployeeModal">Новый сотрудник</button>
                             </div>
                             @endif
@@ -919,10 +920,38 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                             </div>
+                         </div>
 
-                        <div class="row g-4">
+                         <!-- Модальное окно для экспорта сотрудников -->
+                         <div class="modal fade" id="exportEmployeesModal" tabindex="-1" aria-labelledby="exportEmployeesModalLabel">
+                             <div class="modal-dialog modal-lg">
+                                 <div class="modal-content">
+                                     <div class="modal-header">
+                                         <h5 class="modal-title" id="exportEmployeesModalLabel">Выгрузка списка сотрудников</h5>
+                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                     </div>
+                                     <div class="modal-body">
+                                         <p>Выберите сотрудников для выгрузки в Excel:</p>
+                                         <div id="employeesList" class="mb-3">
+                                             <!-- Список сотрудников будет загружен сюда -->
+                                         </div>
+                                         <div class="form-check">
+                                             <input class="form-check-input" type="checkbox" id="selectAllEmployees">
+                                             <label class="form-check-label" for="selectAllEmployees">
+                                                 Выбрать всех
+                                             </label>
+                                         </div>
+                                     </div>
+                                     <div class="modal-footer">
+                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                         <button type="button" class="btn btn-success" id="exportEmployeesBtn">Выгрузить в Excel</button>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+
+                         <div class="row g-4">
                             <!-- Таблица пользователей -->
                             <div id="usersTableContainer" class="col-12">
                                 <div class="card h-100">
@@ -2076,6 +2105,7 @@
 
 <!-- Form Handlers -->
 <script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
+<script type="module" src="{{ asset('js/employee-export.js') }}"></script>
 
 <!-- Event Handlers -->
 <script type="module" src="{{ asset('js/handler.js') }}"></script>
