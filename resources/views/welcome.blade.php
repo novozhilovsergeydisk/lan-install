@@ -958,62 +958,68 @@
                                     <div class="card-header">
                                         <h5 class="mb-0">Список пользователей</h5>
                                     </div>
-                                    @if($user->isAdmin)
-                                    <div class="card-body p-0">
-                                        <div class="table-responsive">
-                                            <div class="table-container">
-                                                <table id="employeesTable" class="table table-hover align-middle mb-0">
-                                                    <thead>
-                                                        <tr class="smaller">
-                                                            <th style="width: 30%">Имя</th>
-                                                            <th style="width: 15%">Телефон</th>
-                                                            <th style="width: 10%">Должность</th>
-                                                            <th style="width: 10%">Дата рожд.</th>
-                                                            <th style="width: 25%">Паспорт</th>
-                                                            <th style="width: 10%">Машина</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    @foreach($employees as $employee)
-                                                        <tr class="small" data-employee-id="{{ $employee->id }}">
-                                                            <td>
-                                                                <div>{{ $employee->fio }} <br> {{ $employee->user_email }}</div>
-                                                                <div class="mt-2">
-                                                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn me-1" 
-                                                                            data-employee-id="{{ $employee->id }}" 
-                                                                            data-employee-name="{{ $employee->fio }}">
-                                                                        <i class="bi bi-pencil-square"></i>
-                                                                    </button> 
+                             <div class="card-body p-0">
+                                         <div class="table-responsive">
+                                             <div class="table-container">
+                                                 <table id="employeesTable" class="table table-hover align-middle mb-0">
+                                                     <thead>
+                                                         <tr class="smaller">
+                                                             <th style="width: 30%">Имя</th>
+                                                             <th style="width: 15%">Телефон</th>
+                                                             @if($user->isAdmin)
+                                                             <th style="width: 10%">Должность</th>
+                                                             <th style="width: 10%">Дата рожд.</th>
+                                                             <th style="width: 25%">Паспорт</th>
+                                                             @endif
+                                                             <th style="width: 10%">Машина</th>
+                                                         </tr>
+                                                     </thead>
+                                                     <tbody>
+                                                     @foreach($employees as $employee)
+                                                         <tr class="small" data-employee-id="{{ $employee->id }}">
+                                                             <td>
+                                                                 <div>{{ $employee->fio }}
+                                                                 @if($user->isAdmin)
+                                                                 <br> {{ $employee->user_email }}
+                                                                 @endif
+                                                                 </div>
+                                                                 @if($user->isAdmin)
+                                                                 <div class="mt-2">
+                                                                     <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn me-1"
+                                                                             data-employee-id="{{ $employee->id }}"
+                                                                             data-employee-name="{{ $employee->fio }}">
+                                                                         <i class="bi bi-pencil-square"></i>
+                                                                     </button>
 
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2  delete-employee-btn me-1" 
-                                                                            data-employee-id="{{ $employee->id }}" 
-                                                                            data-employee-name="{{ $employee->fio }}">
-                                                                        <i class="bi bi-trash"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                            <td>{{ $employee->phone }}</td>
-                                                            <td>{{ $employee->position }}</td>
-                                                            <td>{{ $employee->birth_date ? \Carbon\Carbon::parse($employee->birth_date)->format('d-m-Y') : '' }}</td>
-                                                            <td>
-                                                                <div>
-                                                                    {{ $employee->series_number }} <br> 
-                                                                    {{ $employee->passport_issued_at }} <br> 
-                                                                    {{ $employee->passport_issued_by }} <br> 
-                                                                    {{ $employee->department_code }}
-                                                                </div>
-                                                            </td>
-                                                            <td>{{ $employee->car_brand }} <br> {{ $employee->car_plate }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @else
-                                    <div class="alert alert-info">Управление пользователями доступно только для администраторов</div>
-                                    @endif
+                                                                     <button type="button" class="btn btn-sm btn-outline-danger ms-2  delete-employee-btn me-1"
+                                                                             data-employee-id="{{ $employee->id }}"
+                                                                             data-employee-name="{{ $employee->fio }}">
+                                                                         <i class="bi bi-trash"></i>
+                                                                     </button>
+                                                                 </div>
+                                                                 @endif
+                                                             </td>
+                                                             <td>{{ $employee->phone }}</td>
+                                                             @if($user->isAdmin)
+                                                             <td>{{ $employee->position }}</td>
+                                                             <td>{{ $employee->birth_date ? \Carbon\Carbon::parse($employee->birth_date)->format('d-m-Y') : '' }}</td>
+                                                             <td>
+                                                                 <div>
+                                                                     {{ $employee->series_number }} <br>
+                                                                     {{ $employee->passport_issued_at }} <br>
+                                                                     {{ $employee->passport_issued_by }} <br>
+                                                                     {{ $employee->department_code }}
+                                                                 </div>
+                                                             </td>
+                                                             @endif
+                                                             <td>{{ $employee->car_brand }} <br> {{ $employee->car_plate }}</td>
+                                                         </tr>
+                                                     @endforeach
+                                                     </tbody>
+                                                 </table>
+                                             </div>
+                                         </div>
+                                     </div>
 
                                 </div>
                             </div>
