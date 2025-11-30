@@ -922,7 +922,7 @@
                             </div>
                         </div>
 
-                        <div class="row g-4 flex-nowrap">
+                        <div class="row g-4">
                             <!-- Таблица пользователей -->
                             <div id="usersTableContainer" class="col-12">
                                 <div class="card h-100">
@@ -988,6 +988,67 @@
 
                                 </div>
                             </div>
+
+                            <!-- Список уволенных сотрудников -->
+                            <div class="row mt-4" style="border: 1px solid green; padding: 10px;">
+                                <div id="firedEmployeesTableContainer" class="col-12">
+                                    <div class="card h-100">
+                                        @if($user->isAdmin)
+                                        <div class="card-header">
+                                            <h5 class="mb-0">Уволенные сотрудники</h5>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive">
+                                                <div class="table-container">
+                                                    <table id="firedEmployeesTable" class="table table-hover align-middle mb-0">
+                                                        <thead>
+                                                        <tr class="smaller">
+                                                            <th style="width: 30%">Имя</th>
+                                                            <th style="width: 15%">Телефон</th>
+                                                            <th style="width: 10%">Должность</th>
+                                                            <th style="width: 10%">Дата рожд.</th>
+                                                            <th style="width: 25%">Паспорт</th>
+                                                            <th style="width: 10%">Машина</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        @foreach($firedEmployees as $employee)
+                                                        <tr class="small" data-employee-id="{{ $employee->id }}">
+                                                            <td>
+                                                            <div>{{ $employee->fio }} <br> {{ $employee->user_email }}</div>
+                                                            <div class="mt-2">
+                                                                <button type="button" class="btn btn-sm btn-outline-success me-1 restore-employee-btn" data-employee-id="{{ $employee->id }}" data-employee-name="{{ $employee->fio }}">
+                                                                <i class="bi bi-arrow-counterclockwise"></i> Восстановить
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-danger me-1 delete-employee-permanently-btn" data-employee-id="{{ $employee->id }}" data-employee-name="{{ $employee->fio }}">
+                                                                <i class="bi bi-trash"></i> Удалить
+                                                                </button>
+                                                            </div>
+                                                            </td>
+                                                            <td>{{ $employee->phone }}</td>
+                                                            <td>{{ $employee->position }}</td>
+                                                            <td>{{ $employee->birth_date ? \Carbon\Carbon::parse($employee->birth_date)->format('d-m-Y') : '' }}</td>
+                                                            <td>
+                                                            <div>
+                                                                {{ $employee->series_number }} <br>
+                                                                {{ $employee->passport_issued_at }} <br>
+                                                                {{ $employee->passport_issued_by }} <br>
+                                                                {{ $employee->department_code }}
+                                                            </div>
+                                                            </td>
+                                                            <td>{{ $employee->car_brand }} <br> {{ $employee->car_plate }}</td>
+                                                        </tr>
+                                                        @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 

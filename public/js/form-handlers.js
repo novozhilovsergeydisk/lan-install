@@ -4251,13 +4251,29 @@ export function initDeleteEmployee() {
             button.addEventListener('click', handleDeleteEmployee);
         });
     }
+
+    // Инициализация восстановления сотрудника
+    const restoreEmployeeBtns = document.querySelectorAll('.restore-employee-btn');
+    if (restoreEmployeeBtns && restoreEmployeeBtns.length > 0) {
+        restoreEmployeeBtns.forEach(button => {
+            button.addEventListener('click', handleRestoreEmployee);
+        });
+    }
+
+    // Инициализация полного удаления сотрудника
+    const deletePermanentlyBtns = document.querySelectorAll('.delete-employee-permanently-btn');
+    if (deletePermanentlyBtns && deletePermanentlyBtns.length > 0) {
+        deletePermanentlyBtns.forEach(button => {
+            button.addEventListener('click', handleDeleteEmployeePermanently);
+        });
+    }
 }
 
 async function handleDeleteEmployee(event) {
     console.log('handleDeleteEmployee');
-    
+
     console.log(event);
-    
+
     if (confirm('Вы уверены, что хотите удалить сотрудника?')) {
         // Получаем данные о сотруднике из атрибутов кнопки
         const employeeName = event.currentTarget.getAttribute('data-employee-name');
@@ -4284,29 +4300,145 @@ async function handleDeleteEmployee(event) {
                 // Плавно скрываем строку перед удалением
                 row.style.transition = 'opacity 0.3s';
                 row.style.opacity = '0';
-                
+
                 // Удаляем строку после завершения анимации
                 setTimeout(() => {
                     row.remove();
-                    
-                    // Показываем сообщение, если таблица пуста
-                    const tbody = document.querySelector('#employeesTable tbody');
-                    if (tbody && tbody.children.length === 0) {
-                        const emptyRow = document.createElement('tr');
-                        emptyRow.innerHTML = `
-                            <td colspan="6" class="text-center py-4">
-                                <div class="text-muted">Сотрудники не найдены</div>
-                            </td>
-                        `;
-                        tbody.appendChild(emptyRow);
-                    }
                 }, 300);
             }
         } else {
-            showAlert(result.message || 'Произошла ошибка при удалении сотрудника', 'danger');
+            showAlert(`Ошибка при удалении сотрудника: ${result.message}`, 'danger');
         }
-    }    
-    // showAlert(`Реализация удаления сотрудника "${employeeName}" в разработке`, 'warning');
+    }
+}
+
+async function handleRestoreEmployee(event) {
+    console.log('handleRestoreEmployee');
+
+    if (confirm('Вы уверены, что хотите восстановить сотрудника?')) {
+        const employeeName = event.currentTarget.getAttribute('data-employee-name');
+        const employeeId = event.currentTarget.getAttribute('data-employee-id');
+
+        console.log('Восстановление сотрудника:', employeeName, 'ID:', employeeId);
+
+        const data = {
+            employee_id: employeeId,
+        };
+
+        const result = await postData('/employee/restore', data);
+
+        console.log('Ответ от сервера:', result);
+
+        if (result.success) {
+            showAlert(`Сотрудник "${employeeName}" успешно восстановлен`, 'success');
+
+            // Удаляем строку из таблицы уволенных
+            const row = document.querySelector(`tr[data-employee-id="${employeeId}"]`);
+            if (row) {
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => {
+                    row.remove();
+                }, 300);
+            }
+
+            // Добавляем сотрудника в таблицу активных
+            if (result.employee) {
+                addEmployeeToActiveTable(result.employee);
+            }
+        } else {
+            showAlert(`Ошибка при восстановлении сотрудника: ${result.message}`, 'danger');
+        }
+    }
+}
+
+async function handleDeleteEmployeePermanently(event) {
+    console.log('handleDeleteEmployeePermanently');
+
+    if (confirm('Вы уверены, что хотите скрыть сотрудника? Сотрудник будет заблокирован и скрыт из списка.')) {
+        const employeeName = event.currentTarget.getAttribute('data-employee-name');
+        const employeeId = event.currentTarget.getAttribute('data-employee-id');
+
+        console.log('Полное удаление сотрудника:', employeeName, 'ID:', employeeId);
+
+        const data = {
+            employee_id: employeeId,
+        };
+
+        const result = await postData('/employee/delete-permanently', data);
+
+        console.log('Ответ от сервера:', result);
+
+        if (result.success) {
+            showAlert(`Сотрудник "${employeeName}" заблокирован и скрыт`, 'success');
+
+            // Удаляем строку из таблицы
+            const row = document.querySelector(`tr[data-employee-id="${employeeId}"]`);
+            if (row) {
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => {
+                    row.remove();
+                }, 300);
+            }
+        } else {
+            showAlert(`Ошибка при удалении сотрудника: ${result.message}`, 'danger');
+        }
+    }
+}
+
+function addEmployeeToActiveTable(employee) {
+    const tbody = document.querySelector('#employeesTable tbody');
+    if (!tbody) {
+        console.error('Таблица активных сотрудников не найдена');
+        return;
+    }
+
+    // Создаем новую строку
+    const row = document.createElement('tr');
+    row.className = 'small';
+    row.setAttribute('data-employee-id', employee.id);
+
+    // Форматируем дату рождения
+    const birthDate = employee.birth_date ? new Date(employee.birth_date).toLocaleDateString('ru-RU') : '';
+
+    // HTML для строки
+    row.innerHTML = `
+        <td>
+            <div>${employee.fio} <br> ${employee.user_email || ''}</div>
+            <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn me-1"
+                        data-employee-id="${employee.id}"
+                        data-employee-name="${employee.fio}">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2 delete-employee-btn me-1"
+                        data-employee-id="${employee.id}"
+                        data-employee-name="${employee.fio}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </td>
+        <td>${employee.phone || ''}</td>
+        <td>${employee.position || ''}</td>
+        <td>${birthDate}</td>
+        <td>
+            <div>
+                ${employee.series_number || ''} <br>
+                ${employee.passport_issued_at || ''} <br>
+                ${employee.passport_issued_by || ''} <br>
+                ${employee.department_code || ''}
+            </div>
+        </td>
+        <td>${employee.car_brand || ''} <br> ${employee.car_plate || ''}</td>
+    `;
+
+    // Добавляем строку в начало таблицы (или в конец, в зависимости от сортировки)
+    tbody.appendChild(row);
+
+    // Реинициализируем обработчики для новых кнопок
+    initDeleteEmployee();
+    initEmployeeEditHandlers();
 }
 // END Инициализация удаления сотрудника
 

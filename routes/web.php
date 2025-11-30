@@ -303,6 +303,14 @@ Route::post('/employee/delete', [EmployeeUserController::class, 'deleteEmployee'
     ->name('employee.delete')
     ->middleware('auth');
 
+Route::post('/employee/restore', [HomeController::class, 'restoreEmployee'])
+    ->name('employee.restore')
+    ->middleware(['auth', 'roles']);
+
+Route::post('/employee/delete-permanently', [HomeController::class, 'deleteEmployeePermanently'])
+    ->name('employee.delete-permanently')
+    ->middleware(['auth', 'roles']);
+
 // Delete routes
 // Delete brigade member
 Route::post('/brigade/delete/{id}', [BrigadeController::class, 'deleteBrigade'])
