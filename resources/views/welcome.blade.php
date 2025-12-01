@@ -287,19 +287,16 @@
                                 </div>
 
                                  <div class="d-flex justify-content-start" style="flex: 1;">
-                                     <label for="employeeFilter" class="form-label">Фильтр по сотрудникам в бригаде:</label>
+                                      <label for="employeeFilter" class="form-label"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-funnel text-slate-400 mr-2 flex-shrink-0" aria-hidden="true"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"></path></svg></label>
                                      <select name="employee_filter" id="employeeFilter" class="form-select w-50 ms-2" style="margin-top: -0.4rem;">
                                          <option value="">Все сотрудники</option>
                                          @foreach ($employeesFilter as $employee)
                                              <option value="{{ $employee->id }}" data-fio="{{ $employee->fio }}">{{ $employee->fio }}</option>
                                          @endforeach
                                      </select>
-                                     <div class="form-check ms-3" style="margin-top: -0.4rem;">
-                                         <input class="form-check-input" type="checkbox" id="unassignedBrigadesFilter">
-                                         <label class="form-check-label" for="unassignedBrigadesFilter">
-                                             Неназначенные бригады
-                                         </label>
-                                     </div>
+                                      <button class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 dark:active:bg-slate-700 ms-3" id="unassignedBrigadesFilter" style="margin-top: -0.4rem;">
+                                          Неназначенные бригады
+                                      </button>
                                  </div>
 
                                 @if($user->isAdmin)
@@ -949,9 +946,43 @@
                                      </div>
                                  </div>
                              </div>
-                         </div>
+                          </div>
 
-                         <div class="row g-4">
+                          <!-- Модальное окно для загрузки документов сотрудника -->
+                          <div class="modal fade" id="uploadEmployeeDocumentModal" tabindex="-1" aria-labelledby="uploadEmployeeDocumentModalLabel">
+                              <div class="modal-dialog modal-lg">
+                                  <div class="modal-content">
+                                      <div class="modal-header">
+                                          <h5 class="modal-title" id="uploadEmployeeDocumentModalLabel">Загрузка документа для сотрудника</h5>
+                                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                      </div>
+                                      <div class="modal-body">
+                                          <form id="uploadEmployeeDocumentForm" enctype="multipart/form-data">
+                                              @csrf
+                                              <input type="hidden" id="documentEmployeeId" name="employee_id" value="">
+                                              <div class="mb-3">
+                                                  <label for="documentType" class="form-label">Тип документа</label>
+                                                  <select class="form-select" id="documentType" name="document_type" required>
+                                                      <option value="passport_scan">Скан паспорта</option>
+                                                      <option value="other">Другое</option>
+                                                  </select>
+                                              </div>
+                                              <div class="mb-3">
+                                                  <label for="documentFile" class="form-label">Файл документа</label>
+                                                  <input type="file" class="form-control" id="documentFile" name="file" accept=".jpg,.jpeg,.png,.pdf" required>
+                                                  <div class="form-text">Поддерживаемые форматы: JPG, PNG, PDF. Максимальный размер: 20MB</div>
+                                              </div>
+                                          </form>
+                                      </div>
+                                      <div class="modal-footer">
+                                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                          <button type="button" class="btn btn-primary" id="uploadDocumentBtn">Загрузить</button>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+
+                          <div class="row g-4">
                             <!-- Таблица пользователей -->
                             <div id="usersTableContainer" class="col-12">
                                 <div class="card h-100">
@@ -966,17 +997,18 @@
                                                          <tr class="smaller">
                                                              <th style="width: 30%">Имя</th>
                                                              <th style="width: 15%">Телефон</th>
-                                                             @if($user->isAdmin)
-                                                             <th style="width: 10%">Должность</th>
-                                                             <th style="width: 10%">Дата рожд.</th>
-                                                             <th style="width: 25%">Паспорт</th>
-                                                             @endif
-                                                             <th style="width: 10%">Машина</th>
-                                                         </tr>
+                                                              @if($user->isAdmin)
+                                                              <th style="width: 10%">Должность</th>
+                                                              <th style="width: 10%">Дата рожд.</th>
+                                                              <th style="width: 25%">Паспорт</th>
+                                                              @endif
+                                                              <th style="width: 10%">Машина</th>
+                                                              <th style="width: 10%">Документы</th>
+                                                          </tr>
                                                      </thead>
                                                      <tbody>
-                                                     @foreach($employees as $employee)
-                                                         <tr class="small" data-employee-id="{{ $employee->id }}">
+                                                      @foreach($employees as $employee)
+                                                          <tr class="small" data-employee-id="{{ $employee->id }}">
                                                              <td>
                                                                  <div>{{ $employee->fio }}
                                                                  @if($user->isAdmin)
@@ -991,29 +1023,56 @@
                                                                          <i class="bi bi-pencil-square"></i>
                                                                      </button>
 
-                                                                     <button type="button" class="btn btn-sm btn-outline-danger ms-2  delete-employee-btn me-1"
-                                                                             data-employee-id="{{ $employee->id }}"
-                                                                             data-employee-name="{{ $employee->fio }}">
-                                                                         <i class="bi bi-trash"></i>
-                                                                     </button>
+                                                                      <button type="button" class="btn btn-sm btn-outline-danger ms-2  delete-employee-btn me-1"
+                                                                              data-employee-id="{{ $employee->id }}"
+                                                                              data-employee-name="{{ $employee->fio }}">
+                                                                          <i class="bi bi-trash"></i>
+                                                                      </button>
+
+                                                                      <button type="button" class="btn btn-sm btn-outline-info ms-2 upload-employee-document-btn me-1"
+                                                                              data-employee-id="{{ $employee->id }}"
+                                                                              data-employee-name="{{ $employee->fio }}"
+                                                                              data-bs-toggle="modal"
+                                                                              data-bs-target="#uploadEmployeeDocumentModal">
+                                                                          <i class="bi bi-file-earmark-plus"></i>
+                                                                      </button>
                                                                  </div>
                                                                  @endif
                                                              </td>
                                                              <td>{{ $employee->phone }}</td>
-                                                             @if($user->isAdmin)
-                                                             <td>{{ $employee->position }}</td>
-                                                             <td>{{ $employee->birth_date ? \Carbon\Carbon::parse($employee->birth_date)->format('d-m-Y') : '' }}</td>
-                                                             <td>
-                                                                 <div>
-                                                                     {{ $employee->series_number }} <br>
-                                                                     {{ $employee->passport_issued_at }} <br>
-                                                                     {{ $employee->passport_issued_by }} <br>
-                                                                     {{ $employee->department_code }}
-                                                                 </div>
-                                                             </td>
-                                                             @endif
-                                                             <td>{{ $employee->car_brand }} <br> {{ $employee->car_plate }}</td>
-                                                         </tr>
+                                                              @if($user->isAdmin)
+                                                              <td>{{ $employee->position }}</td>
+                                                              <td>{{ $employee->birth_date ? \Carbon\Carbon::parse($employee->birth_date)->format('d-m-Y') : '' }}</td>
+                                                              <td>
+                                                                  <div>
+                                                                      {{ $employee->series_number }} <br>
+                                                                      {{ $employee->passport_issued_at }} <br>
+                                                                      {{ $employee->passport_issued_by }} <br>
+                                                                      {{ $employee->department_code }}
+                                                                  </div>
+                                                              </td>
+                                                              @endif
+                                                              <td>{{ $employee->car_brand }} <br> {{ $employee->car_plate }}</td>
+                                                              <td>
+                                                                  @php
+                                                                      $documents = DB::table('employee_documents')->where('employee_id', $employee->id)->get();
+                                                                  @endphp
+                                                                  @if($documents->count() > 0)
+                                                                      @foreach($documents as $doc)
+                                                                          @php
+                                                                              $fileName = basename($doc->file_path);
+                                                                              $parts = explode('_', $fileName, 2);
+                                                                              $originalName = isset($parts[1]) ? $parts[1] : $fileName;
+                                                                          @endphp
+                                                                          <a href="{{ route('employee-documents.download', $doc->id) }}" class="btn btn-sm btn-outline-secondary mb-1" target="_blank" title="{{ $doc->document_type }}">
+                                                                              {{ $originalName }}
+                                                                          </a><br>
+                                                                      @endforeach
+                                                                  @else
+                                                                      Нет документов
+                                                                  @endif
+                                                              </td>
+                                                          </tr>
                                                      @endforeach
                                                      </tbody>
                                                  </table>
@@ -1025,7 +1084,7 @@
                             </div>
 
                             <!-- Список уволенных сотрудников -->
-                            <div class="row mt-4" style="border: 1px solid green; padding: 10px;">
+                            <div class="row mt-4" style="border: 0px solid green; padding: 10px;">
                                 <div id="firedEmployeesTableContainer" class="col-12">
                                     <div class="card h-100">
                                         @if($user->isAdmin)
@@ -2784,7 +2843,8 @@
             const noRequestsRow = document.getElementById('no-requests-row');
             let visibleRowsCount = 0;
 
-            const isUnassignedFilterChecked = unassignedBrigadesFilter && unassignedBrigadesFilter.checked;
+            const isUnassignedFilterChecked = unassignedBrigadesFilter && unassignedBrigadesFilter.classList.contains('active');
+            console.log('applyFilters: isUnassignedFilterChecked =', isUnassignedFilterChecked);
             const selectedEmployeeValue = employeeFilter ? employeeFilter.value : '';
             const selectedOption = employeeFilter ? employeeFilter.options[employeeFilter.selectedIndex] : null;
             const selectedFio = selectedOption ? selectedOption.getAttribute('data-fio') : '';
@@ -2829,19 +2889,23 @@
         if (employeeFilter) {
             employeeFilter.addEventListener('change', function() {
                 if (this.value) {
-                    // Сбрасываем чекбокс "Неназначенные бригады"
+                    // Сбрасываем кнопку "Неназначенные бригады"
+                    console.log('Resetting unassigned filter due to employee selection');
                     if (unassignedBrigadesFilter) {
-                        unassignedBrigadesFilter.checked = false;
+                        unassignedBrigadesFilter.classList.remove('active');
                     }
                 }
                 applyFilters();
             });
         }
 
-        // Обработчик для чекбокса "Неназначенные бригады"
+        // Обработчик для кнопки "Неназначенные бригады"
         if (unassignedBrigadesFilter) {
-            unassignedBrigadesFilter.addEventListener('change', function() {
-                if (this.checked) {
+            unassignedBrigadesFilter.addEventListener('click', function() {
+                console.log('Unassigned filter clicked, toggling active class');
+                this.classList.toggle('active');
+                console.log('After toggle, active class:', this.classList.contains('active'));
+                if (this.classList.contains('active')) {
                     // Сбрасываем фильтр по сотруднику
                     if (employeeFilter) {
                         employeeFilter.value = '';

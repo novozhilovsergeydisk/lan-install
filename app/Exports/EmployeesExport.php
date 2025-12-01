@@ -4,10 +4,10 @@ namespace App\Exports;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class EmployeesExport implements FromCollection, WithHeadings, WithColumnWidths
+class EmployeesExport implements FromCollection, WithColumnWidths, WithHeadings
 {
     protected $employees;
 
@@ -29,7 +29,7 @@ class EmployeesExport implements FromCollection, WithHeadings, WithColumnWidths
             'Место рождения',
             'Паспорт (серия номер, кем выдан, когда)',
             'Адрес регистрации',
-            'Номер авто'
+            'Номер авто',
         ];
     }
 

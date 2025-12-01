@@ -712,16 +712,16 @@ class EmployeeUserController extends Controller
                 ->get();
 
             // Используем Laravel Excel для экспорта
-            return Excel::download(new EmployeesExport($employees), 'список_сотрудников_' . now()->format('Y-m-d_H-i-s') . '.xlsx');
+            return Excel::download(new EmployeesExport($employees), 'список_сотрудников_'.now()->format('Y-m-d_H-i-s').'.xlsx');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error('Ошибка при экспорте сотрудников: ' . $e->getMessage());
+            \Log::error('Ошибка при экспорте сотрудников: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,

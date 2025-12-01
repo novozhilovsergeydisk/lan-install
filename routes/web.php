@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BrigadeController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CommentPhotoController;
+use App\Http\Controllers\EmployeeDocumentController;
 use App\Http\Controllers\EmployeesFilterController;
 use App\Http\Controllers\EmployeesUserPositionPassportController;
 use App\Http\Controllers\EmployeeUserController;
@@ -360,3 +361,8 @@ Route::get('/test-log', function () {
     ]);
 });
 Route::get('/api/comments/{commentId}/history', [App\Http\Controllers\HomeController::class, 'getCommentHistory'])->name('api.comments.history');
+
+// Загрузка документов сотрудников
+Route::post('/api/employee-documents', [EmployeeDocumentController::class, 'store'])->middleware('auth')->name('employee-documents.store');
+Route::get('/api/employee-documents/employee/{employeeId}', [EmployeeDocumentController::class, 'getByEmployee'])->middleware('auth')->name('employee-documents.getByEmployee');
+Route::get('/api/employee-documents/{id}/download', [EmployeeDocumentController::class, 'download'])->middleware('auth')->name('employee-documents.download');

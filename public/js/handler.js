@@ -612,7 +612,7 @@ async function applyFilters() {
 
         const brigadeData = await result.json();
 
-        console.log('localStorage.setItem', brigadeData.data);
+        // console.log('localStorage.setItem', brigadeData.data);
 
         localStorage.setItem('brigadeMembersCurrentDayData', JSON.stringify(brigadeData.data));
 
@@ -644,14 +644,14 @@ async function applyFilters() {
                 return data;
             })
             .then(data => {
-                console.log('Загрузка заявок для выбранной даты ', data);
+                // console.log('Загрузка заявок для выбранной даты ', data);
                 
                 // Проверяем, что есть данные для сохранения
                 if (data && data.data && Array.isArray(data.data)) {
                     // Сохраняем данные в localStorage
                     localStorage.setItem('requestsDataFilter', '[]');
                     localStorage.setItem('requestsData', JSON.stringify(data.data));
-                    console.log('Данные заявок сохранены в localStorage:', data.data.length, 'записей');
+                    // console.log('Данные заявок сохранены в localStorage:', data.data.length, 'записей');
                     
                     // Скрываем контейнер карты
                     const mapContainer = document.getElementById('map-content');
@@ -831,16 +831,7 @@ async function applyFilters() {
                             const today = new Date().toISOString().split('T')[0];
                             // const showButton = statusName == 'выполнена' && isAdmin && isToday;
 
-                            console.log('START');
-                            console.log('executionDate', executionDate);
-                            console.log('today', today);
-                            // console.log('request.status_name', request.status_name);
-                            console.log('statusName', statusName);
-                            console.log('isAdmin', isAdmin);
-                            
-                            // console.log('showButton', showButton);
-                            // console.log('window.App.role', window.App.role);
-                            console.log('--------------------------');
+                            // Debug logs removed
 
                             // Создаем HTML строки таблицы
                             const row = document.createElement('tr');
@@ -1028,11 +1019,21 @@ async function applyFilters() {
                         tooltipTriggerList.map(function (tooltipTriggerEl) {
                             return new bootstrap.Tooltip(tooltipTriggerEl);
                         });
+
+                        // Применяем текущие фильтры после загрузки данных
+                        if (typeof applyFilters === 'function') {
+                            // applyFilters();
+                        }
                     } else {
                         // Если данных нет, показываем сообщение
                         const noRequestsRow = document.getElementById('no-requests-row');
                         if (noRequestsRow) {
                             noRequestsRow.classList.remove('d-none');
+                        }
+
+                        // Применяем фильтры (хотя строк нет)
+                        if (typeof applyFilters === 'function') {
+                            // applyFilters();
                         }
                     }
 
@@ -1455,7 +1456,7 @@ export async function loadAddressesForAdditional(selectId = 'additionalAddresses
     const selectElement = document.getElementById(selectId);
     if (!selectElement) return;
 
-    console.log('Загрузка адресов для дополнительной формы');
+    // console.log('Загрузка адресов для дополнительной формы');
 
     try {
         const response = await fetch('/api/geo/addresses', {
@@ -1847,7 +1848,7 @@ export function initializePage() {
                         });
 
                         const brigadeInfoData = await brigadeInfoResponse.json();
-                        console.log('Информация о бригадах:', brigadeInfoData);
+                        // console.log('Информация о бригадах:', brigadeInfoData);
 
                         // Очищаем контейнер для информации о бригадах
                         const brigadeInfoContainer = document.getElementById('brigadeInfo');
@@ -1964,7 +1965,7 @@ export function initializePage() {
                     // console.log('Выбрана дата в календаре (handler.js):', window.selectedDateState.date);
                 }
 
-                console.log('Выбрана дата в календаре (handler.js):', selectedDate);
+                // console.log('Выбрана дата в календаре (handler.js):', selectedDate);
 
                 // Обновить список сотрудников для фильтрации заявок
                 updateEmployeesFilter(selectedDate);    
@@ -2307,7 +2308,7 @@ export function initializePage() {
                             brigadeLeaderFilter.classList.remove('d-none');
                         } else {
                             // Если успешный ответ, но список пуст, показываем сообщение
-                            console.log(data.message || 'Список бригадиров пуст');
+                            // console.log(data.message || 'Список бригадиров пуст');
                             showAlert(data.message || 'На сегодня не создано ни одной бригады!', 'info');
                             brigadeLeaderFilter.classList.add('d-none');
                             teamCheckbox.checked = false;
@@ -2514,12 +2515,14 @@ function handleTransferRequest(button) {
 
         try {
             // Выводим в консоль отправляемые данные для отладки
+            /*
             console.log('Отправка запроса на перенос заявки:', {
                 request_id: requestId,
                 new_date: selectedDate,
                 reason: reason,
                 transfer_to_planning: transferToPlanning
             });
+            */
 
             const response = await fetch('/api/requests/transfer', {
                 method: 'POST',
@@ -2538,7 +2541,7 @@ function handleTransferRequest(button) {
             const result = await response.json();
 
             // Выводим ответ сервера в консоль
-            console.log('Ответ сервера при переносе заявки:', result);
+            // console.log('Ответ сервера при переносе заявки:', result);
 
             // console.log(result);
 
@@ -2600,8 +2603,8 @@ function handleTransferRequest(button) {
                         const [selDay, selMonth, selYear] = selectedDateState.date.split('.');
                         const selDate = new Date(selYear, selMonth - 1, selDay);
 
-                        console.log('Дата выполнения:', execDate);
-                        console.log('Выбранная дата:', selDate);
+                        // console.log('Дата выполнения:', execDate);
+                        // console.log('Выбранная дата:', selDate);
 
                         if (execDate < selDate) {
                             row.remove();
@@ -2753,12 +2756,12 @@ function handleCancelRequest(button) {
                 // Находим строку заявки
                 const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
 
-                console.log('Заявка отменена:', requestRow);
+                // console.log('Заявка отменена:', requestRow);
 
                 if (requestRow) {
                     // Скрыть саму строку
 
-                    console.log('Заявка отменена', requestRow.dataset.requestId);
+                    // console.log('Заявка отменена', requestRow.dataset.requestId);
 
                     // requestRow.style.display = 'none';
 
@@ -3464,7 +3467,7 @@ async function handleEmployeeFormSubmit(e) {
                 }
             });
 
-            console.log('Отправляемые данные:', formDataObj);
+            // console.log('Отправляемые данные:', formDataObj);
 
             // Определяем URL в зависимости от наличия employee_id
             let url = '/employees/store'; // По умолчанию - создание нового сотрудника
@@ -3476,11 +3479,11 @@ async function handleEmployeeFormSubmit(e) {
 
             // Отправляем форму на сервер используя postData
             const data = await postData(url, formDataObj);
-            console.log('Ответ сервера по созданию/обновлению сотрудника:', data);
+            // console.log('Ответ сервера по созданию/обновлению сотрудника:', data);
 
             // Проверяем наличие ошибок валидации
             if (data.errors) {
-                console.log('Ошибки валидации с сервера:', data.errors);
+                // console.log('Ошибки валидации с сервера:', data.errors);
 
                 // Собираем все ошибки в один массив
                 const allErrors = [];
@@ -3702,7 +3705,7 @@ export function hanlerAddToBrigade() {
 
     // Проверяем, существует ли кнопка на странице
     if (!addToBrigadeBtn) {
-        console.log('Кнопка добавления в бригаду не найдена на странице');
+        // console.log('Кнопка добавления в бригаду не найдена на странице');
         return;
     }
 
@@ -3806,7 +3809,7 @@ export function hanlerAddToBrigade() {
             // Обновляем скрытое поле с данными о составе бригады
             updateBrigadeMembersFormField();
         } else {
-            console.log('Выберите хотя бы одного сотрудника');
+            // console.log('Выберите хотя бы одного сотрудника');
         }
     });
 }
@@ -3846,13 +3849,13 @@ export function handlerCreateBrigade() {
             // Обновляем данные бригады перед отправкой
             const members = getAllBrigadeMembers();
 
-            console.log('1) members', members);
+            // console.log('1) members', members);
             
             // return;
 
             const leaderId = document.getElementById('brigadeLeader')?.value;
 
-            console.log('2) leaderId', leaderId);
+            // console.log('2) leaderId', leaderId);
 
             // Проверяем валидность
             if (!leaderId) {
@@ -3876,16 +3879,16 @@ export function handlerCreateBrigade() {
                     return el;
                 })();
 
-            console.log('3) hiddenField', hiddenField);
+            // console.log('3) hiddenField', hiddenField);
 
             hiddenField.value = JSON.stringify(members);
 
-            console.log('4) hiddenField.value', hiddenField.value);
+            // console.log('4) hiddenField.value', hiddenField.value);
 
             // Создаем FormData и добавляем все необходимые поля
             const formData = new FormData(form);
 
-            console.log('5) formData', formData);
+            // console.log('5) formData', formData);
 
             // Очищаем старые данные о членах бригады
             document.querySelectorAll('input[name^="brigade_members["]').forEach(input => {
@@ -3906,7 +3909,7 @@ export function handlerCreateBrigade() {
             // Обновляем FormData
             formData.delete('brigade_members[]');
 
-            console.log('6) formData 2', formData);
+            // console.log('6) formData 2', formData);
 
             members.forEach((member, index) => {
                 if (!member.is_leader) {
@@ -3939,7 +3942,7 @@ export function handlerCreateBrigade() {
             // Получаем данные о членах бригады
             const brigadeMembersData = JSON.parse(formValues.brigade_members_data || '[]');
 
-            console.log('7) brigadeMembersData', brigadeMembersData );
+            // console.log('7) brigadeMembersData', brigadeMembersData );
 
             // return;
 
@@ -3957,7 +3960,7 @@ export function handlerCreateBrigade() {
                 }
             };
 
-            console.log('8) formJson', formJson);
+            // console.log('8) formJson', formJson);
 
             // Выводим JSON в консоль
             // console.log('=== ДАННЫЕ ФОРМЫ В ФОРМАТЕ JSON ===');
@@ -3999,7 +4002,7 @@ export function handlerCreateBrigade() {
                             <p class="mt-2 mb-0">Загрузка списка бригад...</p>
                         </div>`;
 
-                        console.log('11) brigadesList', brigadesList);
+                        // console.log('11) brigadesList', brigadesList);
 
                     const response = await fetch('/api/brigades');
                     if (!response.ok) {
@@ -4008,7 +4011,7 @@ export function handlerCreateBrigade() {
 
                     const brigades = await response.json();
 
-                    console.log('9) brigades', brigades);
+                    // console.log('9) brigades', brigades);
 
                     if (brigades.length === 0) {
                         brigadesList.innerHTML = `
@@ -4021,7 +4024,7 @@ export function handlerCreateBrigade() {
                         return;
                     }
 
-                    console.log('10) brigades', brigades);
+                    // console.log('10) brigades', brigades);
 
                     // Формируем HTML для списка бригад
                     let html = `
@@ -4187,7 +4190,7 @@ export function handlerCreateBrigade() {
                         throw new Error(data.message || `Ошибка ${response.status}: ${response.statusText}`);
                     }
 
-                    console.log('Ответ сервера:', data);
+                    // console.log('Ответ сервера:', data);
 
                     if (data.success) {
                         showAlert('Бригада успешно создана!', 'success');
@@ -4258,7 +4261,7 @@ export function handlerCreateBrigade() {
                             });
 
                             const brigadeInfoData = await brigadeInfoResponse.json();
-                            console.log('Информация о бригадах:', brigadeInfoData);
+                            // console.log('Информация о бригадах:', brigadeInfoData);
 
                             // Отображаем информацию о бригадах на странице
                             displayBrigadeInfo(brigadeInfoData);

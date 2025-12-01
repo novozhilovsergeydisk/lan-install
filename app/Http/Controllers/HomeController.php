@@ -354,7 +354,7 @@ class HomeController extends Controller
 
             \Log::error('=== ERROR restoreEmployee ===', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
@@ -762,47 +762,47 @@ class HomeController extends Controller
             // Запрашиваем brigades
             $brigades = DB::select('SELECT * FROM brigades');
 
-             // Запрашиваем employees с паспортными данными и должностями (активные)
-             $employees = DB::select('
-             SELECT
-                 e.*,
-                 p.series_number,
-                 p.issued_at as passport_issued_at,
-                 p.issued_by as passport_issued_by,
-                 p.department_code,
-                 pos.name as position,
-                 c.brand as car_brand,
-                 c.license_plate as car_plate,
-                 u.email as user_email
-             FROM employees e
-             LEFT JOIN passports p ON e.id = p.employee_id
-             LEFT JOIN positions pos ON e.position_id = pos.id
-             LEFT JOIN cars c ON e.id = c.employee_id
-             LEFT JOIN users u ON u.id = e.user_id
-             WHERE e.is_deleted = false
-             ORDER BY e.fio
-         ');
+            // Запрашиваем employees с паспортными данными и должностями (активные)
+            $employees = DB::select('
+              SELECT
+                  e.*,
+                  p.series_number,
+                  p.issued_at as passport_issued_at,
+                  p.issued_by as passport_issued_by,
+                  p.department_code,
+                  pos.name as position,
+                  c.brand as car_brand,
+                  c.license_plate as car_plate,
+                  u.email as user_email
+              FROM employees e
+              LEFT JOIN passports p ON e.id = p.employee_id
+              LEFT JOIN positions pos ON e.position_id = pos.id
+              LEFT JOIN cars c ON e.id = c.employee_id
+              LEFT JOIN users u ON u.id = e.user_id
+              WHERE e.is_deleted = false
+              ORDER BY e.fio
+            ');
 
-             // Запрашиваем уволенных сотрудников (не заблокированных)
-             $firedEmployees = DB::select('
-             SELECT
-                 e.*,
-                 p.series_number,
-                 p.issued_at as passport_issued_at,
-                 p.issued_by as passport_issued_by,
-                 p.department_code,
-                 pos.name as position,
-                 c.brand as car_brand,
-                 c.license_plate as car_plate,
-                 u.email as user_email
-             FROM employees e
-             LEFT JOIN passports p ON e.id = p.employee_id
-             LEFT JOIN positions pos ON e.position_id = pos.id
-             LEFT JOIN cars c ON e.id = c.employee_id
-             LEFT JOIN users u ON u.id = e.user_id
-             WHERE e.is_deleted = true AND (e.is_blocked IS NULL OR e.is_blocked = false)
-             ORDER BY e.fio
-         ');
+            // Запрашиваем уволенных сотрудников (не заблокированных)
+            $firedEmployees = DB::select('
+              SELECT
+                  e.*,
+                  p.series_number,
+                  p.issued_at as passport_issued_at,
+                  p.issued_by as passport_issued_by,
+                  p.department_code,
+                  pos.name as position,
+                  c.brand as car_brand,
+                  c.license_plate as car_plate,
+                  u.email as user_email
+              FROM employees e
+              LEFT JOIN passports p ON e.id = p.employee_id
+              LEFT JOIN positions pos ON e.position_id = pos.id
+              LEFT JOIN cars c ON e.id = c.employee_id
+              LEFT JOIN users u ON u.id = e.user_id
+              WHERE e.is_deleted = true AND (e.is_blocked IS NULL OR e.is_blocked = false)
+              ORDER BY e.fio
+          ');
 
             // Запрашиваем addresses
             $addresses = DB::select('SELECT * FROM addresses');
@@ -907,13 +907,6 @@ class HomeController extends Controller
 
             $brigadeMembersCurrentDay = DB::select($sql);
 
-            // dd($brigadeMembersWithDetails);`
-
-            // $brigadeMembersWithDetails = collect($brigadeMembersWithDetails);
-
-            // Выводим содержимое для отладки
-            // dd($brigadeMembersWithDetails);
-
             $brigade_members = DB::select('SELECT * FROM brigade_members');  // Оставляем старый запрос для обратной совместимости
 
             // Запрашиваем комментарии с привязкой к заявкам
@@ -999,10 +992,10 @@ class HomeController extends Controller
                 WHERE ur.user_id = op.user_id
                 LIMIT 1
             ) AS role_data ON true
-            WHERE r.execution_date::date = CURRENT_DATE 
-            AND (b.is_deleted = false OR b.id IS NULL) 
+            WHERE r.execution_date::date = CURRENT_DATE
+            AND (b.is_deleted = false OR b.id IS NULL)
             AND rs.name != 'отменена'
-            AND rs.name != 'планирование'   
+            AND rs.name != 'планирование'
             ORDER BY r.id DESC";
 
             if ($user->isFitter) {
@@ -1037,7 +1030,7 @@ class HomeController extends Controller
                     LEFT JOIN request_addresses ra ON r.id = ra.request_id
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
-                    WHERE r.execution_date::date = CURRENT_DATE 
+                    WHERE r.execution_date::date = CURRENT_DATE
                     AND (b.is_deleted = false OR b.id IS NULL)
                     AND rs.name != 'отменена'
                     AND rs.name != 'планирование'
@@ -1062,14 +1055,6 @@ class HomeController extends Controller
 
             $requests = DB::select($sql);
 
-            // Convert stdClass objects to arrays for the view
-            // $requestsData = array_map(function($request) {
-            //     return (array) $request;
-            // }, $requests);
-
-            // Add requests data to the view
-            // view()->share('requestsData', $requestsData);
-
             $flags = [
                 'new' => 'new',
                 'in_work' => 'in_work',
@@ -1086,35 +1071,35 @@ class HomeController extends Controller
             // Получаем список регионов для выпадающего списка
             $regions = DB::table('regions')->orderBy('name')->get();
 
-             // Собираем все переменные для передачи в представление
-             $viewData = [
-                 'user' => $user,
-                 'users' => $users,
-                 'clients' => $clients,
-                 'request_statuses' => $request_statuses,
-                 'requests' => $requests,
-                 'brigades' => $brigades,
-                 'employees' => $employees,
-                 'firedEmployees' => $firedEmployees,
-                 'employeesFilter' => $employeesFilter,
-                 'addresses' => $addresses,
-                 'brigade_members' => $brigade_members,
-                 'comments_by_request' => $comments_by_request,
-                 'request_addresses' => $request_addresses,
-                 'requests_types' => $requests_types,
-                 'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
-                 'brigadeMembersCurrentDay' => $brigadeMembersCurrentDay,
-                 'brigadesCurrentDay' => $brigadesCurrentDay,
-                 'flags' => $flags,
-                 'positions' => $positions,
-                 'roles' => $roles,
-                 'cities' => $cities, // Добавляем список городов
-                 'regions' => $regions, // Добавляем список регионов
-                 'isAdmin' => $user->isAdmin ?? false,
-                 'isUser' => $user->isUser ?? false,
-                 'isFitter' => $user->isFitter ?? false,
-                 'sql' => $sql,
-             ];
+            // Собираем все переменные для передачи в представление
+            $viewData = [
+                'user' => $user,
+                'users' => $users,
+                'clients' => $clients,
+                'request_statuses' => $request_statuses,
+                'requests' => $requests,
+                'brigades' => $brigades,
+                'employees' => $employees,
+                'firedEmployees' => $firedEmployees,
+                'employeesFilter' => $employeesFilter,
+                'addresses' => $addresses,
+                'brigade_members' => $brigade_members,
+                'comments_by_request' => $comments_by_request,
+                'request_addresses' => $request_addresses,
+                'requests_types' => $requests_types,
+                'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+                'brigadeMembersCurrentDay' => $brigadeMembersCurrentDay,
+                'brigadesCurrentDay' => $brigadesCurrentDay,
+                'flags' => $flags,
+                'positions' => $positions,
+                'roles' => $roles,
+                'cities' => $cities, // Добавляем список городов
+                'regions' => $regions, // Добавляем список регионов
+                'isAdmin' => $user->isAdmin ?? false,
+                'isUser' => $user->isUser ?? false,
+                'isFitter' => $user->isFitter ?? false,
+                'sql' => $sql,
+            ];
 
             return view('welcome', $viewData);
         } catch (\Exception $e) {

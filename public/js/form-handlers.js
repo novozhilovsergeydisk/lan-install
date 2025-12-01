@@ -5426,6 +5426,115 @@ function initEmployeeButtons() {
     //         btn.setAttribute('data-listener-added', 'true');
     //     }
     // });
+
+    // Обработчики для кнопок загрузки документов
+    document.querySelectorAll('.upload-employee-document-btn').forEach(btn => {
+        if (!btn.hasAttribute('data-listener-added')) {
+            btn.addEventListener('click', function() {
+                const employeeId = this.getAttribute('data-employee-id');
+                const employeeName = this.getAttribute('data-employee-name');
+                document.getElementById('documentEmployeeId').value = employeeId;
+                document.getElementById('uploadEmployeeDocumentModalLabel').textContent = `Загрузка документа для ${employeeName}`;
+            });
+            btn.setAttribute('data-listener-added', 'true');
+        }
+    });
+}
+
+// Обработчик для загрузки документов сотрудников
+function initEmployeeDocumentUpload() {
+    const uploadBtn = document.getElementById('uploadDocumentBtn');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', async function() {
+            const form = document.getElementById('uploadEmployeeDocumentForm');
+            const formData = new FormData(form);
+
+            // Проверка валидности формы
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Показать индикатор загрузки
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Загрузка...';
+
+            try {
+                const response = await fetch('/api/employee-documents', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Файл успешно загружен.');
+                    // Закрыть модальное окно
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('uploadEmployeeDocumentModal'));
+                    modal.hide();
+                    // Очистить форму
+                    form.reset();
+                    // Обновить ячейку документов в таблице
+                    const employeeId = document.getElementById('documentEmployeeId').value;
+                    updateEmployeeDocumentsCell(employeeId);
+                } else {
+                    alert('Ошибка: ' + (result.message || 'Неизвестная ошибка'));
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке:', error);
+                alert('Произошла ошибка при загрузке файла.');
+            } finally {
+                // Восстановить кнопку
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = 'Загрузить';
+            }
+        });
+    }
+}
+
+// Функция для обновления ячейки документов сотрудника
+async function updateEmployeeDocumentsCell(employeeId) {
+    try {
+        const response = await fetch(`/api/employee-documents/employee/${employeeId}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            const documents = result.documents;
+            let html = '';
+
+            if (documents.length > 0) {
+                documents.forEach(doc => {
+                    const fileName = doc.file_path.split('/').pop();
+                    const parts = fileName.split('_');
+                    const originalName = parts.length > 1 ? parts.slice(1).join('_') : fileName;
+
+                    html += `<a href="/api/employee-documents/${doc.id}/download" class="btn btn-sm btn-outline-secondary mb-1" target="_blank" title="${doc.document_type}">${originalName}</a><br>`;
+                });
+            } else {
+                html = 'Нет документов';
+            }
+
+            // Найти строку сотрудника и обновить ячейку документов
+            const row = document.querySelector(`tr[data-employee-id="${employeeId}"]`);
+            if (row) {
+                const cells = row.querySelectorAll('td');
+                const documentsCell = cells[cells.length - 1]; // Предполагаем, что документы последний столбец
+                documentsCell.innerHTML = html;
+            }
+        } else {
+            console.error('Ошибка при получении документов:', result.message);
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении ячейки документов:', error);
+    }
 }
 
 // Обработчик для кнопки "Удалить" на вкладке "Запланированные заявки"
@@ -5489,6 +5598,7 @@ export function initHouseNumberValidator() {
 
 document.addEventListener('DOMContentLoaded', function() {
     initEmployeeButtons();
+    initEmployeeDocumentUpload();
     initShowFilesButtons();
     initShowPhotoButtons();
     initAddCity();
@@ -6079,6 +6189,7 @@ export {
     addRequestToTable, 
     handleCommentEdit,
     initEmployeeButtons,
+    initEmployeeDocumentUpload,
     loadCommentPhotos
 };
 

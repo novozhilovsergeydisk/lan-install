@@ -91,3 +91,33 @@
 [data-bs-theme="dark"] .custom-select-input.is-invalid {
     border-color: var(--bs-form-invalid-color) !important;
 }
+
+/* Стили для кнопки "Неназначенные бригады" в темной теме */
+[data-bs-theme="dark"] #unassignedBrigadesFilter {
+    background-color: #2b3035 !important;
+    color: #f8f9fa !important;
+    border-color: #373b3e !important;
+    box-shadow: 0 0 0 1px #495057 !important; /* Добавляем очертания */
+}
+
+[data-bs-theme="dark"] #unassignedBrigadesFilter.active {
+    background-color: #212529 !important;
+    color: #f8f9fa !important;
+    border-color: #373b3e !important;
+    box-shadow: 0 0 0 1px rgba(var(--bs-success-rgb), 1) !important; /* Зеленоватые очертания для активного состояния */
+}
+
+[data-bs-theme="dark"] #unassignedBrigadesFilter:hover {
+    background-color: #343a40 !important;
+}
+
+[data-bs-theme="dark"] #unassignedBrigadesFilter.active:hover {
+    background-color: #1e2124 !important;
+}
+
+[data-bs-theme="dark"] #unassignedBrigadesFilter.active::before {
+    content: "✓ ";
+    color: #28a745;
+    font-weight: bold;
+    margin-right: 5px;
+}
