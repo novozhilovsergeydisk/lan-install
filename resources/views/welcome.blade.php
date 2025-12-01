@@ -993,52 +993,55 @@
                                          <div class="table-responsive">
                                              <div class="table-container">
                                                  <table id="employeesTable" class="table table-hover align-middle mb-0">
-                                                     <thead>
-                                                         <tr class="smaller">
-                                                             <th style="width: 30%">Имя</th>
-                                                             <th style="width: 15%">Телефон</th>
-                                                              @if($user->isAdmin)
-                                                              <th style="width: 10%">Должность</th>
-                                                              <th style="width: 10%">Дата рожд.</th>
-                                                              <th style="width: 25%">Паспорт</th>
-                                                              @endif
-                                                              <th style="width: 10%">Машина</th>
-                                                              <th style="width: 10%">Документы</th>
-                                                          </tr>
-                                                     </thead>
+                                                      <thead>
+                                                          <tr class="smaller">
+                                                              <th style="width: 10%">Действия</th>
+                                                              <th style="width: 20%">Имя</th>
+                                                              <th style="width: 15%">Телефон</th>
+                                                               @if($user->isAdmin)
+                                                               <th style="width: 10%">Должность</th>
+                                                               <th style="width: 10%">Дата рожд.</th>
+                                                               <th style="width: 25%">Паспорт</th>
+                                                               @endif
+                                                               <th style="width: 10%">Машина</th>
+                                                               <th style="width: 10%">Документы</th>
+                                                           </tr>
+                                                      </thead>
                                                      <tbody>
-                                                      @foreach($employees as $employee)
-                                                          <tr class="small" data-employee-id="{{ $employee->id }}">
-                                                             <td>
-                                                                 <div>{{ $employee->fio }}
-                                                                 @if($user->isAdmin)
-                                                                 <br> {{ $employee->user_email }}
-                                                                 @endif
-                                                                 </div>
-                                                                 @if($user->isAdmin)
-                                                                 <div class="mt-2">
-                                                                     <button type="button" class="btn btn-sm btn-outline-primary ms-2 edit-employee-btn me-1"
-                                                                             data-employee-id="{{ $employee->id }}"
-                                                                             data-employee-name="{{ $employee->fio }}">
-                                                                         <i class="bi bi-pencil-square"></i>
-                                                                     </button>
-
-                                                                      <button type="button" class="btn btn-sm btn-outline-danger ms-2  delete-employee-btn me-1"
+                                                       @foreach($employees as $employee)
+                                                           <tr class="small" data-employee-id="{{ $employee->id }}">
+                                                              <td class="text-nowrap">
+                                                                  @if($user->isAdmin)
+                                                                  <div class="d-flex gap-1">
+                                                                      <button type="button" class="btn btn-sm btn-outline-primary edit-employee-btn"
                                                                               data-employee-id="{{ $employee->id }}"
                                                                               data-employee-name="{{ $employee->fio }}">
-                                                                          <i class="bi bi-trash"></i>
+                                                                          <i class="bi bi-pencil-square"></i>
                                                                       </button>
 
-                                                                      <button type="button" class="btn btn-sm btn-outline-info ms-2 upload-employee-document-btn me-1"
-                                                                              data-employee-id="{{ $employee->id }}"
-                                                                              data-employee-name="{{ $employee->fio }}"
-                                                                              data-bs-toggle="modal"
-                                                                              data-bs-target="#uploadEmployeeDocumentModal">
-                                                                          <i class="bi bi-file-earmark-plus"></i>
-                                                                      </button>
-                                                                 </div>
-                                                                 @endif
-                                                             </td>
+                                                                       <button type="button" class="btn btn-sm btn-outline-danger delete-employee-btn"
+                                                                               data-employee-id="{{ $employee->id }}"
+                                                                               data-employee-name="{{ $employee->fio }}">
+                                                                           <i class="bi bi-trash"></i>
+                                                                       </button>
+
+                                                                       <button type="button" class="btn btn-sm btn-outline-info upload-employee-document-btn"
+                                                                               data-employee-id="{{ $employee->id }}"
+                                                                               data-employee-name="{{ $employee->fio }}"
+                                                                               data-bs-toggle="modal"
+                                                                               data-bs-target="#uploadEmployeeDocumentModal">
+                                                                           <i class="bi bi-file-earmark-plus"></i>
+                                                                       </button>
+                                                                  </div>
+                                                                  @endif
+                                                              </td>
+                                                              <td>
+                                                                  <div>{{ $employee->fio }}
+                                                                  @if($user->isAdmin)
+                                                                  <br> {{ $employee->user_email }}
+                                                                  @endif
+                                                                  </div>
+                                                              </td>
                                                              <td>{{ $employee->phone }}</td>
                                                               @if($user->isAdmin)
                                                               <td>{{ $employee->position }}</td>
@@ -1095,30 +1098,33 @@
                                             <div class="table-responsive">
                                                 <div class="table-container">
                                                     <table id="firedEmployeesTable" class="table table-hover align-middle mb-0">
-                                                        <thead>
-                                                        <tr class="smaller">
-                                                            <th style="width: 30%">Имя</th>
-                                                            <th style="width: 15%">Телефон</th>
-                                                            <th style="width: 10%">Должность</th>
-                                                            <th style="width: 10%">Дата рожд.</th>
-                                                            <th style="width: 25%">Паспорт</th>
-                                                            <th style="width: 10%">Машина</th>
-                                                        </tr>
-                                                        </thead>
+                                                         <thead>
+                                                         <tr class="smaller">
+                                                             <th style="width: 10%">Действия</th>
+                                                             <th style="width: 20%">Имя</th>
+                                                             <th style="width: 15%">Телефон</th>
+                                                             <th style="width: 10%">Должность</th>
+                                                             <th style="width: 10%">Дата рожд.</th>
+                                                             <th style="width: 25%">Паспорт</th>
+                                                             <th style="width: 10%">Машина</th>
+                                                         </tr>
+                                                         </thead>
                                                         <tbody>
-                                                        @foreach($firedEmployees as $employee)
-                                                        <tr class="small" data-employee-id="{{ $employee->id }}">
-                                                            <td>
-                                                            <div>{{ $employee->fio }} <br> {{ $employee->user_email }}</div>
-                                                            <div class="mt-2">
-                                                                <button type="button" class="btn btn-sm btn-outline-success me-1 restore-employee-btn" data-employee-id="{{ $employee->id }}" data-employee-name="{{ $employee->fio }}">
-                                                                <i class="bi bi-arrow-counterclockwise"></i> Восстановить
-                                                                </button>
-                                                                <button type="button" class="btn btn-sm btn-outline-danger me-1 delete-employee-permanently-btn" data-employee-id="{{ $employee->id }}" data-employee-name="{{ $employee->fio }}">
-                                                                <i class="bi bi-trash"></i> Удалить
-                                                                </button>
-                                                            </div>
-                                                            </td>
+                                                         @foreach($firedEmployees as $employee)
+                                                         <tr class="small" data-employee-id="{{ $employee->id }}">
+                                                             <td class="text-nowrap">
+                                                                 <div class="d-flex gap-1">
+                                                                     <button type="button" class="btn btn-sm btn-outline-success restore-employee-btn" data-employee-id="{{ $employee->id }}" data-employee-name="{{ $employee->fio }}">
+                                                                     <i class="bi bi-arrow-counterclockwise"></i> Восстановить
+                                                                     </button>
+                                                                     <button type="button" class="btn btn-sm btn-outline-danger delete-employee-permanently-btn" data-employee-id="{{ $employee->id }}" data-employee-name="{{ $employee->fio }}">
+                                                                     <i class="bi bi-trash"></i> Удалить
+                                                                     </button>
+                                                                 </div>
+                                                             </td>
+                                                             <td>
+                                                             <div>{{ $employee->fio }} <br> {{ $employee->user_email }}</div>
+                                                             </td>
                                                             <td>{{ $employee->phone }}</td>
                                                             <td>{{ $employee->position }}</td>
                                                             <td>{{ $employee->birth_date ? \Carbon\Carbon::parse($employee->birth_date)->format('d-m-Y') : '' }}</td>
