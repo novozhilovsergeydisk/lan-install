@@ -995,7 +995,9 @@
                                                  <table id="employeesTable" class="table table-hover align-middle mb-0">
                                                       <thead>
                                                           <tr class="smaller">
+                                                              @if($user->isAdmin)
                                                               <th style="width: 10%">Действия</th>
+                                                              @endif
                                                               <th style="width: 20%">Имя</th>
                                                               <th style="width: 15%">Телефон</th>
                                                                @if($user->isAdmin)
@@ -1004,14 +1006,16 @@
                                                                <th style="width: 25%">Паспорт</th>
                                                                @endif
                                                                <th style="width: 10%">Машина</th>
+                                                               @if($user->isAdmin)
                                                                <th style="width: 10%">Документы</th>
+                                                               @endif
                                                            </tr>
                                                       </thead>
                                                      <tbody>
                                                        @foreach($employees as $employee)
                                                            <tr class="small" data-employee-id="{{ $employee->id }}">
+                                                              @if($user->isAdmin)
                                                               <td class="text-nowrap">
-                                                                  @if($user->isAdmin)
                                                                   <div class="d-flex gap-1">
                                                                       <button type="button" class="btn btn-sm btn-outline-primary edit-employee-btn"
                                                                               data-employee-id="{{ $employee->id }}"
@@ -1033,8 +1037,8 @@
                                                                            <i class="bi bi-file-earmark-plus"></i>
                                                                        </button>
                                                                   </div>
-                                                                  @endif
                                                               </td>
+                                                              @endif
                                                               <td>
                                                                   <div>{{ $employee->fio }}
                                                                   @if($user->isAdmin)
@@ -1042,41 +1046,43 @@
                                                                   @endif
                                                                   </div>
                                                               </td>
-                                                             <td>{{ $employee->phone }}</td>
-                                                              @if($user->isAdmin)
-                                                              <td>{{ $employee->position }}</td>
-                                                              <td>{{ $employee->birth_date ? \Carbon\Carbon::parse($employee->birth_date)->format('d-m-Y') : '' }}</td>
-                                                              <td>
-                                                                  <div>
-                                                                      {{ $employee->series_number }} <br>
-                                                                      {{ $employee->passport_issued_at }} <br>
-                                                                      {{ $employee->passport_issued_by }} <br>
-                                                                      {{ $employee->department_code }}
-                                                                  </div>
-                                                              </td>
-                                                              @endif
-                                                              <td>{{ $employee->car_brand }} <br> {{ $employee->car_plate }}</td>
-                                                              <td>
-                                                                  @php
-                                                                      $documents = DB::table('employee_documents')->where('employee_id', $employee->id)->get();
-                                                                  @endphp
-                                                                  @if($documents->count() > 0)
-                                                                      @foreach($documents as $doc)
-                                                                          @php
-                                                                              $fileName = basename($doc->file_path);
-                                                                              $parts = explode('_', $fileName, 2);
-                                                                              $originalName = isset($parts[1]) ? $parts[1] : $fileName;
-                                                                          @endphp
-                                                                          <a href="{{ route('employee-documents.download', $doc->id) }}" class="btn btn-sm btn-outline-secondary mb-1" target="_blank" title="{{ $doc->document_type }}">
-                                                                              {{ $originalName }}
-                                                                          </a><br>
-                                                                      @endforeach
-                                                                  @else
-                                                                      Нет документов
-                                                                  @endif
-                                                              </td>
-                                                          </tr>
-                                                     @endforeach
+                                                              <td>{{ $employee->phone }}</td>
+                                                               @if($user->isAdmin)
+                                                               <td>{{ $employee->position }}</td>
+                                                               <td>{{ $employee->birth_date ? \Carbon\Carbon::parse($employee->birth_date)->format('d-m-Y') : '' }}</td>
+                                                               <td>
+                                                                   <div>
+                                                                       {{ $employee->series_number }} <br>
+                                                                       {{ $employee->passport_issued_at }} <br>
+                                                                       {{ $employee->passport_issued_by }} <br>
+                                                                       {{ $employee->department_code }}
+                                                                   </div>
+                                                               </td>
+                                                               @endif
+                                                               <td>{{ $employee->car_brand }} <br> {{ $employee->car_plate }}</td>
+                                                               @if($user->isAdmin)
+                                                               <td>
+                                                                   @php
+                                                                       $documents = DB::table('employee_documents')->where('employee_id', $employee->id)->get();
+                                                                   @endphp
+                                                                   @if($documents->count() > 0)
+                                                                       @foreach($documents as $doc)
+                                                                           @php
+                                                                               $fileName = basename($doc->file_path);
+                                                                               $parts = explode('_', $fileName, 2);
+                                                                               $originalName = isset($parts[1]) ? $parts[1] : $fileName;
+                                                                           @endphp
+                                                                           <a href="{{ route('employee-documents.download', $doc->id) }}" class="btn btn-sm btn-outline-secondary mb-1" target="_blank" title="{{ $doc->document_type }}">
+                                                                               {{ $originalName }}
+                                                                           </a><br>
+                                                                       @endforeach
+                                                                   @else
+                                                                       Нет документов
+                                                                   @endif
+                                                               </td>
+                                                               @endif
+                                                           </tr>
+                                                      @endforeach
                                                      </tbody>
                                                  </table>
                                              </div>
