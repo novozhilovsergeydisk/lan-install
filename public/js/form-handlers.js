@@ -2659,11 +2659,16 @@ export function initAddressEditButton() {
                         document.getElementById('houses').value = address.houses || '';
                         document.getElementById('responsible_person').value = address.responsible_person || '';
                         document.getElementById('comments').value = address.comments || '';
-                        document.getElementById('latitudeEdit').value = address.latitude ? parseFloat(address.latitude).toString() : '';
-                        document.getElementById('longitudeEdit').value = address.longitude ? parseFloat(address.longitude).toString() : '';
-                        
-                        // Показываем модальное окно
-                        modal.show();
+                         document.getElementById('latitudeEdit').value = address.latitude ? parseFloat(address.latitude).toString() : '';
+                         document.getElementById('longitudeEdit').value = address.longitude ? parseFloat(address.longitude).toString() : '';
+
+                         // Загружаем документы адреса
+                         if (typeof window.AddressDocuments !== 'undefined' && window.AddressDocuments.loadAddressDocuments) {
+                             window.AddressDocuments.loadAddressDocuments(addressId);
+                         }
+
+                         // Показываем модальное окно
+                         modal.show();
                     } else {
                         alert('Ошибка при загрузке данных адреса');
                     }
@@ -3791,7 +3796,7 @@ export function initAddressEditHandlers() {
                         }
 
                         console.log('Загружены данные адреса по кнопке редактирования из списка:', address);
-                        
+
                         document.getElementById('district').value = address.district || '';
                         document.getElementById('street').value = address.street || '';
                         document.getElementById('houses').value = address.houses || '';
@@ -3799,7 +3804,12 @@ export function initAddressEditHandlers() {
                         document.getElementById('comments').value = address.comments || '';
                         document.getElementById('latitudeEdit').value = address.latitude ? parseFloat(address.latitude).toString() : '';
                         document.getElementById('longitudeEdit').value = address.longitude ? parseFloat(address.longitude).toString() : '';
-                        
+
+                        // Загружаем документы адреса
+                        if (typeof window.AddressDocuments !== 'undefined' && window.AddressDocuments.loadAddressDocuments) {
+                            window.AddressDocuments.loadAddressDocuments(addressId);
+                        }
+
                         // Показываем модальное окно
                         modal.show();
                     } else {

@@ -3740,6 +3740,11 @@
                         <input type="text" name="responsible_person" class="form-control" placeholder="ФИО ответственного лица">
                     </div>
                     <div class="col-md-12 mb-3">
+                        <label class="form-label">Документы</label>
+                        <input type="file" id="addressDocument" name="document" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                        <div class="form-text">Можно загрузить проект БТИ или другие документы (PDF, JPG, PNG, до 20MB)</div>
+                    </div>
+                    <div class="col-md-12 mb-3">
                         <label class="form-label">Комментарий</label>
                         <textarea name="comments" class="form-control" rows="3" placeholder="Дополнительная информация"></textarea>
                     </div>
@@ -4130,28 +4135,21 @@
             return;
         }
         
-        const formData = new FormData(form);
-        
-        try {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
-            
-            // Преобразуем FormData в объект
-            const data = {};
-            formData.forEach((value, key) => {
-                data[key] = value;
-            });
+            const formData = new FormData(form);
 
-            // Отправляем запрос на API (используем существующий маршрут /api/addresses/add)
-            const response = await fetch('/api/addresses/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+
+                // Отправляем FormData напрямую (для поддержки файлов)
+                const response = await fetch('/api/addresses/add', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
 
             const result = await response.json();
             
@@ -4472,6 +4470,16 @@
                     <div class="mb-3">
                         <label for="comments" class="form-label">Комментарии</label>
                         <textarea class="form-control" id="comments" name="comments" rows="3"></textarea>
+                    </div>
+
+                    <!-- Секция документов -->
+                    <div class="mb-3">
+                        <label class="form-label">Документы</label>
+                        <div id="addressDocumentsList" class="mb-2">
+                            <!-- Здесь будут отображаться загруженные документы -->
+                        </div>
+                        <input type="file" id="editAddressDocument" name="document" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                        <div class="form-text">Можно загрузить дополнительные документы (PDF, JPG, PNG, до 20MB)</div>
                     </div>
                 </form>
             </div>

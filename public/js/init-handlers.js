@@ -6,6 +6,7 @@ console.log('randomHash', randomHash);
 import { showAlert, postData } from './utils.js';
 import { initReportHandlers } from './report-handler.js';
 import { initPhotoReportModal } from './modals.js';
+import { initAddressDocumentHandlers } from './address-documents.js';
 import { 
     initFormHandlers, 
     initEmployeeEditHandlers, 
@@ -65,6 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initCommentEditHandlers();
     initOpenRequestHandler();
     initOpenAdditionalTaskRequestHandler();
+    initAddressDocumentHandlers();
 
     // Очищаем контейнер фотоотчета при закрытии модального окна комментариев
     const commentsModal = document.getElementById('commentsModal');

@@ -28,11 +28,11 @@ class GeoController extends Controller
     {
         try {
             $address = DB::selectOne('
-            SELECT 
-                a.id, 
-                a.street, 
-                a.houses, 
-                a.district, 
+            SELECT
+                a.id,
+                a.street,
+                a.houses,
+                a.district,
                 a.responsible_person,
                 a.comments,
                 a.latitude,
@@ -50,7 +50,10 @@ class GeoController extends Controller
                 return response()->json(['success' => false, 'message' => 'Address not found'], 404);
             }
 
-            return response()->json(['success' => true, 'data' => $address]);
+            // Получить документы адреса
+            $documents = DB::table('addresses_documents')->where('address_id', $id)->get();
+
+            return response()->json(['success' => true, 'data' => $address, 'documents' => $documents]);
         } catch (\Exception $e) {
             Log::error('Error in GeoController@getAddress: '.$e->getMessage());
 
@@ -335,6 +338,43 @@ class GeoController extends Controller
 
             DB::beginTransaction();
             $addressId = DB::table('addresses')->insertGetId($addressData);
+
+            // Сохраняем документы, если они были загружены
+            if ($request->hasFile('document')) {
+                $files = $request->file('document');
+                if (! is_array($files)) {
+                    $files = [$files]; // Если один файл, делаем массив
+                }
+
+                // Получаем ID типа документа "Проект БТИ"
+                $documentTypeId = DB::table('document_types')->where('name', 'Проект БТИ')->value('id');
+
+                foreach ($files as $file) {
+                    $fileName = time().'_'.$file->getClientOriginalName();
+                    try {
+                        $path = $file->storeAs('address_documents', $fileName, 'private');
+                        \Log::info('Inserting document', [
+                            'address_id' => $addressId,
+                            'document_type_id' => $documentTypeId,
+                            'uploaded_by' => auth()->id(),
+                            'path' => $path,
+                        ]);
+                        DB::table('addresses_documents')->insert([
+                            'address_id' => $addressId,
+                            'document_type_id' => $documentTypeId,
+                            'file_path' => $path,
+                            'uploaded_by' => auth()->id(),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        \Log::info('Document inserted successfully');
+                    } catch (\Exception $e) {
+                        \Log::error('File save error in addAddress', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+                        // Не прерываем создание адреса из-за ошибки с файлом
+                    }
+                }
+            }
+
             DB::commit();
 
             // Получаем информацию о городе

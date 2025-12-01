@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AddressDocumentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BrigadeController;
@@ -146,6 +147,13 @@ Route::prefix('api/addresses')->middleware('auth')->group(function () {
     Route::post('/add', [GeoController::class, 'addAddress'])->name('address.add');
     Route::put('/{id}', [GeoController::class, 'updateAddress'])->name('api.addresses.update');
     Route::delete('/{id}', [GeoController::class, 'deleteAddress'])->name('api.addresses.delete');
+});
+
+// Работа с документами адресов
+Route::prefix('api/address-documents')->middleware('auth')->group(function () {
+    Route::post('/', [AddressDocumentController::class, 'store'])->name('api.address-documents.store');
+    Route::get('/address/{addressId}', [AddressDocumentController::class, 'getByAddress'])->name('api.address-documents.getByAddress');
+    Route::get('/download/{id}', [AddressDocumentController::class, 'download'])->name('api.address-documents.download');
 });
 
 // API Routes for request modification
