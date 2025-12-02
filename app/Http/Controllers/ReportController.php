@@ -701,31 +701,32 @@ class ReportController extends Controller
 
             // return response()->json($data);
 
-            $sql = 'SELECT r.*,
-            c.fio AS client_fio,
-            c.phone AS client_phone,
-            c.organization AS client_organization,
-            rs.name AS status_name,
-            rs.color AS status_color,
-            b.name AS brigade_name,
-            e.fio AS brigade_lead,
-            op.fio AS operator_name,
-            addr.street,
-            addr.houses,
-            addr.district,
-            addr.city_id,
-            ct.name AS city_name,
-            ct.postal_code AS city_postal_code
-        FROM requests r
-        LEFT JOIN clients c ON r.client_id = c.id
-        LEFT JOIN request_statuses rs ON r.status_id = rs.id
-        LEFT JOIN brigades b ON r.brigade_id = b.id
-        LEFT JOIN employees e ON b.leader_id = e.id
-        LEFT JOIN employees op ON r.operator_id = op.id
-        LEFT JOIN request_addresses ra ON r.id = ra.request_id
-        LEFT JOIN addresses addr ON ra.address_id = addr.id
-        LEFT JOIN cities ct ON addr.city_id = ct.id
-        WHERE r.execution_date IS NOT NULL ORDER BY execution_date DESC';
+            $sql = '
+                SELECT r.*,
+                    c.fio AS client_fio,
+                    c.phone AS client_phone,
+                    c.organization AS client_organization,
+                    rs.name AS status_name,
+                    rs.color AS status_color,
+                    b.name AS brigade_name,
+                    e.fio AS brigade_lead,
+                    op.fio AS operator_name,
+                    addr.street,
+                    addr.houses,
+                    addr.district,
+                    addr.city_id,
+                    ct.name AS city_name,
+                    ct.postal_code AS city_postal_code
+                FROM requests r
+                LEFT JOIN clients c ON r.client_id = c.id
+                LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                LEFT JOIN brigades b ON r.brigade_id = b.id
+                LEFT JOIN employees e ON b.leader_id = e.id
+                LEFT JOIN employees op ON r.operator_id = op.id
+                LEFT JOIN request_addresses ra ON r.id = ra.request_id
+                LEFT JOIN addresses addr ON ra.address_id = addr.id
+                LEFT JOIN cities ct ON addr.city_id = ct.id
+                WHERE 1=1 ORDER BY execution_date DESC';
 
             $requestsAllPeriod = DB::select($sql);
 
@@ -751,23 +752,23 @@ class ReportController extends Controller
             );
 
             $requestComments = DB::select("
-            SELECT
-                rc.request_id,
-                c.id as comment_id,
-                c.comment,
-                c.created_at,
-                CASE 
-                    WHEN e.fio IS NOT NULL THEN e.fio
-                    WHEN u.name IS NOT NULL THEN u.name
-                    WHEN u.email IS NOT NULL THEN u.email
-                    ELSE 'Система'
-                END as author_name
-            FROM request_comments rc
-            JOIN comments c ON rc.comment_id = c.id
-            LEFT JOIN users u ON rc.user_id = u.id
-            LEFT JOIN employees e ON u.id = e.user_id
-            ORDER BY rc.request_id, c.created_at
-        ");
+                SELECT
+                    rc.request_id,
+                    c.id as comment_id,
+                    c.comment,
+                    c.created_at,
+                    CASE 
+                        WHEN e.fio IS NOT NULL THEN e.fio
+                        WHEN u.name IS NOT NULL THEN u.name
+                        WHEN u.email IS NOT NULL THEN u.email
+                        ELSE 'Система'
+                    END as author_name
+                FROM request_comments rc
+                JOIN comments c ON rc.comment_id = c.id
+                LEFT JOIN users u ON rc.user_id = u.id
+                LEFT JOIN employees e ON u.id = e.user_id
+                ORDER BY rc.request_id, c.created_at
+            ");
 
             $commentsByRequest = collect($requestComments)
                 ->groupBy('request_id')
@@ -835,35 +836,35 @@ class ReportController extends Controller
 
             // Запрашиваем комментарии с привязкой к заявкам
             $requestComments_old = DB::select("
-            SELECT
-                rc.request_id,
-                c.id as comment_id,
-                c.comment,
-                c.created_at,
-                'Система' as author_name
-            FROM request_comments rc
-            JOIN comments c ON rc.comment_id = c.id
-            ORDER BY rc.request_id, c.created_at
-        ");
+                SELECT
+                    rc.request_id,
+                    c.id as comment_id,
+                    c.comment,
+                    c.created_at,
+                    'Система' as author_name
+                FROM request_comments rc
+                JOIN comments c ON rc.comment_id = c.id
+                ORDER BY rc.request_id, c.created_at
+            ");
 
             $requestComments = DB::select("
-            SELECT
-                rc.request_id,
-                c.id as comment_id,
-                c.comment,
-                c.created_at,
-                CASE 
-                    WHEN e.fio IS NOT NULL THEN e.fio
-                    WHEN u.name IS NOT NULL THEN u.name
-                    WHEN u.email IS NOT NULL THEN u.email
-                    ELSE 'Система'
-                END as author_name
-            FROM request_comments rc
-            JOIN comments c ON rc.comment_id = c.id
-            LEFT JOIN users u ON rc.user_id = u.id
-            LEFT JOIN employees e ON u.id = e.user_id
-            ORDER BY rc.request_id, c.created_at
-        ");
+                SELECT
+                    rc.request_id,
+                    c.id as comment_id,
+                    c.comment,
+                    c.created_at,
+                    CASE 
+                        WHEN e.fio IS NOT NULL THEN e.fio
+                        WHEN u.name IS NOT NULL THEN u.name
+                        WHEN u.email IS NOT NULL THEN u.email
+                        ELSE 'Система'
+                    END as author_name
+                FROM request_comments rc
+                JOIN comments c ON rc.comment_id = c.id
+                LEFT JOIN users u ON rc.user_id = u.id
+                LEFT JOIN employees e ON u.id = e.user_id
+                ORDER BY rc.request_id, c.created_at
+            ");
 
             // Группируем комментарии по ID заявки
             $commentsByRequest = collect($requestComments)
@@ -886,36 +887,67 @@ class ReportController extends Controller
             $startDate = \DateTime::createFromFormat('d.m.Y', $request->input('startDate'))->format('Y-m-d');
             $endDate = \DateTime::createFromFormat('d.m.Y', $request->input('endDate'))->format('Y-m-d');
 
+            $sql_ = '
+                SELECT
+                    r.*,
+                    c.fio AS client_fio,
+                    c.phone AS client_phone,
+                    c.organization AS client_organization,
+                    rs.name AS status_name,
+                    rs.color AS status_color,
+                    b.name AS brigade_name,
+                    e.fio AS brigade_lead,
+                    op.fio AS operator_name,
+                    addr.street,
+                    addr.houses,
+                    addr.district,
+                    addr.city_id,
+                    ct.name AS city_name,
+                    ct.postal_code AS city_postal_code
+                FROM requests r
+                LEFT JOIN clients c ON r.client_id = c.id
+                LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                LEFT JOIN brigades b ON r.brigade_id = b.id
+                LEFT JOIN employees e ON b.leader_id = e.id
+                LEFT JOIN employees op ON r.operator_id = op.id
+                LEFT JOIN request_addresses ra ON r.id = ra.request_id
+                LEFT JOIN addresses addr ON ra.address_id = addr.id
+                LEFT JOIN cities ct ON addr.city_id = ct.id
+                WHERE r.execution_date::date BETWEEN ? AND ?
+                AND (b.is_deleted = false OR b.id IS NULL)
+                ORDER BY r.execution_date DESC, r.id DESC
+            ';
+
             $sql = '
-            SELECT
-                r.*,
-                c.fio AS client_fio,
-                c.phone AS client_phone,
-                c.organization AS client_organization,
-                rs.name AS status_name,
-                rs.color AS status_color,
-                b.name AS brigade_name,
-                e.fio AS brigade_lead,
-                op.fio AS operator_name,
-                addr.street,
-                addr.houses,
-                addr.district,
-                addr.city_id,
-                ct.name AS city_name,
-                ct.postal_code AS city_postal_code
-            FROM requests r
-            LEFT JOIN clients c ON r.client_id = c.id
-            LEFT JOIN request_statuses rs ON r.status_id = rs.id
-            LEFT JOIN brigades b ON r.brigade_id = b.id
-            LEFT JOIN employees e ON b.leader_id = e.id
-            LEFT JOIN employees op ON r.operator_id = op.id
-            LEFT JOIN request_addresses ra ON r.id = ra.request_id
-            LEFT JOIN addresses addr ON ra.address_id = addr.id
-            LEFT JOIN cities ct ON addr.city_id = ct.id
-            WHERE r.execution_date::date BETWEEN ? AND ? 
-            AND (b.is_deleted = false OR b.id IS NULL)
-            ORDER BY r.execution_date DESC, r.id DESC
-        ';
+                SELECT
+                    r.*,
+                    c.fio AS client_fio,
+                    c.phone AS client_phone,
+                    c.organization AS client_organization,
+                    rs.name AS status_name,
+                    rs.color AS status_color,
+                    b.name AS brigade_name,
+                    e.fio AS brigade_lead,
+                    op.fio AS operator_name,
+                    addr.street,
+                    addr.houses,
+                    addr.district,
+                    addr.city_id,
+                    ct.name AS city_name,
+                    ct.postal_code AS city_postal_code
+                FROM requests r
+                LEFT JOIN clients c ON r.client_id = c.id
+                LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                LEFT JOIN brigades b ON r.brigade_id = b.id
+                LEFT JOIN employees e ON b.leader_id = e.id
+                LEFT JOIN employees op ON r.operator_id = op.id
+                LEFT JOIN request_addresses ra ON r.id = ra.request_id
+                LEFT JOIN addresses addr ON ra.address_id = addr.id
+                LEFT JOIN cities ct ON addr.city_id = ct.id
+                WHERE r.execution_date::date BETWEEN ? AND ?
+                AND (b.is_deleted = false OR b.id IS NULL)
+                ORDER BY r.execution_date DESC, r.id DESC
+            ';
 
             $requestsByDateRange = DB::select($sql, [$startDate, $endDate]);
 

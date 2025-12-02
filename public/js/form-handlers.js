@@ -5042,6 +5042,15 @@ async function submitRequestForm(event) {
         }
         isValid = false;
     }
+
+    // Validate execution date
+    const executionDateField = document.getElementById('executionDate');
+    if (executionDateField && !executionDateField.value) {
+        executionDateField.classList.add('is-invalid');
+        isValid = false;
+    } else if (executionDateField) {
+        executionDateField.classList.remove('is-invalid');
+    }
     
     // Валидация комментария
     if (commentField) {

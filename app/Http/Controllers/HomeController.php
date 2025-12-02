@@ -1577,9 +1577,9 @@ class HomeController extends Controller
                     LEFT JOIN request_addresses ra ON r.id = ra.request_id
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
-                    WHERE DATE(r.execution_date) = ?
-                    AND r.status_id != 6
-                    AND (b.is_deleted = false OR b.id IS NULL)
+                     WHERE DATE(r.execution_date) = ?
+                     AND r.status_id NOT IN (6,7)
+                     AND (b.is_deleted = false OR b.id IS NULL)
                     AND (
                         EXISTS (
                             SELECT 1
@@ -1630,7 +1630,7 @@ class HomeController extends Controller
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
                     WHERE DATE(r.execution_date) = ? AND (b.is_deleted = false OR b.id IS NULL)
-                    AND r.status_id != 6
+                    AND r.status_id NOT IN (6,7)
                     ORDER BY r.id DESC
                 ";
             }

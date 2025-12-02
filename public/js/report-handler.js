@@ -403,15 +403,19 @@ export async function loadReport() {
     }
     // Затем проверяем случаи с выбранным диапазоном дат
     else if (startDate && endDate) {
+        // Отчет за выбранный диапазон дат по всем сотрудникам и всем адресам
         if (employeeSelect.value === 'all_employees' && (addressSelect.value === 'all_addresses' || addressSelect.value === '')) {
             url = '/reports/requests/by-date';
         }
+        // Отчет за выбранный диапазон дат по всем сотрудникам и определенному адресу
         else if (employeeSelect.value > 0 && (addressSelect.value === 'all_addresses' || addressSelect.value === '')) {
             url = '/reports/requests/by-employee-date';
         } 
+        // Отчет за выбранный диапазон дат по определенному адресу и всем сотрудникам
         else if (addressSelect.value > 0 && employeeSelect.value === 'all_employees') {
             url = '/reports/requests/by-address-date';
         }
+        // Отчет за выбранный диапазон дат по определенному адресу и определенному сотруднику
         else if (employeeSelect.value > 0 && addressSelect.value > 0) {
             url = '/reports/requests/by-employee-address-date';
         }
