@@ -465,7 +465,8 @@ export async function loadReport() {
     
     const result = await postData(url, requestData);
 
-    console.log('Result:', result); 
+    console.log('Result:', result);
+    console.log('Brigade Members:', result.brigadeMembersWithDetails);
 
     if (result.success) {
         renderReportTable({
@@ -620,10 +621,10 @@ export function renderReportTable(data) {
 
             if (brigadeGroup.length > 0) {
                 const brigade = brigadeGroup[0];
-                const allMembers = brigade.members ? brigade.members.map(m => m.fio).filter(fio => fio) : [];
-                const leaderName = request.brigade_leader_name || request.brigade_lead;
+                const allMembers = brigadeGroup.map(m => m.employee_name).filter(name => name);
+                const leaderName = brigadeGroup[0].employee_leader_name;
                 const leaderShort = leaderName ? shortenName(leaderName) : '';
-                const otherMembers = allMembers.filter(fio => shortenName(fio) !== leaderShort).map(shortenName);
+                const otherMembers = allMembers.filter(name => shortenName(name) !== leaderShort).map(shortenName);
 
                 brigadeInfo = `
                     <div style="font-size: 0.75rem; line-height: 1.2;">
