@@ -334,6 +334,7 @@ class PlanningRequestController extends Controller
             $sql = "
             SELECT
                 r.id,
+                r.brigade_id,
                 TO_CHAR(r.request_date, 'DD.MM.YYYY') AS request_date,
                 r.number,
                 '#' || r.id || ', ' || r.number || ', создана ' || TO_CHAR(r.request_date, 'DD.MM.YYYY') AS request,
@@ -371,20 +372,22 @@ class PlanningRequestController extends Controller
             WHERE 1=1
                 AND (rs.name = 'планирование')
             GROUP BY
-                r.id, r.number, r.request_date,
+                r.id, r.brigade_id, r.number, r.request_date,
                 c.fio, c.phone, c.organization,
                 op.fio,
                 ct.name, addr.district, addr.street, addr.houses,
                 rs.name,
-                rs.color    
+                rs.color
             ORDER BY r.id DESC";
 
             $result = DB::select($sql);
+            $brigadeMembersWithDetails = $this->getBrigadeMembersWithDetails();
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'planningRequests' => $result,
+                    'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
                 ],
             ]);
         } catch (\Exception $e) {
@@ -395,6 +398,41 @@ class PlanningRequestController extends Controller
                 'message' => 'Произошла ошибка при получении запланированных заявок',
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Получение членов бригады с деталями
+     */
+    private function getBrigadeMembersWithDetails()
+    {
+        try {
+            $brigadeMembersWithDetails = DB::select(
+                'SELECT
+                bm.*,
+                b.name as brigade_name,
+                b.leader_id,
+                e.fio as employee_name,
+                e.phone as employee_phone,
+                e.group_role as employee_group_role,
+                e.sip as employee_sip,
+                e.position_id as employee_position_id,
+                el.fio as employee_leader_name,
+                el.phone as employee_leader_phone,
+                el.group_role as employee_leader_group_role,
+                el.sip as employee_leader_sip,
+                el.position_id as employee_leader_position_id
+            FROM brigade_members bm
+            JOIN brigades b ON bm.brigade_id = b.id
+            LEFT JOIN employees e ON bm.employee_id = e.id
+            LEFT JOIN employees el ON b.leader_id = el.id'
+            );
+
+            return $brigadeMembersWithDetails;
+        } catch (\Exception $e) {
+            Log::error('Error in PlanningRequestController@getBrigadeMembersWithDetails: '.$e->getMessage());
+
+            return [];
         }
     }
 

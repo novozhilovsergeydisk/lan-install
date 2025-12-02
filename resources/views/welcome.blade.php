@@ -1383,24 +1383,25 @@
 
                             </div>
 
-                             <table id="requestsPlanningTable" class="table table-hover align-middle mb-0" style="">
-                                 <thead class="bg-dark">
-                                 <tr>
-                                     <th class="line-height-20 font-smaller"></th>
-                                     <th class="line-height-20 font-smaller">
-                                         Адрес
-                                         <span class="dropdown-toggle ms-1" id="planningSortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>
+                              <table id="requestsPlanningTable" class="table table-hover align-middle mb-0" style="">
+                                  <thead class="bg-dark">
+                                  <tr>
+                                      <th class="line-height-20 font-smaller"></th>
+                                      <th class="line-height-20 font-smaller">
+                                          Адрес
+                                          <span class="dropdown-toggle ms-1" id="planningSortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>
                                            <ul class="dropdown-menu" aria-labelledby="planningSortDropdown">
-                                               <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру</a></li>
-                                               <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
-                                               <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
-                                               <li><a class="dropdown-item" href="#" data-sort="status">Сортировать по статусу</a></li>
+                                                <li><a class="dropdown-item" href="#" data-sort="number">Сортировать по номеру</a></li>
+                                                <li><a class="dropdown-item" href="#" data-sort="address">Сортировать по адресу</a></li>
+                                                <li><a class="dropdown-item" href="#" data-sort="organization">Сортировать по организации</a></li>
+                                                <li><a class="dropdown-item" href="#" data-sort="status">Сортировать по статусу</a></li>
                                            </ul>
-                                     </th>
-                                      <th class="line-height-20 font-smaller">Комментарии</th>
-                                      <th class="line-height-20 font-smaller">Действия</th>
-                                 </tr>
-                                 </thead>
+                                      </th>
+                                       <th class="line-height-20 font-smaller">Комментарии</th>
+                                       <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
+                                       <th class="line-height-20 font-smaller">Действия</th>
+                                  </tr>
+                                  </thead>
                                 <tbody>
                                     <!-- Заполнение таблицы происходит динамически -->
                                 </tbody>

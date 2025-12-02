@@ -104,25 +104,25 @@ export async function loadPlanningRequests() {
             const fullAddress = `${cityPrefix}ул. ${request.street || ''}, ${request.houses || ''}`.trim();
             
             // Создаем строку таблицы
-            const row = document.createElement('tr');
-            row.id = `request-${request.id}`;
-            row.setAttribute('data-request-id', request.id);
-            row.dataset.requestNumber = request.number || '';
-            row.dataset.requestStatus = request.status_id || 'status';
-            row.dataset.statusName = request.status_name || '';
-            row.dataset.address = fullAddress;
-            row.className = 'align-middle status-row welcome-blade';
-            row.style.setProperty('--status-color', request.color || '#e2e0e6');
-            row.style.setProperty('--bs-table-bg', request.color, 'important');
-            row.style.backgroundColor = request.color;
-            row.style.color = '#000000'; // Устанавливаем черный цвет текста
-             row.innerHTML = `
-                 <td style="width: 5%" class="col-number">
-                     <div class="form-check">
-                         ${index + 1}
-                     </div>
-                 </td>
-                 <td style="width: 30%" class="col-address">
+             const row = document.createElement('tr');
+             row.id = `request-${request.id}`;
+             row.setAttribute('data-request-id', request.id);
+             row.dataset.requestNumber = request.number || '';
+             row.dataset.requestStatus = request.status_id || 'status';
+             row.dataset.statusName = request.status_name || '';
+             row.dataset.address = fullAddress;
+             row.className = 'align-middle status-row welcome-blade';
+             row.style.setProperty('--status-color', request.color || '#e2e0e6');
+             row.style.setProperty('--bs-table-bg', request.color, 'important');
+             row.style.backgroundColor = request.color;
+             row.style.color = '#000000'; // Устанавливаем черный цвет текста
+              row.innerHTML = `
+                  <td style="width: 3%" class="col-number">
+                      <div class="form-check">
+                          ${index + 1}
+                      </div>
+                  </td>
+                  <td style="width: 25%" class="col-address">
                      <div class="d-flex flex-column">
                          <div class="text-dark col-address__organization">${request.organization || 'Не указан'}</div>
                          <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" data-bs-original-title="${fullAddress}">
@@ -134,50 +134,87 @@ export async function loadPlanningRequests() {
                          </small>
                      </div>
                  </td>
-                 <td style="width: 40%" class="col-comments">
-                     <div class="col-date__date">${request.request_date} | ${request.number}</div>
-                     ${commentsContent.length > 0 ? `
-                         <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
-                             <p class="comment-preview-title">Печатный комментарий:</p>
-                             <div data-comment-request-id="${request.id}" class="comment-preview-text">${commentsContent}</div>
-                         </div>
-                         ${commentsCount >= 1 ? `
-                             <div class="mb-0">
-                                 ${(() => { const p = makeEscapedPreview(commentsContent, 4); return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${comments[0].created_at} | ${comments[0].author_fio}<br>${p.html}${p.ellipsis}</p>`; })()}
-                             </div>
-                             <div class="mt-1">
-                                 <button type="button"
-                                         class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
-                                         data-bs-toggle="modal"
-                                         data-bs-target="#commentsModal"
-                                         data-request-id="${request.id}"
-                                         style="position: relative; z-index: 1;">
-                                     <i class="bi bi-chat-left-text me-1"></i><span class="text-comment"> </span>
-                                     Все комментарии
-                                     <span class="badge bg-primary rounded-pill ms-1">
-                                         ${comments.length}
-                                     </span>
-                                 </button>
-                             </div>
-                         ` : ''}
-                      ` : '<div class="text-muted small">Нет комментариев</div>'}
-                  </td>
-                  <td style="width: 10%; vertical-align: top">
-                    <div class="d-flex align-items-start mt-4">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
-                                <i class="bi bi-pencil-square"></i> В работу
-                            </button>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-start mt-4">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn btn-outline-danger request-delete" data-request-id="${request.id}">
-                                <i class="bi bi-x-circle"></i> Удалить
-                            </button>
-                        </div>
-                    </div>
-                </td>
+                  <td style="width: 20%" class="col-comments">
+                      <div class="col-date__date">${request.request_date} | ${request.number}</div>
+                      ${commentsContent.length > 0 ? `
+                          <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
+                              <p class="comment-preview-title">Печатный комментарий:</p>
+                              <div data-comment-request-id="${request.id}" class="comment-preview-text">${commentsContent}</div>
+                          </div>
+                          ${commentsCount >= 1 ? `
+                              <div class="mb-0">
+                                  ${(() => { const p = makeEscapedPreview(commentsContent, 4); return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${comments[0].created_at} | ${comments[0].author_fio}<br>${p.html}${p.ellipsis}</p>`; })()}
+                              </div>
+                              <div class="mt-1">
+                                  <button type="button"
+                                          class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                                          data-bs-toggle="modal"
+                                          data-bs-target="#commentsModal"
+                                          data-request-id="${request.id}"
+                                          style="position: relative; z-index: 1;">
+                                      <i class="bi bi-chat-left-text me-1"></i><span class="text-comment"> </span>
+                                      Все комментарии
+                                      <span class="badge bg-primary rounded-pill ms-1">
+                                          ${comments.length}
+                                      </span>
+                                  </button>
+                              </div>
+                          ` : ''}
+                       ` : '<div class="text-muted small">Нет комментариев</div>'}
+                   </td>
+                   <td style="width: 20%" class="col-brigade" data-col-brigade-id="${request.brigade_id || ''}">
+                       <div data-name="brigadeMembers" class="col-brigade__div">
+                           ${(() => {
+                               const shortenName = (fullName) => {
+                                   if (!fullName) return '';
+                                   const parts = fullName.trim().split(' ');
+                                   if (parts.length >= 2) {
+                                       return parts[0] + ' ' + parts[1].charAt(0) + '.';
+                                   }
+                                   return fullName;
+                               };
+
+                               if (request.brigade_id) {
+                                   const brigadeMembers = result.data.brigadeMembersWithDetails.filter(member => member.brigade_id == request.brigade_id);
+                                   if (brigadeMembers.length > 0) {
+                                       const leaderName = brigadeMembers[0].employee_leader_name;
+                                       const brigadeName = brigadeMembers[0].brigade_name;
+                                       let membersHtml = '';
+                                       if (leaderName) {
+                                           membersHtml += `<div class="mb-1"><i>${brigadeName}</i></div>`;
+                                           membersHtml += `<div><strong>${shortenName(leaderName)}</strong>`;
+                                           brigadeMembers.forEach(member => {
+                                               membersHtml += `, ${shortenName(member.employee_name)}`;
+                                           });
+                                           membersHtml += '</div>';
+                                       }
+                                       return membersHtml + `<a href="#" class="view-brigade-btn" data-bs-toggle="modal" data-bs-target="#brigadeModal" data-brigade-id="${request.brigade_id}">подробнее...</a>`;
+                                   }
+                               }
+                               return 'Не назначена';
+                           })()}
+                       </div>
+                   </td>
+                   <td style="width: 15%" class="col-actions text-nowrap">
+                     <div class="col-actions__div d-flex flex-column gap-1">
+                         <button type="button"
+                                 class="btn btn-sm btn-outline-primary assign-team-btn p-1"
+                                 data-bs-toggle="tooltip"
+                                 data-bs-placement="left"
+                                 data-bs-title="Назначить бригаду"
+                                 data-request-id="${request.id}">
+                             <i class="bi bi-people"></i>
+                         </button>
+
+                         <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
+                             <i class="bi bi-pencil-square"></i> В работу
+                         </button>
+
+                         <button type="button" class="btn btn-outline-danger request-delete" data-request-id="${request.id}">
+                             <i class="bi bi-x-circle"></i> Удалить
+                         </button>
+                     </div>
+                 </td>
             `;
             
             tbody.appendChild(row);
