@@ -2660,9 +2660,36 @@
                         <div class="col-md-12">
                             <h6>Комментарий к заявке <span class="text-danger">*</span></h6>
                             <div class="mb-3">
-                                <textarea class="form-control" id="planningRequestComment" name="planning_request_comment" rows="3"
-                                              placeholder="Введите комментарий к заявке" required minlength="3"
-                                              maxlength="1000"></textarea>
+                                <!-- Начало блока WYSIWYG для планирования -->
+                                <div class="my-wysiwyg-planning my-wysiwyg">
+                                    <!-- Панель кнопок -->
+                                    <div class="wysiwyg-toolbar-planning wysiwyg-toolbar btn-group mb-2" role="group" aria-label="Editor toolbar">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="bold" title="Жирный"><strong>B</strong></button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="italic" title="Курсив"><em>I</em></button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="createLink" title="Вставить ссылку">link</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="unlink" title="Убрать ссылку">unlink</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="planningToggleCode" title="HTML">HTML</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="planningShowHelp" title="Справка">
+                                            <i class="bi bi-question-circle"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Визуальный редактор -->
+                                    <div class="wysiwyg-editor border rounded p-2" contenteditable="true" id="planningCommentEditor"></div>
+
+                                    <!-- Редактор HTML-кода -->
+                                    <textarea class="wysiwyg-code form-control mt-2" id="planningCommentCode" rows="6" style="display:none;"></textarea>
+
+                                    <!-- Оригинальный textarea (скрытый) -->
+                                    <textarea class="form-control" id="planningRequestComment" name="planning_request_comment" rows="3"
+                                            placeholder="Введите комментарий к заявке" required minlength="3"
+                                            maxlength="1000" style="display:none;"></textarea>
+                                    <!-- Сообщение об ошибке -->
+                                    <div id="planning_comment_error" class="invalid-feedback d-none">
+                                        Пожалуйста, введите комментарий (от 3 до 1000 символов)
+                                    </div>
+                                </div>
+                                <!-- Конец блока WYSIWYG -->
                             </div>
                         </div>
                     </div>

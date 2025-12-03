@@ -3509,6 +3509,24 @@ export function initPlanningRequestFormHandlers() {
     const modalElement = document.getElementById('newPlanningRequestModal');
     if (modalElement) {
         modalElement.addEventListener('hidden.bs.modal', clearPlanningRequestForm);
+
+        // Обработчики для WYSIWYG редактора
+        modalElement.addEventListener('show.bs.modal', function() {
+            if (window.initPlanningWysiwygEditor) {
+                try {
+                    window.initPlanningWysiwygEditor();
+                    console.log('WYSIWYG Planning редактор инициализирован');
+                } catch (error) {
+                    console.error('Ошибка при инициализации WYSIWYG Planning редактора:', error);
+                }
+            }
+        });
+
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            if (window.destroyPlanningWysiwygEditor) {
+                window.destroyPlanningWysiwygEditor();
+            }
+        });
     }
     
     // Добавляем обработчики событий для полей формы

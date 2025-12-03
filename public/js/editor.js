@@ -1231,6 +1231,369 @@ function initAdditionalWysiwygEditor() {
   };
 }
 
+// Глобальная переменная для экземпляра редактора планирования
+let planningWysiwygEditorInstance = null;
+
+// Функция для инициализации WYSIWYG-редактора планирования
+function initPlanningWysiwygEditor() {
+  // Настройки для редактора планирования
+  const allowedTags = ['B','STRONG','I','EM','A','BR','P','DIV','SPAN']; // разрешаем только базовые теги
+  const editorId = 'planningCommentEditor';
+  const codeId = 'planningCommentCode';
+  const textareaId = 'planningRequestComment'; // Текстареа формы
+  const toggleHtmlBtnId = 'planningToggleCode';
+
+  const editor = document.getElementById(editorId);
+  const codeArea = document.getElementById(codeId);
+  const textarea = document.getElementById(textareaId);
+  const toggleBtn = document.getElementById(toggleHtmlBtnId);
+  const toolbar = document.querySelector('.wysiwyg-toolbar-planning');
+
+  if (!editor) {
+    console.error('WYSIWYG Planning: не найден элемент редактора с id', editorId);
+    return;
+  }
+  if (!textarea) {
+    console.error('WYSIWYG Planning: не найден textarea с id', textareaId);
+    return;
+  }
+  if (!toolbar) {
+    console.error('WYSIWYG Planning: не найдена панель инструментов с классом wysiwyg-toolbar-planning');
+    return;
+  }
+
+  console.log('WYSIWYG Planning: редактор инициализирован', { editor, textarea, toolbar });
+
+  // Инициализация: заполнить редактор содержимым textarea (если есть)
+  editor.innerHTML = textarea.value || '';
+
+  // Удаляем пустые пробелы и <br> в начале содержимого
+  if (editor.innerHTML.trim() === '' || editor.innerHTML === '<br>') {
+    editor.innerHTML = '';
+  }
+
+  // Убираем видимость оригинального textarea, но оставляем в DOM
+  textarea.style.display = 'none';
+
+  // Функция для обновления содержимого textarea
+  function updateTextarea() {
+    textarea.value = editor.innerHTML;
+  }
+
+  // Функция для переключения между HTML и визуальным режимом
+  function toggleHtmlMode() {
+    if (editor.style.display === 'none') {
+      // Переключаемся на визуальный режим
+      codeArea.style.display = 'none';
+      editor.style.display = '';
+
+      // Обновляем содержимое редактора из codeArea (сырой HTML)
+      editor.innerHTML = codeArea.value;
+
+      // Обновляем содержимое textarea
+      updateTextarea();
+
+      return 'HTML';
+    } else {
+      // Переключаемся в режим HTML
+      editor.style.display = 'none';
+      codeArea.style.display = '';
+
+      // Обновляем содержимое textarea перед показом HTML
+      updateTextarea();
+
+      // Устанавливаем содержимое textarea в codeArea, сохраняя всю разметку
+      codeArea.value = textarea.value;
+
+      return 'Код';
+    }
+  }
+
+  // Добавляем обработчик для кнопки переключения режима
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      const newText = toggleHtmlMode();
+      this.textContent = newText === 'HTML' ? 'HTML' : 'Код';
+    });
+  }
+
+  // --- Функции утилиты (используем те же) ---
+  // Простая санитизация HTML
+  function sanitizeHTML(html) {
+    html = html.replace(/&lt;!--[\s\S]*?--&gt;|<!--[\s\S]*?-->/g, '');
+    const frag = document.createElement('div');
+    frag.innerHTML = html;
+
+    function clean(node) {
+      if (!node) return;
+      const children = Array.from(node.childNodes);
+      for (const ch of children) {
+        if (ch.nodeType === Node.TEXT_NODE) continue;
+        if (ch.nodeType === Node.ELEMENT_NODE) {
+          const tag = ch.tagName.toUpperCase();
+          if (!allowedTags.includes(tag)) {
+            const inner = document.createDocumentFragment();
+            while (ch.firstChild) {
+              inner.appendChild(ch.firstChild);
+            }
+            try {
+              if (ch.parentNode) {
+                ch.parentNode.replaceChild(inner, ch);
+                clean(node);
+                break;
+              }
+            } catch (e) {
+              console.error('Ошибка при замене тега:', e);
+              continue;
+            }
+          } else {
+            const attrs = Array.from(ch.attributes || []);
+            for (const at of attrs) {
+              if (ch.tagName.toUpperCase() === 'A') {
+                if (at.name !== 'href' && at.name !== 'target' && at.name !== 'rel') {
+                  ch.removeAttribute(at.name);
+                }
+              } else {
+                ch.removeAttribute(at.name);
+              }
+            }
+            if (ch.tagName.toUpperCase() === 'A') {
+              const href = ch.getAttribute('href') || '';
+              if (/^\s*javascript:/i.test(href)) {
+                ch.removeAttribute('href');
+              } else {
+                ch.setAttribute('rel', 'noopener noreferrer');
+                ch.setAttribute('target', '_blank');
+              }
+            }
+            if (ch.childNodes.length > 0) {
+              clean(ch);
+            }
+          }
+        } else if (ch.parentNode) {
+          try {
+            ch.parentNode.removeChild(ch);
+          } catch (e) {
+            console.error('Ошибка при удалении узла:', e);
+          }
+        }
+      }
+    }
+    clean(frag);
+    return frag.innerHTML;
+  }
+
+  // Update state кнопок (active)
+  function updateToolbarState() {
+     const btns = toolbar.querySelectorAll('button[data-cmd]');
+     btns.forEach(btn => {
+       const cmd = btn.getAttribute('data-cmd');
+       if (cmd === 'createLink' || cmd === 'unlink') {
+         btn.classList.remove('active');
+       } else if (cmd === 'bold' || cmd === 'italic') {
+         const tagName = cmd === 'bold' ? 'STRONG' : 'EM';
+         const selection = window.getSelection();
+         let isActive = false;
+         if (selection.rangeCount > 0) {
+           const range = selection.getRangeAt(0);
+           let node = range.commonAncestorContainer;
+           if (node.nodeType === Node.TEXT_NODE) {
+             node = node.parentNode;
+           }
+           while (node && node !== editor) {
+             if (node.tagName === tagName) {
+               isActive = true;
+               break;
+             }
+             node = node.parentNode;
+           }
+         }
+         btn.classList.toggle('active', isActive);
+       } else {
+         try {
+           const state = document.queryCommandState(cmd);
+           btn.classList.toggle('active', !!state);
+         } catch (e) {
+           btn.classList.remove('active');
+         }
+       }
+     });
+   }
+
+  // Вставить HTML
+  function insertHTMLAtCursor(html) {
+    const sanitizedHtml = html.replace(/&lt;!--[\s\S]*?--&gt;|<!--[\s\S]*?-->/g, '');
+    document.execCommand('insertHTML', false, sanitizedHtml);
+    if (editor.innerHTML.startsWith('<br>')) {
+      editor.innerHTML = editor.innerHTML.replace(/^<br>/, '');
+    }
+    if (editor.innerHTML.endsWith('<br>')) {
+      editor.innerHTML = editor.innerHTML.replace(/<br>$/i, '');
+    }
+  }
+  
+  // Форматирование текста
+  function formatText(tagName) {
+      const selection = window.getSelection();
+      if (selection.rangeCount === 0) return;
+
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+      if (!selectedText) return;
+
+      const element = document.createElement(tagName);
+      element.textContent = selectedText;
+
+      range.deleteContents();
+      range.insertNode(element);
+
+      range.setStartAfter(element);
+      range.setEndAfter(element);
+      selection.removeAllRanges();
+      selection.addRange(range);
+  }
+
+  // Обработчики тулбара
+  toolbar.addEventListener('click', function (e) {
+     const btn = e.target.closest('button[data-cmd]');
+     if (!btn) return;
+     const cmd = btn.getAttribute('data-cmd');
+
+     if (cmd === 'createLink') {
+       let url = prompt('Введите URL:', 'https://');
+       if (!url) return;
+       if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
+         url = 'https://' + url;
+       }
+       document.execCommand('createLink', false, url);
+     } else if (cmd === 'unlink') {
+       document.execCommand('unlink', false, null);
+     } else if (cmd === 'bold') {
+       formatText('strong');
+     } else if (cmd === 'italic') {
+       formatText('em');
+     } else {
+       document.execCommand(cmd, false, null);
+     }
+     updateToolbarState();
+     editor.focus();
+   });
+
+  // События редактора
+  editor.addEventListener('keyup', updateToolbarState);
+  editor.addEventListener('mouseup', updateToolbarState);
+  editor.addEventListener('focus', updateToolbarState);
+
+  // Санитизация при вводе
+  editor.addEventListener('input', function(e) {
+    let currentHTML = editor.innerHTML;
+    if (currentHTML.trim() === '' || currentHTML === '<br>') {
+      editor.innerHTML = '';
+      updateTextarea(); // Обновляем textarea
+      return;
+    }
+    const sanitizedHTML = sanitizeHTML(currentHTML);
+    if (currentHTML !== sanitizedHTML) {
+      const selection = window.getSelection();
+      const range = selection.getRangeAt(0);
+      const offset = range.startOffset;
+      editor.innerHTML = sanitizedHTML;
+      const newRange = document.createRange();
+      const textNode = document.createTextNode('');
+      editor.appendChild(textNode);
+      newRange.setStart(textNode, Math.min(offset, textNode.length));
+      newRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+    }
+    updateTextarea(); // Обновляем textarea
+  });
+
+  // Paste
+  editor.addEventListener('paste', function (e) {
+    e.preventDefault();
+    const clipboard = (e.clipboardData || window.clipboardData);
+    if (!clipboard) return;
+
+    if (codeArea.style.display !== 'none') {
+      const text = clipboard.getData('text/plain');
+      document.execCommand('insertText', false, text);
+      updateTextarea();
+      return;
+    }
+
+    const html = clipboard.getData('text/html');
+    const text = clipboard.getData('text/plain');
+    if (html) {
+      const safe = sanitizeHTML(html);
+      insertHTMLAtCursor(safe);
+    } else if (text) {
+      // Используем escapeHTML и linkify из WYSIUtils если доступны, иначе простые версии
+      const escape = window.WYSIUtils && window.WYSIUtils.escapeHTML ? window.WYSIUtils.escapeHTML : (s => s);
+      const linkifyFunc = window.WYSIUtils && window.WYSIUtils.linkify ? window.WYSIUtils.linkify : (s => s);
+      
+      const escaped = escape(text);
+      const linked = linkifyFunc(escaped);
+      const withBreaks = linked.replace(/\r?\n/g, '<br>');
+      insertHTMLAtCursor(withBreaks);
+    } else {
+      const fallback = clipboard.getData('text');
+      document.execCommand('insertText', false, fallback || '');
+    }
+    updateToolbarState();
+    updateTextarea();
+  });
+
+  // Найдём родительскую форму (если есть)
+  function attachFormHandler() {
+    let form = textarea.closest('form');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+      // Скопировать HTML в textarea перед отправкой
+      textarea.value = sanitizeHTML(editor.innerHTML);
+    });
+  }
+  attachFormHandler();
+
+  // Синхронизация из textarea в editor (на случай внешних изменений)
+  const observer = new MutationObserver(() => {
+    if (textarea.value !== editor.innerHTML) {
+      editor.innerHTML = textarea.value || '';
+    }
+  });
+  observer.observe(textarea, { attributes: true, childList: true, characterData: true });
+
+  // Инициализация
+  textarea.value = sanitizeHTML(textarea.value || '');
+  
+  return {
+    updateToolbarState: updateToolbarState,
+    destroy: function() {
+      observer.disconnect();
+    }
+  };
+}
+
+// Функция для уничтожения редактора планирования
+function destroyPlanningWysiwygEditor() {
+  if (planningWysiwygEditorInstance) {
+    if (typeof planningWysiwygEditorInstance.destroy === 'function') {
+      planningWysiwygEditorInstance.destroy();
+    }
+    planningWysiwygEditorInstance = null;
+  }
+}
+
+// Модифицируем initPlanningWysiwygEditor для возврата методов управления
+const originalInitPlanningWysiwygEditor = initPlanningWysiwygEditor;
+window.initPlanningWysiwygEditor = function() {
+  destroyPlanningWysiwygEditor();
+  planningWysiwygEditorInstance = originalInitPlanningWysiwygEditor();
+  return planningWysiwygEditorInstance;
+};
+window.destroyPlanningWysiwygEditor = destroyPlanningWysiwygEditor;
+
 // Добавляем глобальные методы для управления редактором
 window.resetWysiwygEditor = resetWysiwygEditor;
 window.destroyWysiwygEditor = destroyWysiwygEditor;
