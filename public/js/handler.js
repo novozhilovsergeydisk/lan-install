@@ -117,13 +117,13 @@ export async function loadPlanningRequests() {
              row.style.setProperty('--bs-table-bg', request.color, 'important');
              row.style.backgroundColor = request.color;
              row.style.color = '#000000'; // Устанавливаем черный цвет текста
-              row.innerHTML = `
-                  <td style="width: 3%" class="col-number">
-                      <div class="form-check">
-                          ${index + 1}
-                      </div>
-                  </td>
-                  <td style="width: 25%" class="col-address">
+               row.innerHTML = `
+                   <td class="col-number">
+                       <div class="form-check">
+                           ${index + 1}
+                       </div>
+                   </td>
+                   <td class="col-address">
                      <div class="d-flex flex-column">
                          <div class="text-dark col-address__organization">${request.organization || 'Не указан'}</div>
                          <small class="text-dark d-block col-address__street" data-bs-toggle="tooltip" data-bs-original-title="${fullAddress}">
@@ -135,7 +135,7 @@ export async function loadPlanningRequests() {
                          </small>
                      </div>
                  </td>
-                  <td style="width: 20%" class="col-comments">
+                   <td class="col-comments">
                       <div class="col-date__date">${request.request_date} | ${request.number}</div>
                       ${commentsContent.length > 0 ? `
                           <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
@@ -163,7 +163,7 @@ export async function loadPlanningRequests() {
                           ` : ''}
                        ` : '<div class="text-muted small">Нет комментариев</div>'}
                    </td>
-                   <td style="width: 20%" class="col-brigade" data-col-brigade-id="${request.brigade_id || ''}">
+                    <td class="col-brigade" data-col-brigade-id="${request.brigade_id || ''}">
                        <div data-name="brigadeMembers" class="col-brigade__div">
                            ${(() => {
                                const shortenName = (fullName) => {
@@ -196,7 +196,7 @@ export async function loadPlanningRequests() {
                            })()}
                        </div>
                    </td>
-                   <td style="width: 15%" class="col-actions text-nowrap">
+                    <td class="col-actions text-nowrap">
                      <div class="col-actions__div d-flex flex-column gap-1">
                          <button type="button"
                                  class="btn btn-sm btn-outline-primary assign-team-btn p-1"

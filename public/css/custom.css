@@ -88,6 +88,68 @@
     width: 2%;
 }
 
+/* Стили столбцов для таблицы планирования */
+#requestsPlanningTable tr td:nth-child(1) {
+    width: 2%;
+}
+
+#requestsPlanningTable tr td:nth-child(2) {
+    width: 22%;
+}
+
+#requestsPlanningTable tr td:nth-child(3) {
+    width: 52%;
+}
+
+#requestsPlanningTable tr td:nth-child(4) {
+    width: 22%;
+}
+
+#requestsPlanningTable tr td:nth-child(5) {
+    width: 2%;
+}
+
+/* Медиа-запросы для таблицы планирования */
+@media (max-width: 768px) {
+    #requestsPlanningTable tr td:nth-child(2) {
+        width: 25%;
+    }
+
+    #requestsPlanningTable tr td:nth-child(3) {
+        width: 25%;
+    }
+
+    #requestsPlanningTable tr td:nth-child(4) {
+        width: 25%;
+    }
+
+    #requestsPlanningTable tr td:nth-child(5) {
+        width: 25%;
+    }
+}
+
+@media (max-width: 1200px) {
+    #requestsPlanningTable tr td:nth-child(1) {
+        width: auto;
+    }
+
+    #requestsPlanningTable tr td:nth-child(2) {
+        width: auto;
+    }
+
+    #requestsPlanningTable tr td:nth-child(3) {
+        width: auto;
+    }
+
+    #requestsPlanningTable tr td:nth-child(4) {
+        width: auto;
+    }
+
+    #requestsPlanningTable tr td:nth-child(5) {
+        width: auto;
+    }
+}
+
 /**/
 
 /* 1-й Дата исполнения */

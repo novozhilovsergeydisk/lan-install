@@ -155,7 +155,8 @@
         line-height: clamp(0.65rem, 1vw, 1rem) !important;
         margin-top: clamp(5px, 1vw, 7px) !important;
     }
-    #requestsTable th, #requestsTable td {
+    #requestsTable th, #requestsTable td,
+    #requestsPlanningTable th, #requestsPlanningTable td {
         font-size: clamp(0.9rem, 1vw, 1rem) !important;
     }
     h1 {
