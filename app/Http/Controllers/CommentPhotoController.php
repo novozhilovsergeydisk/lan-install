@@ -295,11 +295,10 @@ class CommentPhotoController extends Controller
                         continue;
                     }
 
-                    // Ищем адрес по трем полям
+                    // Ищем адрес по городу, улице и дому (район не учитывается для избежания дублирования)
                     $address = DB::table('addresses')
                         ->where('city_id', $cityId)
                         ->where('street', $street)
-                        ->where('district', $district)
                         ->where('houses', $houses)
                         ->first(['id']);
 
@@ -365,8 +364,8 @@ class CommentPhotoController extends Controller
                     ];
                 }
 
-                if ($cityId && $street && $district && $houses) {
-                    $addressKey = "{$cityId}_{$street}_{$district}_{$houses}";
+                if ($cityId && $street && $houses) {
+                    $addressKey = "{$cityId}_{$street}_{$houses}";
                     $addedAddresses[$addressKey] = [
                         'city_id' => $cityId,
                         'street' => $street,
