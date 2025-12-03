@@ -1398,15 +1398,15 @@
                     <div id="planning" class="tab-pane fade" role="tabpanel">
                         <h4>Список запланированных заявок</h4>
 
-                        @if($user->isAdmin)
-                        <div id="planning-content" class="mb-3">
-                            <button type="button" class="btn btn-primary" id="new-planning-request-button" data-bs-toggle="modal" data-bs-target="#newPlanningRequestModal">
-                                <i class="bi bi-plus-circle me-1"></i>Новая заявка
-                            </button>
-                            <button type="button" class="btn btn-success" id="upload-requests-button">
-                                <i class="bi bi-upload me-1"></i>Загрузить заявки
-                            </button>
-                        </div>
+    @if($user->isAdmin)
+    <div id="planning-content" class="mb-3 d-flex justify-content-end">
+        <button type="button" class="btn btn-primary me-2" id="new-planning-request-button" data-bs-toggle="modal" data-bs-target="#newPlanningRequestModal">
+            <i class="bi bi-plus-circle me-1"></i>Новая заявка
+        </button>
+        <button type="button" class="btn btn-success" id="upload-requests-button">
+            <i class="bi bi-upload me-1"></i>Загрузить заявки
+        </button>
+    </div>
 
                         <div class="table-responsive t-custom">
                             <div id="planning-container">
@@ -2667,10 +2667,10 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                        <button type="button" class="btn btn-primary" id="submitPlanningRequest">Создать заявку</button>
-                    </div>
+                     <div class="mb-3 d-flex justify-content-end">
+                         <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Отмена</button>
+                         <button type="button" class="btn btn-primary" id="submitPlanningRequest">Создать заявку</button>
+                     </div>
                 </form>
             </div>
         </div>
