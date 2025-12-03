@@ -880,18 +880,24 @@ async function applyFilters() {
 
                             // Debug logs removed
 
-                            // Создаем HTML строки таблицы
-                            const row = document.createElement('tr');
-                            row.id = `request-${request.id}`;
-                            row.setAttribute('data-address', request.address || '');
-                            row.setAttribute('data-request-number', request.number || '');
-                            
-                            row.className = 'align-middle status-row class-handler';
-                            row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
-                            // Отладочный вывод
-                            // Логи данных запроса отключены
+                             // Создаем HTML строки таблицы
+                             const row = document.createElement('tr');
+                             row.id = `request-${request.id}`;
+                             row.setAttribute('data-address', request.address || '');
+                             row.setAttribute('data-request-number', request.number || '');
 
-                            row.setAttribute('data-request-id', request.id);
+                             row.className = 'align-middle status-row class-handler';
+                             row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
+
+                             // Отладка атрибутов
+                             console.log('[handler] setting row attributes for request', request.id, {
+                                 status_name: request.status_name,
+                                 address: request.address,
+                                 number: request.number
+                             });
+
+                             row.setAttribute('data-request-id', request.id);
+                             row.dataset.statusName = request.status_name || '';
 
                             // console.log(request);
 
@@ -1061,16 +1067,21 @@ async function applyFilters() {
                             tbody.appendChild(row);
                         });
 
-                        // Инициализируем тултипы
-                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                        tooltipTriggerList.map(function (tooltipTriggerEl) {
-                            return new bootstrap.Tooltip(tooltipTriggerEl);
-                        });
+                         // Инициализируем тултипы
+                         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                         tooltipTriggerList.map(function (tooltipTriggerEl) {
+                             return new bootstrap.Tooltip(tooltipTriggerEl);
+                         });
 
-                        // Применяем текущие фильтры после загрузки данных
-                        if (typeof applyFilters === 'function') {
-                            // applyFilters();
-                        }
+                         // Применяем текущую сортировку после загрузки данных
+                         if (typeof window.applyCurrentSort === 'function') {
+                             window.applyCurrentSort();
+                         }
+
+                         // Применяем текущие фильтры после загрузки данных
+                         if (typeof applyFilters === 'function') {
+                             // applyFilters();
+                         }
                     } else {
                         // Если данных нет, показываем сообщение
                         const noRequestsRow = document.getElementById('no-requests-row');
