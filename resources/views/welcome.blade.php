@@ -666,10 +666,20 @@
 
                     </div>
 
-                    <div class="tab-pane fade" id="addresses" role="tabpanel">
-                        <h4>Адреса</h4>
+                     <div class="tab-pane fade" id="addresses" role="tabpanel">
+                         <h4>Адреса</h4>
 
-                        <div class="card mb-4">
+                         <!-- Уведомление о дубликатах -->
+                         <div id="duplicates-notification" class="alert alert-warning alert-dismissible fade d-none" role="alert">
+                             <strong>Найдены повторяющиеся адреса!</strong>
+                             <span id="duplicates-count"></span>
+                             <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="view-duplicates-btn">
+                                 <i class="bi bi-eye me-1"></i>Посмотреть
+                             </button>
+                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                         </div>
+
+                         <div class="card mb-4">
                             <div class="card-body">
                                 <div class="d-flex align-items-end gap-3 mb-3">
                                     @if($user->isAdmin)
@@ -701,9 +711,29 @@
                                                         <button type="button" id="uploadExcelBtn" class="btn btn-outline-primary flex-shrink-0">
                                                             <i class="bi bi-upload"></i> Загрузить
                                                         </button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                             </div>
+                         </div>
+
+                         <!-- Модальное окно для просмотра дубликатов -->
+                         <div class="modal fade" id="duplicatesModal" tabindex="-1" aria-labelledby="duplicatesModalLabel" aria-hidden="true">
+                             <div class="modal-dialog modal-lg">
+                                 <div class="modal-content">
+                                     <div class="modal-header">
+                                         <h5 class="modal-title" id="duplicatesModalLabel">Повторяющиеся адреса</h5>
+                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                     </div>
+                                     <div class="modal-body">
+                                         <div id="duplicates-list">
+                                             <!-- Здесь будут отображаться дубликаты -->
+                                         </div>
+                                     </div>
+                                     <div class="modal-footer">
+                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
                                             <div class="form-text" style="font-size: 0.775em;">Поддерживаются форматы: .xlsx, .xls</div>
                                         </div>
                                     </form>

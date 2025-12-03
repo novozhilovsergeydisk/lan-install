@@ -143,6 +143,7 @@ Route::get('/api/requests/by-status', [RequestFilterController::class, 'filterBy
 // Работа с адресами
 Route::prefix('api/addresses')->middleware('auth')->group(function () {
     Route::get('/paginated', [GeoController::class, 'getAddressesPaginated'])->name('api.addresses.paginated');
+    Route::get('/duplicates', [GeoController::class, 'getDuplicateAddresses'])->name('api.addresses.duplicates');
     Route::get('/{id}', [GeoController::class, 'getAddress'])->name('api.addresses.show');
     Route::post('/add', [GeoController::class, 'addAddress'])->name('address.add');
     Route::put('/{id}', [GeoController::class, 'updateAddress'])->name('api.addresses.update');

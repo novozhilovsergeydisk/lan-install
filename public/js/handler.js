@@ -1,6 +1,7 @@
 // Импорт необходимых функций из utils.js
 import { postData, makeEscapedPreview, linkifyPreservingAnchors } from './utils.js';
 import { initRequestInWorkHandlers } from './form-handlers.js';
+import { checkForDuplicateAddresses, showDuplicatesModal } from './addresses.js';
 
 // Делаем postData доступной глобально для обратной совместимости
 window.postData = postData;
@@ -268,12 +269,16 @@ export async function loadPlanningRequests() {
 }
  
 
+
+
 /**
  * Функция для загрузки и отображения списка адресов с пагинацией
  * @param {number} page - номер страницы
  * @param {number} perPage - количество элементов на странице
  */
 export async function loadAddressesPaginated(page = 1, perPage = 30) {
+    // Делаем функцию глобально доступной для использования в других модулях
+    window.loadAddressesPaginated = loadAddressesPaginated;
     // Находим контейнер для таблицы адресов
     const container = document.getElementById('AllAddressesList');
     if (!container) {
@@ -292,12 +297,15 @@ export async function loadAddressesPaginated(page = 1, perPage = 30) {
 
         // Загружаем данные с сервера
         const response = await fetch(`/api/addresses/paginated?page=${page}&per_page=${perPage}`);
-        
+
         if (!response.ok) {
             throw new Error('Ошибка загрузки списка адресов');
         }
-        
+
         const data = await response.json();
+
+        // Проверяем дубликаты адресов
+        await checkForDuplicateAddresses();
         
         // Делаем функцию глобально доступной
         window.sortTable = (columnIndex, isNumeric = false) => {
@@ -440,6 +448,8 @@ export async function loadAddressesPaginated(page = 1, perPage = 30) {
             </div>`;
     }
 }
+
+
 
 /**
  * Функция для отображения информации о бригадах
@@ -1741,6 +1751,12 @@ export function initializePage() {
     
     // Загружаем список адресов с пагинацией в таблицу
     loadAddressesPaginated();
+
+    // Обработчик кнопки просмотра дубликатов
+    const viewDuplicatesBtn = document.getElementById('view-duplicates-btn');
+    if (viewDuplicatesBtn) {
+        viewDuplicatesBtn.addEventListener('click', showDuplicatesModal);
+    }
 
     // Обработчик кнопки выхода
     const logoutButton = document.getElementById(FILTER_IDS.LOGOUT_BUTTON);

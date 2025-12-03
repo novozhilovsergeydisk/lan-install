@@ -467,6 +467,52 @@ class GeoController extends Controller
         }
     }
 
+    public function getDuplicateAddresses()
+    {
+        try {
+            // Находим дубликаты адресов по ключевым полям (city_id, street, houses)
+            $duplicates = DB::select('
+                SELECT
+                    city_id,
+                    street,
+                    houses,
+                    COUNT(*) as count,
+                    string_agg(id::text, \',\') as ids,
+                    string_agg((city_name || \', ул. \' || street || \', \' || houses), \'|\') as addresses
+                FROM (
+                    SELECT
+                        a.id,
+                        a.city_id,
+                        a.street,
+                        a.houses,
+                        c.name as city_name
+                    FROM addresses a
+                    JOIN cities c ON a.city_id = c.id
+                ) t
+                GROUP BY city_id, street, houses
+                HAVING COUNT(*) > 1
+                ORDER BY count DESC, street
+            ');
+
+            $total_addresses = array_sum(array_column($duplicates, 'count'));
+
+            return response()->json([
+                'success' => true,
+                'duplicates' => $duplicates,
+                'total_duplicates' => count($duplicates),
+                'total_addresses' => $total_addresses,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in GeoController@getDuplicateAddresses: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении дубликатов адресов',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function deleteAddress($id)
     {
         try {
