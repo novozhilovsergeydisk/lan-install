@@ -159,6 +159,7 @@ class CommentPhotoController extends Controller
 
             // Преобразуем в массив
             $data = $worksheet->toArray();
+            \Log::info('Total rows in spreadsheet: '.count($data));
 
             // Удаляем пустые строки
             $data = array_filter($data, function ($row) {
@@ -166,6 +167,7 @@ class CommentPhotoController extends Controller
                     return $value !== null && $value !== '';
                 }));
             });
+            \Log::info('Rows after filter: '.count($data));
 
             // Если нет данных
             if (empty($data)) {
@@ -207,10 +209,50 @@ class CommentPhotoController extends Controller
             \DB::beginTransaction();
             \Log::info('Начата транзакция');
 
-            // Преобразуем индексированный массив в ассоциативный (первая строка - заголовки)
+            // Игнорируем первую строку (название файла)
+            $title = array_shift($data);
+
+            // Вторая строка - заголовки
             $headers = array_shift($data);
+            \Log::info('Data rows count after shifts: '.count($data));
+
+            // Убираем пробелы в заголовках
+            $headers = array_map(function ($header) {
+                return is_string($header) ? trim($header) : $header;
+            }, $headers);
+
+            \Log::info('Headers after trim:', $headers);
+
+            // Проверяем формат заголовков (принимаем разные регистры и частичные совпадения)
+            $headerCheck = count($headers) < 4;
+            if (! $headerCheck) {
+                $expected = ['город', 'район', 'улица', 'дом'];
+                for ($i = 0; $i < 4; $i++) {
+                    $h = mb_strtolower(trim($headers[$i] ?? ''));
+                    if (mb_strpos($h, $expected[$i]) === false) {
+                        $headerCheck = true;
+                        break;
+                    }
+                }
+            }
+
+            \Log::info('count = '.count($headers));
+            \Log::info('Header check result: '.($headerCheck ? 'true' : 'false'));
+
+            if ($headerCheck) {
+                \Log::info('Entering header check if');
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Формат файла не соответствует названиям столбцов: Город, Район, Улица, Дом',
+                ], 400);
+            }
+
             $result = [];
             $citiesNotFound = [];
+            $duplicatesCount = 0;
+            $newlyAddedCities = [];
+            $newlyAddedAddresses = [];
 
             // Добавляем заголовок для city_id, если его еще нет
             if (! in_array('city_id', $headers)) {
@@ -233,8 +275,12 @@ class CommentPhotoController extends Controller
                 $street = isset($row[2]) && is_string($row[2]) ? trim($row[2]) : '';
                 $houses = isset($row[3]) && is_string($row[3]) ? trim($row[3]) : '';
 
+                \Log::info('Processing row: cityName='.$cityName.', street='.$street.', district='.$district.', houses='.$houses);
+
                 // Пропускаем строку, если отсутствуют обязательные данные
                 if (empty($cityName) || empty($street) || empty($district) || empty($houses)) {
+                    \Log::info('Skipping row due to empty fields');
+
                     continue;
                 }
 
@@ -265,6 +311,11 @@ class CommentPhotoController extends Controller
                                     'postal_code' => null,
                                 ];
                                 $cityId = DB::table('cities')->insertGetId($cityData);
+                                $newlyAddedCities[$cityId] = [
+                                    'id' => $cityId,
+                                    'name' => $cityName,
+                                    'region_id' => 1,
+                                ];
                                 \Log::info('Добавлен новый город:', array_merge(['id' => $cityId], $cityData));
 
                                 if (! $cityId) {
@@ -312,6 +363,12 @@ class CommentPhotoController extends Controller
                                 'houses' => $houses,
                             ];
                             $addressId = DB::table('addresses')->insertGetId($addressData);
+                            $newlyAddedAddresses[] = [
+                                'city_id' => $cityId,
+                                'street' => $street,
+                                'district' => $district,
+                                'houses' => $houses,
+                            ];
                             \Log::info('Добавлен новый адрес:', array_merge(['id' => $addressId], $addressData));
 
                             \Log::info('Добавлен новый адрес', [
@@ -334,6 +391,7 @@ class CommentPhotoController extends Controller
                         }
                     } else {
                         $addressId = $address->id;
+                        $duplicatesCount++;
                     }
                 } // закрывающая скобка для if ($cityName)
 
@@ -344,37 +402,6 @@ class CommentPhotoController extends Controller
                 $result[] = array_combine($headers, $row);
             }
 
-            // Собираем статистику по добавленным данным
-            $addedCities = [];
-            $addedAddresses = [];
-
-            // Проходим по всем обработанным строкам
-            foreach ($result as $row) {
-                $cityName = $row['city'] ?? null;
-                $street = $row['street'] ?? null;
-                $district = $row['district'] ?? null;
-                $houses = $row['houses'] ?? null;
-                $cityId = $row['city_id'] ?? null;
-
-                if ($cityId && ! in_array($cityName, $citiesNotFound)) {
-                    $addedCities[$cityId] = [
-                        'id' => $cityId,
-                        'name' => $cityName,
-                        'region_id' => 1,
-                    ];
-                }
-
-                if ($cityId && $street && $houses) {
-                    $addressKey = "{$cityId}_{$street}_{$houses}";
-                    $addedAddresses[$addressKey] = [
-                        'city_id' => $cityId,
-                        'street' => $street,
-                        'district' => $district,
-                        'houses' => $houses,
-                    ];
-                }
-            }
-
             $response = [
                 'success' => true,
                 'data' => $result,
@@ -382,10 +409,11 @@ class CommentPhotoController extends Controller
                 'rows_count' => count($result),
                 'cities_not_found' => array_unique($citiesNotFound),
                 'added_data' => [
-                    'cities' => array_values($addedCities),
-                    'addresses' => array_values($addedAddresses),
-                    'cities_count' => count($addedCities),
-                    'addresses_count' => count($addedAddresses),
+                    'cities' => array_values($newlyAddedCities),
+                    'addresses' => $newlyAddedAddresses,
+                    'cities_count' => count($newlyAddedCities),
+                    'addresses_count' => count($newlyAddedAddresses),
+                    'duplicates_count' => $duplicatesCount,
                 ],
             ];
 
@@ -397,21 +425,34 @@ class CommentPhotoController extends Controller
                     implode(', ', array_unique($citiesNotFound));
             }
 
-            if (! empty($addedCities)) {
-                $messages[] = 'Добавлено новых городов: '.count($addedCities);
+            if (! empty($newlyAddedCities)) {
+                $messages[] = 'Добавлено новых городов: '.count($newlyAddedCities);
             }
 
-            if (! empty($addedAddresses)) {
-                $messages[] = 'Добавлено новых адресов: '.count($addedAddresses);
+            if (! empty($newlyAddedAddresses)) {
+                $messages[] = 'Добавлено новых адресов: '.count($newlyAddedAddresses);
+            }
+
+            if ($duplicatesCount > 0) {
+                $messages[] = 'Найдено дубликатов адресов: '.$duplicatesCount;
             }
 
             if (! empty($messages)) {
-                $response['message'] = implode('. ', $messages).'.';
+                $response['message'] = implode("\n", $messages).'.';
+            }
+
+            // Если не добавлено ни одного нового адреса, считаем загрузку неудачной
+            if (count($newlyAddedAddresses) == 0) {
+                $response['success'] = false;
+                $rowsMsg = 'Обработано строк: '.count($result).'. ';
+                $duplicatesMsg = $duplicatesCount > 0 ? 'Найдено дубликатов адресов: '.$duplicatesCount.'. ' : '';
+                $response['message'] = $rowsMsg."<br>".$duplicatesMsg."<br>".'Новые адреса не добавлены.';
             }
 
             // Завершаем транзакцию, так как все проверки пройдены
             \DB::commit();
             \Log::info('Транзакция успешно завершена, изменения сохранены');
+            \Log::info('Final response:', $response);
 
             return response()->json($response);
 

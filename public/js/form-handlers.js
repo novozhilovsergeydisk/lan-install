@@ -5651,7 +5651,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initEditRequestFormHandler();
 });
 
-// Обработчик загрузки файла Excel
+// Обработчик загрузки файла Excel с адресами
 function initUploadExcel() {
     const uploadExcelBtn = document.getElementById('uploadExcelBtn');
     const uploadExcelForm = document.getElementById('uploadExcelForm');
@@ -5671,7 +5671,7 @@ function initUploadExcel() {
     });
 }
 
-// Функция обработки загрузки Excel файла
+// Функция обработки загрузки Excel файла с адресами
 async function handleExcelUpload() {
     const fileInput = document.getElementById('excelFile');
     const file = fileInput?.files?.[0];
@@ -5721,13 +5721,22 @@ async function handleExcelUpload() {
         });
 
         const data = await response.json();
-        
+
+        console.log('Response status:', response.status, 'data:', data);
+
         if (!response.ok) {
             throw new Error(data.message || `Ошибка сервера: ${response.status}`);
         }
 
         console.log('Успешный ответ сервера:', data);
-        showAlert('Файл успешно загружен и обработан', 'success');
+        console.log('Message:', data.message);
+        console.log('Loaded addresses:', data.data);
+
+        if (data.success) {
+            showAlert(data.message || 'Файл успешно загружен и обработан', 'success');
+        } else {
+            showAlert(data.message || 'Файл обработан, но с предупреждениями', 'warning');
+        }
         
         // Очищаем форму после успешной загрузки
         if (uploadExcelForm) {
