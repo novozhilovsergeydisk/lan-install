@@ -250,6 +250,11 @@
                                 type="button" role="tab">Планирование
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="request-types-tab" data-bs-toggle="tab" data-bs-target="#request-types"
+                                type="button" role="tab">Типы заявок
+                        </button>
+                    </li>
                     <!-- <li class="nav-item" role="presentation">
                         <button class="nav-link" id="photo-reports-tab" data-bs-toggle="tab" data-bs-target="#photo-reports"
                                 type="button" role="tab">Фотоотчеты
@@ -1133,7 +1138,7 @@
                                         <div class="card-body p-0">
                                             <div class="table-responsive">
                                                 <div class="table-container">
-                                                    <table id="firedEmployeesTable" class="table table-hover align-middle mb-0">
+                                                    <table id="firedEmployeesTable" class="table table-hover align-middle mb-0 dark-theme-table">
                                                          <thead>
                                                          <tr class="smaller">
                                                              <th style="width: 10%">Действия</th>
@@ -1437,7 +1442,74 @@
                                 </tbody>
                             </table>
                         </div>
-                        @endif
+                         @endif
+                    </div>
+
+                    <div id="request-types" class="tab-pane fade" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0">Управление типами заявок</h4>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRequestTypeModal">
+                                <i class="bi bi-plus-circle me-1"></i>Добавить тип
+                            </button>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table id="requestTypesTable" class="table table-hover mb-0 dark-theme-table" >
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 50px;">ID</th>
+                                                <th>Название</th>
+                                                <th>Цвет</th>
+                                                @if($user->isAdmin)
+                                                <th class="text-end">Действия</th>
+                                                @endif
+                                            </tr>
+                                        </thead>
+                                        <tbody id="requestTypesList">
+                                            <tr>
+                                                <td colspan="4" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Загрузка...</span>
+                                                    </div>
+                                                    <p class="mt-2 mb-0">Загрузка списка типов заявок...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Модальное окно добавления/редактирования типа заявки -->
+                        <div class="modal fade" id="addRequestTypeModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Добавить новый тип заявки</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="requestTypeForm">
+                                            <input type="hidden" id="requestTypeId" value="">
+                                            <div class="mb-3">
+                                                <label for="requestTypeName" class="form-label">Название типа</label>
+                                                <input type="text" class="form-control" id="requestTypeName" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="requestTypeColor" class="form-label">Цвет</label>
+                                                <input type="color" class="form-control" id="requestTypeColor" value="#E0E0E0" required>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                        <button type="button" class="btn btn-primary" id="saveRequestTypeBtn">Сохранить</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- <div id="photo-reports" class="tab-pane fade" role="tabpanel">
@@ -3696,6 +3768,7 @@
 <script src="{{ asset('js/brigade-sort.js') }}"></script>
 <script src="{{ asset('js/table-sort.js') }}"></script>
 <script src="{{ asset('js/table-planning-sort.js') }}"></script>
+
 <link rel="stylesheet" href="{{ asset('css/brigade-sort.css') }}">
 
 <!-- Stack for pushed scripts -->

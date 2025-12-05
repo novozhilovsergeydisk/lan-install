@@ -65,20 +65,20 @@
     color: #fff !important;
 }
 
-/* Стили для таблицы уволенных сотрудников в темной теме */
-[data-bs-theme="dark"] #firedEmployeesTable,
-[data-bs-theme="dark"] #firedEmployeesTable th,
-[data-bs-theme="dark"] #firedEmployeesTable td {
+/* Унифицированные стили для таблиц в темной теме */
+[data-bs-theme="dark"] .dark-theme-table,
+[data-bs-theme="dark"] .dark-theme-table th,
+[data-bs-theme="dark"] .dark-theme-table td {
     color: #f8f9fa !important;
     background-color: transparent !important;
 }
 
-[data-bs-theme="dark"] #firedEmployeesTable thead tr th {
+[data-bs-theme="dark"] .dark-theme-table thead tr th {
     background-color: #3563c2 !important;
     color: #ccc !important;
 }
 
-[data-bs-theme="dark"] #firedEmployeesTable .table-hover tbody tr:hover {
+[data-bs-theme="dark"] .dark-theme-table.table-hover tbody tr:hover {
     background-color: #373b3e !important;
 }
 

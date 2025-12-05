@@ -7,6 +7,7 @@ import { showAlert, postData } from './utils.js';
 import { initReportHandlers } from './report-handler.js';
 import { initPhotoReportModal } from './modals.js';
 import { initAddressDocumentHandlers } from './address-documents.js';
+import { initRequestTypesHandlers, loadRequestTypes } from './request-types.js';
 import { 
     initFormHandlers, 
     initEmployeeEditHandlers, 
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initOpenRequestHandler();
     initOpenAdditionalTaskRequestHandler();
     initAddressDocumentHandlers();
+    initRequestTypesHandlers();
 
     // Очищаем контейнер фотоотчета при закрытии модального окна комментариев
     const commentsModal = document.getElementById('commentsModal');
@@ -387,6 +389,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Ошибка при обновлении списка бригад:', error);
                 showAlert('Не удалось обновить список бригад: ' + error.message);
             }
+        });
+    }
+
+    // Добавляем обработчик для вкладки типов заявок
+    const requestTypesTab = document.getElementById('request-types-tab');
+    if (requestTypesTab) {
+        requestTypesTab.addEventListener('click', function () {
+            // Загружаем список типов заявок при открытии вкладки
+            loadRequestTypes();
         });
     }
 

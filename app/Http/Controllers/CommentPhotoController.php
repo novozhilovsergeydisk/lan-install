@@ -446,7 +446,7 @@ class CommentPhotoController extends Controller
                 $response['success'] = false;
                 $rowsMsg = 'Обработано строк: '.count($result).'. ';
                 $duplicatesMsg = $duplicatesCount > 0 ? 'Найдено дубликатов адресов: '.$duplicatesCount.'. ' : '';
-                $response['message'] = $rowsMsg."<br>".$duplicatesMsg."<br>".'Новые адреса не добавлены.';
+                $response['message'] = $rowsMsg.'<br>'.$duplicatesMsg.'<br>'.'Новые адреса не добавлены.';
             }
 
             // Завершаем транзакцию, так как все проверки пройдены

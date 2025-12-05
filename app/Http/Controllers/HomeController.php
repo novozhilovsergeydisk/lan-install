@@ -2355,6 +2355,27 @@ class HomeController extends Controller
     }
 
     /**
+     * Get list of requests with optional date filter
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRequests(Request $request)
+    {
+        $date = $request->query('date');
+
+        if ($date) {
+            return $this->getRequestsByDate($date);
+        }
+
+        // If no date, return all requests (or default behavior)
+        // For now, return empty or implement logic for all requests
+        return response()->json([
+            'data' => [],
+            'message' => 'Параметр date обязателен для фильтрации заявок',
+        ], 400);
+    }
+
+    /**
      * Get list of brigades
      *
      * @return \Illuminate\Http\JsonResponse

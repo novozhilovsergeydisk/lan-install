@@ -17,6 +17,7 @@ use App\Http\Controllers\PlanningRequestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RequestFilterController;
 use App\Http\Controllers\RequestTeamFilterController;
+use App\Http\Controllers\RequestTypeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/test-no-auth', function () {
@@ -110,6 +111,14 @@ Route::prefix('statuses')->middleware('auth')->group(function () {
     // Route::post('/', [StatusController::class, 'store']);
     // Route::put('/{id}', [StatusController::class, 'update']);
     // Route::delete('/{id}', [StatusController::class, 'destroy']);
+});
+
+// Маршруты для работы с типами заявок
+Route::prefix('api/request-types')->middleware('auth')->group(function () {
+    Route::get('/', [RequestTypeController::class, 'index']);
+    Route::post('/', [RequestTypeController::class, 'store']);
+    Route::put('/{id}', [RequestTypeController::class, 'update']);
+    Route::delete('/{id}', [RequestTypeController::class, 'destroy']);
 });
 
 // Обработка комментариев
@@ -237,8 +246,8 @@ Route::prefix('api')->middleware('auth')->group(function () {
     // Get requests by date
     Route::get('/requests/date/{date}', [HomeController::class, 'getRequestsByDate'])->name('api.requests.by-date');
 
-    // Get request types
-    Route::get('/request-types', [HomeController::class, 'getRequestTypes'])->name('api.request-types');
+    // Get requests with optional date filter
+    Route::get('/requests', [HomeController::class, 'getRequests'])->name('api.requests');
 
     // Get request statuses
     Route::get('/request-statuses', [HomeController::class, 'getRequestStatuses'])->name('api.request-statuses');
