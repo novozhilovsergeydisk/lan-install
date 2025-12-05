@@ -27,7 +27,7 @@ function renderRequestTypesTable(requestTypes) {
     if (!requestTypes || requestTypes.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="4" class="text-center py-4">
+                <td colspan="3" class="text-center py-4">
                     <p class="mb-0">Типы заявок не найдены</p>
                 </td>
             </tr>
@@ -37,7 +37,6 @@ function renderRequestTypesTable(requestTypes) {
 
     tbody.innerHTML = requestTypes.map(type => `
         <tr>
-            <td>${type.id}</td>
             <td>${type.name}</td>
             <td>
                 <div class="d-flex align-items-center">

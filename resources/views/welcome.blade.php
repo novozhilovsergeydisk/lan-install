@@ -1459,7 +1459,6 @@
                                     <table id="requestTypesTable" class="table table-hover mb-0 dark-theme-table" >
                                         <thead class="table-light">
                                             <tr>
-                                                <th style="width: 50px;">ID</th>
                                                 <th>Название</th>
                                                 <th>Цвет</th>
                                                 @if($user->isAdmin)
@@ -1469,7 +1468,7 @@
                                         </thead>
                                         <tbody id="requestTypesList">
                                             <tr>
-                                                <td colspan="4" class="text-center py-4">
+                                                <td colspan="3" class="text-center py-4">
                                                     <div class="spinner-border text-primary" role="status">
                                                         <span class="visually-hidden">Загрузка...</span>
                                                     </div>
