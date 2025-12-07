@@ -429,7 +429,7 @@
 
                                         <!-- Комментарий -->
                                         <td class="col-comments">
-                                             <div class="col-date__date" @if($request->request_type_color) style="background-color: {{ $request->request_type_color }}; color: {{ \App\Helpers\StringHelper::getContrastColor($request->request_type_color) }}" @endif>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }} | {{ $request->number }} @if($request->request_type_name) <span>{{ $request->request_type_name }}</span> @endif</div>
+                                            <div class="col-date__date" @if($request->request_type_color) style="background-color: {{ $request->request_type_color }}; color: {{ \App\Helpers\StringHelper::getContrastColor($request->request_type_color) }}" @endif>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }} | {{ $request->number }} @if($request->request_type_name) <span>{{ $request->request_type_name }}</span> @endif</div>
                                             @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
                                                 @php
                                                     $firstComment = $comments_by_request[$request->id][0];
@@ -437,7 +437,7 @@
                                                     $author = $firstComment->author_name;
                                                     $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
                                                 @endphp
-                                                <div class="comment-preview small text-dark" data-bs-toggle="tooltip" style="border: 5px solid {{ $request->request_type_color ?? 'black' }}; border-top: 0px;">
+                                                <div class="comment-preview small text-dark" data-bs-toggle="tooltip" @if($request->request_type_color) style="border: 5px solid {{ $request->request_type_color }}; border-top: 0px;" @endif>
                                                     <p class="comment-preview-title">Печатный комментарий:</p>
                                                     <div data-comment-request-id="{{ $request->id }}" class="comment-preview-text">{!! $commentText !!}</div>
                                                 </div>
