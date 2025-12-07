@@ -82,6 +82,9 @@ Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['au
 // Close request
 Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth')->middleware(['auth', 'roles']);
 
+// Get work parameters for request
+Route::get('/requests/{request}/work-parameters', [HomeController::class, 'getWorkParameters'])->name('requests.work-parameters')->middleware('auth')->middleware(['auth', 'roles']);
+
 // Open request
 Route::post('/requests/{request}/open', [HomeController::class, 'openRequest'])->name('requests.open')->middleware('auth')->middleware(['auth', 'roles']);
 

@@ -2575,41 +2575,46 @@
                         <!-- <h6>Информация о клиенте</h6> -->
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="clientName" class="form-label">Контактное лицо <span
-                                        class="text-danger">*</span></label>
+                                <label for="clientName" class="form-label">Контактное лицо </label>
                                 <input type="text" class="form-control" id="clientName" name="client_name">
                             </div>
                             <div class="col-md-6">
-                                <label for="clientPhone" class="form-label">Телефон <span
-                                        class="text-danger">*</span></label>
+                                <label for="clientPhone" class="form-label">Телефон </label>
                                 <input type="tel" class="form-control" id="clientPhone" name="client_phone">
                             </div>
                             <div class="col-md-6">
                                 <label for="clientOrganization" class="form-label">Организация</label>
                                 <input type="text" class="form-control" id="clientOrganization" name="client_organization">
                             </div>
+                            <div class="col-md-6">
+                                <label for="requestType" class="form-label">Тип заявки <span
+                                         class="text-danger">*</span></label>
+                                <select class="form-select" id="requestType" name="request_type_id" required>
+                                    <option value="" disabled selected>Выберите тип заявки</option>
+                                     <!-- Will be populated by JavaScript -->
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-3 hide-me">
-                        <!-- <h6>Детали заявки</h6> -->
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="requestType" class="form-label">Тип заявки <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-select" id="requestType" name="request_type_id" required>
-                                    <option value="" disabled selected>Выберите тип заявки</option>
-                                    <!-- Will be populated by JavaScript -->
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="requestStatus" class="form-label">Статус</label>
-                                <select class="form-select" id="requestStatus" name="status_id">
-                                    <!-- Will be populated by JavaScript -->
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="mb-3">
+                         <div class="row g-3">
+                             <div class="col-md-6">
+                                 <label for="workParameterName" class="form-label">Параметр <span class="text-danger">*</span></label>
+                                 <input type="text" class="form-control" id="workParameterName" name="work_parameter_name" placeholder="Введите название параметра" required>
+                                 <div id="workParameterName_error" class="invalid-feedback d-none">
+                                     Название параметра запланированных работ
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                 <label for="workParameterQuantity" class="form-label">Количество <span class="text-danger">*</span></label>
+                                 <input type="number" class="form-control" id="workParameterQuantity" name="work_parameter_quantity" placeholder="Введите количество" min="1" required>
+                                 <div id="workParameterQuantity_error" class="invalid-feedback d-none">
+                                     Пожалуйста, введите количество (минимум 1)
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
 
                     <div class="mb-3">
                         <div class="row g-3">
@@ -2626,21 +2631,21 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <h6>Адрес</h6>
-                        <div class="mb-3">
-                            <select class="form-select" id="addresses_id" name="addresses_id" required>
-                                <option value="" disabled selected>Выберите адрес</option>
-                                <!-- Will be populated by JavaScript -->
-                            </select>
-                        </div>
-                        <div id="addresses_id_error" class="invalid-feedback d-none">
-                            Пожалуйста, выберите адрес из списка
-                        </div>
-                    </div>
+                     <div class="mb-3">
+                         <h6>Адрес</h6>
+                         <div class="mb-3">
+                             <select class="form-select" id="addresses_id" name="addresses_id" required>
+                                 <option value="" disabled selected>Выберите адрес</option>
+                                 <!-- Will be populated by JavaScript -->
+                             </select>
+                         </div>
+                         <div id="addresses_id_error" class="invalid-feedback d-none">
+                             Пожалуйста, выберите адрес из списка
+                         </div>
+                     </div>
 
-                    <div class="mb-3">
-                        <h6>Комментарий к заявке</h6>
+                     <div class="mb-3">
+                         <h6>Комментарий к заявке</h6>
                         <div class="mb-3">
                             <!-- Начало блока WYSIWYG -->
                             <div class="my-wysiwyg">
@@ -3115,16 +3120,21 @@
                 // Clear any existing options first
                 select.innerHTML = '';
 
+                // Add placeholder option
+                const placeholderOption = document.createElement('option');
+                placeholderOption.value = '';
+                placeholderOption.textContent = 'Выберите тип заявки';
+                placeholderOption.disabled = true;
+                placeholderOption.selected = true;
+                select.appendChild(placeholderOption);
+
                 types.forEach((type, index) => {
                     const option = document.createElement('option');
                     option.value = type.id;
                     option.textContent = type.name;
                     select.appendChild(option);
 
-                    // Select the first item by default
-                    if (index === 0) {
-                        option.selected = true;
-                    }
+                    // Do not select any by default, let placeholder be selected
                 });
             } catch (error) {
                 console.error('Error loading request types:', error);
@@ -3135,9 +3145,14 @@
         // Load request statuses from API
         async function loadRequestStatuses() {
             try {
+                const select = document.getElementById('requestStatus');
+                if (!select) {
+                    console.log('Request status select not found, skipping status loading');
+                    return;
+                }
+
                 const response = await fetch('/api/request-statuses');
                 const statuses = await response.json();
-                const select = document.getElementById('requestStatus');
 
                 statuses.forEach(status => {
                     const option = document.createElement('option');
@@ -3396,15 +3411,33 @@
                 <form id="closeRequestForm" novalidate="novalidate">
                     @csrf
                     <input type="hidden" id="requestIdToClose" name="request_id">
-                    <div class="mb-3">
-                        <label for="closeCommentEditor" class="form-label">Комментарий</label>
-                        <div class="form-control" id="closeCommentEditor" contenteditable="true" style="min-height: 6rem;"></div>
-                        <textarea class="form-control d-none" id="closeComment" name="comment" rows="3" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <input type="checkbox" id="uncompletedWorks" name="uncompleted_works">
-                        <label for="uncompletedWorks">Недоделанные работы</label>
-                    </div>
+                     <div class="mb-3">
+                         <label for="closeCommentEditor" class="form-label">Комментарий</label>
+                         <div class="form-control" id="closeCommentEditor" contenteditable="true" style="min-height: 6rem;"></div>
+                         <textarea class="form-control d-none" id="closeComment" name="comment" rows="3" required></textarea>
+                     </div>
+                     <div class="mb-3">
+                         <div class="row g-3">
+                             <div class="col-md-6">
+                                 <label for="closeWorkParameterName" class="form-label">Параметр <span class="text-danger">*</span></label>
+                                 <input type="text" class="form-control" id="closeWorkParameterName" name="work_parameter_name" placeholder="Введите название параметра" required>
+                                 <div id="closeWorkParameterName_error" class="invalid-feedback d-none">
+                                     Название параметра запланированных работ
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                 <label for="closeWorkParameterQuantity" class="form-label">Количество <span class="text-danger">*</span></label>
+                                 <input type="number" class="form-control" id="closeWorkParameterQuantity" name="work_parameter_quantity" placeholder="Введите количество" min="1" required>
+                                 <div id="closeWorkParameterQuantity_error" class="invalid-feedback d-none">
+                                     Пожалуйста, введите количество (минимум 1)
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="mb-3">
+                         <input type="checkbox" id="uncompletedWorks" name="uncompleted_works">
+                         <label for="uncompletedWorks">Недоделанные работы</label>
+                     </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -3488,6 +3521,34 @@
                 document.getElementById('requestIdToClose').value = requestId;
                 document.getElementById('modalRequestId').textContent = '#' + requestId;
 
+                // Подгружаем данные запланированных работ
+                fetch(`/requests/${requestId}/work-parameters`, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data.length > 0) {
+                        // Заполняем поля данными первой запланированной работы
+                        const workParam = data.data[0];
+                        document.getElementById('closeWorkParameterName').value = workParam.name || '';
+                        document.getElementById('closeWorkParameterQuantity').value = workParam.quantity || '';
+                    } else {
+                        // Очищаем поля, если данных нет
+                        document.getElementById('closeWorkParameterName').value = '';
+                        document.getElementById('closeWorkParameterQuantity').value = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading work parameters:', error);
+                    // Очищаем поля в случае ошибки
+                    document.getElementById('closeWorkParameterName').value = '';
+                    document.getElementById('closeWorkParameterQuantity').value = '';
+                });
+
                 // Показываем модальное окно
                 modal.show();
             }
@@ -3516,6 +3577,30 @@
                 commentField.classList.remove('is-invalid');
             }
 
+            // Валидация параметров работы
+            const workParameterNameField = document.getElementById('closeWorkParameterName');
+            const workParameterQuantityField = document.getElementById('closeWorkParameterQuantity');
+
+            if (!workParameterNameField.value.trim()) {
+                workParameterNameField.classList.add('is-invalid');
+                document.getElementById('closeWorkParameterName_error').classList.remove('d-none');
+                showAlert('Пожалуйста, заполните название параметра', 'warning');
+                return;
+            } else {
+                workParameterNameField.classList.remove('is-invalid');
+                document.getElementById('closeWorkParameterName_error').classList.add('d-none');
+            }
+
+            if (!workParameterQuantityField.value || workParameterQuantityField.value < 1) {
+                workParameterQuantityField.classList.add('is-invalid');
+                document.getElementById('closeWorkParameterQuantity_error').classList.remove('d-none');
+                showAlert('Пожалуйста, введите корректное количество', 'warning');
+                return;
+            } else {
+                workParameterQuantityField.classList.remove('is-invalid');
+                document.getElementById('closeWorkParameterQuantity_error').classList.add('d-none');
+            }
+
             const requestId = document.getElementById('requestIdToClose').value;
             const comment = document.getElementById('closeComment').value;
             const submitBtn = this;
@@ -3527,6 +3612,8 @@
 
                 const inputData = {
                         comment: comment,
+                        work_parameter_name: workParameterNameField.value.trim(),
+                        work_parameter_quantity: parseInt(workParameterQuantityField.value),
                         uncompleted_works: document.getElementById('uncompletedWorks').checked,
                         _token: document.querySelector('input[name="_token"]').value
                     };
@@ -4396,7 +4483,7 @@
                                      <!-- Will be populated by JavaScript -->
                                  </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 hide-me">
                                 <label for="editRequestStatus" class="form-label">Статус</label>
                                  <select class="form-select" id="editRequestStatus" name="status_id">
                                      <option value="" selected>Выберите статус</option>

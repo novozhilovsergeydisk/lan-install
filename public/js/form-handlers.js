@@ -5047,6 +5047,21 @@ async function submitRequestForm(event) {
     if (commentError) commentError.classList.add('d-none');
     if (addressError) addressError.classList.add('d-none');
 
+    // Reset request type error
+    let requestTypeField = document.getElementById('requestType');
+    if (requestTypeField) requestTypeField.classList.remove('is-invalid');
+
+    // Reset work parameter errors
+    let workParameterNameField = document.getElementById('workParameterName');
+    let workParameterNameError = document.getElementById('workParameterName_error');
+    let workParameterQuantityField = document.getElementById('workParameterQuantity');
+    let workParameterQuantityError = document.getElementById('workParameterQuantity_error');
+
+    if (workParameterNameField) workParameterNameField.classList.remove('is-invalid');
+    if (workParameterNameError) workParameterNameError.classList.add('d-none');
+    if (workParameterQuantityField) workParameterQuantityField.classList.remove('is-invalid');
+    if (workParameterQuantityError) workParameterQuantityError.classList.add('d-none');
+
     // Validate required fields
     let isValid = true;
     
@@ -5104,7 +5119,40 @@ async function submitRequestForm(event) {
             }
         }
     }
-    
+
+    // Валидация типа заявки
+    requestTypeField = document.getElementById('requestType');
+    if (requestTypeField && !requestTypeField.value) {
+        requestTypeField.classList.add('is-invalid');
+        isValid = false;
+    } else if (requestTypeField) {
+        requestTypeField.classList.remove('is-invalid');
+    }
+
+    // Валидация параметров работы
+    workParameterNameField = document.getElementById('workParameterName');
+    workParameterNameError = document.getElementById('workParameterName_error');
+    workParameterQuantityField = document.getElementById('workParameterQuantity');
+    workParameterQuantityError = document.getElementById('workParameterQuantity_error');
+
+    if (workParameterNameField && !workParameterNameField.value.trim()) {
+        workParameterNameField.classList.add('is-invalid');
+        if (workParameterNameError) workParameterNameError.classList.remove('d-none');
+        isValid = false;
+    } else if (workParameterNameField) {
+        workParameterNameField.classList.remove('is-invalid');
+        if (workParameterNameError) workParameterNameError.classList.add('d-none');
+    }
+
+    if (workParameterQuantityField && (!workParameterQuantityField.value || workParameterQuantityField.value < 1)) {
+        workParameterQuantityField.classList.add('is-invalid');
+        if (workParameterQuantityError) workParameterQuantityError.classList.remove('d-none');
+        isValid = false;
+    } else if (workParameterQuantityField) {
+        workParameterQuantityField.classList.remove('is-invalid');
+        if (workParameterQuantityError) workParameterQuantityError.classList.add('d-none');
+    }
+
     if (!isValid) {
         form.classList.add('was-validated');
         submitBtn.disabled = false;
@@ -5145,17 +5193,21 @@ async function submitRequestForm(event) {
         client_phone: data.client_phone || '',
         client_organization: data.client_organization || '',
         request_type_id: data.request_type_id,
-        status_id: data.status_id,
+        status_id: data.status_id || 1, // Default to 'новая' status (id=1)
         comment: data.comment || '',
         execution_date: data.execution_date || null,
         execution_time: data.execution_time || null,
         brigade_id: data.brigade_id || null,
         operator_id: data.operator_id || null,
         address_id: addressId,
+        work_parameter_name: data.work_parameter_name || null,
+        work_parameter_quantity: data.work_parameter_quantity || null,
     };
 
     // Логируем данные перед отправкой
     console.log('Отправляемые данные:', requestData);
+    console.log('data.work_parameter_name:', data.work_parameter_name);
+    console.log('data.work_parameter_quantity:', data.work_parameter_quantity);
 
     // return;
 

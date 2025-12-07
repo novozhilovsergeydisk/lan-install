@@ -2106,6 +2106,44 @@ class HomeController extends Controller
                     'created_at' => now(),
                 ]);
 
+                // Обновляем параметры работы: устанавливаем is_done = true
+                // DB::table('work_parameters')
+                //     ->where('request_id', $id)
+                //     ->update(['is_done' => true, 'updated_at' => now()]);
+
+                // Валидация параметров работы
+                $workParameterName = $request->input('work_parameter_name');
+                $workParameterQuantity = $request->input('work_parameter_quantity');
+
+                if (! $workParameterName || ! $workParameterQuantity) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Необходимо указать параметры работы',
+                    ], 422);
+                }
+
+                // Создаем новую запись параметров работы (обязательно)
+                try {
+                    DB::table('work_parameters')->insert([
+                        'request_id' => $id,
+                        'name' => $workParameterName,
+                        'quantity' => $workParameterQuantity,
+                        'is_planning' => false, // Это выполненная работа
+                        'is_done' => true,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    \Log::info('Создан параметр выполненной работы для заявки:', [
+                        'request_id' => $id,
+                        'name' => $workParameterName,
+                        'quantity' => $workParameterQuantity,
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Ошибка при создании параметров выполненной работы: '.$e->getMessage());
+                    throw $e; // Критическая ошибка при закрытии заявки
+                }
+
                 // Если отмечен чекбокс "Недоделанные работы", добавляем запись в таблицу incomplete_works
                 if ($request->input('uncompleted_works')) {
                     DB::table('incomplete_works')->insert([
@@ -2132,21 +2170,54 @@ class HomeController extends Controller
                     // Получаем данные текущей заявки
                     $currentRequest = DB::table('requests')->where('id', $id)->first();
 
+                    if (! $currentRequest) {
+                        throw new \Exception('Текущая заявка не найдена');
+                    }
+
+                    // Получаем статус "перенесена"
+                    $transferredStatus = DB::table('request_statuses')->where('name', 'перенесена')->first();
+
+                    if (! $transferredStatus) {
+                        throw new \Exception('Статус "перенесена" не найден в базе данных');
+                    }
+
                     // Генерируем номер заявки
                     $count = DB::table('requests')->count() + 1;
                     $requestNumber = 'REQ-'.date('Ymd').'-'.str_pad($count, 4, '0', STR_PAD_LEFT);
 
-                    // Создаем новую заявку на завтра
+                    // Создаем новую заявку на завтра с тем же типом, что и у текущей
                     $newRequestId = DB::table('requests')->insertGetId([
                         'number' => $requestNumber,
                         'client_id' => $currentRequest->client_id, // Копируем client_id из текущей заявки
                         'brigade_id' => null,
-                        'status_id' => DB::table('request_statuses')->where('name', 'перенесена')->first()->id,
-                        'request_type_id' => DB::table('request_types')->where('name', 'монтаж')->first()->id,
+                        'status_id' => $transferredStatus->id,
+                        'request_type_id' => $currentRequest->request_type_id, // Используем тот же тип заявки
                         'operator_id' => $employeeId, // Используем ID сотрудника
                         'execution_date' => now()->addDay()->toDateString(),
                         'request_date' => now()->toDateString(),
                     ]);
+
+                    // Создаем параметры работы (запланированные) для новой заявки (недоделанные работы)
+                    try {
+                        DB::table('work_parameters')->insert([
+                            'request_id' => $newRequestId,
+                            'name' => $workParameterName, // Из формы закрытия
+                            'quantity' => $workParameterQuantity, // Из формы закрытия
+                            'is_planning' => true, // Запланированные работы
+                            'is_done' => false,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                        \Log::info('Создан параметр запланированной работы для новой заявки:', [
+                            'new_request_id' => $newRequestId,
+                            'name' => $workParameterName,
+                            'quantity' => $workParameterQuantity,
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::error('Ошибка при создании параметров запланированной работы для новой заявки: '.$e->getMessage());
+                        throw $e;
+                    }
 
                     // Получаем адрес текущей заявки
                     $requestAddress = DB::table('request_addresses')
@@ -2665,6 +2736,8 @@ class HomeController extends Controller
                 'brigade_id' => $input['brigade_id'] ?? null,
                 'operator_id' => $employeeId,
                 'address_id' => $input['address_id'] ?? null,
+                'work_parameter_name' => $input['work_parameter_name'] ?? null,
+                'work_parameter_quantity' => $input['work_parameter_quantity'] ?? null,
             ];
 
             // Используем ранее найденный employeeId или null
@@ -2688,6 +2761,8 @@ class HomeController extends Controller
                 'brigade_id' => 'nullable|exists:brigades,id',
                 'operator_id' => 'nullable|exists:employees,id',
                 'address_id' => 'required|exists:addresses,id',
+                'work_parameter_name' => 'required|string|max:255',
+                'work_parameter_quantity' => 'required|integer|min:1',
             ];
 
             // Логируем входные данные для отладки
@@ -2928,6 +3003,28 @@ class HomeController extends Controller
             //     'request_id' => $requestId,
             //     'address_id' => $addressId
             // ]);
+
+            // 6. Создаем параметры работы (обязательно)
+            try {
+                DB::table('work_parameters')->insert([
+                    'name' => $validated['work_parameter_name'],
+                    'quantity' => $validated['work_parameter_quantity'],
+                    'request_id' => $requestId,
+                    'is_planning' => true,
+                    'is_done' => false,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                \Log::info('Создан параметр работы для заявки:', [
+                    'request_id' => $requestId,
+                    'name' => $validated['work_parameter_name'],
+                    'quantity' => $validated['work_parameter_quantity'],
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Ошибка при создании параметров работы: '.$e->getMessage());
+                throw $e; // Теперь это критическая ошибка, так как поля обязательные
+            }
 
             // 🔽 Комплексный запрос получения списка заявок с подключением к employees
             $requestById = DB::select('
@@ -3459,6 +3556,32 @@ class HomeController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при получении истории правок',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get work parameters for a specific request.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getWorkParameters($id)
+    {
+        try {
+            $workParameters = DB::table('work_parameters')
+                ->where('request_id', $id)
+                ->where('is_planning', true)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $workParameters,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении параметров работ: '.$e->getMessage(),
             ], 500);
         }
     }
