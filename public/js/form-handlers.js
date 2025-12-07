@@ -2151,11 +2151,15 @@ function addRequestToTable(result) {
     const clientOrganization = clientData.organization || '';
     const addressData = result.data.address || {};
     const commentData = result.data.comment || {};
+    const requestTypeName = result.data.request_type_name;
+    const requestTypeColor = result.data.request_type_color;
 
     console.log('Данные заявки:', requestData);
     console.log('Данные клиента:', clientData);
     console.log('Данные адреса:', addressData);
     console.log('Данные комментария:', commentData);
+    console.log('Request type name:', requestTypeName);
+    console.log('Request type color:', requestTypeColor);
 
     // Исправление обработки комментария
     // Проверяем разные варианты структуры данных комментария
@@ -2230,9 +2234,9 @@ function addRequestToTable(result) {
         </td>
         <!-- Комментарий -->
         <td class="col-comment">
-            <div class="col-date__date" ${requestData.request_type_color ? `style="background-color: ${requestData.request_type_color}; color: ${window.utils.getContrastColor(requestData.request_type_color)}"` : ''}>${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate} | ${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}${requestData.request_type_name ? ` <span>${requestData.request_type_name}</span>` : ''}</div>
+            <div class="col-date__date" ${requestTypeColor ? `style="background-color: ${requestTypeColor}; color: ${window.utils.getContrastColor(requestTypeColor)}"` : ''}>${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate} | ${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}${requestTypeName ? ` <span>${requestTypeName}</span>` : ''}</div>
             ${extractedComment ? `
-                <div class="comment-preview small text-dark" data-bs-toggle="tooltip" ${requestData.request_type_color ? `style="border: 5px solid ${requestData.request_type_color}; border-top: 0px;"` : ''}>
+                <div class="comment-preview small text-dark" data-bs-toggle="tooltip" ${requestTypeColor ? `style="border: 5px solid ${requestTypeColor}; border-top: 0px;"` : ''}>
                     <p class="comment-preview-title">Печатный комментарий:</p>
                     <div data-comment-request-id="${requestData.id}" class="comment-preview-text">${extractedComment}</div>
                 </div>

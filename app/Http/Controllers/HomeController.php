@@ -1203,6 +1203,12 @@ class HomeController extends Controller
                 ], 404);
             }
 
+            // Получаем данные типа заявки для ответа
+            $requestTypeData = DB::selectOne(
+                'SELECT rt.name AS request_type_name, rt.color AS request_type_color FROM requests r LEFT JOIN request_types rt ON r.request_type_id = rt.id WHERE r.id = ?',
+                [$validated['request_id']]
+            );
+
             // Начинаем транзакцию
             DB::beginTransaction();
 
@@ -1455,6 +1461,8 @@ class HomeController extends Controller
                     'comments' => $comments,
                     'commentId' => $commentId,
                     'files' => $files,
+                    'request_type_name' => $requestTypeData->request_type_name ?? null,
+                    'request_type_color' => $requestTypeData->request_type_color ?? null,
                 ]);
             } catch (\Exception $e) {
                 // Откатываем изменения при ошибке
@@ -3073,6 +3081,17 @@ class HomeController extends Controller
                 $requestById = (object) $requestById[0];
             }
 
+            // Получаем данные типа заявки для логирования
+            $requestTypeData = DB::selectOne(
+                'SELECT rt.name AS request_type_name, rt.color AS request_type_color FROM request_types rt WHERE rt.id = ?',
+                [$requestById->request_type_id]
+            );
+
+            \Log::info('Request type data', [
+                'name' => $requestTypeData->request_type_name ?? null,
+                'color' => $requestTypeData->request_type_color ?? null
+            ]);
+
             // Формируем ответ
             $response = [
                 'success' => true,
@@ -3107,12 +3126,14 @@ class HomeController extends Controller
                         'district' => $address->district,
                         'comment' => $address->comments ?? '',
                     ],
-                    'comment' => $newCommentId ? [
-                        'id' => $newCommentId,
-                        'text' => $commentText,
-                    ] : null,
-                ],
-            ];
+                     'comment' => $newCommentId ? [
+                         'id' => $newCommentId,
+                         'text' => $commentText,
+                     ] : null,
+                     'request_type_name' => $requestTypeData->request_type_name ?? null,
+                     'request_type_color' => $requestTypeData->request_type_color ?? null,
+                 ],
+             ];
 
             // Фиксируем изменения, если все успешно
             DB::commit();
@@ -3133,6 +3154,8 @@ class HomeController extends Controller
                 ] : 'Без привязки к клиенту',
                 'address_id' => $address->id ?? null,
                 'comment_id' => $newCommentId ?? null,
+                'request_type_name' => $requestTypeData->request_type_name ?? null,
+                'request_type_color' => $requestTypeData->request_type_color ?? null,
             ]);
 
             \Log::info('=== END storeRequest ===');
