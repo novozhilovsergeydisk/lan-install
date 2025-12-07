@@ -437,7 +437,7 @@
                                                     $author = $firstComment->author_name;
                                                     $date = \Carbon\Carbon::parse($firstComment->created_at)->format('d.m.Y H:i');
                                                 @endphp
-                                                <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
+                                                <div class="comment-preview small text-dark" data-bs-toggle="tooltip" style="border: 5px solid {{ $request->request_type_color ?? 'black' }}; border-top: 0px;">
                                                     <p class="comment-preview-title">Печатный комментарий:</p>
                                                     <div data-comment-request-id="{{ $request->id }}" class="comment-preview-text">{!! $commentText !!}</div>
                                                 </div>
