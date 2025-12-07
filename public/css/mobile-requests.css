@@ -129,6 +129,13 @@
 
 .col-date__date {
     font-size: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.col-date__date span {
+    margin-right: 10px;
 }
 
 .col-date__number {
@@ -239,6 +246,13 @@
 
     .col-date__date {
         font-size: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .col-date__date span {
+        margin-right: 10px;
     }
 
     .col-date__number {

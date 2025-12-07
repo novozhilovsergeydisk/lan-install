@@ -136,7 +136,7 @@ export async function loadPlanningRequests() {
                      </div>
                  </td>
                    <td class="col-comments">
-                      <div class="col-date__date">${request.request_date} | ${request.number}</div>
+                       <div class="col-date__date" ${request.request_type_color ? `style="background-color: ${request.request_type_color}; color: ${window.utils.getContrastColor(request.request_type_color)}"` : ''}>${request.request_date} | ${request.number}${request.request_type_color || request.request_type_name ? ` <span>${request.request_type_name || 'Не указан'}</span>` : ''}</div>
                       ${commentsContent.length > 0 ? `
                           <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                               <p class="comment-preview-title">Печатный комментарий:</p>
@@ -904,9 +904,16 @@ async function applyFilters() {
                             // Добавляем счетчик для нумерации строк (начинаем с 1)
                             const rowNumber = index + 1;
 
-                            // console.log({ request });
+                             // console.log({ request });
 
-                            // console.log(request.is_admin);
+                             console.log('Request data for span:', {
+                                 id: request.id,
+                                 request_type_color: request.request_type_color,
+                                 request_type_name: request.request_type_name
+                             });
+                             console.log('All keys:', Object.keys(request));
+
+                             // console.log(request.is_admin);
                             
                             // Подготовим HTML блока комментариев без IIFE
                             let commentsSectionHtml = '--';
@@ -967,7 +974,7 @@ async function applyFilters() {
 
                              <!-- Комментарий -->
                              <td class="col-comments">
-                                 <div class="col-date__date">${formattedDate} | ${requestNumber}</div>
+                                  <div class="col-date__date" ${request.request_type_color ? `style="background-color: ${request.request_type_color}; color: ${window.utils.getContrastColor(request.request_type_color)}"` : ''}>${formattedDate} | ${requestNumber}${request.request_type_color || request.request_type_name ? ` <span>${request.request_type_name || 'Не указан'}</span>` : ''}</div>
                                  ${commentsSectionHtml}
                                  <!-- Кнопка комментариев -->
                                  <div class="mt-1">

@@ -539,3 +539,8 @@ body.dark-mode .custom-select-options li:hover {
     width: 16%;
     height: 3rem;
 }
+
+/* Отступ слева для блока col-date__date */
+.col-date__date {
+    padding-left: 5px;
+}

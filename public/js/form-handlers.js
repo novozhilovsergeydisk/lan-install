@@ -2230,7 +2230,7 @@ function addRequestToTable(result) {
         </td>
         <!-- Комментарий -->
         <td class="col-comment">
-            <div class="col-date__date">${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate} | ${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}</div>
+            <div class="col-date__date" ${requestData.request_type_color ? `style="background-color: ${requestData.request_type_color}; color: ${window.utils.getContrastColor(requestData.request_type_color)}"` : ''}>${requestData.execution_date ? new Date(requestData.execution_date).toLocaleDateString('ru-RU') : formattedDate} | ${requestData.number || 'REQ-' + formattedDate.replace(/\./g, '') + '-' + String(requestData.id).padStart(4, '0')}${requestData.request_type_color || requestData.request_type_name ? ` <span>${requestData.request_type_name || 'Не указан'}</span>` : ''}</div>
             ${extractedComment ? `
                 <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                     <p class="comment-preview-title">Печатный комментарий:</p>

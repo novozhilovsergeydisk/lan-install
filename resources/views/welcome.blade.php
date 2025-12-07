@@ -429,7 +429,7 @@
 
                                         <!-- Комментарий -->
                                         <td class="col-comments">
-                                            <div class="col-date__date">{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }} | {{ $request->number }}</div>
+                                             <div class="col-date__date" @if($request->request_type_color) style="background-color: {{ $request->request_type_color }}; color: {{ \App\Helpers\StringHelper::getContrastColor($request->request_type_color) }}" @endif>{{ $request->execution_date ? \Carbon\Carbon::parse($request->execution_date)->format('d.m.Y') : 'Не указана' }} | {{ $request->number }} @if($request->request_type_name) <span>{{ $request->request_type_name }}</span> @endif</div>
                                             @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) > 0)
                                                 @php
                                                     $firstComment = $comments_by_request[$request->id][0];
@@ -1636,28 +1636,28 @@
         border-color: #0d6efd;
     }
 
-    /* Help button (Reports) softer color */
-    #reports-help-btn {
-        color: #7a7a7a; /* text a bit darker for readability */
-        border-color: #ccc;
-    }
-    #reports-help-btn:hover,
-    #reports-help-btn:focus {
-        color: #666;
-        border-color: #bbb;
-        background-color: rgba(204, 204, 204, 0.15);
-    }
-    /* Dark theme adjustments */
-    [data-bs-theme="dark"] #reports-help-btn {
-        color: #ccc;
-        border-color: #888;
-    }
-    [data-bs-theme="dark"] #reports-help-btn:hover,
-    [data-bs-theme="dark"] #reports-help-btn:focus {
-        color: #e0e0e0;
-        border-color: #9a9a9a;
-        background-color: rgba(204, 204, 204, 0.10);
-    }
+        /* Help button (Reports) softer color */
+        #reports-help-btn {
+            color: #7a7a7a; /* text a bit darker for readability */
+            border-color: #ccc;
+        }
+        #reports-help-btn:hover,
+        #reports-help-btn:focus {
+            color: #666;
+            border-color: #bbb;
+            background-color: rgba(204, 204, 204, 0.15);
+        }
+        /* Dark theme adjustments */
+        [data-bs-theme="dark"] #reports-help-btn {
+            color: #ccc;
+            border-color: #888;
+        }
+        [data-bs-theme="dark"] #reports-help-btn:hover,
+        [data-bs-theme="dark"] #reports-help-btn:focus {
+            color: #e0e0e0;
+            border-color: #9a9a9a;
+            background-color: rgba(204, 204, 204, 0.10);
+        }
     /* Reports help modal lists: keep indentation and increase line height */
     #reportsHelpModal ul.list-unstyled {
         padding-left: 1.25rem; /* keep left indent without bullets */

@@ -955,48 +955,51 @@ class HomeController extends Controller
             $brigadesCurrentDay = DB::select($sql);
 
             // 🔽 Комплексный запрос получения списка заявок с подключением к employees
-            $sql = "SELECT
-                r.*,
-                c.fio AS client_fio,
-                c.phone AS client_phone,
-                c.organization AS client_organization,
-                rs.name AS status_name,
-                rs.color AS status_color,
-                b.name AS brigade_name,
-                e.fio AS brigade_lead,
-                op.fio AS operator_name,
-                op.user_id AS operator_user_id,
-                role_data.role_name AS operator_role,
-                addr.id AS address_id,
-                addr.street,
-                addr.houses,
-                addr.district,
-                addr.city_id,
-                addr.latitude,
-                addr.longitude,
-                ct.name AS city_name,
-                ct.postal_code AS city_postal_code
-            FROM requests r
-            LEFT JOIN clients c ON r.client_id = c.id
-            LEFT JOIN request_statuses rs ON r.status_id = rs.id
-            LEFT JOIN brigades b ON r.brigade_id = b.id
-            LEFT JOIN employees e ON b.leader_id = e.id
-            LEFT JOIN employees op ON r.operator_id = op.id
-            LEFT JOIN request_addresses ra ON r.id = ra.request_id
-            LEFT JOIN addresses addr ON ra.address_id = addr.id
-            LEFT JOIN cities ct ON addr.city_id = ct.id
-            LEFT JOIN LATERAL (
-                SELECT r.name AS role_name
-                FROM user_roles ur
-                JOIN roles r ON ur.role_id = r.id
-                WHERE ur.user_id = op.user_id
-                LIMIT 1
-            ) AS role_data ON true
-            WHERE r.execution_date::date = CURRENT_DATE
-            AND (b.is_deleted = false OR b.id IS NULL)
-            AND rs.name != 'отменена'
-            AND rs.name != 'планирование'
-            ORDER BY r.id DESC";
+             $sql = "SELECT
+                 r.*,
+                 c.fio AS client_fio,
+                 c.phone AS client_phone,
+                 c.organization AS client_organization,
+                 rs.name AS status_name,
+                 rs.color AS status_color,
+                 rt.name AS request_type_name,
+                 rt.color AS request_type_color,
+                 b.name AS brigade_name,
+                 e.fio AS brigade_lead,
+                 op.fio AS operator_name,
+                 op.user_id AS operator_user_id,
+                 role_data.role_name AS operator_role,
+                 addr.id AS address_id,
+                 addr.street,
+                 addr.houses,
+                 addr.district,
+                 addr.city_id,
+                 addr.latitude,
+                 addr.longitude,
+                 ct.name AS city_name,
+                 ct.postal_code AS city_postal_code
+             FROM requests r
+             LEFT JOIN clients c ON r.client_id = c.id
+             LEFT JOIN request_statuses rs ON r.status_id = rs.id
+             LEFT JOIN request_types rt ON r.request_type_id = rt.id
+             LEFT JOIN brigades b ON r.brigade_id = b.id
+             LEFT JOIN employees e ON b.leader_id = e.id
+             LEFT JOIN employees op ON r.operator_id = op.id
+             LEFT JOIN request_addresses ra ON r.id = ra.request_id
+             LEFT JOIN addresses addr ON ra.address_id = addr.id
+             LEFT JOIN cities ct ON addr.city_id = ct.id
+             LEFT JOIN LATERAL (
+                 SELECT r.name AS role_name
+                 FROM user_roles ur
+                 JOIN roles r ON ur.role_id = r.id
+                 WHERE ur.user_id = op.user_id
+                 LIMIT 1
+             ) AS role_data ON true
+             WHERE r.execution_date::date = CURRENT_DATE
+             AND (b.is_deleted = false OR b.id IS NULL)
+             AND rs.name != 'отменена'
+             AND rs.name != 'планирование'
+             ORDER BY r.id DESC";
 
             if ($user->isFitter) {
                 $sql = "
@@ -1007,6 +1010,8 @@ class HomeController extends Controller
                         c.organization AS client_organization,
                         rs.name AS status_name,
                         rs.color AS status_color,
+                        rt.name AS request_type_name,
+                        rt.color AS request_type_color,
                         b.name AS brigade_name,
                         e.fio AS brigade_lead,
                         op.fio AS operator_name,
@@ -1018,12 +1023,11 @@ class HomeController extends Controller
                         addr.latitude,
                         addr.longitude,
                         ct.name AS city_name,
-                        ct.postal_code AS city_postal_code,
-                        rs.name AS status_name,
-                        rs.color AS status_color
+                        ct.postal_code AS city_postal_code
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                    LEFT JOIN request_types rt ON r.request_type_id = rt.id
                     LEFT JOIN brigades b ON r.brigade_id = b.id
                     LEFT JOIN employees e ON b.leader_id = e.id
                     LEFT JOIN employees op ON r.operator_id = op.id
@@ -1550,6 +1554,8 @@ class HomeController extends Controller
                         c.organization AS client_organization,
                         rs.name AS status_name,
                         rs.color AS status_color,
+                        rt.name AS request_type_name,
+                        rt.color AS request_type_color,
                         b.name AS brigade_name,
                         b.id AS brigade_id,
                         e.fio AS brigade_lead,
@@ -1571,6 +1577,7 @@ class HomeController extends Controller
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                    LEFT JOIN request_types rt ON r.request_type_id = rt.id
                     LEFT JOIN brigades b ON r.brigade_id = b.id
                     LEFT JOIN employees e ON b.leader_id = e.id
                     LEFT JOIN employees op ON r.operator_id = op.id
@@ -1606,6 +1613,8 @@ class HomeController extends Controller
                         c.organization AS client_organization,
                         rs.name AS status_name,
                         rs.color AS status_color,
+                        rt.name AS request_type_name,
+                        rt.color AS request_type_color,
                         b.name AS brigade_name,
                         b.id AS brigade_id,
                         e.fio AS brigade_lead,
@@ -1623,6 +1632,7 @@ class HomeController extends Controller
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                    LEFT JOIN request_types rt ON r.request_type_id = rt.id
                     LEFT JOIN brigades b ON r.brigade_id = b.id
                     LEFT JOIN employees e ON b.leader_id = e.id
                     LEFT JOIN employees op ON r.operator_id = op.id

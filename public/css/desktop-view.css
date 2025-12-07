@@ -72,7 +72,8 @@ footer, #divider {
     .font-size-0-8rem { font-size: 1rem !important; line-height: 1.2; }
     .col-brigade__div,
     .col-brigade__div a { font-size: 1rem !important; line-height: 1.2; }
-    .col-date__date { font-size: 1rem !important; line-height: 1.2; }
+    .col-date__date { font-size: 1rem !important; line-height: 1.2; display: flex; justify-content: space-between; align-items: center; }
+    .col-date__date span { margin-right: 10px; }
 }
 
 @media (min-width: 376px) and (max-width: 480px) {
@@ -89,7 +90,8 @@ footer, #divider {
     .font-size-0-8rem { font-size: 1rem !important; line-height: 1.2; }
     .col-brigade__div,
     .col-brigade__div a { font-size: 1rem !important; line-height: 1.2; }
-    .col-date__date { font-size: 1rem !important; line-height: 1.2; }
+    .col-date__date { font-size: 1rem !important; line-height: 1.2; display: flex; justify-content: space-between; align-items: center; }
+    .col-date__date span { margin-right: 10px; }
 }
 
 @media (min-width: 481px) and (max-width: 600px) {
@@ -106,7 +108,8 @@ footer, #divider {
     .font-size-0-8rem { font-size: 1rem !important; line-height: 1.2; }
     .col-brigade__div,
     .col-brigade__div a { font-size: 1rem !important; line-height: 1.2; }
-    .col-date__date { font-size: 1rem !important; line-height: 1.2; }
+    .col-date__date { font-size: 1rem !important; line-height: 1.2; display: flex; justify-content: space-between; align-items: center; }
+    .col-date__date span { margin-right: 10px; }
 }
 
 @media (min-width: 601px) and (max-width: 760px) {
@@ -123,7 +126,8 @@ footer, #divider {
     .font-size-0-8rem { font-size: 1rem !important; line-height: 1.2; }
     .col-brigade__div,
     .col-brigade__div a { font-size: 1rem !important; line-height: 1.2; }
-    .col-date__date { font-size: 1rem !important; line-height: 1.2; }
+    .col-date__date { font-size: 1rem !important; line-height: 1.2; display: flex; justify-content: space-between; align-items: center; }
+    .col-date__date span { margin-right: 10px; }
 }
 
 @media (min-width: 761px) and (max-width: 840px) {
@@ -140,7 +144,8 @@ footer, #divider {
     .font-size-0-8rem { font-size: 1rem !important; line-height: 1.2; }
     .col-brigade__div,
     .col-brigade__div a { font-size: 1rem !important; line-height: 1.2; }
-    .col-date__date { font-size: 1rem !important; line-height: 1.2; }
+    .col-date__date { font-size: 1rem !important; line-height: 1.2; display: flex; justify-content: space-between; align-items: center; }
+    .col-date__date span { margin-right: 10px; }
 }
 
 @media (min-width: 841px) and (max-width: 900px) {

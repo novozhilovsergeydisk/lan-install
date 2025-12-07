@@ -303,8 +303,31 @@ function validateRequiredField(field, isRequired = false) {
     }
 }
 
+/**
+ * Определяет контрастный цвет текста (черный или белый) на основе цвета фона
+ * @param {string} hexColor - Цвет фона в формате #RRGGBB
+ * @returns {string} '#000000' или '#FFFFFF'
+ */
+function getContrastColor(hexColor) {
+    if (!hexColor || !hexColor.startsWith('#')) return '#000000';
+
+    // Удалить #
+    const color = hexColor.slice(1);
+
+    // Преобразовать в RGB
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+
+    // Вычислить luminance (яркость)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    // Если luminance > 0.5, фон светлый - текст черный, иначе белый
+    return luminance > 0.5 ? '#000000' : '#FFFFFF';
+}
+
 // Экспорт для модулей
-export { showAlert, fetchData, postData, sendRequest, linkifyPreservingAnchors, makeEscapedPreview, showModal, getElement, setValue, getValue, validateRequiredField };
+export { showAlert, fetchData, postData, sendRequest, linkifyPreservingAnchors, makeEscapedPreview, showModal, getElement, setValue, getValue, validateRequiredField, getContrastColor };
 
 // Экспорт глобально
 if (typeof window !== 'undefined') {
@@ -315,6 +338,7 @@ if (typeof window !== 'undefined') {
         sendRequest,
         linkifyPreservingAnchors,
         makeEscapedPreview,
-        validateRequiredField
+        validateRequiredField,
+        getContrastColor
     };
 }

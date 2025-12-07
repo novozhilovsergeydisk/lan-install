@@ -147,4 +147,31 @@ class StringHelper
         // Возвращаем в одну строку без <br>
         return $result;
     }
+
+    /**
+     * Определяет контрастный цвет текста (черный или белый) на основе цвета фона
+     *
+     * @param  string|null  $hexColor  Цвет фона в формате #RRGGBB
+     * @return string '#000000' или '#FFFFFF'
+     */
+    public static function getContrastColor(?string $hexColor): string
+    {
+        if (! $hexColor || ! str_starts_with($hexColor, '#')) {
+            return '#000000';
+        }
+
+        // Удалить #
+        $color = substr($hexColor, 1);
+
+        // Преобразовать в RGB
+        $r = hexdec(substr($color, 0, 2));
+        $g = hexdec(substr($color, 2, 2));
+        $b = hexdec(substr($color, 4, 2));
+
+        // Вычислить luminance (яркость)
+        $luminance = (0.299 * $r + 0.587 * $g + 0.114 * $b) / 255;
+
+        // Если luminance > 0.5, фон светлый - текст черный, иначе белый
+        return $luminance > 0.5 ? '#000000' : '#FFFFFF';
+    }
 }
