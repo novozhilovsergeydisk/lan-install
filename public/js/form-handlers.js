@@ -2845,13 +2845,38 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
 
     // Получаем текущий HTML комментария
     let commentHtml = contentHtml.trim();
-    
-    // Если содержимое пустое, пробуем получить текст из textContent
-    // if (!commentHtml) {
-    //     commentHtml = commentElement.textContent.trim();
-    // }
-    
+
+    // Если содержимое пустое, пробуем получить текст из innerHTML элемента
+    if (!commentHtml) {
+        commentHtml = commentElement.innerHTML.trim();
+    }
+
     console.log('Original comment HTML:', commentHtml);
+
+    // Функция для нормализации HTML - убираем множественные <br> теги и лишние пробелы
+    function normalizeHtml(html) {
+        if (!html) return html;
+
+        // Заменяем множественные <br> на одиночные
+        html = html.replace(/(<br\s*\/?>\s*)+/gi, '<br>');
+
+        // Убираем <br> в начале и конце
+        html = html.replace(/^(<br\s*\/?>\s*)+|(<br\s*\/?>\s*)+$/gi, '');
+
+        // Убираем лишние пробелы вокруг <br>
+        html = html.replace(/\s*<br\s*\/?>\s*/gi, '<br>');
+
+        // Заменяем множественные пробелы и &nbsp; на одиночные пробелы
+        html = html.replace(/(&nbsp;\s*)+/g, '&nbsp;');
+        html = html.replace(/\s+/g, ' ');
+
+        // Убираем пробелы в начале и конце
+        html = html.trim();
+
+        return html;
+    }
+
+    commentHtml = normalizeHtml(commentHtml);
     
     // Показываем элемент комментария, если он скрыт
     commentElement.style.display = 'block';
@@ -2973,7 +2998,32 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
     // Обработчик кнопки Сохранить
     saveButton.addEventListener('click', async function() {
         // Получаем HTML содержимое редактора
-        const newText = editor.innerHTML.trim();
+        let newText = editor.innerHTML.trim();
+
+        // Нормализуем HTML перед сохранением
+        function normalizeHtml(html) {
+            if (!html) return html;
+
+            // Заменяем множественные <br> на одиночные
+            html = html.replace(/(<br\s*\/?>\s*)+/gi, '<br>');
+
+            // Убираем <br> в начале и конце
+            html = html.replace(/^(<br\s*\/?>\s*)+|(<br\s*\/?>\s*)+$/gi, '');
+
+            // Убираем лишние пробелы вокруг <br>
+            html = html.replace(/\s*<br\s*\/?>\s*/gi, '<br>');
+
+            // Заменяем множественные пробелы и &nbsp; на одиночные пробелы
+            html = html.replace(/(&nbsp;\s*)+/g, '&nbsp;');
+            html = html.replace(/\s+/g, ' ');
+
+            // Убираем пробелы в начале и конце
+            html = html.trim();
+
+            return html;
+        }
+
+        newText = normalizeHtml(newText);
 
         // console.log('newText', newText);
 
