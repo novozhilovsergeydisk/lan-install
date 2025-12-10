@@ -3632,8 +3632,8 @@
                         container.innerHTML = '<div class="alert alert-danger py-2 mb-0 small">Ошибка загрузки параметров.</div>';
                     });
                 } else if (!requestTypeId) {
-                     console.error('Не удалось определить тип заявки');
-                     if (container) container.innerHTML = '<div class="alert alert-warning py-2 mb-0 small">Ошибка: не удалось определить тип заявки.</div>';
+                     console.warn('Тип заявки не указан для заявки #' + requestId);
+                     if (container) container.innerHTML = '<div class="alert alert-secondary py-2 mb-0 small">Тип заявки не указан. Список работ недоступен.</div>';
                 }
 
                 // Показываем модальное окно

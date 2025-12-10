@@ -2208,6 +2208,7 @@ function addRequestToTable(result) {
     // Создаем новую строку для таблицы
     const newRow = document.createElement('tr');
     newRow.id = `request-${requestData.id}`;
+    newRow.dataset.requestTypeId = requestData.type_id || '';
     newRow.dataset.requestNumber = requestData.number || '';
     newRow.dataset.address = fullAddress;
     newRow.className = 'align-middle status-row new-row';
