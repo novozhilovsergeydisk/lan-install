@@ -3177,7 +3177,7 @@
         // Load request types from API
         async function loadRequestTypes() {
             try {
-                const response = await fetch('/api/request-types');
+                const response = await fetch('/api/request-types?is_deleted=false');
                 const types = await response.json();
                 const select = document.getElementById('requestType');
 
