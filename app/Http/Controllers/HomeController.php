@@ -2099,12 +2099,31 @@ class HomeController extends Controller
             //     'employee_id' => $employee_id,
             //     'role' => $employee_role,
             // Получаем параметры работы из запроса
-            $workParameters = $request->input('work_parameters');
+            $workParameters = $request->input('work_parameters', []);
+
+            // Получаем запланированные работы из базы данных
+            $plannedWorkParameters = DB::table('work_parameters')
+                ->where('request_id', $id)
+                ->where('is_planning', true)
+                ->where('is_done', false)
+                ->get();
+
+            // Собираем все parameter_type_id
+            $allParameterTypeIds = [];
+            if (! empty($workParameters)) {
+                $allParameterTypeIds = array_merge($allParameterTypeIds, array_column($workParameters, 'parameter_type_id'));
+            }
+            if (! empty($plannedWorkParameters)) {
+                $allParameterTypeIds = array_merge($allParameterTypeIds, $plannedWorkParameters->pluck('parameter_type_id')->toArray());
+            }
+
+            // Убираем дубликаты и приводим к строкам (если ID могут быть строками)
+            $allParameterTypeIds = array_unique(array_map('strval', $allParameterTypeIds));
+
             $types = [];
-            if (! empty($workParameters) && is_array($workParameters)) {
-                $typeIds = array_column($workParameters, 'parameter_type_id');
+            if (! empty($allParameterTypeIds)) {
                 $types = DB::table('work_parameter_types')
-                    ->whereIn('id', $typeIds)
+                    ->whereIn('id', $allParameterTypeIds)
                     ->pluck('name', 'id')
                     ->toArray();
             }
@@ -2120,6 +2139,20 @@ class HomeController extends Controller
             if ($updated) {
                 // Формируем комментарий для закрываемой заявки
                 $commentText = $request->input('comment', 'Заявка закрыта');
+
+                // Формируем часть комментария о запланированных работах
+                if (! empty($plannedWorkParameters) && count($plannedWorkParameters) > 0) {
+                    $plannedWorksInfoPart = '';
+                    if (! empty($commentText)) {
+                        $plannedWorksInfoPart .= '<br><br>';
+                    }
+                    $plannedWorksInfoPart .= 'Запланированные работы:';
+                    foreach ($plannedWorkParameters as $param) {
+                        $typeName = $types[$param->parameter_type_id] ?? 'Неизвестная работа';
+                        $plannedWorksInfoPart .= "<br>- {$typeName}: {$param->quantity}";
+                    }
+                    $commentText .= $plannedWorksInfoPart;
+                }
 
                 \Log::info('Параметры работы:', [
                     'workParameters' => $workParameters,
@@ -2179,6 +2212,23 @@ class HomeController extends Controller
                         \Log::error('Ошибка при создании параметров выполненной работы: '.$e->getMessage());
                         throw $e; // Критическая ошибка при закрытии заявки
                     }
+                }
+
+                // Обновляем статус запланированных работ: устанавливаем is_done = true и is_planning = false
+                if (! empty($plannedWorkParameters) && count($plannedWorkParameters) > 0) {
+                    $plannedWorkIds = $plannedWorkParameters->pluck('id')->toArray();
+                    DB::table('work_parameters')
+                        ->whereIn('id', $plannedWorkIds)
+                        ->update([
+                            'is_planning' => false,
+                            'is_done' => true,
+                            'updated_at' => now(),
+                        ]);
+
+                    \Log::info('Обновлен статус запланированных работ для заявки:', [
+                        'request_id' => $id,
+                        'count' => count($plannedWorkParameters),
+                    ]);
                 }
 
                 // Если отмечен чекбокс "Недоделанные работы", добавляем запись в таблицу incomplete_works
