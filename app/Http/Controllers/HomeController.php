@@ -2098,8 +2098,16 @@ class HomeController extends Controller
             //     'operator_id' => $operator_id,
             //     'employee_id' => $employee_id,
             //     'role' => $employee_role,
-            //     'is_brigade_member' => $isBrigadeMember,
-            // ]);
+            // Получаем параметры работы из запроса
+            $workParameters = $request->input('work_parameters');
+            $types = [];
+            if (! empty($workParameters) && is_array($workParameters)) {
+                $typeIds = array_column($workParameters, 'parameter_type_id');
+                $types = DB::table('work_parameter_types')
+                    ->whereIn('id', $typeIds)
+                    ->pluck('name', 'id')
+                    ->toArray();
+            }
 
             // Начинаем транзакцию
             DB::beginTransaction();
@@ -2110,12 +2118,36 @@ class HomeController extends Controller
                 ->update(['status_id' => 4]);
 
             if ($updated) {
-                // Создаем комментарий
-                $commentId = DB::table('comments')->insertGetId([
-                    'comment' => $request->input('comment', 'Заявка закрыта'),
-                    'created_at' => now(),
+                // Формируем комментарий для закрываемой заявки
+                $commentText = $request->input('comment', 'Заявка закрыта');
+
+                \Log::info('Параметры работы:', [
+                    'workParameters' => $workParameters,
                 ]);
 
+                if (! empty($workParameters) && is_array($workParameters)) {
+                    $worksInfoPart = '';
+                    // Добавляем <br><br> только если $commentText уже что-то содержит
+                    if (! empty($commentText)) {
+                        $worksInfoPart .= '<br><br>';
+                    }
+                    $worksInfoPart .= 'Выполненные работы:';
+                    foreach ($workParameters as $param) {
+                        $typeName = $types[$param['parameter_type_id']] ?? 'Неизвестная работа';
+                        $worksInfoPart .= "<br>- {$typeName}: {$param['quantity']}";
+                    }
+                    $commentText .= $worksInfoPart;
+                }
+
+                \Log::info('Комментарий для закрываемой заявки:', [
+                    'commentText' => $commentText,
+                ]);
+
+                // Создаем комментарий
+                $commentId = DB::table('comments')->insertGetId([
+                    'comment' => $commentText,
+                    'created_at' => now(),
+                ]);
                 // Связываем комментарий с заявкой
                 DB::table('request_comments')->insert([
                     'request_id' => $id,
@@ -2124,16 +2156,8 @@ class HomeController extends Controller
                     'created_at' => now(),
                 ]);
 
-                // Обновляем параметры работы: устанавливаем is_done = true
-                // DB::table('work_parameters')
-                //     ->where('request_id', $id)
-                //     ->update(['is_done' => true, 'updated_at' => now()]);
-
-                // Получаем параметры работы (массив)
-                $workParameters = $request->input('work_parameters');
-
                 // Создаем записи параметров работы
-                if (!empty($workParameters) && is_array($workParameters)) {
+                if (! empty($workParameters) && is_array($workParameters)) {
                     try {
                         foreach ($workParameters as $param) {
                             DB::table('work_parameters')->insert([
@@ -2212,7 +2236,7 @@ class HomeController extends Controller
 
                     // Создаем параметры работы (запланированные) для новой заявки (недоделанные работы)
                     try {
-                        if (!empty($workParameters) && is_array($workParameters)) {
+                        if (! empty($workParameters) && is_array($workParameters)) {
                             foreach ($workParameters as $param) {
                                 DB::table('work_parameters')->insert([
                                     'request_id' => $newRequestId,
@@ -2261,9 +2285,26 @@ class HomeController extends Controller
 
                 // Если была создана новая заявка на недоделанные работы, добавляем её ID в ответ
                 if (isset($newRequestId)) {
+                    // Формируем расширенный комментарий с информацией о работах
+                    $commentText = $request->input('comment', 'Создана новая заявка на недоделанные работы');
+
+                    if (! empty($workParameters) && is_array($workParameters)) {
+                        $worksInfoPart = '';
+                        // Добавляем <br><br> только если $commentText уже что-то содержит
+                        if (! empty($commentText)) {
+                            $worksInfoPart .= '<br><br>';
+                        }
+                        $worksInfoPart .= 'Запланированные работы:';
+                        foreach ($workParameters as $param) {
+                            $typeName = $types[$param['parameter_type_id']] ?? 'Неизвестная работа';
+                            $worksInfoPart .= "<br>- {$typeName}: {$param['quantity']}";
+                        }
+                        $commentText .= $worksInfoPart;
+                    }
+
                     // Создаем комментарий
                     $newCommentId = DB::table('comments')->insertGetId([
-                        'comment' => $request->input('comment', 'Создана новая заявка на недоделанные работы'),
+                        'comment' => $commentText,
                         'created_at' => now(),
                     ]);
 
@@ -2951,8 +2992,27 @@ class HomeController extends Controller
             $requestId = $result[0]->id;
             // \Log::info('Создана заявка с ID:', ['id' => $requestId]);
 
-            // 4. Создаем комментарий, только если он не пустой
+            // 4. Создаем комментарий
             $commentText = trim($validated['comment'] ?? '');
+            $workParams = $validated['work_parameters'] ?? [];
+
+            if (! empty($workParams) && is_array($workParams)) {
+                $typeIds = array_column($workParams, 'parameter_type_id');
+                $types = DB::table('work_parameter_types')->whereIn('id', $typeIds)->pluck('name', 'id');
+
+                $worksInfoPart = '';
+                // Добавляем <br><br> только если $commentText уже что-то содержит
+                if (! empty($commentText)) {
+                    $worksInfoPart .= '<br><br>';
+                }
+                $worksInfoPart .= 'Запланированные работы:';
+                foreach ($workParams as $param) {
+                    $typeName = $types[$param['parameter_type_id']] ?? 'Неизвестная работа';
+                    $worksInfoPart .= "<br>- {$typeName}: {$param['quantity']}";
+                }
+                $commentText .= $worksInfoPart;
+            }
+
             $newCommentId = null;
 
             if (! empty($commentText)) {
@@ -3016,7 +3076,7 @@ class HomeController extends Controller
             // ]);
 
             // 6. Создаем параметры работы (опционально)
-            if (!empty($validated['work_parameters'])) {
+            if (! empty($validated['work_parameters'])) {
                 try {
                     foreach ($validated['work_parameters'] as $param) {
                         DB::table('work_parameters')->insert([
