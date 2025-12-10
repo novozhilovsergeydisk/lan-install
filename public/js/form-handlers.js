@@ -5240,6 +5240,22 @@ async function submitRequestForm(event) {
         }
     });
 
+    // Сбор динамических параметров
+    const workParameters = [];
+    const parameterRows = document.querySelectorAll('#workParametersContainer .work-parameter-row');
+    parameterRows.forEach(row => {
+        const typeId = row.dataset.id;
+        const quantityInput = row.querySelector('.work-parameter-quantity');
+        const quantity = quantityInput ? parseInt(quantityInput.value) : 0;
+        
+        if (typeId && quantity > 0) {
+            workParameters.push({
+                parameter_type_id: typeId,
+                quantity: quantity
+            });
+        }
+    });
+
     // Формируем данные для отправки
     const requestData = {
         _token: data._token,
@@ -5254,8 +5270,7 @@ async function submitRequestForm(event) {
         brigade_id: data.brigade_id || null,
         operator_id: data.operator_id || null,
         address_id: addressId,
-        work_parameter_name: data.work_parameter_name || null,
-        work_parameter_quantity: data.work_parameter_quantity || null,
+        work_parameters: workParameters,
     };
 
     // Логируем данные перед отправкой
@@ -6473,3 +6488,63 @@ export function initCommentHistoryModalHandler() {
         });
     }
 }
+
+
+// Функция для загрузки параметров работ при выборе типа заявки
+async function loadWorkParametersForRequestType(requestTypeId) {
+    const container = document.getElementById('workParametersContainer');
+    if (!container) return;
+
+    container.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Загрузка работ...</div>';
+
+    try {
+        const response = await fetch(`/api/work-parameter-types/by-request-type/${requestTypeId}`);
+        const data = await response.json();
+
+        container.innerHTML = '';
+
+        if (Array.isArray(data) && data.length > 0) {
+            data.forEach(param => {
+                const row = document.createElement('div');
+                row.className = 'row g-3 mb-2 align-items-center work-parameter-row';
+                // data-id будет содержать ID типа параметра
+                row.dataset.id = param.id;
+                row.dataset.name = param.name;
+
+                row.innerHTML = `
+                    <div class="col-md-8">
+                        <label class="form-label mb-0">${param.name}</label>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="number" class="form-control work-parameter-quantity" placeholder="Кол-во" min="0" value="0">
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        } else {
+            container.innerHTML = '<div class="alert alert-info py-2 mb-0 small">Нет доступных параметров работ для этого типа заявки.</div>';
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке параметров работ:', error);
+        container.innerHTML = '<div class="alert alert-danger py-2 mb-0 small">Ошибка загрузки параметров.</div>';
+    }
+}
+
+// Инициализация обработчика изменения типа заявки
+document.addEventListener('DOMContentLoaded', () => {
+    const requestTypeSelect = document.getElementById('requestType');
+    if (requestTypeSelect) {
+        requestTypeSelect.addEventListener('change', function() {
+            const typeId = this.value;
+            if (typeId) {
+                loadWorkParametersForRequestType(typeId);
+            } else {
+                const container = document.getElementById('workParametersContainer');
+                if (container) {
+                    container.innerHTML =
+                        '<div class="alert alert-light border text-center p-2 mb-0 text-muted small">Выберите тип заявки, чтобы загрузить список работ</div>';
+                }
+            }
+        });
+    }
+});

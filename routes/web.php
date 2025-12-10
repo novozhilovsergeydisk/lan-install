@@ -18,6 +18,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RequestFilterController;
 use App\Http\Controllers\RequestTeamFilterController;
 use App\Http\Controllers\RequestTypeController;
+use App\Http\Controllers\WorkParameterTypeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/test-no-auth', function () {
@@ -124,6 +125,17 @@ Route::prefix('api/request-types')->middleware('auth')->group(function () {
     Route::delete('/{id}', [RequestTypeController::class, 'destroy']);
 });
 
+Route::get('/request-types', [RequestTypeController::class, 'index'])->middleware('auth')->name('request-types.index');
+
+// Маршруты для работы с параметрами типов заявок
+Route::prefix('api/work-parameter-types')->middleware('auth')->group(function () {
+    Route::get('/', [WorkParameterTypeController::class, 'index']);
+    Route::get('/by-request-type/{id}', [WorkParameterTypeController::class, 'getByRequestType']);
+    Route::post('/', [WorkParameterTypeController::class, 'store']);
+    Route::put('/{id}', [WorkParameterTypeController::class, 'update']);
+    Route::delete('/{id}', [WorkParameterTypeController::class, 'destroy']);
+});
+
 // Обработка комментариев
 Route::post('/requests/comment', [HomeController::class, 'addComment'])
     ->middleware('auth')
@@ -208,6 +220,7 @@ Route::prefix('reports')->middleware('auth')->group(function () {
     // Address and employee data
     Route::get('/addresses', [ReportController::class, 'getAddresses'])->name('reports.addresses');
     Route::get('/employees', [ReportController::class, 'getEmployees'])->name('reports.employees');
+    Route::get('/organizations', [ReportController::class, 'getOrganizations'])->name('reports.organizations');
 
     // Show address reports page
     Route::get('/address/{addressId}', [ReportController::class, 'showAddressReports'])->name('reports.address.show');

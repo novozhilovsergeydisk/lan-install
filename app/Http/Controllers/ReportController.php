@@ -612,6 +612,7 @@ class ReportController extends Controller
                 c.organization AS client_organization,
                 rs.name AS status_name,
                 rs.color AS status_color,
+                rt.name AS request_type_name,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -625,6 +626,7 @@ class ReportController extends Controller
             ")
                 ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
                 ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+                ->leftJoin('request_types AS rt', 'r.request_type_id', '=', 'rt.id')
                 ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
                 ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
                 ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
@@ -643,12 +645,23 @@ class ReportController extends Controller
                             ->from('brigade_members as bm2')
                             ->whereColumn('bm2.brigade_id', 'b.id')
                             ->where('bm2.employee_id', $employeeId);
-                    })->orWhere('b.leader_id', $employeeId); // ✅ упрощено и точно
-                })
-                ->groupBy(
-                    'r.id', 'c.id', 'rs.id', 'b.id', 'e.id',
-                    'op.id', 'addr.id', 'ct.id'
-                )
+                    })->orWhere('b.leader_id', $employeeId);
+                });
+
+            // Добавляем фильтр по организации
+            if ($request->has('organization') && ! empty($request->organization)) {
+                $query->where('c.organization', $request->organization);
+            }
+
+            // Добавляем фильтр по типу заявки
+            if ($request->has('requestTypeId') && ! empty($request->requestTypeId)) {
+                $query->where('r.request_type_id', $request->requestTypeId);
+            }
+
+            $query->groupBy(
+                'r.id', 'c.id', 'rs.id', 'rt.id', 'b.id', 'e.id',
+                'op.id', 'addr.id', 'ct.id'
+            )
                 ->orderByDesc('r.execution_date')
                 ->orderByDesc('r.id');
 
@@ -659,6 +672,8 @@ class ReportController extends Controller
                 'sql' => $query->toSql(),
                 'bindings' => $query->getBindings(),
                 'employeeId' => $employeeId,
+                'organization' => $request->organization ?? null,
+                'requestTypeId' => $request->requestTypeId ?? null,
             ]);
 
             $brigadeMembersWithDetails = $this->getBrigadeMembersWithDetails();
@@ -701,6 +716,8 @@ class ReportController extends Controller
 
             // return response()->json($data);
 
+            $bindings = [];
+
             $sql = '
                 SELECT r.*,
                     c.fio AS client_fio,
@@ -708,6 +725,7 @@ class ReportController extends Controller
                     c.organization AS client_organization,
                     rs.name AS status_name,
                     rs.color AS status_color,
+                    rt.name AS request_type_name,
                     b.name AS brigade_name,
                     e.fio AS brigade_lead,
                     op.fio AS operator_name,
@@ -720,15 +738,36 @@ class ReportController extends Controller
                 FROM requests r
                 LEFT JOIN clients c ON r.client_id = c.id
                 LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                LEFT JOIN request_types rt ON r.request_type_id = rt.id
                 LEFT JOIN brigades b ON r.brigade_id = b.id
                 LEFT JOIN employees e ON b.leader_id = e.id
                 LEFT JOIN employees op ON r.operator_id = op.id
                 LEFT JOIN request_addresses ra ON r.id = ra.request_id
                 LEFT JOIN addresses addr ON ra.address_id = addr.id
                 LEFT JOIN cities ct ON addr.city_id = ct.id
-                WHERE 1=1 ORDER BY execution_date DESC';
+                WHERE 1=1';
 
-            $requestsAllPeriod = DB::select($sql);
+            // Добавляем фильтр по организации
+            if ($request->has('organization') && ! empty($request->organization)) {
+                $sql .= ' AND c.organization = ?';
+                $bindings[] = $request->organization;
+            }
+
+            // Добавляем фильтр по типу заявки
+            if ($request->has('requestTypeId') && ! empty($request->requestTypeId)) {
+                $sql .= ' AND r.request_type_id = ?';
+                $bindings[] = $request->requestTypeId;
+            }
+
+            $sql .= ' ORDER BY execution_date DESC';
+
+            // Логируем SQL-запрос для отладки
+            \Log::info('SQL Query in getAllPeriod:', [
+                'sql' => $sql,
+                'bindings' => $bindings,
+            ]);
+
+            $requestsAllPeriod = DB::select($sql, $bindings);
 
             $brigadeMembersWithDetails = DB::select(
                 'SELECT
@@ -918,6 +957,8 @@ class ReportController extends Controller
                 ORDER BY r.execution_date DESC, r.id DESC
             ';
 
+            $bindings = [$startDate, $endDate];
+
             $sql = '
                 SELECT
                     r.*,
@@ -926,6 +967,7 @@ class ReportController extends Controller
                     c.organization AS client_organization,
                     rs.name AS status_name,
                     rs.color AS status_color,
+                    rt.name AS request_type_name,
                     b.name AS brigade_name,
                     e.fio AS brigade_lead,
                     op.fio AS operator_name,
@@ -938,6 +980,7 @@ class ReportController extends Controller
                 FROM requests r
                 LEFT JOIN clients c ON r.client_id = c.id
                 LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                LEFT JOIN request_types rt ON r.request_type_id = rt.id
                 LEFT JOIN brigades b ON r.brigade_id = b.id
                 LEFT JOIN employees e ON b.leader_id = e.id
                 LEFT JOIN employees op ON r.operator_id = op.id
@@ -945,11 +988,29 @@ class ReportController extends Controller
                 LEFT JOIN addresses addr ON ra.address_id = addr.id
                 LEFT JOIN cities ct ON addr.city_id = ct.id
                 WHERE r.execution_date::date BETWEEN ? AND ?
-                AND (b.is_deleted = false OR b.id IS NULL)
-                ORDER BY r.execution_date DESC, r.id DESC
-            ';
+                AND (b.is_deleted = false OR b.id IS NULL)';
 
-            $requestsByDateRange = DB::select($sql, [$startDate, $endDate]);
+            // Добавляем фильтр по организации
+            if ($request->has('organization') && ! empty($request->organization)) {
+                $sql .= ' AND c.organization = ?';
+                $bindings[] = $request->organization;
+            }
+
+            // Добавляем фильтр по типу заявки
+            if ($request->has('requestTypeId') && ! empty($request->requestTypeId)) {
+                $sql .= ' AND r.request_type_id = ?';
+                $bindings[] = $request->requestTypeId;
+            }
+
+            $sql .= ' ORDER BY r.execution_date DESC, r.id DESC';
+
+            // Логируем SQL-запрос для отладки
+            \Log::info('SQL Query in getRequestsByDateRange:', [
+                'sql' => $sql,
+                'bindings' => $bindings,
+            ]);
+
+            $requestsByDateRange = DB::select($sql, $bindings);
 
             $data = [
                 'success' => true,
@@ -1069,6 +1130,7 @@ class ReportController extends Controller
                 c.organization AS client_organization,
                 rs.name AS status_name,
                 rs.color AS status_color,
+                rt.name AS request_type_name,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -1082,6 +1144,7 @@ class ReportController extends Controller
             ")
                 ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
                 ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+                ->leftJoin('request_types AS rt', 'r.request_type_id', '=', 'rt.id')
                 ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
                 ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
                 ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
@@ -1103,19 +1166,35 @@ class ReportController extends Controller
                     })->orWhere('b.leader_id', $employeeId);
                 })
                 ->whereDate('r.execution_date', '>=', $startDate)
-                ->whereDate('r.execution_date', '<=', $endDate)
-                ->groupBy(
-                    'r.id', 'c.id', 'rs.id', 'b.id', 'e.id',
-                    'op.id', 'addr.id', 'ct.id'
-                )
+                ->whereDate('r.execution_date', '<=', $endDate);
+
+            // Добавляем фильтр по организации
+            if ($request->has('organization') && ! empty($request->organization)) {
+                $query->where('c.organization', $request->organization);
+            }
+
+            // Добавляем фильтр по типу заявки
+            if ($request->has('requestTypeId') && ! empty($request->requestTypeId)) {
+                $query->where('r.request_type_id', $request->requestTypeId);
+            }
+
+            $query->groupBy(
+                'r.id', 'c.id', 'rs.id', 'rt.id', 'b.id', 'e.id',
+                'op.id', 'addr.id', 'ct.id'
+            )
                 ->orderByDesc('r.execution_date')
                 ->orderByDesc('r.id');
 
             $requestsByEmployeeAndDateRange = $query->get();
 
-            \Log::info('SQL Query:', [
+            \Log::info('SQL Query in getRequestsByEmployeeAndDateRange:', [
                 'sql' => $query->toSql(),
                 'bindings' => $query->getBindings(),
+                'employeeId' => $employeeId,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'organization' => $request->organization ?? null,
+                'requestTypeId' => $request->requestTypeId ?? null,
             ]);
 
             $data = [
@@ -1171,6 +1250,26 @@ class ReportController extends Controller
             Log::error('Error in ReportController@getBrigadeMembersWithDetails: '.$e->getMessage());
 
             return [];
+        }
+    }
+
+    /**
+     * Получение списка организаций для отчетов
+     */
+    public function getOrganizations()
+    {
+        try {
+            $organizations = DB::select('SELECT DISTINCT organization FROM clients WHERE organization IS NOT NULL AND organization != \'\' ORDER BY organization');
+
+            return response()->json($organizations);
+        } catch (\Exception $e) {
+            Log::error('Error in ReportController@getOrganizations: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении списка организаций',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 

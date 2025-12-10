@@ -400,7 +400,7 @@
                                         $rowNumber = $loop->iteration; 
                                         // Get the current loop iteration (1-based index)
                                     @endphp
-                                     <tr id="request-{{ $request->id }}" data-request-status="{{ $request->status_id }}" data-request-number="{{ $request->number }}" data-address="{{ ($request->city_name && $request->city_name !== 'Москва' ? $request->city_name . ', ' : '') . ' ул. ' . $request->street . ', ' . $request->houses }}" class="align-middle status-row welcome-blade"
+                                     <tr id="request-{{ $request->id }}" data-request-type-id="{{ $request->request_type_id }}" data-request-status="{{ $request->status_id }}" data-request-number="{{ $request->number }}" data-address="{{ ($request->city_name && $request->city_name !== 'Москва' ? $request->city_name . ', ' : '') . ' ул. ' . $request->street . ', ' . $request->houses }}" class="align-middle status-row welcome-blade"
                                          style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                          data-request-id="{{ $request->id }}">
 
@@ -1319,6 +1319,18 @@
                                 <!-- Сюда динамически загружаем список адресов -->
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div id="report-organizations-container" class="col-md-4">
+                                <!-- Сюда динамически загружаем список организаций -->
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div id="report-request-types-container" class="col-md-4">
+                                <!-- Сюда динамически загружаем список типов заявок -->
+                            </div>
+                        </div>
                         
                         <div class="row mb-3">
                             <div class="col-md-12">
@@ -1481,6 +1493,12 @@
                             </div>
                         </div>
 
+                        <div class="d-flex justify-content-end align-items-center mb-4">
+                            <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addWorkParameterTypeModal">
+                                <i class="bi bi-gear me-1"></i>Параметры типа заявки
+                            </button>
+                        </div>
+
                         <!-- Модальное окно добавления/редактирования типа заявки -->
                         <div class="modal fade" id="addRequestTypeModal" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog">
@@ -1505,6 +1523,64 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                                         <button type="button" class="btn btn-primary" id="saveRequestTypeBtn">Сохранить</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Модальное окно добавления/редактирования параметра типа заявки -->
+                        <div class="modal fade" id="addWorkParameterTypeModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Параметры типа заявки</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <!-- Таблица параметров типов заявок -->
+                                        <div class="table-responsive mb-3">
+                                            <table class="table table-sm table-hover dark-theme-table">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Название</th>
+                                                        <th>Тип заявки</th>
+                                                        <th class="text-end">Действия</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="workParameterTypesList">
+                                                    <tr>
+                                                        <td colspan="3" class="text-center py-4">
+                                                            <div class="spinner-border text-primary spinner-border-sm" role="status">
+                                                                <span class="visually-hidden">Загрузка...</span>
+                                                            </div>
+                                                            <p class="mt-2 mb-0">Загрузка параметров...</p>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <hr>
+
+                                        <!-- Форма добавления/редактирования -->
+                                        <form id="workParameterTypeForm">
+                                            <input type="hidden" id="workParameterTypeId" value="">
+                                            <div class="mb-3">
+                                                <label for="workParameterTypeRequestType" class="form-label">Тип заявки</label>
+                                                <select class="form-control" id="workParameterTypeRequestType" required>
+                                                    <option value="">Загрузка...</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="workParameterTypeName" class="form-label">Название параметра</label>
+                                                <input type="text" class="form-control" id="workParameterTypeName" required>
+                                            </div>
+                                            
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                        <button type="button" class="btn btn-primary" id="saveWorkParameterTypeBtn">Сохранить</button>
                                     </div>
                                 </div>
                             </div>
@@ -2597,24 +2673,12 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                         <div class="row g-3">
-                             <div class="col-md-6">
-                                 <label for="workParameterName" class="form-label">Параметр <span class="text-danger">*</span></label>
-                                 <input type="text" class="form-control" id="workParameterName" name="work_parameter_name" placeholder="Введите название параметра" required>
-                                 <div id="workParameterName_error" class="invalid-feedback d-none">
-                                     Название параметра запланированных работ
-                                 </div>
-                             </div>
-                             <div class="col-md-6">
-                                 <label for="workParameterQuantity" class="form-label">Количество <span class="text-danger">*</span></label>
-                                 <input type="number" class="form-control" id="workParameterQuantity" name="work_parameter_quantity" placeholder="Введите количество" min="1" required>
-                                 <div id="workParameterQuantity_error" class="invalid-feedback d-none">
-                                     Пожалуйста, введите количество (минимум 1)
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
+                    <!-- Динамические параметры работ -->
+                    <div id="workParametersContainer" class="mb-3">
+                        <div class="alert alert-light border text-center p-2 mb-0 text-muted small">
+                            Выберите тип заявки, чтобы загрузить список работ
+                        </div>
+                    </div>
 
                     <div class="mb-3">
                         <div class="row g-3">
@@ -3416,24 +3480,12 @@
                          <div class="form-control" id="closeCommentEditor" contenteditable="true" style="min-height: 6rem;"></div>
                          <textarea class="form-control d-none" id="closeComment" name="comment" rows="3" required></textarea>
                      </div>
-                     <div class="mb-3">
-                         <div class="row g-3">
-                             <div class="col-md-6">
-                                 <label for="closeWorkParameterName" class="form-label">Параметр <span class="text-danger">*</span></label>
-                                 <input type="text" class="form-control" id="closeWorkParameterName" name="work_parameter_name" placeholder="Введите название параметра" required>
-                                 <div id="closeWorkParameterName_error" class="invalid-feedback d-none">
-                                     Название параметра запланированных работ
-                                 </div>
-                             </div>
-                             <div class="col-md-6">
-                                 <label for="closeWorkParameterQuantity" class="form-label">Количество <span class="text-danger">*</span></label>
-                                 <input type="number" class="form-control" id="closeWorkParameterQuantity" name="work_parameter_quantity" placeholder="Введите количество" min="1" required>
-                                 <div id="closeWorkParameterQuantity_error" class="invalid-feedback d-none">
-                                     Пожалуйста, введите количество (минимум 1)
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
+                    <!-- Динамические параметры работ для закрытия -->
+                    <div id="closeWorkParametersContainer" class="mb-3">
+                        <div class="alert alert-light border text-center p-2 mb-0 text-muted small">
+                            Загрузка списка работ...
+                        </div>
+                    </div>
                      <div class="mb-3">
                          <input type="checkbox" id="uncompletedWorks" name="uncompleted_works">
                          <label for="uncompletedWorks">Недоделанные работы</label>
@@ -3514,40 +3566,75 @@
         document.addEventListener('click', function (e) {
             if (e.target.closest('.close-request-btn')) {
                 e.preventDefault();
-                const requestId = e.target.closest('.close-request-btn').getAttribute('data-request-id');
+                const btn = e.target.closest('.close-request-btn');
+                const requestId = btn.getAttribute('data-request-id');
+                // Ищем строку заявки, чтобы получить тип заявки
+                const tr = document.getElementById(`request-${requestId}`);
+                const requestTypeId = tr ? tr.getAttribute('data-request-type-id') : null;
+
                 const modal = new bootstrap.Modal(document.getElementById('closeRequestModal'));
 
                 // Устанавливаем ID заявки в скрытое поле и заголовок
                 document.getElementById('requestIdToClose').value = requestId;
                 document.getElementById('modalRequestId').textContent = '#' + requestId;
 
-                // Подгружаем данные запланированных работ
-                fetch(`/requests/${requestId}/work-parameters`, {
-                    method: 'GET',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.data.length > 0) {
-                        // Заполняем поля данными первой запланированной работы
-                        const workParam = data.data[0];
-                        document.getElementById('closeWorkParameterName').value = workParam.name || '';
-                        document.getElementById('closeWorkParameterQuantity').value = workParam.quantity || '';
-                    } else {
-                        // Очищаем поля, если данных нет
-                        document.getElementById('closeWorkParameterName').value = '';
-                        document.getElementById('closeWorkParameterQuantity').value = '';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading work parameters:', error);
-                    // Очищаем поля в случае ошибки
-                    document.getElementById('closeWorkParameterName').value = '';
-                    document.getElementById('closeWorkParameterQuantity').value = '';
-                });
+                // Загружаем параметры работ
+                const container = document.getElementById('closeWorkParametersContainer');
+                if (container && requestTypeId) {
+                    container.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Загрузка работ...</div>';
+
+                    // Выполняем параллельно запросы на получение типов работ и запланированных работ
+                    Promise.all([
+                        fetch(`/api/work-parameter-types/by-request-type/${requestTypeId}`).then(r => r.json()),
+                        fetch(`/requests/${requestId}/work-parameters`, {
+                            method: 'GET',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json'
+                            }
+                        }).then(r => r.json())
+                    ]).then(([allTypes, plannedParamsResponse]) => {
+                        const plannedParams = plannedParamsResponse.success ? plannedParamsResponse.data : [];
+                        
+                        // Создаем Map для быстрого поиска запланированного количества
+                        const plannedMap = new Map();
+                        plannedParams.forEach(p => {
+                            if (p.parameter_type_id) {
+                                plannedMap.set(Number(p.parameter_type_id), p.quantity);
+                            }
+                        });
+
+                        container.innerHTML = '';
+
+                        if (Array.isArray(allTypes) && allTypes.length > 0) {
+                            allTypes.forEach(param => {
+                                const plannedQty = plannedMap.get(param.id) || 0;
+                                const row = document.createElement('div');
+                                row.className = 'row g-3 mb-2 align-items-center work-parameter-row';
+                                row.dataset.id = param.id;
+                                row.dataset.name = param.name;
+
+                                row.innerHTML = `
+                                    <div class="col-md-8">
+                                        <label class="form-label mb-0">${param.name}</label>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="number" class="form-control work-parameter-quantity" placeholder="Кол-во" min="0" value="${plannedQty}">
+                                    </div>
+                                `;
+                                container.appendChild(row);
+                            });
+                        } else {
+                            container.innerHTML = '<div class="alert alert-info py-2 mb-0 small">Нет доступных параметров работ для этого типа заявки.</div>';
+                        }
+                    }).catch(error => {
+                        console.error('Error loading work parameters:', error);
+                        container.innerHTML = '<div class="alert alert-danger py-2 mb-0 small">Ошибка загрузки параметров.</div>';
+                    });
+                } else if (!requestTypeId) {
+                     console.error('Не удалось определить тип заявки');
+                     if (container) container.innerHTML = '<div class="alert alert-warning py-2 mb-0 small">Ошибка: не удалось определить тип заявки.</div>';
+                }
 
                 // Показываем модальное окно
                 modal.show();
@@ -3577,29 +3664,21 @@
                 commentField.classList.remove('is-invalid');
             }
 
-            // Валидация параметров работы
-            const workParameterNameField = document.getElementById('closeWorkParameterName');
-            const workParameterQuantityField = document.getElementById('closeWorkParameterQuantity');
-
-            if (!workParameterNameField.value.trim()) {
-                workParameterNameField.classList.add('is-invalid');
-                document.getElementById('closeWorkParameterName_error').classList.remove('d-none');
-                showAlert('Пожалуйста, заполните название параметра', 'warning');
-                return;
-            } else {
-                workParameterNameField.classList.remove('is-invalid');
-                document.getElementById('closeWorkParameterName_error').classList.add('d-none');
-            }
-
-            if (!workParameterQuantityField.value || workParameterQuantityField.value < 1) {
-                workParameterQuantityField.classList.add('is-invalid');
-                document.getElementById('closeWorkParameterQuantity_error').classList.remove('d-none');
-                showAlert('Пожалуйста, введите корректное количество', 'warning');
-                return;
-            } else {
-                workParameterQuantityField.classList.remove('is-invalid');
-                document.getElementById('closeWorkParameterQuantity_error').classList.add('d-none');
-            }
+            // Сбор динамических параметров
+            const workParameters = [];
+            const parameterRows = document.querySelectorAll('#closeWorkParametersContainer .work-parameter-row');
+            parameterRows.forEach(row => {
+                const typeId = row.dataset.id;
+                const quantityInput = row.querySelector('.work-parameter-quantity');
+                const quantity = quantityInput ? parseInt(quantityInput.value) : 0;
+                
+                if (typeId && quantity > 0) {
+                    workParameters.push({
+                        parameter_type_id: typeId,
+                        quantity: quantity
+                    });
+                }
+            });
 
             const requestId = document.getElementById('requestIdToClose').value;
             const comment = document.getElementById('closeComment').value;
@@ -3612,8 +3691,7 @@
 
                 const inputData = {
                         comment: comment,
-                        work_parameter_name: workParameterNameField.value.trim(),
-                        work_parameter_quantity: parseInt(workParameterQuantityField.value),
+                        work_parameters: workParameters,
                         uncompleted_works: document.getElementById('uncompletedWorks').checked,
                         _token: document.querySelector('input[name="_token"]').value
                     };
@@ -3650,7 +3728,7 @@
                 const modal = bootstrap.Modal.getInstance(document.getElementById('closeRequestModal'));
                 modal.hide();
             } catch (error) {
-                console.error('Ошибка при закрытии заявки  #${requestId}:', error);
+                console.error(`Ошибка при закрытии заявки #${requestId}:`, error);
                 showAlert(`Ошибка при закрытии заявки #${requestId} : ${error.message}`, 'danger');
             } finally {
                 submitBtn.disabled = false;

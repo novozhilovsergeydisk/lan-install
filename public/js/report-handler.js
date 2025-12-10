@@ -361,12 +361,78 @@ export async function loadAddressesForReport() {
     }
 }
 
+// Функция для загрузки списка организаций
+export async function loadOrganizationsForReport() {
+    try {
+        const response = await fetch('/reports/organizations');
+        const data = await response.json();
+
+        const select = document.createElement('select');
+        select.id = 'report-organizations';
+        select.className = 'form-select';
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = 'all_organizations';
+        defaultOption.textContent = 'Все организации';
+        select.appendChild(defaultOption);
+
+        data.forEach(org => {
+            const option = document.createElement('option');
+            option.value = org.organization;
+            option.textContent = org.organization;
+            select.appendChild(option);
+        });
+
+        const container = document.getElementById('report-organizations-container');
+        if (container) {
+            container.appendChild(select);
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке организаций:', error);
+        showAlert('Не удалось загрузить список организаций', 'danger');
+    }
+}
+
+// Функция для загрузки списка типов заявок
+export async function loadRequestTypesForReport() {
+    try {
+        const response = await fetch('/request-types');
+        const data = await response.json();
+
+        const select = document.createElement('select');
+        select.id = 'report-request-types';
+        select.className = 'form-select';
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = 'all_request_types';
+        defaultOption.textContent = 'Все типы заявок';
+        select.appendChild(defaultOption);
+
+        data.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.id;
+            option.textContent = type.name;
+            select.appendChild(option);
+        });
+
+        const container = document.getElementById('report-request-types-container');
+        if (container) {
+            container.appendChild(select);
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке типов заявок:', error);
+        showAlert('Не удалось загрузить список типов заявок', 'danger');
+    }
+}
+
 // Функция для загрузки отчёта
 export async function loadReport() {
     let startDate = $('#datepicker-reports-start').datepicker('getFormattedDate');
     let endDate = $('#datepicker-reports-end').datepicker('getFormattedDate');
     const employeeSelect = document.getElementById('report-employees');
     const addressSelect = document.getElementById('report-addresses');
+    const organizationSelect = document.getElementById('report-organizations');
+    const requestTypeSelect = document.getElementById('report-request-types');
     const allPeriod = document.getElementById('report-all-period');
     let url = '';    
     
@@ -439,16 +505,26 @@ export async function loadReport() {
     console.log('Request URL:', url);
 
     // Формируем данные для запроса
-    const requestData = { 
-        startDate, 
-        endDate, 
+    const requestData = {
+        startDate,
+        endDate,
         employeeId: employeeSelect.value === 'all_employees' ? '' : employeeSelect.value,
-        allPeriod: allPeriod.checked 
+        allPeriod: allPeriod.checked
     };
-    
+
     // Добавляем addressId только если он выбран
     if (addressSelect.value && addressSelect.value !== 'all_addresses') {
         requestData.addressId = addressSelect.value;
+    }
+
+    // Добавляем organization только если она выбрана
+    if (organizationSelect.value && organizationSelect.value !== 'all_organizations') {
+        requestData.organization = organizationSelect.value;
+    }
+
+    // Добавляем requestTypeId только если он выбран
+    if (requestTypeSelect.value && requestTypeSelect.value !== 'all_request_types') {
+        requestData.requestTypeId = requestTypeSelect.value;
     }
     
     console.log('Данные для запроса:', requestData);
@@ -830,8 +906,16 @@ export async function initReportHandlers() {
         // Загрузка списка адресов и ожидание её завершения
         await loadAddressesForReport();
 
+        // Загрузка списка организаций
+        await loadOrganizationsForReport();
+
+        // Загрузка списка типов заявок
+        await loadRequestTypesForReport();
+
         const employeeSelect = document.getElementById('report-employees');
         const addressSelect = document.getElementById('report-addresses');
+        const organizationSelect = document.getElementById('report-organizations');
+        const requestTypeSelect = document.getElementById('report-request-types');
         const allPeriodCheckbox = document.getElementById('report-all-period');
         
         if (allPeriodCheckbox) {
@@ -918,6 +1002,30 @@ export async function initReportHandlers() {
             });
         } else {
             console.error('Элемент report-addresses не найден после загрузки адресов');
+        }
+
+        if (organizationSelect) {
+            organizationSelect.addEventListener('change', () => {
+                const selectedOrganization = organizationSelect.value;
+                console.log('Selected organization:', selectedOrganization);
+
+                // Сбрасываем чекбокс "За весь период"
+                if (allPeriodCheckbox) {
+                    // allPeriodCheckbox.checked = false;
+                }
+            });
+        }
+
+        if (requestTypeSelect) {
+            requestTypeSelect.addEventListener('change', () => {
+                const selectedRequestTypeId = requestTypeSelect.value;
+                console.log('Selected request type ID:', selectedRequestTypeId);
+
+                // Сбрасываем чекбокс "За весь период"
+                if (allPeriodCheckbox) {
+                    // allPeriodCheckbox.checked = false;
+                }
+            });
         }
     } catch (error) {
         console.error('Ошибка при инициализации обработчиков отчета:', error);

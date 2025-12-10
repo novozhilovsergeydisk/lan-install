@@ -8,12 +8,13 @@ import { initReportHandlers } from './report-handler.js';
 import { initPhotoReportModal } from './modals.js';
 import { initAddressDocumentHandlers } from './address-documents.js';
 import { initRequestTypesHandlers, loadRequestTypes } from './request-types.js';
-import { 
-    initFormHandlers, 
-    initEmployeeEditHandlers, 
-    initSaveEmployeeChanges, 
-    initEmployeeFilter,     
-    initDeleteEmployee, 
+import { initWorkParameterTypesHandlers } from './work-parameter-types.js';
+import {
+    initFormHandlers,
+    initEmployeeEditHandlers,
+    initSaveEmployeeChanges,
+    initEmployeeFilter,
+    initDeleteEmployee,
     initDeleteMember,
     currentDateState,
     initAddPhotoReport,
@@ -69,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initOpenAdditionalTaskRequestHandler();
     initAddressDocumentHandlers();
     initRequestTypesHandlers();
+    initWorkParameterTypesHandlers();
 
     // Очищаем контейнер фотоотчета при закрытии модального окна комментариев
     const commentsModal = document.getElementById('commentsModal');

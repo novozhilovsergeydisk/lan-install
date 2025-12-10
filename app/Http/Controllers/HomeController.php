@@ -955,7 +955,7 @@ class HomeController extends Controller
             $brigadesCurrentDay = DB::select($sql);
 
             // 🔽 Комплексный запрос получения списка заявок с подключением к employees
-             $sql = "SELECT
+            $sql = "SELECT
                  r.*,
                  c.fio AS client_fio,
                  c.phone AS client_phone,
@@ -2129,37 +2129,32 @@ class HomeController extends Controller
                 //     ->where('request_id', $id)
                 //     ->update(['is_done' => true, 'updated_at' => now()]);
 
-                // Валидация параметров работы
-                $workParameterName = $request->input('work_parameter_name');
-                $workParameterQuantity = $request->input('work_parameter_quantity');
+                // Получаем параметры работы (массив)
+                $workParameters = $request->input('work_parameters');
 
-                if (! $workParameterName || ! $workParameterQuantity) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Необходимо указать параметры работы',
-                    ], 422);
-                }
+                // Создаем записи параметров работы
+                if (!empty($workParameters) && is_array($workParameters)) {
+                    try {
+                        foreach ($workParameters as $param) {
+                            DB::table('work_parameters')->insert([
+                                'request_id' => $id,
+                                'parameter_type_id' => $param['parameter_type_id'],
+                                'quantity' => $param['quantity'],
+                                'is_planning' => false, // Это выполненная работа
+                                'is_done' => true,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
 
-                // Создаем новую запись параметров работы (обязательно)
-                try {
-                    DB::table('work_parameters')->insert([
-                        'request_id' => $id,
-                        'name' => $workParameterName,
-                        'quantity' => $workParameterQuantity,
-                        'is_planning' => false, // Это выполненная работа
-                        'is_done' => true,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-
-                    \Log::info('Создан параметр выполненной работы для заявки:', [
-                        'request_id' => $id,
-                        'name' => $workParameterName,
-                        'quantity' => $workParameterQuantity,
-                    ]);
-                } catch (\Exception $e) {
-                    \Log::error('Ошибка при создании параметров выполненной работы: '.$e->getMessage());
-                    throw $e; // Критическая ошибка при закрытии заявки
+                        \Log::info('Созданы параметры выполненной работы для заявки:', [
+                            'request_id' => $id,
+                            'count' => count($workParameters),
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::error('Ошибка при создании параметров выполненной работы: '.$e->getMessage());
+                        throw $e; // Критическая ошибка при закрытии заявки
+                    }
                 }
 
                 // Если отмечен чекбокс "Недоделанные работы", добавляем запись в таблицу incomplete_works
@@ -2217,20 +2212,23 @@ class HomeController extends Controller
 
                     // Создаем параметры работы (запланированные) для новой заявки (недоделанные работы)
                     try {
-                        DB::table('work_parameters')->insert([
-                            'request_id' => $newRequestId,
-                            'name' => $workParameterName, // Из формы закрытия
-                            'quantity' => $workParameterQuantity, // Из формы закрытия
-                            'is_planning' => true, // Запланированные работы
-                            'is_done' => false,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                        if (!empty($workParameters) && is_array($workParameters)) {
+                            foreach ($workParameters as $param) {
+                                DB::table('work_parameters')->insert([
+                                    'request_id' => $newRequestId,
+                                    'parameter_type_id' => $param['parameter_type_id'],
+                                    'quantity' => $param['quantity'],
+                                    'is_planning' => true, // Запланированные
+                                    'is_done' => false,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            }
+                        }
 
-                        \Log::info('Создан параметр запланированной работы для новой заявки:', [
+                        \Log::info('Созданы параметры запланированной работы для новой заявки:', [
                             'new_request_id' => $newRequestId,
-                            'name' => $workParameterName,
-                            'quantity' => $workParameterQuantity,
+                            'count' => count($workParameters),
                         ]);
                     } catch (\Exception $e) {
                         \Log::error('Ошибка при создании параметров запланированной работы для новой заявки: '.$e->getMessage());
@@ -2754,17 +2752,11 @@ class HomeController extends Controller
                 'brigade_id' => $input['brigade_id'] ?? null,
                 'operator_id' => $employeeId,
                 'address_id' => $input['address_id'] ?? null,
-                'work_parameter_name' => $input['work_parameter_name'] ?? null,
-                'work_parameter_quantity' => $input['work_parameter_quantity'] ?? null,
+                'work_parameters' => $input['work_parameters'] ?? null,
             ];
 
             // Используем ранее найденный employeeId или null
             $validationData['operator_id'] = $employeeId;
-
-            // \Log::info('Используем для заявки operator_id:', [
-            //     'user_id' => $userId,
-            //     'employee_id' => $employeeId
-            // ]);
 
             // Правила валидации
             $rules = [
@@ -2779,8 +2771,9 @@ class HomeController extends Controller
                 'brigade_id' => 'nullable|exists:brigades,id',
                 'operator_id' => 'nullable|exists:employees,id',
                 'address_id' => 'required|exists:addresses,id',
-                'work_parameter_name' => 'required|string|max:255',
-                'work_parameter_quantity' => 'required|integer|min:1',
+                'work_parameters' => 'nullable|array',
+                'work_parameters.*.parameter_type_id' => 'required|exists:work_parameter_types,id',
+                'work_parameters.*.quantity' => 'required|integer|min:1',
             ];
 
             // Логируем входные данные для отладки
@@ -3022,26 +3015,29 @@ class HomeController extends Controller
             //     'address_id' => $addressId
             // ]);
 
-            // 6. Создаем параметры работы (обязательно)
-            try {
-                DB::table('work_parameters')->insert([
-                    'name' => $validated['work_parameter_name'],
-                    'quantity' => $validated['work_parameter_quantity'],
-                    'request_id' => $requestId,
-                    'is_planning' => true,
-                    'is_done' => false,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            // 6. Создаем параметры работы (опционально)
+            if (!empty($validated['work_parameters'])) {
+                try {
+                    foreach ($validated['work_parameters'] as $param) {
+                        DB::table('work_parameters')->insert([
+                            'parameter_type_id' => $param['parameter_type_id'],
+                            'quantity' => $param['quantity'],
+                            'request_id' => $requestId,
+                            'is_planning' => true,
+                            'is_done' => false,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
 
-                \Log::info('Создан параметр работы для заявки:', [
-                    'request_id' => $requestId,
-                    'name' => $validated['work_parameter_name'],
-                    'quantity' => $validated['work_parameter_quantity'],
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Ошибка при создании параметров работы: '.$e->getMessage());
-                throw $e; // Теперь это критическая ошибка, так как поля обязательные
+                    \Log::info('Созданы параметры работы для заявки:', [
+                        'request_id' => $requestId,
+                        'count' => count($validated['work_parameters']),
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Ошибка при создании параметров работы: '.$e->getMessage());
+                    throw $e;
+                }
             }
 
             // 🔽 Комплексный запрос получения списка заявок с подключением к employees
@@ -3089,7 +3085,7 @@ class HomeController extends Controller
 
             \Log::info('Request type data', [
                 'name' => $requestTypeData->request_type_name ?? null,
-                'color' => $requestTypeData->request_type_color ?? null
+                'color' => $requestTypeData->request_type_color ?? null,
             ]);
 
             // Формируем ответ
@@ -3126,14 +3122,14 @@ class HomeController extends Controller
                         'district' => $address->district,
                         'comment' => $address->comments ?? '',
                     ],
-                     'comment' => $newCommentId ? [
-                         'id' => $newCommentId,
-                         'text' => $commentText,
-                     ] : null,
-                     'request_type_name' => $requestTypeData->request_type_name ?? null,
-                     'request_type_color' => $requestTypeData->request_type_color ?? null,
-                 ],
-             ];
+                    'comment' => $newCommentId ? [
+                        'id' => $newCommentId,
+                        'text' => $commentText,
+                    ] : null,
+                    'request_type_name' => $requestTypeData->request_type_name ?? null,
+                    'request_type_color' => $requestTypeData->request_type_color ?? null,
+                ],
+            ];
 
             // Фиксируем изменения, если все успешно
             DB::commit();
