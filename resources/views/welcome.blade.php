@@ -1321,13 +1321,13 @@
                         </div>
 
                         <div class="row">
-                            <div id="report-organizations-container" class="col-md-4">
+                            <div id="report-organizations-container" class="col-md-4 mt-2">
                                 <!-- Сюда динамически загружаем список организаций -->
                             </div>
                         </div>
 
                         <div class="row">
-                            <div id="report-request-types-container" class="col-md-4">
+                            <div id="report-request-types-container" class="col-md-4 mt-2">
                                 <!-- Сюда динамически загружаем список типов заявок -->
                             </div>
                         </div>
