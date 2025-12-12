@@ -1915,6 +1915,25 @@
                     }
                     return false;
                 }
+
+                // Проверка размера файлов
+                let totalSize = 0;
+                const fileInputs = this.querySelectorAll('input[type="file"]');
+                fileInputs.forEach(input => {
+                    if (input.files) {
+                        for (let i = 0; i < input.files.length; i++) {
+                            totalSize += input.files[i].size;
+                        }
+                    }
+                });
+
+                const MAX_SIZE_MB = 100;
+                const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+                if (totalSize > MAX_SIZE_BYTES) {
+                    utils.showAlert(`Общий размер файлов (${(totalSize / (1024 * 1024)).toFixed(2)} МБ) превышает допустимый лимит ${MAX_SIZE_MB} МБ.`, 'danger');
+                    return false;
+                }
                 
                 console.log('Валидация пройдена, продолжаем отправку');
 
@@ -1995,6 +2014,9 @@
                     return response;
                 })
                     .then(response => {
+                        if (response.status === 413) {
+                             throw new Error('Размер файлов слишком большой. Пожалуйста, уменьшите размер или количество файлов.');
+                        }
                         if (!response.ok) {
                             throw new Error('Ошибка при отправке комментария');
                         }

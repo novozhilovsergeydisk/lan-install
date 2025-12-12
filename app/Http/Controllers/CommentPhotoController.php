@@ -475,12 +475,34 @@ class CommentPhotoController extends Controller
         }
     }
 
-    public function downloadAllPhotos()
+    public function downloadAllPhotos(Request $request)
     {
         try {
-            // Создаем временный файл для архива
-            $zip = new \ZipArchive;
-            $zipName = 'photos_archive_'.now()->format('Y-m-d_H-i-s').'.zip';
+            $requestId = $request->input('request_id');
+
+            if (! $requestId) {
+                throw new \Exception('Не указан ID заявки');
+            }
+
+            // Получаем информацию о заявке и адресе
+            $requestInfo = DB::table('requests as r')
+                ->leftJoin('request_addresses as ra', 'r.id', '=', 'ra.request_id')
+                ->leftJoin('addresses as a', 'ra.address_id', '=', 'a.id')
+                ->select('r.number', 'a.street', 'a.houses')
+                ->where('r.id', $requestId)
+                ->first();
+
+            if (! $requestInfo) {
+                throw new \Exception('Заявка не найдена');
+            }
+
+            // Формируем имя архива: Адрес_НомерЗаявки.zip
+            $addressString = ($requestInfo->street ?? 'NoAddress').'_'.($requestInfo->houses ?? '');
+            $zipNameRaw = $addressString.'_'.$requestInfo->number;
+            // Санитизация имени файла
+            $zipName = preg_replace('/[^a-zA-Zа-яА-Я0-9\s\-_]/u', '_', $zipNameRaw).'.zip';
+            $zipName = preg_replace('/_+/', '_', $zipName); // Убираем двойные подчеркивания
+
             $zipPath = storage_path('app/temp/'.$zipName);
 
             // Создаем директорию, если она не существует
@@ -488,50 +510,53 @@ class CommentPhotoController extends Controller
                 mkdir(dirname($zipPath), 0755, true);
             }
 
+            $zip = new \ZipArchive;
             if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
                 throw new \Exception('Не удалось создать архив');
             }
 
-            // Получаем все комментарии с фотографиями для всех заявок
-            $comments = \DB::table('requests as r')
-                ->leftJoin('request_comments as rc', 'rc.request_id', '=', 'r.id')
-                ->leftJoin('comments as c', 'c.id', '=', 'rc.comment_id')
-                ->leftJoin('comment_photos as cp', 'cp.comment_id', '=', 'c.id')
-                ->leftJoin('photos as p', 'p.id', '=', 'cp.photo_id')
+            // Получаем все комментарии с фотографиями для конкретной заявки
+            $comments = DB::table('comments as c')
+                ->join('request_comments as rc', 'c.id', '=', 'rc.comment_id')
+                ->join('comment_photos as cp', 'c.id', '=', 'cp.comment_id')
+                ->join('photos as p', 'cp.photo_id', '=', 'p.id')
                 ->select(
-                    'r.id as request_id',
-                    'r.number as request_number',
                     'c.id as comment_id',
                     'c.comment',
                     'p.path as photo_path',
                     'p.original_name',
                     'cp.created_at as photo_created_at'
                 )
-                ->whereNotNull('p.path')  // Берем только комментарии с фотографиями
+                ->where('rc.request_id', $requestId)
+                ->whereNotNull('p.path')
                 ->orderBy('c.id')
                 ->orderBy('cp.created_at')
                 ->get()
                 ->groupBy('comment_id');
 
             foreach ($comments as $commentId => $commentPhotos) {
-                // Создаем имя папки на основе номера заявки и комментария
-                $folderName = $commentPhotos[0]->request_number.'_'.
-                             preg_replace('/[^a-zA-Zа-яА-Я0-9\s\-_]/u', '', $commentPhotos[0]->comment);
-                $folderName = mb_substr($folderName, 0, 50); // Ограничиваем длину имени папки
+                // Имя папки 1-го уровня: Номер заявки
+                $level1 = $requestInfo->number;
+                
+                // Имя папки 2-го уровня: Текст комментария
+                $commentText = $commentPhotos[0]->comment ?? 'NoComment';
+                $level2 = preg_replace('/[^a-zA-Zа-яА-Я0-9\s\-_]/u', ' ', $commentText);
+                $level2 = mb_substr(trim($level2), 0, 50); // Ограничиваем длину
+                if (empty($level2)) {
+                    $level2 = 'Comment_'.$commentId;
+                }
 
                 foreach ($commentPhotos as $index => $photo) {
                     $photoPath = storage_path('app/public/'.$photo->photo_path);
 
                     if (file_exists($photoPath)) {
-                        // Создаем уникальное имя файла, чтобы избежать перезаписи
-                        $fileExtension = pathinfo($photo->original_name, PATHINFO_EXTENSION);
+                        // Уникальное имя файла
                         $fileName = $index.'_'.$photo->original_name;
 
-                        // Добавляем файл в архив с путем, включающим имя папки комментария
-                        $zip->addFile(
-                            $photoPath,
-                            $folderName.'/'.$fileName
-                        );
+                        // Структура: НомерЗаявки / ТекстКомментария / Фото
+                        $zipPathInArchive = $level1.'/'.$level2.'/'.$fileName;
+
+                        $zip->addFile($photoPath, $zipPathInArchive);
                     }
                 }
             }
@@ -540,7 +565,7 @@ class CommentPhotoController extends Controller
 
             // Проверяем, что архив не пустой
             if (filesize($zipPath) === 0) {
-                throw new \Exception('Не найдено фотографий для скачивания');
+                throw new \Exception('Не найдено фотографий для скачивания или файлы отсутствуют на диске');
             }
 
             // Отправляем архив на скачивание
@@ -550,7 +575,6 @@ class CommentPhotoController extends Controller
             \Log::error('Ошибка при создании архива с фотографиями: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
 
-            // Удаляем временный файл, если он был создан
             if (isset($zipPath) && file_exists($zipPath)) {
                 unlink($zipPath);
             }

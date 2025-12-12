@@ -1359,16 +1359,20 @@ function initExportReportBtn() {
 }
 
 // Обработчик для кнопки скачивания zip-архива всех фото
-function initDownloadAllPhotos() {
+export function initDownloadAllPhotos() {
     const downloadAllPhotosBtn = document.querySelector('.download-all-photos-btn');
     
     if (downloadAllPhotosBtn) {
         downloadAllPhotosBtn.addEventListener('click', async function() {
             console.log('Кнопка скачивания архива всех фото нажата');
 
-            showAlert('Подготовка архива всех фото в разработке', 'info');
-
-            return;
+            // Получаем ID заявки
+            const requestId = document.getElementById('commentRequestId')?.value;
+            
+            if (!requestId) {
+                showAlert('Не удалось определить ID заявки', 'warning');
+                return;
+            }
 
             // Показываем индикатор загрузки
             const originalText = downloadAllPhotosBtn.innerHTML;
@@ -1380,9 +1384,11 @@ function initDownloadAllPhotos() {
                 const response = await fetch('/download-all-photos', {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         'Accept': 'application/zip, application/json',
                     },
+                    body: JSON.stringify({ request_id: requestId }),
                     responseType: 'blob'
                 });
 
@@ -1396,11 +1402,13 @@ function initDownloadAllPhotos() {
                 
                 // Проверяем, что это действительно архив
                 if (blob.type !== 'application/zip' && blob.type !== 'application/x-zip-compressed') {
+                    // Пытаемся прочитать текст ошибки из blob
                     const errorText = await blob.text();
                     try {
                         const errorData = JSON.parse(errorText);
                         throw new Error(errorData.message || 'Неверный формат ответа от сервера');
                     } catch (e) {
+                        // Если не JSON, значит просто неверный тип файла
                         throw new Error('Ожидался zip-архив, но получен неверный формат данных');
                     }
                 }
@@ -1412,7 +1420,7 @@ function initDownloadAllPhotos() {
                 
                 // Получаем имя файла из заголовка Content-Disposition или используем имя по умолчанию
                 const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = 'photos_archive_' + new Date().toISOString().slice(0, 10) + '.zip';
+                let filename = 'photos_archive.zip';
                 if (contentDisposition) {
                     const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
                     if (filenameMatch != null && filenameMatch[1]) {
@@ -1429,7 +1437,7 @@ function initDownloadAllPhotos() {
                 document.body.removeChild(a);
                 
                 // Показываем уведомление об успешном скачивании
-                showAlert('Архив с фотографиями успешно загружается', 'success');
+                showAlert('Архив с фотографиями успешно скачан', 'success');
                 
             } catch (error) {
                 console.error('Ошибка при скачивании архива:', error);
@@ -5765,7 +5773,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initCommentHandlers();
     initRequestCloseHandlers();
     initPhotoReportList();
-    initDownloadAllPhotos();
+    // initDownloadAllPhotos();
     initUploadExcel();
     initExportReportBtn();
     initOpenMapBtn();
