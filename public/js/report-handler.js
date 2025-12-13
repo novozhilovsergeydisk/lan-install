@@ -367,25 +367,127 @@ export async function loadOrganizationsForReport() {
         const response = await fetch('/reports/organizations');
         const data = await response.json();
 
+        const container = document.getElementById('report-organizations-container');
+        if (!container) return;
+        
+        // Очищаем контейнер
+        container.innerHTML = '';
+
+        // Создаем контейнер для селекта и кнопки
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'position-relative mt-2';
+
         const select = document.createElement('select');
         select.id = 'report-organizations';
         select.className = 'form-select';
+        select.style.paddingRight = '35px';
+        select.style.textOverflow = 'ellipsis';
+        select.style.overflow = 'hidden';
+        select.style.whiteSpace = 'nowrap';
+        
+        // Создаем обертку для кастомного селекта
+        const customSelectWrapper = document.createElement('div');
+        customSelectWrapper.className = 'custom-select-wrapper';
+        customSelectWrapper.id = 'custom-select-wrapper-report-organizations';
 
         const defaultOption = document.createElement('option');
         defaultOption.value = 'all_organizations';
         defaultOption.textContent = 'Все организации';
         select.appendChild(defaultOption);
+        
+        // Создаем кнопку очистки
+        const clearButton = document.createElement('button');
+        clearButton.className = 'btn btn-link text-secondary';
+        clearButton.type = 'button';
+        clearButton.id = 'clear-organization-btn';
+        clearButton.innerHTML = '&times;';
+        clearButton.title = 'Очистить выбор';
+        clearButton.style.position = 'absolute';
+        clearButton.style.right = '8px';
+        clearButton.style.top = '50%';
+        clearButton.style.transform = 'translateY(-50%)';
+        clearButton.style.background = 'none';
+        clearButton.style.border = 'none';
+        clearButton.style.fontSize = '1.5em';
+        clearButton.style.padding = '0 5px';
+        clearButton.style.zIndex = '5';
+        clearButton.style.lineHeight = '1';
+        clearButton.style.textDecoration = 'none';
+        
+        // Добавляем обработчик для кнопки очистки
+        clearButton.addEventListener('click', function() {
+            select.value = 'all_organizations';
+            const event = new Event('change');
+            select.dispatchEvent(event);
+        });
+
+        // Добавляем элементы в контейнер
+        customSelectWrapper.appendChild(select);
+        inputGroup.appendChild(customSelectWrapper);
+        
+        // Добавляем кнопку очистки
+        const clearButtonWrapper = document.createElement('div');
+        clearButtonWrapper.style.position = 'absolute';
+        clearButtonWrapper.style.right = '10px';
+        clearButtonWrapper.style.top = '50%';
+        clearButtonWrapper.style.transform = 'translateY(-50%)';
+        clearButtonWrapper.style.zIndex = '10';
+        clearButtonWrapper.style.pointerEvents = 'none';
+        
+        clearButtonWrapper.appendChild(clearButton);
+        customSelectWrapper.appendChild(clearButtonWrapper);
+        
+        clearButton.style.pointerEvents = 'auto';
 
         data.forEach(org => {
             const option = document.createElement('option');
             option.value = org.organization;
             option.textContent = org.organization;
+            option.dataset.text = org.organization;
             select.appendChild(option);
         });
 
-        const container = document.getElementById('report-organizations-container');
-        if (container) {
-            container.appendChild(select);
+        container.appendChild(inputGroup);
+        
+        // Инициализируем кастомный селект
+        if (typeof window.initCustomSelect === 'function') {
+            window.initCustomSelect('report-organizations', 'Выберите организацию');
+            
+            // Добавляем обработчик для кнопки очистки после инициализации кастомного селекта
+            setTimeout(() => {
+                const customSelectInput = document.querySelector('#custom-select-wrapper-report-organizations .custom-select-input');
+                if (customSelectInput) {
+                    clearButton.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        
+                        select.selectedIndex = -1;
+                        
+                        if (customSelectInput) {
+                            customSelectInput.value = '';
+                            customSelectInput.placeholder = 'Выберите организацию';
+                            
+                            const dropdown = customSelectInput.closest('.custom-select-wrapper');
+                            if (dropdown) {
+                                const options = dropdown.querySelectorAll('.custom-select-options li');
+                                options.forEach(option => {
+                                    option.classList.remove('active');
+                                });
+                                
+                                const optionsList = dropdown.querySelector('.custom-select-options');
+                                if (optionsList) {
+                                    optionsList.style.display = 'none';
+                                }
+                            }
+                        }
+                        
+                        const event = new Event('change', { bubbles: true });
+                        select.dispatchEvent(event);
+                    });
+                }
+            }, 100);
+        } else {
+             select.classList.remove('d-none');
         }
     } catch (error) {
         console.error('Ошибка при загрузке организаций:', error);
