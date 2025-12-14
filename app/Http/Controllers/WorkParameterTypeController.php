@@ -47,7 +47,7 @@ class WorkParameterTypeController extends Controller
             $workParameterTypes = DB::table('work_parameter_types')
                 ->where('request_type_id', $requestTypeId)
                 ->where('is_deleted', false)
-                ->orderBy('name')
+                ->orderBy('id')
                 ->get();
 
             return response()->json($workParameterTypes);
