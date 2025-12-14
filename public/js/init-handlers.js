@@ -127,6 +127,19 @@ document.addEventListener('DOMContentLoaded', function () {
             if (form) {
                 form.classList.remove('was-validated');
             }
+        }); // Closing brace for shown.bs.modal listener
+        
+        // Обработчик закрытия модального окна создания новой заявки
+        newRequestModal.addEventListener('hidden.bs.modal', function() {
+            const workParametersContainer = document.getElementById('workParametersContainer');
+            if (workParametersContainer) {
+                workParametersContainer.innerHTML = ''; // Очищаем динамически созданные поля
+            }
+            // Сбрасываем выбранный тип заявки
+            const requestTypeSelect = document.getElementById('requestType');
+            if (requestTypeSelect) {
+                requestTypeSelect.value = ''; // Предполагаем, что пустая строка - это значение по умолчанию
+            }
         });
     }
 
