@@ -3,9 +3,16 @@
 /**
  * Загрузка списка параметров типов заявок
  */
-export async function loadWorkParameterTypes() {
+export async function loadWorkParameterTypes(requestTypeId = null) {
+    const tbody = document.getElementById('workParameterTypesList');
+
+    if (!requestTypeId) {
+        tbody.innerHTML = '';
+        return;
+    }
+
     try {
-        const response = await fetch('/api/work-parameter-types/');
+        const response = await fetch(`/api/work-parameter-types/by-request-type/${requestTypeId}`);
         if (!response.ok) {
             throw new Error('Ошибка загрузки параметров типов заявок');
         }
@@ -43,7 +50,7 @@ function renderWorkParameterTypesTable(workParameterTypes) {
                 <button class="btn btn-sm btn-outline-primary me-1 edit-work-parameter-type-btn" data-id="${param.id}" data-name="${param.name}" data-request-type-id="${param.request_type_id}">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger delete-work-parameter-type-btn" data-id="${param.id}" data-name="${param.name}">
+                <button class="btn btn-sm btn-outline-danger delete-work-parameter-type-btn" data-id="${param.id}" data-name="${param.name}" data-request-type-id="${param.request_type_id}">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -63,8 +70,13 @@ async function loadRequestTypesForSelect() {
 
         const data = await response.json();
         const select = document.getElementById('workParameterTypeRequestType');
+        const currentValue = select.value;
         select.innerHTML = '<option value="">Выберите тип заявки</option>' +
             data.map(type => `<option value="${type.id}">${type.name}</option>`).join('');
+        
+        if (currentValue) {
+            select.value = currentValue;
+        }
     } catch (error) {
         console.error('Ошибка при загрузке типов заявок для select:', error);
         window.utils.showAlert('Ошибка загрузки типов заявок', 'danger');
@@ -90,7 +102,7 @@ export async function createWorkParameterType(name, requestTypeId) {
 
         if (data.success) {
             window.utils.showAlert('Параметр типа заявки успешно создан', 'success');
-            loadWorkParameterTypes();
+            loadWorkParameterTypes(requestTypeId);
             return true;
         } else {
             window.utils.showAlert(data.message || 'Ошибка создания параметра типа заявки', 'danger');
@@ -122,7 +134,7 @@ export async function updateWorkParameterType(id, name, requestTypeId) {
 
         if (data.success) {
             window.utils.showAlert('Параметр типа заявки успешно обновлен', 'success');
-            loadWorkParameterTypes();
+            loadWorkParameterTypes(requestTypeId);
             return true;
         } else {
             window.utils.showAlert(data.message || 'Ошибка обновления параметра типа заявки', 'danger');
@@ -138,7 +150,7 @@ export async function updateWorkParameterType(id, name, requestTypeId) {
 /**
  * Удаление параметра типа заявки
  */
-export async function deleteWorkParameterType(id, name) {
+export async function deleteWorkParameterType(id, name, requestTypeId) {
     if (!confirm(`Вы уверены, что хотите удалить параметр "${name}"?`)) {
         return;
     }
@@ -156,7 +168,7 @@ export async function deleteWorkParameterType(id, name) {
 
         if (data.success) {
             window.utils.showAlert('Параметр типа заявки успешно удален', 'success');
-            loadWorkParameterTypes();
+            loadWorkParameterTypes(requestTypeId);
         } else {
             window.utils.showAlert(data.message || 'Ошибка удаления параметра типа заявки', 'danger');
         }
@@ -205,19 +217,34 @@ export function initWorkParameterTypesHandlers() {
     });
 
     // Обработчик открытия модального окна для создания
-    document.querySelector('[data-bs-target="#addWorkParameterTypeModal"]').addEventListener('click', async () => {
-        document.getElementById('workParameterTypeForm').reset();
-        document.getElementById('workParameterTypeId').value = '';
-        document.querySelector('#addWorkParameterTypeModal .modal-title').textContent = 'Параметры типа заявки';
-        await loadRequestTypesForSelect();
-        await loadWorkParameterTypes();
-    });
+    const modalBtn = document.querySelector('[data-bs-target="#addWorkParameterTypeModal"]');
+    if (modalBtn) {
+        modalBtn.addEventListener('click', async () => {
+            document.getElementById('workParameterTypeForm').reset();
+            document.getElementById('workParameterTypeId').value = '';
+            document.querySelector('#addWorkParameterTypeModal .modal-title').textContent = 'Параметры типа заявки';
+            document.getElementById('workParameterTypesList').innerHTML = '';
+            await loadRequestTypesForSelect();
+        });
+    }
+
+    // Обработчик изменения типа заявки
+    const typeSelect = document.getElementById('workParameterTypeRequestType');
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+            loadWorkParameterTypes(this.value);
+        });
+    }
 
     // Обработчик закрытия модального окна
-    document.getElementById('addWorkParameterTypeModal').addEventListener('hidden.bs.modal', () => {
-        document.getElementById('workParameterTypeForm').reset();
-        document.getElementById('workParameterTypeId').value = '';
-    });
+    const modalEl = document.getElementById('addWorkParameterTypeModal');
+    if (modalEl) {
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            document.getElementById('workParameterTypeForm').reset();
+            document.getElementById('workParameterTypeId').value = '';
+            document.getElementById('workParameterTypesList').innerHTML = '';
+        });
+    }
 
     // Обработчики для кнопок редактирования и удаления параметров типов заявок
     document.addEventListener('click', function(e) {
@@ -235,7 +262,8 @@ export function initWorkParameterTypesHandlers() {
             const button = e.target.closest('.delete-work-parameter-type-btn');
             const id = button.dataset.id;
             const name = button.dataset.name;
-            deleteWorkParameterType(id, name);
+            const requestTypeId = button.dataset.requestTypeId;
+            deleteWorkParameterType(id, name, requestTypeId);
         }
     });
 }
@@ -248,7 +276,4 @@ async function handleEditWorkParameterType(id, name, requestTypeId) {
 
     await loadRequestTypesForSelect();
     document.getElementById('workParameterTypeRequestType').value = requestTypeId;
-
-    // Модальное окно уже открыто, так как список находится внутри него.
-    // Просто прокручиваем к форме, если нужно, или оставляем как есть.
 }

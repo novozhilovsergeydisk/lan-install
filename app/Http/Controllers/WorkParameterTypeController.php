@@ -45,9 +45,11 @@ class WorkParameterTypeController extends Controller
     {
         try {
             $workParameterTypes = DB::table('work_parameter_types')
-                ->where('request_type_id', $requestTypeId)
-                ->where('is_deleted', false)
-                ->orderBy('id')
+                ->join('request_types', 'work_parameter_types.request_type_id', '=', 'request_types.id')
+                ->where('work_parameter_types.request_type_id', $requestTypeId)
+                ->where('work_parameter_types.is_deleted', false)
+                ->select('work_parameter_types.*', 'request_types.name as request_type_name')
+                ->orderBy('work_parameter_types.id')
                 ->get();
 
             return response()->json($workParameterTypes);
