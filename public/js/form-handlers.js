@@ -134,6 +134,75 @@ async function initEditRequestHandler() {
                     // if (commentEl) commentEl.value = data.comment || data.commentText || '';
                     // log(commentEl.value);
 
+                    // Populate work parameters
+                    const editWorkParametersContainer = document.getElementById('editWorkParametersContainer');
+                    if (editWorkParametersContainer) {
+                        editWorkParametersContainer.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Загрузка работ...</div>';
+                        
+                        // Function to load parameters for edit modal
+                        const loadEditParameters = async (typeId, existingParameters = []) => {
+                            try {
+                                const response = await fetch(`/api/work-parameter-types/by-request-type/${typeId}`);
+                                const typesData = await response.json();
+                                
+                                editWorkParametersContainer.innerHTML = '';
+                                
+                                if (Array.isArray(typesData) && typesData.length > 0) {
+                                    typesData.forEach(param => {
+                                        const row = document.createElement('div');
+                                        row.className = 'row g-3 mb-2 align-items-center work-parameter-row';
+                                        row.dataset.id = param.id;
+                                        
+                                        // Find existing value if any
+                                        const existingParam = existingParameters.find(p => p.parameter_type_id == param.id);
+                                        const value = existingParam ? existingParam.quantity : 0;
+                                        
+                                        row.innerHTML = `
+                                            <div class="col-md-8">
+                                                <label class="form-label mb-0">${param.name}</label>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <input type="number" class="form-control work-parameter-quantity" placeholder="Кол-во" min="0" value="${value}">
+                                            </div>
+                                        `;
+                                        editWorkParametersContainer.appendChild(row);
+                                    });
+                                } else {
+                                    editWorkParametersContainer.innerHTML = '<div class="alert alert-info py-2 mb-0 small">Нет доступных параметров работ для этого типа заявки.</div>';
+                                }
+                            } catch (error) {
+                                console.error('Ошибка при загрузке параметров работ:', error);
+                                editWorkParametersContainer.innerHTML = '<div class="alert alert-danger py-2 mb-0 small">Ошибка загрузки параметров.</div>';
+                            }
+                        };
+
+                        // Initial load
+                        if (data.request_type_id) {
+                            loadEditParameters(data.request_type_id, data.work_parameters || []);
+                        } else {
+                            editWorkParametersContainer.innerHTML = '<div class="alert alert-light border text-center p-2 mb-0 text-muted small">Выберите тип заявки, чтобы загрузить список работ</div>';
+                        }
+
+                        // Add change listener to request type select in edit modal
+                        const editRequestTypeSelect = document.getElementById('editRequestType');
+                        if (editRequestTypeSelect) {
+                            // Remove old listener to avoid duplicates if any (though difficult without named function)
+                            // A better approach is to check if we already attached it, but for now simple attach
+                            // Note: this might attach multiple times if initEditRequestHandler is called multiple times?
+                            // initEditRequestHandler is likely called once on page load.
+                            
+                            editRequestTypeSelect.onchange = function() {
+                                const typeId = this.value;
+                                if (typeId) {
+                                    // When type changes, we don't have existing parameters for the NEW type, so pass empty array
+                                    loadEditParameters(typeId, []);
+                                } else {
+                                    editWorkParametersContainer.innerHTML = '<div class="alert alert-light border text-center p-2 mb-0 text-muted small">Выберите тип заявки, чтобы загрузить список работ</div>';
+                                }
+                            };
+                        }
+                    }
+
                     console.log('Заполнение формы завершено');
 
                     // Загружаем адреса для выпадающего списка и устанавливаем значение в кастомный селект
@@ -239,6 +308,22 @@ async function initEditRequestFormHandler() {
         console.log(requestId);
         console.log('Fetching URL:', `/requests/${requestId}`);
 
+        // Collect work parameters
+        const workParameters = [];
+        const parameterRows = document.querySelectorAll('#editWorkParametersContainer .work-parameter-row');
+        parameterRows.forEach(row => {
+            const typeId = row.dataset.id;
+            const quantityInput = row.querySelector('.work-parameter-quantity');
+            const quantity = quantityInput ? parseInt(quantityInput.value) : 0;
+            
+            if (typeId && quantity > 0) {
+                workParameters.push({
+                    parameter_type_id: typeId,
+                    quantity: quantity
+                });
+            }
+        });
+
         // Собираем данные вручную
         const payload = {
             _token: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -252,6 +337,7 @@ async function initEditRequestFormHandler() {
             execution_date: getValue('editExecutionDate'),
             execution_time: getValue('editExecutionTime'),
             addresses_id: getValue('editAddressesId'),
+            work_parameters: workParameters,
         };
 
         console.log('Sending data:', payload);
@@ -5252,10 +5338,15 @@ async function submitRequestForm(event) {
     // Сбор динамических параметров
     const workParameters = [];
     const parameterRows = document.querySelectorAll('#workParametersContainer .work-parameter-row');
+    
+    console.log('Найдены строки параметров:', parameterRows.length);
+
     parameterRows.forEach(row => {
         const typeId = row.dataset.id;
         const quantityInput = row.querySelector('.work-parameter-quantity');
         const quantity = quantityInput ? parseInt(quantityInput.value) : 0;
+        
+        // console.log(`Параметр: id=${typeId}, кол-во=${quantity}`);
         
         if (typeId && quantity > 0) {
             workParameters.push({
@@ -5264,6 +5355,8 @@ async function submitRequestForm(event) {
             });
         }
     });
+    
+    console.log('Собранные параметры работы:', workParameters);
 
     // Формируем данные для отправки
     const requestData = {

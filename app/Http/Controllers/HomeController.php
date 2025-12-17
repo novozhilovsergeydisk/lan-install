@@ -74,6 +74,13 @@ class HomeController extends Controller
                 return response()->json(['success' => false, 'message' => 'Заявка не найдена'], 404);
             }
 
+            // Fetch work parameters
+            $workParameters = DB::table('work_parameters')
+                ->where('request_id', $id)
+                ->get();
+
+            $request->work_parameters = $workParameters;
+
             return response()->json(['success' => true, 'data' => $request]);
         } catch (\Exception $e) {
             return response()->json([
@@ -104,6 +111,9 @@ class HomeController extends Controller
                 'execution_date' => 'required|date',
                 'execution_time' => 'nullable|date_format:H:i',
                 'addresses_id' => 'required|integer|exists:addresses,id',
+                'work_parameters' => 'nullable|array',
+                'work_parameters.*.parameter_type_id' => 'required|exists:work_parameter_types,id',
+                'work_parameters.*.quantity' => 'required|integer|min:1',
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -114,6 +124,20 @@ class HomeController extends Controller
         }
 
         $user = auth()->user();
+
+        // Проверяем, загружены ли роли пользователя
+        if (! isset($user->roles) || ! is_array($user->roles)) {
+            // Если роли не загружены, загружаем их из базы
+            $roles = DB::table('user_roles')
+                ->join('roles', 'user_roles.role_id', '=', 'roles.id')
+                ->where('user_roles.user_id', $user->id)
+                ->pluck('roles.name')
+                ->toArray();
+
+            $user->roles = $roles;
+            $user->isAdmin = in_array('admin', $roles);
+        }
+
         if (! $user->isAdmin) {
             return response()->json(['success' => false, 'message' => 'Недостаточно прав'], 403);
         }
@@ -175,6 +199,28 @@ class HomeController extends Controller
             }
 
             DB::table('requests')->where('id', $id)->update($updateData);
+
+            // 4. Update work parameters
+            if (isset($validated['work_parameters'])) {
+                // Delete existing parameters for this request
+                DB::table('work_parameters')->where('request_id', $id)->delete();
+
+                // Insert new parameters
+                if (! empty($validated['work_parameters'])) {
+                    foreach ($validated['work_parameters'] as $param) {
+                        DB::table('work_parameters')->insert([
+                            'parameter_type_id' => $param['parameter_type_id'],
+                            'quantity' => $param['quantity'],
+                            'request_id' => $id,
+                            'is_planning' => true,
+                            'is_done' => false,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
+
             DB::commit();
 
             return response()->json(['success' => true, 'message' => 'Заявка обновлена']);
@@ -2888,6 +2934,7 @@ class HomeController extends Controller
 
             $validated = $validator->validated();
             // \Log::info('Валидированные данные:', $validated);
+            \Log::info('Получены параметры работы:', $validated['work_parameters'] ?? []);
 
             // 1. Подготовка данных клиента
             $fio = trim($validated['client_name'] ?? '');

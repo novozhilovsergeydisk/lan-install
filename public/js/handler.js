@@ -104,14 +104,14 @@ export async function loadPlanningRequests() {
             const cityPrefix = request.city_name && request.city_name !== 'Москва' ? `${request.city_name}, ` : '';
             const fullAddress = `${cityPrefix}ул. ${request.street || ''}, ${request.houses || ''}`.trim();
             
-            // Создаем строку таблицы
-             const row = document.createElement('tr');
-             row.id = `request-${request.id}`;
-             row.setAttribute('data-request-id', request.id);
-             row.dataset.requestNumber = request.number || '';
-             row.dataset.requestStatus = request.status_id || 'status';
-             row.dataset.statusName = request.status_name || '';
-             row.dataset.address = fullAddress;
+                         // Создаем строку таблицы
+                         const row = document.createElement('tr');
+                         row.id = `request-${request.id}`;
+                         row.setAttribute('data-request-id', request.id);
+                         row.setAttribute('data-request-type-id', request.request_type_id || '');
+                         row.dataset.requestNumber = request.number || '';
+                         row.dataset.requestStatus = request.status_id || 'status';
+                         row.dataset.statusName = request.status_name || '';             row.dataset.address = fullAddress;
              row.className = 'align-middle status-row welcome-blade';
              row.style.setProperty('--status-color', request.color || '#e2e0e6');
              row.style.setProperty('--bs-table-bg', request.color, 'important');
@@ -897,6 +897,7 @@ async function applyFilters() {
                              });
 
                              row.setAttribute('data-request-id', request.id);
+                             row.setAttribute('data-request-type-id', request.request_type_id || '');
                              row.dataset.statusName = request.status_name || '';
 
                             // console.log(request);

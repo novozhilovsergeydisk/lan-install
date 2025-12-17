@@ -334,6 +334,7 @@ class PlanningRequestController extends Controller
             $sql = "
             SELECT
                 r.id,
+                r.request_type_id,
                 r.brigade_id,
                 TO_CHAR(r.request_date, 'DD.MM.YYYY') AS request_date,
                 r.number,
@@ -349,6 +350,8 @@ class PlanningRequestController extends Controller
                 c.organization,
                  rs.name AS status_name,
                  rs.color,
+                 rt.name AS request_type_name,
+                 rt.color AS request_type_color,
                  jsonb_agg(
                     jsonb_build_object(
                         'comment', co.comment,
@@ -361,6 +364,7 @@ class PlanningRequestController extends Controller
             FROM requests r
             LEFT JOIN clients c ON r.client_id = c.id
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
+            LEFT JOIN request_types rt ON r.request_type_id = rt.id
             LEFT JOIN employees op ON r.operator_id = op.id
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
@@ -372,12 +376,14 @@ class PlanningRequestController extends Controller
             WHERE 1=1
                 AND (rs.name = 'планирование')
             GROUP BY
-                r.id, r.brigade_id, r.number, r.request_date,
+                r.id, r.request_type_id, r.brigade_id, r.number, r.request_date,
                 c.fio, c.phone, c.organization,
                 op.fio,
                 ct.name, addr.district, addr.street, addr.houses,
                 rs.name,
-                rs.color
+                rs.color,
+                rt.name,
+                rt.color
             ORDER BY r.id DESC";
 
             $result = DB::select($sql);

@@ -4593,6 +4593,11 @@
                         </div>
                     </div>
 
+                    <!-- Динамические параметры работ для редактирования -->
+                    <div id="editWorkParametersContainer" class="mb-3">
+                        <!-- Здесь будут отображаться параметры работ -->
+                    </div>
+
                     <div class="mb-3">
                         <div class="row g-3">
                             <div class="col-md-6">
