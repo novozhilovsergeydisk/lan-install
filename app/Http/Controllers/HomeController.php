@@ -2968,34 +2968,34 @@ class HomeController extends Controller
             }
 
             // 3. Поиск существующего клиента по телефону (если телефон указан)
-            $client = null;
+            // $client = null;
             $clientId = null;
 
             // Поиск клиента по телефону, ФИО или организации
-            $query = DB::table('clients');
-            $foundClient = false;
+            // $query = DB::table('clients');
+            // $foundClient = false;
 
-            if (! empty($clientData['fio'])) {
-                if ($foundClient) {
-                    $query->orWhere('fio', $clientData['fio']);
-                } else {
-                    $query->where('fio', $clientData['fio']);
-                    $foundClient = true;
-                }
-            } elseif (! empty($clientData['phone'])) {
-                $query->where('phone', $clientData['phone']);
-                $foundClient = true;
-            } elseif (! empty($clientData['organization'])) {
-                if ($foundClient) {
-                    $query->orWhere('organization', $clientData['organization']);
-                } else {
-                    $query->where('organization', $clientData['organization']);
-                    $foundClient = true;
-                }
-            }
+            // if (! empty($clientData['fio'])) {
+            //     if ($foundClient) {
+            //         $query->orWhere('fio', $clientData['fio']);
+            //     } else {
+            //         $query->where('fio', $clientData['fio']);
+            //         $foundClient = true;
+            //     }
+            // } elseif (! empty($clientData['phone'])) {
+            //     $query->where('phone', $clientData['phone']);
+            //     $foundClient = true;
+            // } elseif (! empty($clientData['organization'])) {
+            //     if ($foundClient) {
+            //         $query->orWhere('organization', $clientData['organization']);
+            //     } else {
+            //         $query->where('organization', $clientData['organization']);
+            //         $foundClient = true;
+            //     }
+            // }
 
             // Выполняем запрос только если хотя бы одно поле заполнено
-            $client = $foundClient ? $query->first() : null;
+            // $client = $foundClient ? $query->first() : null;
 
             // $response = [
             //     'success' => true,
@@ -3007,20 +3007,20 @@ class HomeController extends Controller
 
             // 4. Создание или обновление клиента
             try {
-                if ($client) {
-                    // Обновляем существующего клиента
-                    DB::table('clients')
-                        ->where('id', $client->id)
-                        ->update([
-                            'fio' => $clientData['fio'],
-                            'phone' => $clientData['phone'],
-                            'email' => $clientData['email'],
-                            'organization' => $clientData['organization'],
-                        ]);
-                    $clientId = $client->id;
-                    $clientState = 'updated';
-                    // \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
-                } else {
+                // if ($client) {
+                //     // Обновляем существующего клиента
+                //     DB::table('clients')
+                //         ->where('id', $client->id)
+                //         ->update([
+                //             'fio' => $clientData['fio'],
+                //             'phone' => $clientData['phone'],
+                //             'email' => $clientData['email'],
+                //             'organization' => $clientData['organization'],
+                //         ]);
+                //     $clientId = $client->id;
+                //     $clientState = 'updated';
+                //     // \Log::info('Обновлен существующий клиент:', ['id' => $clientId]);
+                // } else {
                     // Создаем нового клиента (даже если все поля пустые)
                     $clientId = DB::table('clients')->insertGetId([
                         'fio' => $clientData['fio'],
@@ -3030,7 +3030,7 @@ class HomeController extends Controller
                     ]);
                     $clientState = 'created';
                     // \Log::info('Создан новый клиент:', ['id' => $clientId]);
-                }
+                // }
             } catch (\Exception $e) {
                 \Log::error('Ошибка при сохранении клиента: '.$e->getMessage());
 
