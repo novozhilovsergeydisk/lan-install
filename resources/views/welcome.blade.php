@@ -2424,7 +2424,7 @@
 								<input type="text" class="form-control" id="additionalClientOrganization" name="client_organization"> </div>
 						</div>
 					</div>
-					<div class="mb-3 hide-me">
+					<div class="mb-3">
 						<!-- <h6>Детали заявки</h6> -->
 						<div class="row g-3">
 							<div class="col-md-6">
@@ -2434,7 +2434,7 @@
 									<!-- Will be populated by JavaScript -->
 								</select>
 							</div>
-							<div class="col-md-6">
+							<div class="col-md-6 d-none">
 								<label for="additionalRequestStatus" class="form-label">Статус</label>
 								<select class="form-select" id="additionalRequestStatus" name="status_id">
 									<!-- Will be populated by JavaScript -->

@@ -84,27 +84,47 @@ export function initAdditionalTaskModal() {
         if (modal) {
             const bsModal = new bootstrap.Modal(modal);
             bsModal.show();
-            // Загружаем данные заявки и заполняем форму
-            if (requestId) {
-                fetch('/requests/' + requestId, {
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            
+            // Используем Promise.all для параллельной загрузки данных и гарантированного порядка заполнения
+            const typesPromise = fetch('/api/request-types?is_deleted=false').then(r => r.json()).catch(err => { console.error('Ошибка загрузки типов:', err); return []; });
+            
+            const requestPromise = requestId 
+                ? fetch('/requests/' + requestId, {
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }
+                }).then(r => r.json()).catch(err => { console.error('Ошибка загрузки заявки:', err); return null; })
+                : Promise.resolve(null);
+
+            Promise.all([typesPromise, requestPromise])
+                .then(([types, requestData]) => {
+                    // 1. Заполняем типы заявок
+                    const typeSelect = document.getElementById('additionalRequestType');
+                    if (typeSelect) {
+                        typeSelect.innerHTML = '<option value="" disabled selected>Выберите тип заявки</option>';
+                        if (Array.isArray(types)) {
+                            types.forEach(type => {
+                                const option = document.createElement('option');
+                                option.value = type.id;
+                                option.textContent = type.name;
+                                typeSelect.appendChild(option);
+                            });
+                        }
                     }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Данные заявки с сервера:', data);
-                    if (data.success && data.data) {
-                        const request = data.data;
+
+                    // 2. Заполняем данные формы
+                    if (requestData && requestData.success && requestData.data) {
+                        const request = requestData.data;
                         console.log('Объект request:', request);
-                        // Заполняем поля формы данными заявки
+                        
                         document.getElementById('additionalClientName').value = request.client_fio || '';
                         document.getElementById('additionalClientPhone').value = request.client_phone || '';
                         document.getElementById('additionalClientOrganization').value = request.client_organization || '';
-                        document.getElementById('additionalRequestType').value = request.request_type_id || '';
-                        document.getElementById('additionalRequestStatus').value = request.status_id || '';
+                        
+                        // Устанавливаем значения селектов (теперь безопасно, так как опции загружены)
+                        if (typeSelect) typeSelect.value = request.request_type_id || '';
+                        
                         document.getElementById('additionalExecutionDate').value = request.execution_date || '';
                         document.getElementById('additionalExecutionTime').value = request.execution_time || '';
+                        
                         // Для комментария - заполняем WYSIWYG
                         const commentEditor = document.getElementById('additionalCommentEditor');
                         const commentTextarea = document.getElementById('additionalComment');
@@ -117,10 +137,7 @@ export function initAdditionalTaskModal() {
                         loadAddressesForAdditional('additionalAddressesId', request.address_id);
                     }
                 })
-                .catch(error => {
-                    console.error('Ошибка при загрузке данных заявки:', error);
-                });
-            }
+                .catch(error => console.error('Ошибка при инициализации формы:', error));
             // Устанавливаем текущую дату по умолчанию и минимальную дату (если не заполнено)
             const today = new Date().toISOString().split('T')[0];
             const dateField = document.getElementById('additionalExecutionDate');
@@ -148,12 +165,6 @@ export function initAdditionalTaskModal() {
 
             const formData = new FormData(form);
             const data = Object.fromEntries(formData);
-
-            // Устанавливаем тип заявки по умолчанию (предположим id=1), если не выбран
-            if (!data.request_type_id) {
-                data.request_type_id = '1';
-                formData.set('request_type_id', '1');
-            }
 
             // Устанавливаем статус по умолчанию "новая" (id=1), если не выбран
             if (!data.status_id) {
@@ -214,10 +225,10 @@ export function initAdditionalTaskModal() {
                         modal.hide();
                     }
 
-                    // Обновляем таблицу заявок, если функция существует
-                    if (typeof window.updateRequestsTable === 'function') {
-                        window.updateRequestsTable();
-                    }
+                    // Перезагружаем страницу
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
                 } else {
                     showAlert(result.message || 'Ошибка при создании дополнительного задания', 'error');
                 }
