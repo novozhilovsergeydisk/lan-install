@@ -2422,11 +2422,6 @@
 							<div class="col-md-6">
 								<label for="additionalClientOrganization" class="form-label">Организация</label>
 								<input type="text" class="form-control" id="additionalClientOrganization" name="client_organization"> </div>
-						</div>
-					</div>
-					<div class="mb-3">
-						<!-- <h6>Детали заявки</h6> -->
-						<div class="row g-3">
 							<div class="col-md-6">
 								<label for="additionalRequestType" class="form-label">Тип заявки <span class="text-danger">*</span></label>
 								<select class="form-select" id="additionalRequestType" name="request_type_id" required>
