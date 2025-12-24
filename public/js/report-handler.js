@@ -527,8 +527,17 @@ export async function loadRequestTypesForReport() {
     }
 }
 
+// Pagination state
+let currentReportPage = 1;
+const reportLimit = 20;
+let isLoading = false;
+let totalReportPages = 1;
+
 // Функция для загрузки отчёта
-export async function loadReport() {
+// changePage: 0 = сброс, 1 = вперед, -1 = назад, 'first' = начало, 'last' = конец
+export async function loadReport(changePage = 0) {
+    if (isLoading) return;
+
     let startDate = $('#datepicker-reports-start').datepicker('getFormattedDate');
     let endDate = $('#datepicker-reports-end').datepicker('getFormattedDate');
     const employeeSelect = document.getElementById('report-employees');
@@ -541,6 +550,16 @@ export async function loadReport() {
     if (!startDate || !endDate) {
         showAlert('Необходимо указать даты', 'warning');
         return;
+    }
+
+    if (changePage === 0 || changePage === 'first') {
+        currentReportPage = 1;
+    } else if (changePage === 'last') {
+        currentReportPage = totalReportPages > 0 ? totalReportPages : 1;
+    } else {
+        currentReportPage += changePage;
+        if (currentReportPage < 1) currentReportPage = 1;
+        if (currentReportPage > totalReportPages && totalReportPages > 0) currentReportPage = totalReportPages;
     }
 
     // console.log(employeeSelect.value);
@@ -611,7 +630,9 @@ export async function loadReport() {
         startDate,
         endDate,
         employeeId: employeeSelect.value === 'all_employees' ? '' : employeeSelect.value,
-        allPeriod: allPeriod.checked
+        allPeriod: allPeriod.checked,
+        page: currentReportPage,
+        limit: reportLimit
     };
 
     // Добавляем addressId только если он выбран
@@ -631,6 +652,9 @@ export async function loadReport() {
     
     console.log('Данные для запроса:', requestData);
 
+    isLoading = true;
+    updatePaginationControls(0, 0); // Disable controls while loading
+
     // Показываем индикатор загрузки
     const tbody = document.querySelector('#requestsReportTable tbody');
     tbody.innerHTML = `
@@ -646,24 +670,101 @@ export async function loadReport() {
         </tr>`;
     
     const result = await postData(url, requestData);
+    isLoading = false;
 
     console.log('Result:', result);
-    console.log('Brigade Members:', result.brigadeMembersWithDetails);
+    // console.log('Brigade Members:', result.brigadeMembersWithDetails);
 
     if (result.success) {
+        const requests = result.requestsByDateRange || result.requestsByEmployeeAndDateRange || result.requestsAllPeriodByEmployee || result.requestsAllPeriod || result.requestsByAddressAndDateRange || [];
+        
+        // Update total pages from server response
+        if (result.total) {
+            totalReportPages = Math.ceil(result.total / reportLimit);
+        } else {
+             // Fallback if total not present: if full page returned, assume there are more pages
+            totalReportPages = (requests.length === reportLimit) ? currentReportPage + 1 : currentReportPage;
+        }
+
         renderReportTable({
-            requests: result.requestsByDateRange || result.requestsByEmployeeAndDateRange || result.requestsAllPeriodByEmployee || result.requestsAllPeriod || result.requestsByAddressAndDateRange || [],
+            requests: requests,
             brigadeMembers: result.brigadeMembersWithDetails || [],
             comments_by_request: result.comments_by_request || result.commentsByRequest || {}
         });
+
+        // Update pagination based on results count
+        updatePaginationControls(requests.length, totalReportPages);
     } else {
         renderReportTable({
             requests: [],
             brigadeMembers: [],
             comments_by_request: {}
         });
+        updatePaginationControls(0, 0);
         showAlert(result.message || 'Ошибка при загрузке отчёта', 'danger');
     }
+}
+
+function updatePaginationControls(itemsCount, totalPages) {
+    let paginationContainer = document.getElementById('report-pagination-container');
+    
+    // Если контейнера нет, создаем его
+    if (!paginationContainer) {
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'report-pagination-container';
+        paginationContainer.className = 'd-flex justify-content-center align-items-center mt-3 mb-5 gap-2';
+        
+        paginationContainer.innerHTML = `
+            <button id="report-first-btn" class="btn btn-outline-secondary" title="В начало">
+                <i class="bi bi-chevron-double-left"></i>
+            </button>
+            <button id="report-prev-btn" class="btn btn-outline-secondary" title="Назад">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="fw-bold mx-2" id="report-page-indicator" style="min-width: 80px; text-align: center;">Стр. 1</span>
+            <button id="report-next-btn" class="btn btn-outline-secondary" title="Вперед">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            <button id="report-last-btn" class="btn btn-outline-secondary" title="В конец">
+                <i class="bi bi-chevron-double-right"></i>
+            </button>
+        `;
+        
+        const tableResponsive = document.querySelector('#requestsReportTable').closest('.table-responsive');
+        if (tableResponsive) {
+            tableResponsive.parentNode.insertBefore(paginationContainer, tableResponsive.nextSibling);
+            
+            document.getElementById('report-first-btn').addEventListener('click', () => {
+                if (!isLoading && currentReportPage > 1) loadReport('first');
+            });
+
+            document.getElementById('report-prev-btn').addEventListener('click', () => {
+                if (!isLoading && currentReportPage > 1) loadReport(-1);
+            });
+            
+            document.getElementById('report-next-btn').addEventListener('click', () => {
+                if (!isLoading && currentReportPage < totalReportPages) loadReport(1);
+            });
+
+            document.getElementById('report-last-btn').addEventListener('click', () => {
+                if (!isLoading && currentReportPage < totalReportPages) loadReport('last');
+            });
+        }
+    }
+
+    const firstBtn = document.getElementById('report-first-btn');
+    const prevBtn = document.getElementById('report-prev-btn');
+    const nextBtn = document.getElementById('report-next-btn');
+    const lastBtn = document.getElementById('report-last-btn');
+    const pageIndicator = document.getElementById('report-page-indicator');
+
+    if (pageIndicator) pageIndicator.textContent = `Стр. ${currentReportPage} из ${totalPages > 0 ? totalPages : '?'}`;
+
+    if (firstBtn) firstBtn.disabled = isLoading || currentReportPage <= 1;
+    if (prevBtn) prevBtn.disabled = isLoading || currentReportPage <= 1;
+    
+    if (nextBtn) nextBtn.disabled = isLoading || currentReportPage >= totalPages || itemsCount === 0;
+    if (lastBtn) lastBtn.disabled = isLoading || currentReportPage >= totalPages || itemsCount === 0;
 }
 
 /**
@@ -704,13 +805,13 @@ export function renderReportTable(data) {
         return;
     }
 
-    // Очищаем таблицу
+    // Всегда очищаем таблицу
     tbody.innerHTML = '';
 
     // Определяем, пришёл ли массив или объект
     const responseData = Array.isArray(data) ? data[0] : data;
 
-    console.log('Полученные данные в responseData:', responseData);
+    // console.log('Полученные данные в responseData:', responseData);
     
     // Проверяем данные (поддерживаем оба формата ответа)
     let requests, brigadeMembers, comments_by_request;
@@ -735,6 +836,10 @@ export function renderReportTable(data) {
         tbody.appendChild(row);
         return;
     }
+
+    // Если "Загрузить еще" контейнер остался от предыдущей реализации - удаляем его
+    const oldLoadMore = document.getElementById('load-more-reports-container');
+    if (oldLoadMore) oldLoadMore.remove();
     
     if (requests.length === 0) {
         const row = document.createElement('tr');

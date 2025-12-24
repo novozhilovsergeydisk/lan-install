@@ -22,6 +22,11 @@ class ReportController extends Controller
             $employeeId = $validated['employeeId'];
             $addressId = $validated['addressId'];
 
+            // Pagination parameters
+            $page = (int) $request->input('page', 1);
+            $limit = (int) $request->input('limit', 20);
+            $offset = ($page - 1) * $limit;
+
             $query = DB::table('requests as r')
                 ->selectRaw("
                 r.*,
@@ -69,19 +74,101 @@ class ReportController extends Controller
                     'rs.name', 'rs.color', 'b.name', 'e.fio', 'op.fio',
                     'addr.street', 'addr.houses', 'addr.district',
                     'addr.city_id', 'ct.name', 'ct.postal_code',
-                ])
-                ->orderBy('r.execution_date', 'DESC')
+                ]);
+
+            // Calculate total before ordering and limiting
+            $total = DB::table(DB::raw("({$query->toSql()}) as sub"))
+                ->mergeBindings($query)
+                ->count();
+
+            $query->orderBy('r.execution_date', 'DESC')
                 ->orderBy('r.id', 'DESC');
 
+            // Apply pagination
+            $query->limit($limit)->offset($offset);
+
             $requests = $query->get();
+
+            // Optimization: Fetch only relevant brigade members and comments
+            $requestIds = $requests->pluck('id')->toArray();
+            $brigadeIds = $requests->pluck('brigade_id')->filter()->unique()->toArray();
+            
+            // Get Brigade Members
+            $brigadeMembersWithDetails = [];
+            if (!empty($brigadeIds)) {
+                 $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
+                 $brigadeMembersWithDetails = DB::select(
+                    "SELECT
+                        bm.*,
+                        b.name as brigade_name,
+                        b.leader_id,
+                        e.fio as employee_name,
+                        e.phone as employee_phone,
+                        e.group_role as employee_group_role,
+                        e.sip as employee_sip,
+                        e.position_id as employee_position_id,
+                        el.fio as employee_leader_name,
+                        el.phone as employee_leader_phone,
+                        el.group_role as employee_leader_group_role,
+                        el.sip as employee_leader_sip,
+                        el.position_id as employee_leader_position_id
+                    FROM brigade_members bm
+                    JOIN brigades b ON bm.brigade_id = b.id
+                    LEFT JOIN employees e ON bm.employee_id = e.id
+                    LEFT JOIN employees el ON b.leader_id = el.id
+                    WHERE bm.brigade_id IN ($placeholders)", 
+                    array_values($brigadeIds)
+                );
+            }
+
+            // Get Comments
+            $commentsByRequest = [];
+            if (!empty($requestIds)) {
+                $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
+                $requestComments = DB::select("
+                    SELECT
+                        rc.request_id,
+                        c.id as comment_id,
+                        c.comment,
+                        c.created_at,
+                        CASE 
+                            WHEN e.fio IS NOT NULL THEN e.fio
+                            WHEN u.name IS NOT NULL THEN u.name
+                            WHEN u.email IS NOT NULL THEN u.email
+                            ELSE 'Система'
+                        END as author_name
+                    FROM request_comments rc
+                    JOIN comments c ON rc.comment_id = c.id
+                    LEFT JOIN users u ON rc.user_id = u.id
+                    LEFT JOIN employees e ON u.id = e.user_id
+                    WHERE rc.request_id IN ($placeholders)
+                    ORDER BY rc.request_id, c.created_at
+                ", array_values($requestIds));
+
+                $commentsByRequest = collect($requestComments)
+                ->groupBy('request_id')
+                ->map(function ($comments) {
+                    return collect($comments)->map(function ($comment) {
+                        return (object) [
+                            'id' => $comment->comment_id,
+                            'comment' => $comment->comment,
+                            'created_at' => $comment->created_at,
+                            'author_name' => $comment->author_name,
+                        ];
+                    })->toArray();
+                })->toArray();
+            }
 
             $data = [
                 'success' => true,
                 'debug' => false,
                 'message' => 'Заявки успешно получены',
                 'requestsByAddressAndDateRange' => $requests,
-                'brigadeMembersWithDetails' => $this->getBrigadeMembersWithDetails(),
-                'commentsByRequest' => $this->getCommentsByRequest(),
+                'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+                'commentsByRequest' => $commentsByRequest,
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total
             ];
 
             return response()->json($data);
@@ -195,10 +282,28 @@ class ReportController extends Controller
     public function getAllPeriodByAddress(Request $request)
     {
         try {
-            $brigadeMembersWithDetails = $this->getBrigadeMembersWithDetails();
-            $commentsByRequest = $this->getCommentsByRequest();
+            // Pagination parameters
+            $page = (int) $request->input('page', 1);
+            $limit = (int) $request->input('limit', 20);
+            $offset = ($page - 1) * $limit;
 
             $addressId = $request->input('addressId');
+
+            $sqlBase = '
+            FROM requests r
+            LEFT JOIN clients c ON r.client_id = c.id
+            LEFT JOIN request_statuses rs ON r.status_id = rs.id
+            LEFT JOIN brigades b ON r.brigade_id = b.id
+            LEFT JOIN employees e ON b.leader_id = e.id
+            LEFT JOIN employees op ON r.operator_id = op.id
+            LEFT JOIN request_addresses ra ON r.id = ra.request_id
+            LEFT JOIN addresses addr ON ra.address_id = addr.id
+            LEFT JOIN cities ct ON addr.city_id = ct.id
+            WHERE (b.is_deleted = false OR b.id IS NULL)
+            AND addr.id = ?';
+
+            // Calculate total
+            $total = DB::select('SELECT COUNT(*) as total ' . $sqlBase, [$addressId])[0]->total;
 
             $sql = '
             SELECT
@@ -217,21 +322,79 @@ class ReportController extends Controller
                 addr.city_id,
                 ct.name AS city_name,
                 ct.postal_code AS city_postal_code
-            FROM requests r
-            LEFT JOIN clients c ON r.client_id = c.id
-            LEFT JOIN request_statuses rs ON r.status_id = rs.id
-            LEFT JOIN brigades b ON r.brigade_id = b.id
-            LEFT JOIN employees e ON b.leader_id = e.id
-            LEFT JOIN employees op ON r.operator_id = op.id
-            LEFT JOIN request_addresses ra ON r.id = ra.request_id
-            LEFT JOIN addresses addr ON ra.address_id = addr.id
-            LEFT JOIN cities ct ON addr.city_id = ct.id
-            WHERE (b.is_deleted = false OR b.id IS NULL)
-            AND addr.id = ?
+            ' . $sqlBase . '
             ORDER BY r.execution_date DESC, r.id DESC
-        ';
+            LIMIT ? OFFSET ?
+            ';
 
-            $requestsByAddressAndDateRange = DB::select($sql, [$addressId]);
+            $requestsByAddressAndDateRange = DB::select($sql, [$addressId, $limit, $offset]);
+
+             // Optimization: Fetch only relevant brigade members and comments
+             $requestIds = array_column($requestsByAddressAndDateRange, 'id');
+             $brigadeIds = array_filter(array_unique(array_column($requestsByAddressAndDateRange, 'brigade_id')));
+ 
+             $brigadeMembersWithDetails = [];
+             if (!empty($brigadeIds)) {
+                 $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
+                                 $brigadeMembersWithDetails = DB::select(
+                                     "SELECT
+                                         bm.*,
+                                         b.name as brigade_name,
+                                         b.leader_id,
+                                         e.fio as employee_name,
+                                         e.phone as employee_phone,
+                                         e.group_role as employee_group_role,
+                                         e.sip as employee_sip,
+                                         e.position_id as employee_position_id,
+                                         el.fio as employee_leader_name,
+                                         el.phone as employee_leader_phone,
+                                         el.group_role as employee_leader_group_role,
+                                         el.sip as employee_leader_sip,
+                                         el.position_id as employee_leader_position_id
+                                     FROM brigade_members bm
+                                     JOIN brigades b ON bm.brigade_id = b.id
+                                     LEFT JOIN employees e ON bm.employee_id = e.id
+                                     LEFT JOIN employees el ON b.leader_id = el.id
+                                     WHERE bm.brigade_id IN ($placeholders)", 
+                                     array_values($brigadeIds)
+                                 );             }
+ 
+             $commentsByRequest = [];
+             if (!empty($requestIds)) {
+                 $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
+                 $requestComments = DB::select("
+                     SELECT
+                         rc.request_id,
+                         c.id as comment_id,
+                         c.comment,
+                         c.created_at,
+                         CASE 
+                             WHEN e.fio IS NOT NULL THEN e.fio
+                             WHEN u.name IS NOT NULL THEN u.name
+                             WHEN u.email IS NOT NULL THEN u.email
+                             ELSE 'Система'
+                         END as author_name
+                     FROM request_comments rc
+                     JOIN comments c ON rc.comment_id = c.id
+                     LEFT JOIN users u ON rc.user_id = u.id
+                     LEFT JOIN employees e ON u.id = e.user_id
+                     WHERE rc.request_id IN ($placeholders)
+                     ORDER BY rc.request_id, c.created_at
+                 ", array_values($requestIds));
+ 
+                 $commentsByRequest = collect($requestComments)
+                     ->groupBy('request_id')
+                     ->map(function ($comments) {
+                         return collect($comments)->map(function ($comment) {
+                             return (object) [
+                                 'id' => $comment->comment_id,
+                                 'comment' => $comment->comment,
+                                 'created_at' => $comment->created_at,
+                                 'author_name' => $comment->author_name,
+                             ];
+                         })->toArray();
+                     })->toArray();
+             }
 
             $data = [
                 'success' => true,
@@ -240,6 +403,9 @@ class ReportController extends Controller
                 'requestsByAddressAndDateRange' => $requestsByAddressAndDateRange,
                 'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
                 'commentsByRequest' => $commentsByRequest,
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total
             ];
 
             return response()->json($data);
@@ -604,6 +770,11 @@ class ReportController extends Controller
             $employeeId = $validated['employeeId'];
             $allPeriod = $validated['allPeriod'] === true || $validated['allPeriod'] === '1' || $validated['allPeriod'] === 1;
 
+            // Pagination parameters
+            $page = (int) $request->input('page', 1);
+            $limit = (int) $request->input('limit', 20);
+            $offset = ($page - 1) * $limit;
+
             $query = DB::table('requests as r')
                 ->selectRaw("
                 r.*,
@@ -661,9 +832,18 @@ class ReportController extends Controller
             $query->groupBy(
                 'r.id', 'c.id', 'rs.id', 'rt.id', 'b.id', 'e.id',
                 'op.id', 'addr.id', 'ct.id'
-            )
-                ->orderByDesc('r.execution_date')
+            );
+
+            // Calculate total before ordering and limiting
+            $total = DB::table(DB::raw("({$query->toSql()}) as sub"))
+                ->mergeBindings($query)
+                ->count();
+
+            $query->orderByDesc('r.execution_date')
                 ->orderByDesc('r.id');
+
+            // Apply pagination
+            $query->limit($limit)->offset($offset);
 
             $requestsAllPeriodByEmployee = $query->get();
 
@@ -674,10 +854,79 @@ class ReportController extends Controller
                 'employeeId' => $employeeId,
                 'organization' => $request->organization ?? null,
                 'requestTypeId' => $request->requestTypeId ?? null,
+                'page' => $page,
+                'limit' => $limit
             ]);
 
-            $brigadeMembersWithDetails = $this->getBrigadeMembersWithDetails();
-            $commentsByRequest = $this->getCommentsByRequest();
+            // Optimization: Fetch only relevant brigade members and comments
+            $requestIds = $requestsAllPeriodByEmployee->pluck('id')->toArray();
+            $brigadeIds = $requestsAllPeriodByEmployee->pluck('brigade_id')->filter()->unique()->toArray();
+            
+            // Get Brigade Members
+            $brigadeMembersWithDetails = [];
+            if (!empty($brigadeIds)) {
+                 $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
+                 $brigadeMembersWithDetails = DB::select(
+                    "SELECT
+                        bm.*,
+                        b.name as brigade_name,
+                        b.leader_id,
+                        e.fio as employee_name,
+                        e.phone as employee_phone,
+                        e.group_role as employee_group_role,
+                        e.sip as employee_sip,
+                        e.position_id as employee_position_id,
+                        el.fio as employee_leader_name,
+                        el.phone as employee_leader_phone,
+                        el.group_role as employee_leader_group_role,
+                        el.sip as employee_leader_sip,
+                        el.position_id as employee_leader_position_id
+                    FROM brigade_members bm
+                    JOIN brigades b ON bm.brigade_id = b.id
+                    LEFT JOIN employees e ON bm.employee_id = e.id
+                    LEFT JOIN employees el ON b.leader_id = el.id
+                    WHERE bm.brigade_id IN ($placeholders)", 
+                    array_values($brigadeIds)
+                );
+            }
+
+            // Get Comments
+            $commentsByRequest = [];
+            if (!empty($requestIds)) {
+                $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
+                $requestComments = DB::select("
+                    SELECT
+                        rc.request_id,
+                        c.id as comment_id,
+                        c.comment,
+                        c.created_at,
+                        CASE 
+                            WHEN e.fio IS NOT NULL THEN e.fio
+                            WHEN u.name IS NOT NULL THEN u.name
+                            WHEN u.email IS NOT NULL THEN u.email
+                            ELSE 'Система'
+                        END as author_name
+                    FROM request_comments rc
+                    JOIN comments c ON rc.comment_id = c.id
+                    LEFT JOIN users u ON rc.user_id = u.id
+                    LEFT JOIN employees e ON u.id = e.user_id
+                    WHERE rc.request_id IN ($placeholders)
+                    ORDER BY rc.request_id, c.created_at
+                ", array_values($requestIds));
+
+                $commentsByRequest = collect($requestComments)
+                ->groupBy('request_id')
+                ->map(function ($comments) {
+                    return collect($comments)->map(function ($comment) {
+                        return (object) [
+                            'id' => $comment->comment_id,
+                            'comment' => $comment->comment,
+                            'created_at' => $comment->created_at,
+                            'author_name' => $comment->author_name,
+                        ];
+                    })->toArray();
+                })->toArray();
+            }
 
             $data = [
                 'success' => true,
@@ -686,6 +935,9 @@ class ReportController extends Controller
                 'requestsAllPeriodByEmployee' => $requestsAllPeriodByEmployee,
                 'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
                 'commentsByRequest' => $commentsByRequest,
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total
             ];
 
             return response()->json($data);
@@ -700,151 +952,182 @@ class ReportController extends Controller
         }
     }
 
-    /**
-     * Поиск заявок за весь период
-     */
-    public function getAllPeriod(Request $request)
-    {
-        try {
-            // Тест
-            // $data = [
-            //     'success' => true,
-            //     'debug' => false,
-            //     'message' => 'Заявки успешно получены',
-            //     'request-all' => $request->all(),
-            // ];
-
-            // return response()->json($data);
-
-            $bindings = [];
-
-            $sql = '
-                SELECT r.*,
-                    c.fio AS client_fio,
-                    c.phone AS client_phone,
-                    c.organization AS client_organization,
-                    rs.name AS status_name,
-                    rs.color AS status_color,
-                    rt.name AS request_type_name,
-                    b.name AS brigade_name,
-                    e.fio AS brigade_lead,
-                    op.fio AS operator_name,
-                    addr.street,
-                    addr.houses,
-                    addr.district,
-                    addr.city_id,
-                    ct.name AS city_name,
-                    ct.postal_code AS city_postal_code
-                FROM requests r
-                LEFT JOIN clients c ON r.client_id = c.id
-                LEFT JOIN request_statuses rs ON r.status_id = rs.id
-                LEFT JOIN request_types rt ON r.request_type_id = rt.id
-                LEFT JOIN brigades b ON r.brigade_id = b.id
-                LEFT JOIN employees e ON b.leader_id = e.id
-                LEFT JOIN employees op ON r.operator_id = op.id
-                LEFT JOIN request_addresses ra ON r.id = ra.request_id
-                LEFT JOIN addresses addr ON ra.address_id = addr.id
-                LEFT JOIN cities ct ON addr.city_id = ct.id
-                WHERE 1=1';
-
-            // Добавляем фильтр по организации
-            if ($request->has('organization') && ! empty($request->organization)) {
-                $sql .= ' AND c.organization = ?';
-                $bindings[] = $request->organization;
+        /**
+         * Поиск заявок за весь период
+         */
+        public function getAllPeriod(Request $request)
+        {
+            try {
+                // Тест
+                // $data = [
+                //     'success' => true,
+                //     'debug' => false,
+                //     'message' => 'Заявки успешно получены',
+                //     'request-all' => $request->all(),
+                // ];
+    
+                // return response()->json($data);
+    
+                $bindings = [];
+    
+                // Pagination parameters
+                $page = (int) $request->input('page', 1);
+                $limit = (int) $request->input('limit', 20);
+                $offset = ($page - 1) * $limit;
+    
+                $sqlBase = '
+                    FROM requests r
+                    LEFT JOIN clients c ON r.client_id = c.id
+                    LEFT JOIN request_statuses rs ON r.status_id = rs.id
+                    LEFT JOIN request_types rt ON r.request_type_id = rt.id
+                    LEFT JOIN brigades b ON r.brigade_id = b.id
+                    LEFT JOIN employees e ON b.leader_id = e.id
+                    LEFT JOIN employees op ON r.operator_id = op.id
+                    LEFT JOIN request_addresses ra ON r.id = ra.request_id
+                    LEFT JOIN addresses addr ON ra.address_id = addr.id
+                    LEFT JOIN cities ct ON addr.city_id = ct.id
+                    WHERE 1=1';
+    
+                // Добавляем фильтр по организации
+                if ($request->has('organization') && ! empty($request->organization)) {
+                    $sqlBase .= ' AND c.organization = ?';
+                    $bindings[] = $request->organization;
+                }
+    
+                // Добавляем фильтр по типу заявки
+                if ($request->has('requestTypeId') && ! empty($request->requestTypeId)) {
+                    $sqlBase .= ' AND r.request_type_id = ?';
+                    $bindings[] = $request->requestTypeId;
+                }
+    
+                // Calculate total
+                $total = DB::select("SELECT COUNT(*) as total $sqlBase", $bindings)[0]->total;
+    
+                $sql = "
+                    SELECT r.*,
+                        c.fio AS client_fio,
+                        c.phone AS client_phone,
+                        c.organization AS client_organization,
+                        rs.name AS status_name,
+                        rs.color AS status_color,
+                        rt.name AS request_type_name,
+                        b.name AS brigade_name,
+                        e.fio AS brigade_lead,
+                        op.fio AS operator_name,
+                        addr.street,
+                        addr.houses,
+                        addr.district,
+                        addr.city_id,
+                        ct.name AS city_name,
+                        ct.postal_code AS city_postal_code
+                    $sqlBase
+                    ORDER BY execution_date DESC
+                    LIMIT ? OFFSET ?
+                ";
+    
+                $bindings[] = $limit;
+                $bindings[] = $offset;
+    
+                // Логируем SQL-запрос для отладки
+                \Log::info('SQL Query in getAllPeriod:', [
+                    'sql' => $sql,
+                    'bindings' => $bindings,
+                    'page' => $page
+                ]);
+    
+                $requestsAllPeriod = DB::select($sql, $bindings);
+    
+                // Optimization: Fetch only relevant brigade members and comments
+                $requestIds = array_column($requestsAllPeriod, 'id');
+                $brigadeIds = array_filter(array_unique(array_column($requestsAllPeriod, 'brigade_id')));
+    
+                $brigadeMembersWithDetails = [];
+                if (!empty($brigadeIds)) {
+                    $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
+                                    $brigadeMembersWithDetails = DB::select(
+                                        "SELECT
+                                            bm.*,
+                                            b.name as brigade_name,
+                                            b.leader_id,
+                                            e.fio as employee_name,
+                                            e.phone as employee_phone,
+                                            e.group_role as employee_group_role,
+                                            e.sip as employee_sip,
+                                            e.position_id as employee_position_id,
+                                            el.fio as employee_leader_name,
+                                            el.phone as employee_leader_phone,
+                                            el.group_role as employee_leader_group_role,
+                                            el.sip as employee_leader_sip,
+                                            el.position_id as employee_leader_position_id
+                                        FROM brigade_members bm
+                                        JOIN brigades b ON bm.brigade_id = b.id
+                                        LEFT JOIN employees e ON bm.employee_id = e.id
+                                        LEFT JOIN employees el ON b.leader_id = el.id
+                                        WHERE bm.brigade_id IN ($placeholders)", 
+                                        array_values($brigadeIds)
+                                    );                }
+    
+                $comments_by_request = [];
+                if (!empty($requestIds)) {
+                    $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
+                    $requestComments = DB::select(" 
+                        SELECT
+                            rc.request_id,
+                            c.id as comment_id,
+                            c.comment,
+                            c.created_at,
+                            CASE 
+                                WHEN e.fio IS NOT NULL THEN e.fio
+                                WHEN u.name IS NOT NULL THEN u.name
+                                WHEN u.email IS NOT NULL THEN u.email
+                                ELSE 'Система'
+                            END as author_name
+                        FROM request_comments rc
+                        JOIN comments c ON rc.comment_id = c.id
+                        LEFT JOIN users u ON rc.user_id = u.id
+                        LEFT JOIN employees e ON u.id = e.user_id
+                        WHERE rc.request_id IN ($placeholders)
+                        ORDER BY rc.request_id, c.created_at
+                    ", array_values($requestIds));
+    
+                    $commentsByRequest = collect($requestComments)
+                        ->groupBy('request_id')
+                        ->map(function ($comments) {
+                            return collect($comments)->map(function ($comment) {
+                                return (object) [
+                                    'id' => $comment->comment_id,
+                                    'comment' => $comment->comment,
+                                    'created_at' => $comment->created_at,
+                                    'author_name' => $comment->author_name,
+                                ];
+                            })->toArray();
+                        });
+                    $comments_by_request = $commentsByRequest->toArray();
+                }
+    
+                $data = [
+                    'success' => true,
+                    'debug' => false,
+                    'message' => 'Заявки успешно получены',
+                    'requestsAllPeriod' => $requestsAllPeriod,
+                    'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+                    'comments_by_request' => $comments_by_request,
+                    'page' => $page,
+                    'limit' => $limit,
+                    'total' => $total
+                ];
+    
+                return response()->json($data);
+            } catch (\Exception $e) {
+                Log::error('Error in ReportController@getAllPeriod: '.$e->getMessage());
+    
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Произошла ошибка при получении отчета',
+                    'error' => $e->getMessage(),
+                ], 500);
             }
-
-            // Добавляем фильтр по типу заявки
-            if ($request->has('requestTypeId') && ! empty($request->requestTypeId)) {
-                $sql .= ' AND r.request_type_id = ?';
-                $bindings[] = $request->requestTypeId;
-            }
-
-            $sql .= ' ORDER BY execution_date DESC';
-
-            // Логируем SQL-запрос для отладки
-            \Log::info('SQL Query in getAllPeriod:', [
-                'sql' => $sql,
-                'bindings' => $bindings,
-            ]);
-
-            $requestsAllPeriod = DB::select($sql, $bindings);
-
-            $brigadeMembersWithDetails = DB::select(
-                'SELECT
-                bm.*,
-                b.name as brigade_name,
-                b.leader_id,
-                e.fio as employee_name,
-                e.phone as employee_phone,
-                e.group_role as employee_group_role,
-                e.sip as employee_sip,
-                e.position_id as employee_position_id,
-                el.fio as employee_leader_name,
-                el.phone as employee_leader_phone,
-                el.group_role as employee_leader_group_role,
-                el.sip as employee_leader_sip,
-                el.position_id as employee_leader_position_id
-            FROM brigade_members bm
-            JOIN brigades b ON bm.brigade_id = b.id
-            LEFT JOIN employees e ON bm.employee_id = e.id
-            LEFT JOIN employees el ON b.leader_id = el.id'
-            );
-
-            $requestComments = DB::select("
-                SELECT
-                    rc.request_id,
-                    c.id as comment_id,
-                    c.comment,
-                    c.created_at,
-                    CASE 
-                        WHEN e.fio IS NOT NULL THEN e.fio
-                        WHEN u.name IS NOT NULL THEN u.name
-                        WHEN u.email IS NOT NULL THEN u.email
-                        ELSE 'Система'
-                    END as author_name
-                FROM request_comments rc
-                JOIN comments c ON rc.comment_id = c.id
-                LEFT JOIN users u ON rc.user_id = u.id
-                LEFT JOIN employees e ON u.id = e.user_id
-                ORDER BY rc.request_id, c.created_at
-            ");
-
-            $commentsByRequest = collect($requestComments)
-                ->groupBy('request_id')
-                ->map(function ($comments) {
-                    return collect($comments)->map(function ($comment) {
-                        return (object) [
-                            'id' => $comment->comment_id,
-                            'comment' => $comment->comment,
-                            'created_at' => $comment->created_at,
-                            'author_name' => $comment->author_name,
-                        ];
-                    })->toArray();
-                });
-
-            $comments_by_request = $commentsByRequest->toArray();
-
-            $data = [
-                'success' => true,
-                'debug' => false,
-                'message' => 'Заявки успешно получены',
-                'requestsAllPeriod' => $requestsAllPeriod,
-                'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
-                'comments_by_request' => $comments_by_request,
-            ];
-
-            return response()->json($data);
-        } catch (\Exception $e) {
-            Log::error('Error in ReportController@getAllPeriod: '.$e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Произошла ошибка при получении отчета',
-                'error' => $e->getMessage(),
-            ], 500);
         }
-    }
-
     /**
      * Поиск заявок за период по датам
      */
