@@ -154,6 +154,10 @@
         text-align: left !important;
     }
 
+    #content-wrapper {
+        margin-top: 0 !important;
+    }
+
     .tab-content {
         margin-bottom: 1rem;    
     }

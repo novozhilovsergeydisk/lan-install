@@ -97,6 +97,22 @@
         .comment-preview::-webkit-scrollbar-thumb:hover {
             background-color: rgba(0, 0, 0, 0.3);
         }
+        .comment-preview-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .tab-content {
+            margin-top: -2.7rem;
+        }
+
+        #header-section__right {
+            transform: translateY(-1.5rem);
+        }
+
+        #content-wrapper {
+            margin-top: -2rem;
+        }
     </style>
 
     <!-- Font Awesome -->
@@ -175,42 +191,12 @@
         <div id="main-content" class="main-content">
             <div id="content-wrapper" class="container-fluid position-relative"
                  style="min-height: 100vh; overflow-x: hidden;">
-                <div id="header-section" class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h1 class="mb-0">Система управления заявками</h1>
-                        @if(isset($user))
-                            <div class="text-success small mt-1 fw-bold">
-                                Авторизован: {{ $user->name }}
-                            </div>
-                        @endif
-                    </div>
+                <div id="header-section" class="mb-2">
                     @if (session('success'))
                         <!-- <div style="color: green; font-weight: bold;">
                             {{ session('success') }}
                         </div> -->
                     @endif
-
-                    <div class="d-flex align-items-center">
-                        <div id="desktop-view-toggle-container" style="display: none;">
-                            <button type="button" id="toggle-desktop-view" style="margin-right: 0.5rem;" class="btn btn-outline-secondary btn-sm px-3">
-                                <i class="bi bi-laptop"></i> Десктоп
-                            </button>
-                        </div>
-
-                        <!-- Logout Button -->
-                        <form action="{{ route('logout') }}" method="POST" class="mb-0">
-                            @csrf
-                            <button type="submit" id="logout-button" class="btn btn-outline-danger btn-sm px-3">
-                                <i class="bi bi-box-arrow-right me-1"></i>Выход
-                            </button>
-                        </form>
-
-                        <!-- Theme Toggle -->
-                        <div class="theme-toggle me-3" id="themeToggle">
-                            <i class="bi bi-sun theme-icon" id="sunIcon"></i>
-                            <i class="bi bi-moon-stars-fill theme-icon d-none" id="moonIcon"></i>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Tabs -->
@@ -260,6 +246,30 @@
                                 type="button" role="tab">Фотоотчеты
                         </button>
                     </li> -->
+                    
+                    <li class="nav-item ms-auto">
+                        <div id="header-section__right" class="d-flex align-items-center pb-1">
+                            <div id="desktop-view-toggle-container" style="display: none;">
+                                <button type="button" id="toggle-desktop-view" style="margin-right: 0.5rem;" class="btn btn-outline-secondary btn-sm px-3">
+                                    <i class="bi bi-laptop"></i> Десктоп
+                                </button>
+                            </div>
+
+                            <!-- Theme Toggle -->
+                            <div class="theme-toggle me-3" id="themeToggle">
+                                <i class="bi bi-sun theme-icon" id="sunIcon"></i>
+                                <i class="bi bi-moon-stars-fill theme-icon d-none" id="moonIcon"></i>
+                            </div>
+
+                            <!-- Logout Button -->
+                            <form action="{{ route('logout') }}" method="POST" class="mb-0">
+                                @csrf
+                                <button type="submit" id="logout-button" class="btn btn-outline-danger btn-sm px-3">
+                                    <i class="bi bi-box-arrow-right me-1"></i>Выход
+                                </button>
+                            </form>
+                        </div>
+                    </li>
                 </ul>
 
                 <!-- mainTabsContent -->
