@@ -148,6 +148,20 @@
 
 /* Адаптация для мобильных устройств (ширина экрана до 768px) */
 @media (max-width: 768px) {
+    #unassignedBrigadesFilter {
+        margin-left: 0 !important;
+        margin-top: 0.1rem !important;
+        text-align: left !important;
+    }
+
+    .tab-content {
+        margin-bottom: 1rem;    
+    }
+
+    .form-label {
+        display: none;
+    }
+
     .col-address__organization {
         font-size: clamp(0.53rem, 1vw, 1rem) !important;
     }
