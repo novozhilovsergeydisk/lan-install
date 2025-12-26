@@ -6650,3 +6650,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+// Обработчик для чекбоксов выбора заявок (массовые действия)
+document.addEventListener('change', function(event) {
+    if (event.target.classList.contains('request-checkbox')) {
+        console.log('Чекбокс заявки нажат. ID:', event.target.value, 'Выбран:', event.target.checked);
+    }
+    if (event.target.id === 'selectAllRequests') {
+        const isChecked = event.target.checked;
+        const checkboxes = document.querySelectorAll('.request-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = isChecked;
+        });
+        console.log('Выбрать все: установлено', isChecked, 'для', checkboxes.length, 'заявок');
+    }
+});

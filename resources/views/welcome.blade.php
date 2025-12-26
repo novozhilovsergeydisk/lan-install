@@ -466,8 +466,8 @@
                                                     @endif
                                                 </div>
                                             @endif
-                                            @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) >= 1)
-                                                <div class="mt-1">
+                                            <div class="mt-1 d-flex flex-wrap gap-1">
+                                                @if(isset($comments_by_request[$request->id]) && count($comments_by_request[$request->id]) >= 1)
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
                                                             data-bs-toggle="modal"
@@ -487,8 +487,19 @@
                                                             Закрыть заявку
                                                         </button>
                                                     @endif
-                                                </div>
-                                            @endif
+                                                @endif
+                                                
+                                                @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
+                                                   <button type="button"
+                                                            class="btn btn-sm btn-outline-purple edit-request-btn p-1"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="right"
+                                                            data-bs-title="Редактировать заявку"
+                                                            data-request-id="{{ $request->id }}">
+                                                        <i class="bi bi-pencil"></i>
+                                                   </button>
+                                                @endif
+                                            </div>
                                          </td>
 
                                          <!-- Состав бригады -->
@@ -559,15 +570,6 @@
                                                             data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-x-circle"></i>
                                                     </button>
-
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-outline-purple edit-request-btn p-1"
-                                                            data-bs-toggle="tooltip"
-                                                            data-bs-placement="left"
-                                                            data-bs-title="Редактировать заявку"
-                                                            data-request-id="{{ $request->id }}">
-                                                        <i class="bi bi-pencil"></i>
-                                                   </button>
                                                 @endif
 
                                                 @php
@@ -593,6 +595,9 @@
                                                         <i class="bi bi-plus-circle"></i> 
                                                     </button>
                                                 @endif
+                                                <div class="mt-2 text-center">
+                                                    <input type="checkbox" class="form-check-input request-checkbox" value="{{ $request->id }}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                                                </div>
                                             </div>
                                             @endif
                                         </td>
