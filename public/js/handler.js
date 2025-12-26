@@ -978,7 +978,7 @@ async function applyFilters() {
                                   <div class="col-date__date" ${request.request_type_color ? `style="background-color: ${request.request_type_color}; color: ${window.utils.getContrastColor(request.request_type_color)}"` : ''}>${formattedDate} | ${requestNumber}${request.request_type_name ? ` <span>${request.request_type_name}</span>` : ''}</div>
                                  ${commentsSectionHtml}
                                  <!-- Кнопка комментариев -->
-                                 <div class="mt-1">
+                                 <div class="mt-1 d-flex flex-wrap gap-1">
                                      <button type="button"
                                              class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
                                              data-bs-toggle="modal"
@@ -997,6 +997,14 @@ async function applyFilters() {
                                      ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
                                          <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                              Закрыть заявку
+                                         </button>
+                                         <button type="button"
+                                                 class="btn btn-sm btn-outline-purple edit-request-btn p-1"
+                                                 data-bs-toggle="tooltip"
+                                                 data-bs-placement="right"
+                                                 data-bs-title="Редактировать заявку"
+                                                 data-request-id="${request.id}">
+                                             <i class="bi bi-pencil"></i>
                                          </button>
                                      ` : ''}
                                  </div>
@@ -1039,14 +1047,6 @@ async function applyFilters() {
                                             data-request-id="${request.id}">
                                         <i class="bi bi-x-circle"></i>
                                     </button>
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-purple edit-request-btn p-1"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-placement="left"
-                                            data-bs-title="Редактировать заявку"
-                                            data-request-id="${request.id}">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
                                 ` : ''}
 
                                 ${isAdmin && statusName == 'выполнена' && (today === executionDate) ? `
@@ -1068,6 +1068,10 @@ async function applyFilters() {
                                         <i class="bi bi-plus-circle"></i> 
                                     </button>
                                 ` : ''}
+                                
+                                <div class="mt-2 text-center">
+                                    <input type="checkbox" class="form-check-input request-checkbox" value="${request.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                                </div>
                             </td>
                             ` : ''}
                         `;

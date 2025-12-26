@@ -2331,23 +2331,31 @@ function addRequestToTable(result) {
                     <p class="comment-preview-title">Печатный комментарий:</p>
                     <div data-comment-request-id="${requestData.id}" class="comment-preview-text">${extractedComment}</div>
                 </div>
-                <div class="mt-1">
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
-                            data-bs-toggle="modal"
-                            data-bs-target="#commentsModal"
-                            data-request-id="${requestData.id}"
-                            style="position: relative; z-index: 1;">
-                        <i class="bi bi-chat-left-text me-1"></i>
-                        <span class="badge bg-primary rounded-pill ms-1">
-                            1
-                        </span>
-                    </button>
-                    <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
-                        Закрыть заявку
-                    </button>
-                </div>
             ` : ''}
+            <div class="mt-1 d-flex flex-wrap gap-1">
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
+                        data-bs-toggle="modal"
+                        data-bs-target="#commentsModal"
+                        data-request-id="${requestData.id}"
+                        style="position: relative; z-index: 1;">
+                    <i class="bi bi-chat-left-text me-1"></i>
+                    <span class="badge bg-primary rounded-pill ms-1">
+                        ${extractedComment ? '1' : '0'}
+                    </span>
+                </button>
+                <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
+                    Закрыть заявку
+                </button>
+                <button type="button"
+                        class="btn btn-sm btn-outline-purple edit-request-btn p-1"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="right"
+                        data-bs-title="Редактировать заявку"
+                        data-request-id="${requestData.id}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            </div>
         </td>
         <td class="col-brigade">
             <div data-name="brigadeMembers" class="col-brigade__div">
@@ -2384,14 +2392,9 @@ function addRequestToTable(result) {
                         data-request-id="${requestData.id}">
                     <i class="bi bi-x-circle"></i>
                 </button>
-                <button type="button"
-                        class="btn btn-sm btn-outline-purple edit-request-btn p-1"
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="left"
-                        data-bs-title="Редактировать заявку"
-                        data-request-id="${requestData.id}">
-                    <i class="bi bi-pencil"></i>
-                </button>
+                <div class="mt-2 text-center">
+                    <input type="checkbox" class="form-check-input request-checkbox" value="${requestData.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                </div>
             </div>
         </td>
         ` : ''}
