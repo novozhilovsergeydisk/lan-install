@@ -1765,7 +1765,7 @@
 <hr id="divider" class="my-0 border-top border-2 border-opacity-10">
 
 <!-- Footer -->
-<footer class="bg-dark text-white sticky-bottom">
+<footer class="bg-dark text-white">
     <div class="container-fluid py-4">
         <div class="row justify-content-center">
             <div class="col-12 col-lg-10">
