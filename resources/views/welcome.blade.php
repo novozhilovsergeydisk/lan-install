@@ -4566,7 +4566,7 @@
                     <input type="hidden" id="editRequestId" name="request_id" />
                     <input type="hidden" id="editClientId" name="edit_client_id" />
                     <div class="mb-3">
-                        <!-- <h6>Информация о клиенте</h6> -->
+                        <!-- <h6>Информация о клиенте и заявке</h6> -->
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="editClientName" class="form-label">Контактное лицо</label>
@@ -4580,12 +4580,6 @@
                                 <label for="editClientOrganization" class="form-label">Организация</label>
                                 <input type="text" class="form-control" id="editClientOrganization" name="client_organization" />
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 hide-me">
-                        <!-- <h6>Детали заявки</h6> -->
-                        <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="editRequestType" class="form-label">Тип заявки <span class="text-danger">*</span></label>
                                  <select class="form-select" id="editRequestType" name="request_type_id" required>
@@ -4593,7 +4587,12 @@
                                      <!-- Will be populated by JavaScript -->
                                  </select>
                             </div>
-                            <div class="col-md-6 hide-me">
+                        </div>
+                    </div>
+
+                    <div class="mb-3 hide-me">
+                        <div class="row g-3">
+                            <div class="col-md-6">
                                 <label for="editRequestStatus" class="form-label">Статус</label>
                                  <select class="form-select" id="editRequestStatus" name="status_id">
                                      <option value="" selected>Выберите статус</option>

@@ -51,95 +51,129 @@ async function initEditRequestHandler() {
         document.getElementById('editRequestId').value = requestId;
 
         try {
-            // [HomeController::class, 'getEditRequest']
-            const response = await fetch(`/requests/${requestId}`); 
-            if (!response.ok) {
-                throw new Error('Ошибка загрузки');
+            // Параллельная загрузка данных заявки, типов и статусов
+            const [requestResponse, typesResponse, statusesResponse, addressesResponse] = await Promise.all([
+                fetch(`/requests/${requestId}`),
+                fetch('/api/request-types?is_deleted=false'),
+                fetch('/api/request-statuses/all'),
+                fetch('/api/addresses')
+            ]);
+
+            if (!requestResponse.ok) {
+                throw new Error('Ошибка загрузки заявки');
             }
-            const responseData = await response.json();
+
+            const responseData = await requestResponse.json();
             const data = responseData.data || responseData; // Поддерживаем оба формата ответа
+            
+            // Получаем данные для списков
+            const types = await typesResponse.json().catch(() => []);
+            const statusesData = await statusesResponse.json().catch(() => ({}));
+            const statuses = statusesData.statuses || [];
+            const addresses = await addressesResponse.json().catch(() => []);
 
             console.log('Получены данные с сервера:', JSON.stringify(responseData, null, 2));
             console.log('Используемые данные:', data);
 
             const modalEl = document.getElementById('editRequestModal');
             console.log('Найден элемент модального окна:', modalEl);
+            
             if (modalEl) {
                 const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
 
-                // Добавляем обработчик события показа модального окна
+                // Функция заполнения формы
                 const fillForm = function() {
                     console.log('Начинаем заполнение формы');
 
-                    // Выводим все доступные поля из data
-                    console.log('Доступные поля в data:', Object.keys(data));
-                    console.log('Данные для заполнения:', data);
-
+                    // 1. Заполняем простые поля
                     const editClientIdEl = document.getElementById('editClientId');
-                    console.log({ editClientIdEl });
-                    if (!editClientIdEl) {
-                        console.error('Element with id "editClientId" not found');
-                        return;
-                    }
-                    editClientIdEl.value = data.client_id || data.clientId || '';
-                    console.log(editClientIdEl.value);
+                    if (editClientIdEl) editClientIdEl.value = data.client_id || data.clientId || '';
 
                     const clientNameEl = document.getElementById('editClientName');
-                    console.log({ clientNameEl });
                     if (clientNameEl) clientNameEl.value = data.client_fio || data.clientName || '';
-                    console.log(clientNameEl.value);
 
                     const clientPhoneEl = document.getElementById('editClientPhone');
-                    console.log({ clientPhoneEl });
                     if (clientPhoneEl) clientPhoneEl.value = data.client_phone || data.clientPhone || '';
-                    console.log(clientPhoneEl.value);
 
                     const clientOrgEl = document.getElementById('editClientOrganization');
-                    console.log({ clientOrgEl });
                     if (clientOrgEl) clientOrgEl.value = data.client_organization || data.clientOrganization || '';
-                    console.log(clientOrgEl.value);
-
-                    const requestTypeEl = document.getElementById('editRequestType');
-                    console.log({ requestTypeEl });
-                    if (requestTypeEl) requestTypeEl.value = data.request_type_id || data.requestTypeId || '';
-                    console.log(requestTypeEl.value);
-
-                    const requestStatusEl = document.getElementById('editRequestStatus');
-                    console.log({ requestStatusEl });
-                    if (requestStatusEl) requestStatusEl.value = data.status_id || data.statusId || '';
-                    console.log(requestStatusEl.value);
 
                     const executionDateEl = document.getElementById('editExecutionDate');
-                    console.log({ executionDateEl });
                     if (executionDateEl) executionDateEl.value = data.execution_date || data.executionDate || '';
-                    console.log(executionDateEl.value);
 
                     const executionTimeEl = document.getElementById('editExecutionTime');
-                    console.log({ executionTimeEl });
                     if (executionTimeEl) executionTimeEl.value = data.execution_time || data.executionTime || '';
-                    console.log(executionTimeEl.value);
 
-                    // Проверяем наличие элемента addressesId перед обращением к нему
-                    const addressesIdEl = document.getElementById('editAddressesId');
-                    console.log({ addressesIdEl });
-                    if (addressesIdEl) {
-                        addressesIdEl.value = data.address_id || '';
-                        console.log('Значение addressesId установлено:', addressesIdEl.value);
-                    } else {
-                        console.warn('Элемент с id "addressesId" не найден в DOM');
+                    // 2. Заполняем и устанавливаем типы заявок
+                    const requestTypeEl = document.getElementById('editRequestType');
+                    if (requestTypeEl) {
+                        requestTypeEl.innerHTML = '<option value="" selected>Выберите тип заявки</option>';
+                        types.forEach(type => {
+                            const option = document.createElement('option');
+                            option.value = type.id;
+                            option.textContent = type.name;
+                            requestTypeEl.appendChild(option);
+                        });
+                        // Устанавливаем значение после заполнения
+                        requestTypeEl.value = data.request_type_id || data.requestTypeId || '';
                     }
 
-                    const commentEl = document.getElementById('editComment');
-                    console.log({ commentEl });
-                    // if (commentEl) commentEl.value = data.comment || data.commentText || '';
-                    // log(commentEl.value);
+                    // 3. Заполняем и устанавливаем статусы
+                    const requestStatusEl = document.getElementById('editRequestStatus');
+                    if (requestStatusEl) {
+                        requestStatusEl.innerHTML = '<option value="" selected>Выберите статус</option>';
+                        statuses.forEach(status => {
+                            const option = document.createElement('option');
+                            option.value = status.id;
+                            option.textContent = status.name;
+                            requestStatusEl.appendChild(option);
+                        });
+                        // Устанавливаем значение после заполнения
+                        requestStatusEl.value = data.status_id || data.statusId || '';
+                    }
 
-                    // Populate work parameters
+                    // 4. Заполняем и устанавливаем адрес
+                    const addressesIdEl = document.getElementById('editAddressesId');
+                    if (addressesIdEl) {
+                        addressesIdEl.innerHTML = '<option value="" disabled selected>Выберите адрес</option>';
+                        addresses.forEach(address => {
+                            const option = document.createElement('option');
+                            option.value = address.id;
+                            option.textContent = address.full_address;
+                            // Добавляем доп данные для поиска
+                            option.dataset.street = address.street;
+                            option.dataset.houses = address.houses;
+                            option.dataset.city = address.city;
+                            addressesIdEl.appendChild(option);
+                        });
+                        
+                        // Устанавливаем значение в нативный селект
+                        addressesIdEl.value = data.address_id || '';
+                        
+                        // Инициализируем кастомный селект и устанавливаем значение
+                        if (typeof window.initCustomSelect === 'function') {
+                            // Пересоздаем кастомный селект
+                            const existingWrapper = document.getElementById('custom-select-wrapper-editAddressesId');
+                            if (existingWrapper) existingWrapper.remove();
+                            addressesIdEl.style.display = 'block'; // Временно показываем для initCustomSelect
+                            
+                            window.initCustomSelect('editAddressesId', "Выберите адрес из списка");
+                            
+                            // Небольшая задержка для рендеринга
+                            setTimeout(() => {
+                                if (typeof setCustomSelectValue === 'function') {
+                                    setCustomSelectValue('editAddressesId', data.address_id || '');
+                                    console.log('Значение в кастомный селект адреса установлено');
+                                }
+                            }, 100);
+                        }
+                    }
+
+                    // 5. Загрузка параметров работ (существующая логика)
                     const editWorkParametersContainer = document.getElementById('editWorkParametersContainer');
                     if (editWorkParametersContainer) {
                         editWorkParametersContainer.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Загрузка работ...</div>';
                         
-                        // Function to load parameters for edit modal
                         const loadEditParameters = async (typeId, existingParameters = []) => {
                             try {
                                 const response = await fetch(`/api/work-parameter-types/by-request-type/${typeId}`);
@@ -153,7 +187,6 @@ async function initEditRequestHandler() {
                                         row.className = 'row g-3 mb-2 align-items-center work-parameter-row';
                                         row.dataset.id = param.id;
                                         
-                                        // Find existing value if any
                                         const existingParam = existingParameters.find(p => p.parameter_type_id == param.id);
                                         const value = existingParam ? existingParam.quantity : 0;
                                         
@@ -176,25 +209,18 @@ async function initEditRequestHandler() {
                             }
                         };
 
-                        // Initial load
                         if (data.request_type_id) {
                             loadEditParameters(data.request_type_id, data.work_parameters || []);
                         } else {
                             editWorkParametersContainer.innerHTML = '<div class="alert alert-light border text-center p-2 mb-0 text-muted small">Выберите тип заявки, чтобы загрузить список работ</div>';
                         }
 
-                        // Add change listener to request type select in edit modal
+                        // Обработчик изменения типа заявки
                         const editRequestTypeSelect = document.getElementById('editRequestType');
                         if (editRequestTypeSelect) {
-                            // Remove old listener to avoid duplicates if any (though difficult without named function)
-                            // A better approach is to check if we already attached it, but for now simple attach
-                            // Note: this might attach multiple times if initEditRequestHandler is called multiple times?
-                            // initEditRequestHandler is likely called once on page load.
-                            
                             editRequestTypeSelect.onchange = function() {
                                 const typeId = this.value;
                                 if (typeId) {
-                                    // When type changes, we don't have existing parameters for the NEW type, so pass empty array
                                     loadEditParameters(typeId, []);
                                 } else {
                                     editWorkParametersContainer.innerHTML = '<div class="alert alert-light border text-center p-2 mb-0 text-muted small">Выберите тип заявки, чтобы загрузить список работ</div>';
@@ -204,56 +230,26 @@ async function initEditRequestHandler() {
                     }
 
                     console.log('Заполнение формы завершено');
-
-                    // Загружаем адреса для выпадающего списка и устанавливаем значение в кастомный селект
-                    if (typeof loadAddresses === 'function') {
-                        loadAddresses('editAddressesId');
-                        // После загрузки адресов устанавливаем значение в кастомный селект с повторными попытками
-                        function trySetCustomSelectValue(attempts = 0) {
-                            const wrapper = document.getElementById('custom-select-wrapper-editAddressesId');
-                            if (wrapper) {
-                                setCustomSelectValue('editAddressesId', data.address_id || '');
-                                console.log('Значение в кастомный селект установлено');
-                            } else if (attempts < 10) {
-                                console.log(`Попытка ${attempts + 1}: Wrapper кастомного селекта не найден, повторная попытка через 200мс`);
-                                setTimeout(() => trySetCustomSelectValue(attempts + 1), 200);
-                            } else {
-                                console.error('Не удалось установить значение в кастомный селект после 10 попыток');
-                            }
-                        }
-                        setTimeout(trySetCustomSelectValue, 500); // Начальная задержка 500ms
-                    }
-
-                    // Проверяем значения полей после заполнения
-                    const fields = ['editClientName', 'editClientPhone', 'editClientOrganization', 'editRequestType',
-                                 'editRequestStatus', 'execution_date', 'execution_time', 'editAddressesId', 'editComment'];
-                    fields.forEach(field => {
-                        const el = document.getElementById(field);
-                        console.log(`Поле ${field}:`, el ? {value: el.value, id: el.id} : 'не найдено');
-                    });
                 };
                 
-                // Скрываем все активные tooltips перед показом модального окна
+                // Скрываем все активные tooltips
                 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
                 tooltipTriggerList.map(function (tooltipTriggerEl) {
                     const tooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
                     if (tooltip) tooltip.hide();
                 });
 
-                // Если модальное окно уже показано, вызываем fillForm напрямую
-                if (modalEl.classList.contains('show')) {
-                    console.log('Модальное окно уже показано, заполняем форму сразу');
-                    fillForm();
-                } else {
-                    console.log('Ожидаем показ модального окна');
-                    modalEl.addEventListener('shown.bs.modal', fillForm, { once: true });
-                }
-
+                // Показываем модальное окно
+                // Важно: Сначала показываем, потом заполняем, чтобы элементы были видны (хотя fillForm работает с DOM, display не так важен для value)
+                // Но лучше привязаться к событию, как было, или вызвать сразу, если уже показано.
+                // В данном случае мы уже имеем данные, поэтому можем заполнить и показать.
+                
+                fillForm(); // Заполняем сразу, так как данные уже есть
                 modal.show();
             }
         } catch (error) {
             console.error('Ошибка:', error);
-            showAlert('Ошибка загрузки данных заявки', 'danger');
+            showAlert('Ошибка загрузки данных заявки: ' + error.message, 'danger');
         }
     });
 }
