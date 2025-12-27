@@ -1637,7 +1637,7 @@ class ReportController extends Controller
                     WHERE wp.request_id = r.id
                 ) as work_description,
                 (
-                    SELECT string_agg(co.comment, '; ')
+                    SELECT string_agg(NULLIF(TRIM(REGEXP_REPLACE(co.comment, '((<br>)+)?\s*Запланированные работы:.*', '', 'g')), ''), '; ')
                     FROM request_comments rc
                     JOIN comments co ON rc.comment_id = co.id
                     WHERE rc.request_id = r.id
@@ -1650,6 +1650,7 @@ class ReportController extends Controller
             LEFT JOIN brigades b ON r.brigade_id = b.id
             LEFT JOIN employees leader ON b.leader_id = leader.id
             WHERE r.id IN ($placeholders)
+            ORDER BY r.id DESC
         ";
 
         $requests = DB::select($sql, $ids);
