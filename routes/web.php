@@ -265,6 +265,9 @@ Route::prefix('api')->middleware('auth')->group(function () {
     // Get requests by date
     Route::get('/requests/date/{date}', [HomeController::class, 'getRequestsByDate'])->name('api.requests.by-date');
 
+    // Get request counts by month
+    Route::get('/requests/counts', [HomeController::class, 'getRequestCountsByMonth'])->name('api.requests.counts');
+
     // Get requests with optional date filter
     Route::get('/requests', [HomeController::class, 'getRequests'])->name('api.requests');
 

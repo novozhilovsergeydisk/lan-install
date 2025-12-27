@@ -1944,6 +1944,46 @@ class HomeController extends Controller
     }
 
     /**
+     * Получение количества заявок по дням за указанный месяц
+     */
+    public function getRequestCountsByMonth(Request $request)
+    {
+        try {
+            $month = $request->input('month');
+            $year = $request->input('year');
+
+            if (!$month || !$year) {
+                return response()->json(['success' => false, 'message' => 'Не указан год или месяц'], 400);
+            }
+
+            // Создаем даты начала и конца месяца
+            $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
+            $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d');
+
+            // Запрос количества заявок
+            $counts = DB::table('requests')
+                ->join('request_statuses', 'requests.status_id', '=', 'request_statuses.id')
+                ->select(DB::raw('DATE(execution_date) as date'), DB::raw('count(*) as count'))
+                ->whereBetween('execution_date', [$startDate, $endDate])
+                ->whereNotIn('request_statuses.name', ['отменена', 'планирование'])
+                ->groupBy('date')
+                ->get();
+
+            // Преобразуем в удобный формат ['YYYY-MM-DD' => count]
+            $result = [];
+            foreach ($counts as $row) {
+                $result[$row->date] = $row->count;
+            }
+
+            return response()->json(['success' => true, 'data' => $result]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting request counts: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Ошибка при получении количества заявок'], 500);
+        }
+    }
+
+    /**
      * Получение комментариев к заявке
      */
     public function getComments($requestId)

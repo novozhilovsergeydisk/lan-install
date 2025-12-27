@@ -22,14 +22,145 @@ $(document).ready(function() {
     $('.request-checkbox:checked').each(function() {
         $(this).closest('tr').addClass('row-selected');
     });
-    
-    // Initialize datepicker
-    $('#datepicker').datepicker({
+
+    // Cache for request counts
+    let requestCounts = {};
+
+    // Function to load request counts
+    function loadRequestCounts(year, month) {
+        $.ajax({
+            url: '/api/requests/counts',
+            data: { year: year, month: month },
+            success: function(response) {
+                if (response.success) {
+                    // Merge new data into cache
+                    Object.assign(requestCounts, response.data);
+                    
+                    // Redraw datepicker to apply new data without resetting the view
+                    const datepicker = $('#datepicker').data('datepicker');
+                    if (datepicker) {
+                        datepicker.fill();
+                    }
+                }
+            },
+            error: function(err) {
+                console.error('Failed to load request counts', err);
+            }
+        });
+    }
+
+    // Datepicker options
+    const datepickerOptions = {
         format: 'dd.mm.yyyy',
         language: 'ru',
         autoclose: true,
         todayHighlight: true,
-        container: '#datepicker'
+        container: '#datepicker',
+        beforeShowDay: function(date) {
+            // Format date as YYYY-MM-DD
+            let year = date.getFullYear();
+            let month = (date.getMonth() + 1).toString().padStart(2, '0');
+            let day = date.getDate().toString().padStart(2, '0');
+            let dateString = `${year}-${month}-${day}`;
+
+            if (requestCounts[dateString] !== undefined && requestCounts[dateString] > 0) {
+                return {
+                    tooltip: `Заявок: ${requestCounts[dateString]}`,
+                    classes: 'has-requests',
+                    title: `Заявок: ${requestCounts[dateString]}`
+                };
+            }
+            return {};
+        }
+    };
+
+    // Function to initialize datepicker
+    function initDatepicker() {
+        const $datepicker = $('#datepicker');
+        const currentDate = $datepicker.datepicker('getDate') || new Date();
+        
+        // Destroy existing instance if any
+        if ($datepicker.data('datepicker')) {
+            $datepicker.datepicker('destroy');
+        }
+
+        // Initialize
+        $datepicker.datepicker(datepickerOptions);
+        
+        // Restore date
+        $datepicker.datepicker('setDate', currentDate);
+
+        // Restore event listeners
+        $datepicker.on('changeMonth', function(e) {
+            let date = e.date;
+            if (date) {
+                 loadRequestCounts(date.getFullYear(), date.getMonth() + 1);
+            }
+        });
+        
+        // Restore changeDate listener for input sync
+        $datepicker.on('changeDate', function(e) {
+            const selectedDate = e.format('dd.mm.yyyy');
+            $('#dateInput').val(selectedDate);
+            $('#selectedDate').text(selectedDate);
+            
+            // Clear map data logic...
+             if (localStorage.getItem('requestsData')) {
+                localStorage.removeItem('requestsData');
+            }
+            
+            if (window.yandexMap) {
+                try {
+                    window.yandexMap.destroy();
+                    window.yandexMap = null;
+                } catch (error) {
+                    console.error('Ошибка при уничтожении карты:', error);
+                }
+            }
+            
+            const mapContainer = document.getElementById('map-content');
+            if (mapContainer) {
+                mapContainer.innerHTML = '<div id="map" style="width: 100%; height: 100%;"></div>';
+                mapContainer.classList.add('hide-me');
+                mapContainer.style.display = 'none';
+                mapContainer.style.visibility = 'hidden';
+                mapContainer.style.height = '0';
+                mapContainer.style.padding = '0';
+            }
+        });
+    }
+    
+    // Initial initialization
+    initDatepicker();
+
+    // Initial load of request counts
+    let initialDateForCounts = new Date();
+    loadRequestCounts(initialDateForCounts.getFullYear(), initialDateForCounts.getMonth() + 1);
+
+    // Show request count in info block on hover
+    $(document).on('mouseenter', '#datepicker .day', function() {
+        const timestamp = $(this).data('date');
+        if (!timestamp) return;
+        
+        const date = new Date(timestamp);
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
+        
+        const count = requestCounts[dateString];
+        const formattedDate = date.toLocaleDateString('ru-RU');
+        
+        if (count && count > 0) {
+            $('#calendar-status').text(`${formattedDate}: заявок - ${count}`);
+        } else {
+            $('#calendar-status').text(`${formattedDate}: нет заявок`);
+        }
+    });
+
+    // Clear info block on mouseleave
+    $(document).on('mouseleave', '#datepicker .day', function() {
+        $('#calendar-status').text('');
     });
 
     // Sync datepicker with input field

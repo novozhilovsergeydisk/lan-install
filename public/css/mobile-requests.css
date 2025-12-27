@@ -162,8 +162,12 @@
         margin-bottom: 1rem;    
     }
 
-    .form-label {
+    /* .form-label {
         display: none;
+    } */
+
+    .modal .form-label {
+        display: block !important;
     }
 
     .col-address__organization {

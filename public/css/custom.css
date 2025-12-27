@@ -544,3 +544,8 @@ body.dark-mode .custom-select-options li:hover {
 .col-date__date {
     padding-left: 5px;
 }
+
+/* Calendar cell with requests */
+.datepicker tbody td.has-requests {
+    position: relative;
+}
