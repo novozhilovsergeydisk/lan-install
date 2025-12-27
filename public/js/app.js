@@ -1,19 +1,16 @@
 // Initialize when document is ready
 $(document).ready(function() {
-    // Handle checkbox selection (only one can be selected)
-    $('.request-checkbox').on('change', function() {
+    // Handle checkbox selection (multiple selection allowed)
+    $(document).on('change', '.request-checkbox', function() {
         const currentCheckbox = $(this);
         const currentRow = currentCheckbox.closest('tr');
-        
-        // Remove selection from all checkboxes
-        $('.request-checkbox').not(this).prop('checked', false);
-        $('tr').removeClass('row-selected');
         
         if (currentCheckbox.is(':checked')) {
             // Highlight the current row if checkbox is checked
             currentRow.addClass('row-selected');
         } else {
-            // Reset styles for the current checkbox
+            // Remove highlight and reset styles
+            currentRow.removeClass('row-selected');
             currentCheckbox.css({
                 'background-color': 'transparent',
                 'border-color': 'rgba(0, 0, 0, 0.25)'

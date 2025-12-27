@@ -339,6 +339,11 @@
                                 <i class="bi bi-map me-1"></i>На карте
                             </button>
 
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2 d-none"
+                                    id="btn-print-work-permit">
+                                <i class="bi bi-printer me-1"></i>Распечатать
+                            </button>
+
                             <div id="status-buttons" class="d-flex flex-wrap gap-2  hide-me">
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->
                             </div>
@@ -2396,7 +2401,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <!-- Form Handlers -->
-<script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
+    <script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
+    <script src="{{ asset('js/print-work-permit.js') }}"></script>
+
 <script type="module" src="{{ asset('js/employee-export.js') }}"></script>
 
 <!-- Event Handlers -->

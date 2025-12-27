@@ -1603,4 +1603,90 @@ class ReportController extends Controller
             return [];
         }
     }
+
+    public function printWorkPermit(Request $request)
+    {
+        $ids = explode(',', $request->query('ids', ''));
+        $ids = array_filter($ids, 'is_numeric');
+
+        if (empty($ids)) {
+            return response('Не выбраны заявки для печати', 400);
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        $sql = "
+            SELECT
+                r.id,
+                r.number,
+                r.brigade_id,
+                TO_CHAR(r.execution_date, 'DD.MM.YYYY') as execution_date_formatted,
+                c.fio as client_fio,
+                c.organization as client_organization,
+                c.phone as client_phone,
+                addr.street,
+                addr.houses,
+                addr.district,
+                ct.name as city_name,
+                b.name as brigade_name,
+                leader.fio as brigade_leader_fio,
+                (
+                    SELECT string_agg(wpt.name || CASE WHEN wp.quantity > 0 THEN ': ' || wp.quantity ELSE '' END, '; ')
+                    FROM work_parameters wp
+                    JOIN work_parameter_types wpt ON wp.parameter_type_id = wpt.id
+                    WHERE wp.request_id = r.id
+                ) as work_description,
+                (
+                    SELECT string_agg(co.comment, '; ')
+                    FROM request_comments rc
+                    JOIN comments co ON rc.comment_id = co.id
+                    WHERE rc.request_id = r.id
+                ) as request_comments
+            FROM requests r
+            LEFT JOIN clients c ON r.client_id = c.id
+            LEFT JOIN request_addresses ra ON r.id = ra.request_id
+            LEFT JOIN addresses addr ON ra.address_id = addr.id
+            LEFT JOIN cities ct ON addr.city_id = ct.id
+            LEFT JOIN brigades b ON r.brigade_id = b.id
+            LEFT JOIN employees leader ON b.leader_id = leader.id
+            WHERE r.id IN ($placeholders)
+        ";
+
+        $requests = DB::select($sql, $ids);
+
+        // Получаем членов бригад
+        $brigadeIds = array_unique(array_filter(array_map(fn($r) => $r->brigade_id, $requests)));
+        $membersByBrigade = [];
+
+        if (!empty($brigadeIds)) {
+            $brigadePlaceholders = implode(',', array_fill(0, count($brigadeIds), '?'));
+            $membersSql = "
+                SELECT bm.brigade_id, e.fio, e.group_role
+                FROM brigade_members bm
+                JOIN employees e ON bm.employee_id = e.id
+                WHERE bm.brigade_id IN ($brigadePlaceholders)
+            ";
+            $members = DB::select($membersSql, array_values($brigadeIds));
+            
+            foreach ($members as $member) {
+                $membersByBrigade[$member->brigade_id][] = $member;
+            }
+        }
+
+        // Прикрепляем членов бригады к каждой заявке
+        foreach ($requests as $req) {
+            $req->brigade_members = $membersByBrigade[$req->brigade_id] ?? [];
+        }
+
+        $issuerFio = auth()->user()->name;
+        $employee = DB::table('employees')->where('user_id', auth()->id())->first();
+        if ($employee) {
+            $issuerFio = $employee->fio;
+        }
+
+        return view('reports.work-permit', [
+            'requests' => $requests,
+            'issuerFio' => $issuerFio
+        ]);
+    }
 }

@@ -236,6 +236,9 @@ Route::prefix('reports')->middleware('auth')->group(function () {
     Route::post('requests/by-employee-date', [ReportController::class, 'getRequestsByEmployeeAndDateRange'])->name('reports.requests.by-employee-date');
     Route::post('requests/by-address-date', [ReportController::class, 'getRequestsByAddressAndDateRange'])->name('reports.requests.by-address-date');
     Route::post('requests/by-employee-address-date', [ReportController::class, 'getRequestsByEmployeeAddressAndDateRange'])->name('reports.requests.by-employee-address-date');
+
+    // Work Permit
+    Route::get('/work-permit', [ReportController::class, 'printWorkPermit'])->name('reports.work-permit');
 });
 
 // API Routes for request management
