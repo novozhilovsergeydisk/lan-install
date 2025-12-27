@@ -1637,7 +1637,7 @@ class ReportController extends Controller
                     WHERE wp.request_id = r.id
                 ) as work_description,
                 (
-                    SELECT string_agg(NULLIF(TRIM(REGEXP_REPLACE(co.comment, '((<br>)+)?\s*Запланированные работы:.*', '', 'g')), ''), '; ')
+                    SELECT string_agg(NULLIF(TRIM(REGEXP_REPLACE(co.comment, '((<br>)+)?\s*Запланированные работы:.*', '', 'g')), ''), '<br>')
                     FROM request_comments rc
                     JOIN comments co ON rc.comment_id = co.id
                     WHERE rc.request_id = r.id
