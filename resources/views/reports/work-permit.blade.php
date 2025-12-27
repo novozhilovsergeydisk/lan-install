@@ -52,7 +52,8 @@
 
         /* Обертка для двойной рамки */
         .table-wrapper {
-            border: 3px double #000;
+            border: 1px double #000;
+            padding: 2px;
             margin-bottom: 30px;
         }
 
