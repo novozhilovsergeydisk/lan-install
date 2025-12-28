@@ -105,9 +105,9 @@
     </style>
 </head>
 <body>
-    @foreach($requests as $req)
+    @foreach($groupedRequests as $brigadeData)
     <div class="page">
-        <h2>НАРЯД-ДОПУСК № {{ $req->number }} ДАТА {{ $req->execution_date_formatted }}</h2>
+        <h2>НАРЯД-ДОПУСК № {{ implode(', ', array_column($brigadeData['requests'], 'number')) }} ДАТА {{ implode(', ', array_keys($brigadeData['dates'])) }}</h2>
 
         <div class="table-wrapper">
             <table class="info-table">
@@ -117,8 +117,14 @@
                 </tr>
                 <tr>
                     <td class="value-row" colspan="4">
-                        {{ $req->city_name }}, {{ $req->street }} {{ $req->houses }} {{ $req->district ? '(' . $req->district . ')' : '' }}<br>
-                        {{ $req->client_organization }}{{ $req->client_fio ? ', (' . $req->client_fio . ')' : '' }}{{ $req->client_phone ? ', тел. ' . $req->client_phone : '' }}
+                        <ol style="margin: 0; padding-left: 20px;">
+                        @foreach($brigadeData['requests'] as $req)
+                            <li style="margin-bottom: 5px;">
+                                {{ $req->city_name }}, {{ $req->street }} {{ $req->houses }} {{ $req->district ? '(' . $req->district . ')' : '' }}<br>
+                                {{ $req->client_organization }}{{ $req->client_fio ? ', (' . $req->client_fio . ')' : '' }}{{ $req->client_phone ? ', тел. ' . $req->client_phone : '' }}
+                            </li>
+                        @endforeach
+                        </ol>
                     </td>
                 </tr>
 
@@ -128,14 +134,13 @@
                 </tr>
                 <tr>
                     <td class="value-row" colspan="4">
-                        @if($req->work_description)
-                            <strong>Запланированные работы:</strong> {{ $req->work_description }}
-                            <br>--<br>
-                        @endif
-                        @if($req->request_comments)
-                            {!! $req->request_comments !!}
-                            
-                        @endif
+                        <ol style="margin: 0; padding-left: 20px;">
+                        @foreach($brigadeData['requests'] as $req)
+                            <li style="margin-bottom: 5px;">
+                                {!! $req->first_comment !!}
+                            </li>
+                        @endforeach
+                        </ol>
                     </td>
                 </tr>
 
@@ -145,9 +150,9 @@
                 </tr>
                 <tr>
                     <td class="value-row" colspan="4">
-                        @if(count($req->brigade_members) > 0)
+                        @if(count($brigadeData['brigade_members']) > 0)
                             <ul class="ul-members">
-                                @foreach($req->brigade_members as $index => $member)
+                                @foreach($brigadeData['brigade_members'] as $index => $member)
                                     <li>{{ $index + 1 }}. {{ $member->fio }} {{ $member->group_role ? '— ' . $member->group_role : '' }}</li>
                                 @endforeach
                             </ul>
@@ -160,7 +165,7 @@
                 <tr>
                     <!-- Ответственный производитель работ -->
                     <td style="width: 35%;">
-                        {{ $req->brigade_leader_fio ?? '____________________' }}
+                        {{ $brigadeData['brigade_leader_fio'] ?? '____________________' }}
                         <div style="font-size: 11px;">ответственный производитель работ</div>
                     </td>
                     <td style="width: 15%;">

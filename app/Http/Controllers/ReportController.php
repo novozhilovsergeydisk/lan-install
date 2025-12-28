@@ -1631,17 +1631,13 @@ class ReportController extends Controller
                 b.name as brigade_name,
                 leader.fio as brigade_leader_fio,
                 (
-                    SELECT string_agg(wpt.name || CASE WHEN wp.quantity > 0 THEN ': ' || wp.quantity ELSE '' END, '; ')
-                    FROM work_parameters wp
-                    JOIN work_parameter_types wpt ON wp.parameter_type_id = wpt.id
-                    WHERE wp.request_id = r.id
-                ) as work_description,
-                (
-                    SELECT string_agg(NULLIF(TRIM(REGEXP_REPLACE(co.comment, '((<br>)+)?\s*Запланированные работы:.*', '', 'g')), ''), '<br>')
+                    SELECT co.comment
                     FROM request_comments rc
                     JOIN comments co ON rc.comment_id = co.id
                     WHERE rc.request_id = r.id
-                ) as request_comments
+                    ORDER BY co.created_at ASC
+                    LIMIT 1
+                ) as first_comment
             FROM requests r
             LEFT JOIN clients c ON r.client_id = c.id
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
@@ -1650,7 +1646,7 @@ class ReportController extends Controller
             LEFT JOIN brigades b ON r.brigade_id = b.id
             LEFT JOIN employees leader ON b.leader_id = leader.id
             WHERE r.id IN ($placeholders)
-            ORDER BY r.id DESC
+            ORDER BY r.brigade_id, r.execution_date, r.id
         ";
 
         $requests = DB::select($sql, $ids);
@@ -1674,9 +1670,23 @@ class ReportController extends Controller
             }
         }
 
-        // Прикрепляем членов бригады к каждой заявке
+        // Группируем заявки по бригаде
+        $groupedRequests = [];
         foreach ($requests as $req) {
-            $req->brigade_members = $membersByBrigade[$req->brigade_id] ?? [];
+            $brigadeId = $req->brigade_id ?? 0;
+            if (!isset($groupedRequests[$brigadeId])) {
+                $groupedRequests[$brigadeId] = [
+                    'brigade_name' => $req->brigade_name,
+                    'brigade_leader_fio' => $req->brigade_leader_fio,
+                    'dates' => [],
+                    'requests' => [],
+                    'brigade_members' => $membersByBrigade[$brigadeId] ?? []
+                ];
+            }
+            $groupedRequests[$brigadeId]['requests'][] = $req;
+            if ($req->execution_date_formatted) {
+                $groupedRequests[$brigadeId]['dates'][$req->execution_date_formatted] = true;
+            }
         }
 
         $issuerFio = auth()->user()->name;
@@ -1686,7 +1696,7 @@ class ReportController extends Controller
         }
 
         return view('reports.work-permit', [
-            'requests' => $requests,
+            'groupedRequests' => $groupedRequests,
             'issuerFio' => $issuerFio
         ]);
     }
