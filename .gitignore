@@ -1,3 +1,6 @@
+scripts/*
+csv/*
+data/*
 comment.txt
 filter_by_date.sh
 filter_by_date_and_block.sh
