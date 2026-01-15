@@ -1211,9 +1211,9 @@ function initExportReportBtn() {
     exportBtn.addEventListener('click', function() {
         console.log('Кнопка экспорта нажата');
 
-        showAlert('Функционал экспорта отчета в Excel в разработке', 'warning');
+        // showAlert('Функционал экспорта отчета в Excel в разработке', 'warning');
 
-        return;
+        // return;
         
         try {
             // Получаем данные из localStorage
@@ -5867,7 +5867,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initPhotoReportList();
     // initDownloadAllPhotos();
     initUploadExcel();
-    initExportReportBtn();
+    // initExportReportBtn();
     initOpenMapBtn();
     initEditRequestHandler();
     initEditRequestFormHandler();

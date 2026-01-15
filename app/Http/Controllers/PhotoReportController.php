@@ -130,4 +130,96 @@ class PhotoReportController extends Controller
             return '0 bytes';
         }
     }
+
+    /**
+     * Скачивание всех фото и файлов заявки архивом
+     *
+     * @param int $requestId
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
+     */
+    public function downloadRequestPhotos($requestId)
+    {
+        try {
+            // Получаем список фото
+            $photos = DB::table('requests as r')
+                ->join('request_comments as rc', 'r.id', '=', 'rc.request_id')
+                ->join('comments as c', 'rc.comment_id', '=', 'c.id')
+                ->join('comment_photos as cp', 'c.id', '=', 'cp.comment_id')
+                ->join('photos as p', 'cp.photo_id', '=', 'p.id')
+                ->where('r.id', $requestId)
+                ->select('p.path', 'p.original_name')
+                ->distinct()
+                ->get();
+
+            // Получаем список файлов
+            $files = DB::table('requests as r')
+                ->join('request_comments as rc', 'r.id', '=', 'rc.request_id')
+                ->join('comments as c', 'rc.comment_id', '=', 'c.id')
+                ->join('comment_files as cf', 'c.id', '=', 'cf.comment_id')
+                ->join('files as f', 'cf.file_id', '=', 'f.id')
+                ->where('r.id', $requestId)
+                ->select('f.path', 'f.original_name')
+                ->distinct()
+                ->get();
+
+            // Объединяем коллекции
+            $allAttachments = $photos->concat($files);
+
+            if ($allAttachments->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'Файлы не найдены'], 404);
+            }
+
+            // Создаем временный файл
+            $zipFileName = 'attachments_request_' . $requestId . '_' . time() . '.zip';
+            $zipFilePath = storage_path('app/temp/' . $zipFileName);
+            
+            // Убедимся, что директория существует
+            if (!file_exists(dirname($zipFilePath))) {
+                mkdir(dirname($zipFilePath), 0755, true);
+            }
+
+            $zip = new \ZipArchive;
+            if ($zip->open($zipFilePath, \ZipArchive::CREATE) === TRUE) {
+                $addedFiles = 0;
+                
+                foreach ($allAttachments as $file) {
+                    $possiblePaths = [
+                        storage_path('app/public/' . $file->path),
+                        public_path('storage/' . $file->path),
+                        public_path($file->path)
+                    ];
+
+                    foreach ($possiblePaths as $filePath) {
+                        if (file_exists($filePath)) {
+                            $entryName = $file->original_name ?: basename($filePath);
+                            
+                            // Уникальное имя
+                            $i = 1;
+                            while ($zip->locateName($entryName) !== false) {
+                                $info = pathinfo($entryName);
+                                $entryName = $info['filename'] . '_' . $i++ . '.' . ($info['extension'] ?? '');
+                            }
+                            
+                            $zip->addFile($filePath, $entryName);
+                            $addedFiles++;
+                            break; 
+                        }
+                    }
+                }
+                $zip->close();
+                
+                if ($addedFiles === 0) {
+                    return response()->json(['success' => false, 'message' => 'Не удалось найти физические файлы на сервере'], 404);
+                }
+            } else {
+                return response()->json(['success' => false, 'message' => 'Не удалось создать архив'], 500);
+            }
+
+            return response()->download($zipFilePath)->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            Log::error('Error downloading attachments: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Ошибка сервера: ' . $e->getMessage()], 500);
+        }
+    }
 }

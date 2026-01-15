@@ -6,8 +6,55 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use App\Exports\RequestsReportExport;
+use Maatwebsite\Excel\Facades\Excel;
+
 class ReportController extends Controller
 {
+    /**
+     * Экспорт отчета в Excel
+     */
+    public function export(Request $request)
+    {
+        try {
+            $filters = $request->only([
+                'startDate',
+                'endDate',
+                'employeeId',
+                'addressId',
+                'organization',
+                'requestTypeId',
+                'allPeriod'
+            ]);
+            
+            // Маппинг 'all_employees' и прочих пустых значений в null
+            if (($filters['employeeId'] ?? '') === 'all_employees') $filters['employeeId'] = null;
+            if (($filters['addressId'] ?? '') === 'all_addresses') $filters['addressId'] = null;
+            if (($filters['organization'] ?? '') === 'all_organizations') $filters['organization'] = null;
+            if (($filters['requestTypeId'] ?? '') === 'all_request_types') $filters['requestTypeId'] = null;
+
+            // Преобразование дат в Y-m-d для БД
+            if (!empty($filters['startDate']) && empty($filters['allPeriod'])) {
+                try {
+                    $filters['startDate'] = \Carbon\Carbon::createFromFormat('d.m.Y', $filters['startDate'])->format('Y-m-d');
+                    $filters['endDate'] = \Carbon\Carbon::createFromFormat('d.m.Y', $filters['endDate'])->format('Y-m-d');
+                } catch (\Exception $e) {
+                    $filters['startDate'] = null;
+                    $filters['endDate'] = null;
+                }
+            }
+
+            // Логируем фильтры для отладки
+            \Illuminate\Support\Facades\Log::info('Export filters:', $filters);
+
+            return Excel::download(new RequestsReportExport($filters), 'export_' . now()->format('d_m_Y_H_i') . '.xlsx');
+
+        } catch (\Exception $e) {
+            Log::error('Error in ReportController@export: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Ошибка экспорта: ' . $e->getMessage()], 500);
+        }
+    }
+
     /**
      * Получение заявок за период по адресу и сотруднику
      */

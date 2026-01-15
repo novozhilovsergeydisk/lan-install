@@ -109,6 +109,9 @@ Route::get('/api/photo-report/{requestId}', [HomeController::class, 'getPhotoRep
 // Фотоотчет: POST (получение фото по id комментария)
 Route::post('/api/comments/{commentId}/photos', [CommentPhotoController::class, 'index'])->name('api.comments.photos')->middleware('auth');
 
+// Скачивание фотоотчета архивом
+Route::get('/photo-reports/{requestId}/download', [PhotoReportController::class, 'downloadRequestPhotos'])->name('photo-report.download')->middleware('auth');
+
 // Маршруты для работы со статусами заявок
 Route::prefix('statuses')->middleware('auth')->group(function () {
     // Route::get('/', [StatusController::class, 'index']);
@@ -239,6 +242,9 @@ Route::prefix('reports')->middleware('auth')->group(function () {
 
     // Work Permit
     Route::get('/work-permit', [ReportController::class, 'printWorkPermit'])->name('reports.work-permit');
+    
+    // Export Report
+    Route::post('requests/export', [ReportController::class, 'export'])->name('reports.requests.export');
 });
 
 // API Routes for request management
