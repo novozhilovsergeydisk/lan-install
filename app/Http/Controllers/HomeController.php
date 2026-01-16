@@ -1023,7 +1023,14 @@ class HomeController extends Controller
                  addr.latitude,
                  addr.longitude,
                  ct.name AS city_name,
-                 ct.postal_code AS city_postal_code
+                 ct.postal_code AS city_postal_code,
+                 (
+                    SELECT quantity
+                    FROM work_parameters wp
+                    WHERE wp.request_id = r.id
+                    ORDER BY wp.id ASC
+                    LIMIT 1
+                 ) AS first_param_quantity
              FROM requests r
              LEFT JOIN clients c ON r.client_id = c.id
              LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1069,7 +1076,14 @@ class HomeController extends Controller
                         addr.latitude,
                         addr.longitude,
                         ct.name AS city_name,
-                        ct.postal_code AS city_postal_code
+                        ct.postal_code AS city_postal_code,
+                        (
+                            SELECT quantity
+                            FROM work_parameters wp
+                            WHERE wp.request_id = r.id
+                            ORDER BY wp.id ASC
+                            LIMIT 1
+                        ) AS first_param_quantity
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1546,10 +1560,11 @@ class HomeController extends Controller
     /**
      * Получение заявок по дате
      */
-    public function getRequestsByDate($date)
+    public function getRequestsByDate(Request $request, $date)
     {
         try {
             $user = auth()->user();
+            $includePlanning = filter_var($request->query('include_planning', false), FILTER_VALIDATE_BOOLEAN);
 
             // Загружаем роли пользователя
             $sql = 'SELECT roles.name FROM user_roles
@@ -1587,14 +1602,17 @@ class HomeController extends Controller
             $validated = $validator->validated();
             $requestDate = $validated['date'];
 
-            // Закомментирован тестовый блок искусственной ошибки
-            // if ($requestDate === '2025-06-27') {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'Тестовая ошибка: проверка обработки ошибок',
-            //         'test_error' => true
-            //     ], 200);
-            // }
+            // Формируем условие для статусов и дат
+            // Стандартное условие: выбранная дата и не (планирование или удалена)
+            $whereClause = "DATE(r.execution_date) = ? AND r.status_id NOT IN (6,7)";
+            $bindings = [$requestDate];
+
+            // Если нужно включить планирование
+            if ($includePlanning) {
+                // (Дата = Х И не удалена/планирование) ИЛИ (статус = планирование И не удалена)
+                // Статус 6 - планирование, 7 - удалена
+                $whereClause = "(DATE(r.execution_date) = ? AND r.status_id NOT IN (6,7)) OR (r.status_id = 6)";
+            }
 
             // Получаем заявки с основной информацией
 
@@ -1627,7 +1645,14 @@ class HomeController extends Controller
                             SELECT COUNT(*)
                             FROM request_comments rc
                             WHERE rc.request_id = r.id
-                        ) AS comments_count
+                        ) AS comments_count,
+                        (
+                            SELECT quantity
+                            FROM work_parameters wp
+                            WHERE wp.request_id = r.id
+                            ORDER BY wp.id ASC
+                            LIMIT 1
+                        ) AS first_param_quantity
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1638,8 +1663,7 @@ class HomeController extends Controller
                     LEFT JOIN request_addresses ra ON r.id = ra.request_id
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
-                     WHERE DATE(r.execution_date) = ?
-                     AND r.status_id NOT IN (6,7)
+                     WHERE $whereClause
                      AND (b.is_deleted = false OR b.id IS NULL)
                     AND (
                         EXISTS (
@@ -1682,7 +1706,14 @@ class HomeController extends Controller
                         addr.latitude,
                         addr.longitude,
                         ct.name AS city_name,
-                        (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count
+                        (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count,
+                        (
+                            SELECT quantity
+                            FROM work_parameters wp
+                            WHERE wp.request_id = r.id
+                            ORDER BY wp.id ASC
+                            LIMIT 1
+                        ) AS first_param_quantity
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1693,13 +1724,12 @@ class HomeController extends Controller
                     LEFT JOIN request_addresses ra ON r.id = ra.request_id
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
-                    WHERE DATE(r.execution_date) = ? AND (b.is_deleted = false OR b.id IS NULL)
-                    AND r.status_id NOT IN (6,7)
+                    WHERE $whereClause AND (b.is_deleted = false OR b.id IS NULL)
                     ORDER BY r.id DESC
                 ";
             }
 
-            $requestByDate = DB::select($sqlRequestByDate, [$requestDate]);
+            $requestByDate = DB::select($sqlRequestByDate, $bindings);
 
             // return response()->json([
             //     'success' => false,

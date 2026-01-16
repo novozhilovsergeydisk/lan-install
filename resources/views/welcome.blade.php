@@ -339,6 +339,14 @@
                                 <i class="bi bi-map me-1"></i>На карте
                             </button>
 
+                            <!-- Checkbox for Planning Requests (Initially Hidden or Visible depending on UI preference, assumed visible when map is relevant) -->
+                            <div class="form-check form-switch d-inline-block align-middle mb-3 me-2 ms-2">
+                                <input class="form-check-input" type="checkbox" id="cb-show-planning">
+                                <label class="form-check-label user-select-none" for="cb-show-planning">
+                                    Планирование
+                                </label>
+                            </div>
+
                             <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2 d-none"
                                     id="btn-print-work-permit">
                                 <i class="bi bi-printer me-1"></i>Распечатать
@@ -4858,15 +4866,7 @@
 <!-- Подключаем скрипт для работы с модальными окнами -->
 <script type="module" src="{{ asset('js/modals.js') }}"></script>
 <script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
-<script src="{{ asset('js/report-export.js') }}"></script>
-
-<!-- Подключаем библиотеку для экспорта в Excel -->
-<!--
-<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
--->
-
-
+    <script src="{{ asset('js/report-export.js') }}"></script>
+    <script src="{{ asset('js/map-requests.js') }}"></script>
 </body>
-
 </html>
-
