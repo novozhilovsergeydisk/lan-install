@@ -1786,48 +1786,18 @@
 <!-- Footer -->
 <footer class="bg-dark text-white">
     <div class="container-fluid py-4">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center text-center">
             <div class="col-12 col-lg-10">
-                <div class="row g-4 d-none">
-                    <!-- Temporarily hidden footer content -->
-                    <div class="col-md-4 text-center text-md-start">
-                        <h5>О компании</h5>
-                        <p class="text-muted small">Сервис для управления заявками и бригадами. Удобный инструмент
-                            для организации работы монтажных бригад.</p>
-                    </div>
-                    <div class="col-md-4">
-                        <h5>Контакты</h5>
-                        <ul class="list-unstyled text-muted small">
-                            <li><i class="bi bi-telephone me-2"></i> +7 (XXX) XXX-XX-XX</li>
-                            <li><i class="bi bi-envelope me-2"></i> info@fursa.ru</li>
-                            <li><i class="bi bi-geo-alt me-2"></i> г. Москва, ул. Примерная, 123</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-4">
-                        <h5>Быстрые ссылки</h5>
-                        <ul class="list-unstyled">
-                            <li><a href="#" class="text-white text-decoration-none">Главная</a></li>
-                            <li><a href="#" class="text-white text-decoration-none">Услуги</a></li>
-                            <li><a href="#" class="text-white text-decoration-none">Тарифы</a></li>
-                            <li><a href="#" class="text-white text-decoration-none">Документация</a></li>
-                        </ul>
-                    </div>
+                <div class="d-flex flex-wrap justify-content-center gap-4 mb-4">
+                    <a href="https://docs.google.com/spreadsheets/d/1XHFtDmqNkXltwpZ_j83XgQwddBx6JBiQfqtoc9n3ZiA/edit?usp=drivesdk" target="_blank" class="text-white text-decoration-none"><i class="bi bi-calendar3 me-2"></i>График работы</a>
+                    <a href="https://docs.google.com/spreadsheets/d/1u2V2q3rPj1ajIUZ8do3SNGOIOmBx8wkvCJBeMX2_6jQ/edit?usp=drivesdk" target="_blank" class="text-white text-decoration-none"><i class="bi bi-cash-stack me-2"></i>График оплаты</a>
+                    <a href="https://storage.lan-install.online/" target="_blank" class="text-white text-decoration-none"><i class="bi bi-box-seam me-2"></i>Склад</a>
                 </div>
-                <hr class="my-4 bg-secondary d-none">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <div class="text-center text-md-start small">
-                            &copy; 2025 lan-install.online. Все права защищены.
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-center text-md-end">
-                            <a href="#" class="text-white text-decoration-none me-3"><i
-                                    class="bi bi-telegram"></i></a>
-                            <a href="#" class="text-white text-decoration-none me-3"><i
-                                    class="bi bi-whatsapp"></i></a>
-                            <a href="#" class="text-white text-decoration-none me-3"><i
-                                    class="bi bi-vk"></i></a>
+                <hr class="my-4 bg-secondary">
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <div class="small">
+                            &copy; {{ date('Y') }} lan-install.online. Все права защищены.
                         </div>
                     </div>
                 </div>
