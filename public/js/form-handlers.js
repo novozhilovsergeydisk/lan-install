@@ -6014,14 +6014,6 @@ function initShowPhotoButtons() {
                     photosContainer.remove();
                 }
             } else {
-                // Скрываем все открытые фотографии
-                document.querySelectorAll('.data-show-photo-btn.active').forEach(btn => {
-                    btn.classList.remove('active');
-                    const containerId = `comment-photos-${btn.getAttribute('data-comment-id')}`;
-                    const container = document.getElementById(containerId);
-                    if (container) container.remove();
-                });
-                
                 // Показываем фотографии для выбранного комментария
                 showPhotoBtn.classList.add('active');
                 loadCommentPhotos(commentId, showPhotoBtn);
