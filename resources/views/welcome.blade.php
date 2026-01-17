@@ -1635,6 +1635,20 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Mobile Footer Links -->
+            <div id="mobile-footer-links" class="d-md-none py-4 bg-light text-center mt-auto border-top">
+                <div class="container">
+                    <div class="d-flex flex-column gap-3 mb-3">
+                        <a href="https://docs.google.com/spreadsheets/d/1XHFtDmqNkXltwpZ_j83XgQwddBx6JBiQfqtoc9n3ZiA/edit?usp=drivesdk" target="_blank" class="text-dark text-decoration-none"><i class="bi bi-calendar3 me-2"></i>График работы</a>
+                        <a href="https://docs.google.com/spreadsheets/d/1u2V2q3rPj1ajIUZ8do3SNGOIOmBx8wkvCJBeMX2_6jQ/edit?usp=drivesdk" target="_blank" class="text-dark text-decoration-none"><i class="bi bi-cash-stack me-2"></i>График оплаты</a>
+                        <a href="https://storage.lan-install.online/" target="_blank" class="text-dark text-decoration-none"><i class="bi bi-box-seam me-2"></i>Склад</a>
+                    </div>
+                    <div class="small text-muted">
+                        &copy; {{ date('Y') }} lan-install.online. Все права защищены.
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1784,7 +1798,7 @@
 <hr id="divider" class="my-0 border-top border-2 border-opacity-10">
 
 <!-- Footer -->
-<footer class="bg-dark text-white">
+<footer class="bg-dark text-white d-none d-md-block">
     <div class="container-fluid py-4">
         <div class="row justify-content-center text-center">
             <div class="col-12 col-lg-10">
