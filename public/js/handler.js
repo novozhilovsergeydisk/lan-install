@@ -272,19 +272,185 @@ export async function loadPlanningRequests() {
 
 
 /**
- * Функция для загрузки и отображения списка адресов с пагинацией
+ * Функция для загрузки и отображения карты адресов (заменяет старую таблицу)
+ */
+export async function loadAddressesPaginated() {
+    // Делаем функцию глобально доступной
+    window.loadAddressesPaginated = loadAddressesPaginated;
+    // Обеспечиваем доступность функции переключения назад
+    window.loadAddressesPaginatedOld = loadAddressesPaginatedOld;
+    
+    const container = document.getElementById('AllAddressesList');
+    if (!container) {
+        console.error('Контейнер #AllAddressesList не найден');
+        return;
+    }
+
+    // Настраиваем контейнер для карты
+    container.style.height = '85vh';
+    container.style.width = '100%';
+    container.style.position = 'relative';
+    container.className = ''; // Убираем table-responsive и прочие классы
+    
+    // HTML каркас с лоадером
+    container.innerHTML = `
+        <div id="addresses-map-container" style="width: 100%; height: 100%;"></div>
+        <div id="map-loader" class="d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000;">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <div class="mt-2 text-muted">Загрузка карты и адресов...</div>
+            </div>
+        </div>
+        <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2000;">
+             <button class="btn btn-primary shadow-sm" onclick="window.loadAddressesPaginatedOld()" title="Вернуться к списку">
+                <i class="bi bi-list-ul"></i> Список
+             </button>
+        </div>
+    `;
+
+    try {
+        // Загружаем все адреса (не пагинированные)
+        const response = await fetch('/api/addresses');
+        if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
+        
+        // Получаем данные (API возвращает массив объектов)
+        const addresses = await response.json();
+
+        // Проверяем дубликаты (старая логика)
+        if (typeof checkForDuplicateAddresses === 'function') {
+            await checkForDuplicateAddresses();
+        }
+
+        // Ждем загрузки API Яндекс.Карт
+        if (typeof ymaps === 'undefined') {
+             // Пробуем подождать
+             await new Promise(resolve => setTimeout(resolve, 1000));
+             if (typeof ymaps === 'undefined') throw new Error('API Яндекс.Карт не загружено');
+        }
+
+        ymaps.ready(() => {
+            initAddressesMap(addresses);
+        });
+
+    } catch (error) {
+        console.error('Ошибка при инициализации карты адресов:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger m-3" role="alert">
+                Не удалось загрузить карту адресов. ${error.message}
+                <br>
+                <button class="btn btn-outline-danger btn-sm mt-2" onclick="window.location.reload()">Обновить страницу</button>
+            </div>`;
+    }
+}
+
+// Вспомогательная функция инициализации карты
+function initAddressesMap(addresses) {
+    const mapContainer = document.getElementById('addresses-map-container');
+    if (!mapContainer) return;
+
+    // Очищаем старый инстанс если был
+    if (window.addressesMapInstance) {
+        window.addressesMapInstance.destroy();
+    }
+
+    const map = new ymaps.Map(mapContainer, {
+        center: [55.7558, 37.6173], // Точный центр Москвы
+        zoom: 10,
+        controls: ['zoomControl', 'searchControl', 'typeSelector', 'fullscreenControl']
+    });
+    window.addressesMapInstance = map;
+
+    // ObjectManager для оптимизации большого количества меток
+    const objectManager = new ymaps.ObjectManager({
+        clusterize: true,
+        gridSize: 64, // Размер ячейки кластеризации в пикселях
+        clusterDisableClickZoom: false,
+        geoObjectOpenBalloonOnClick: true,
+        clusterOpenBalloonOnClick: true
+    });
+
+    const features = addresses
+        .filter(a => a.latitude && a.longitude && parseFloat(a.latitude) !== 0 && parseFloat(a.longitude) !== 0) // Фильтруем пустые и нулевые координаты
+        .map(addr => {
+        const fullAddr = [addr.city_name || addr.city, addr.street, addr.houses].filter(Boolean).join(', ');
+        
+        // Кнопки действий (используют существующие обработчики через классы)
+        const isAdmin = window.App?.user?.isAdmin;
+        
+        const editBtn = isAdmin ? 
+            `<button type="button" class="btn btn-sm btn-outline-primary edit-address-btn" data-address-id="${addr.id}"><i class="bi bi-pencil-square"></i></button>` : '';
+            
+        const deleteBtn = isAdmin ? 
+            `<button type="button" class="btn btn-sm btn-outline-danger delete-address-btn ms-2" data-address-id="${addr.id}"><i class="bi bi-trash"></i></button>` : '';
+
+        return {
+            type: 'Feature',
+            id: addr.id,
+            geometry: {
+                type: 'Point',
+                coordinates: [parseFloat(addr.latitude), parseFloat(addr.longitude)]
+            },
+            properties: {
+                balloonContentHeader: `<strong>${fullAddr}</strong>`,
+                balloonContentBody: `
+                    <div>
+                        ${addr.district ? `<div><small class="text-muted">Район:</small> ${addr.district}</div>` : ''}
+                        ${addr.responsible_person ? `<div><small class="text-muted">Ответственный:</small> ${addr.responsible_person}</div>` : ''}
+                        ${addr.comments ? `<div class="mt-2 p-2 bg-light rounded small"><em>${addr.comments}</em></div>` : ''}
+                        <div class="mt-3 border-top pt-2 text-end">
+                             ${editBtn} ${deleteBtn}
+                        </div>
+                    </div>
+                `,
+                clusterCaption: `${addr.street}, ${addr.houses}`,
+                hintContent: fullAddr
+            }
+        };
+    });
+
+    objectManager.add(features);
+    map.geoObjects.add(objectManager);
+
+    if (features.length > 0) {
+        // Проверяем, есть ли объекты в Москве. Если да, центрируемся на Москве.
+        // Если объектов в Москве нет, тогда подстраиваемся под все объекты.
+        const hasMoscowAddresses = addresses.some(a => a.city_name === 'Москва' || a.city === 'Москва');
+        
+        if (hasMoscowAddresses) {
+            map.setCenter([55.7558, 37.6173], 10);
+        } else {
+            map.setBounds(map.geoObjects.getBounds(), { 
+                checkZoomRange: true,
+                zoomMargin: 50 
+            });
+        }
+    }
+
+    const loader = document.getElementById('map-loader');
+    if(loader) loader.remove();
+}
+
+/**
+ * Функция для загрузки и отображения списка адресов с пагинацией (Старая версия - Таблица)
  * @param {number} page - номер страницы
  * @param {number} perPage - количество элементов на странице
  */
-export async function loadAddressesPaginated(page = 1, perPage = 30) {
+export async function loadAddressesPaginatedOld(page = 1, perPage = 30) {
     // Делаем функцию глобально доступной для использования в других модулях
-    window.loadAddressesPaginated = loadAddressesPaginated;
+    window.loadAddressesPaginatedOld = loadAddressesPaginatedOld;
     // Находим контейнер для таблицы адресов
     const container = document.getElementById('AllAddressesList');
     if (!container) {
         console.error('Контейнер для таблицы адресов не найден');
         return;
     }
+
+    // Восстанавливаем стили контейнера если вернулись с карты
+    container.style.height = '';
+    container.style.width = '';
+    container.className = 'table-responsive';
 
     try {
         // Показываем индикатор загрузки
@@ -293,7 +459,13 @@ export async function loadAddressesPaginated(page = 1, perPage = 30) {
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Загрузка...</span>
                 </div>
-            </div>`;
+            </div>
+            <div style="position: absolute; top: 10px; right: 50px;">
+                 <button class="btn btn-light shadow-sm btn-sm" onclick="window.loadAddressesPaginated()" title="На карту">
+                    <i class="bi bi-map"></i> Карта
+                 </button>
+            </div>
+            `;
 
         // Загружаем данные с сервера
         const response = await fetch(`/api/addresses/paginated?page=${page}&per_page=${perPage}`);
@@ -348,6 +520,11 @@ export async function loadAddressesPaginated(page = 1, perPage = 30) {
 
         // Формируем HTML для таблицы адресов
         let html = `
+            <div class="d-flex justify-content-start mb-2">
+                 <button class="btn btn-outline-primary btn-sm" onclick="window.loadAddressesPaginated()">
+                    <i class="bi bi-map"></i> Показать на карте
+                 </button>
+            </div>
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
@@ -435,7 +612,7 @@ export async function loadAddressesPaginated(page = 1, perPage = 30) {
                 e.preventDefault();
                 const page = parseInt(link.dataset.page);
                 if (!isNaN(page) && page !== data.current_page) {
-                    loadAddressesPaginated(page, perPage);
+                    loadAddressesPaginatedOld(page, perPage);
                 }
             });
         });
