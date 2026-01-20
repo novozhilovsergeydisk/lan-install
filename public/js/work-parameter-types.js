@@ -206,13 +206,19 @@ export function initWorkParameterTypesHandlers() {
         }
 
         if (success) {
-            // Закрытие модального окна
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addWorkParameterTypeModal'));
-            modal.hide();
+            if (id) {
+                // Если редактирование - закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addWorkParameterTypeModal'));
+                modal.hide();
 
-            // Сброс формы
-            document.getElementById('workParameterTypeForm').reset();
-            document.getElementById('workParameterTypeId').value = '';
+                // Сброс формы
+                document.getElementById('workParameterTypeForm').reset();
+                document.getElementById('workParameterTypeId').value = '';
+            } else {
+                // Если создание - очищаем только поле названия для быстрого добавления следующего параметра
+                document.getElementById('workParameterTypeName').value = '';
+                document.getElementById('workParameterTypeName').focus();
+            }
         }
     });
 
