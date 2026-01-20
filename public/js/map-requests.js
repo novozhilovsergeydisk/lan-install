@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     // Используем setTimeout, чтобы наш скрипт выполнился после init-handlers.js (который type="module" и может выполняться позже или параллельно),
     // и после того, как старые скрипты навесят свои обработчики.
@@ -192,8 +191,30 @@ function drawRequests(map, requests) {
     if (!requests || requests.length === 0) return;
 
     const bounds = [];
+    const usedCoordinates = new Set(); // Для отслеживания занятых координат
+
     requests.forEach(request => {
-        const placemark = addPlacemark(map, request);
+        // Проверяем и смещаем координаты при совпадении
+        let lat = parseFloat(request.latitude);
+        let lon = parseFloat(request.longitude);
+        let coordKey = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+
+        while (usedCoordinates.has(coordKey)) {
+            // Добавляем небольшое случайное смещение (примерно 5-10 метров)
+            // 0.0001 градуса ~ 11 метров
+            const offsetLat = (Math.random() - 0.5) * 0.0002;
+            const offsetLon = (Math.random() - 0.5) * 0.0002;
+            lat += offsetLat;
+            lon += offsetLon;
+            coordKey = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+        }
+
+        usedCoordinates.add(coordKey);
+        
+        // Обновляем координаты в объекте request (локально для отрисовки)
+        const requestWithOffset = { ...request, latitude: lat, longitude: lon };
+
+        const placemark = addPlacemark(map, requestWithOffset);
         if (placemark) {
             bounds.push(placemark.geometry.getCoordinates());
         }

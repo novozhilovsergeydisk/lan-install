@@ -1446,12 +1446,19 @@
 
     @if($user->isAdmin)
     <div id="planning-content" class="mb-3 d-flex justify-content-end">
+        <button type="button" class="btn btn-outline-secondary me-2" id="btn-open-planning-map">
+            <i class="bi bi-map me-1"></i>На карте
+        </button>
         <button type="button" class="btn btn-primary me-2" id="new-planning-request-button" data-bs-toggle="modal" data-bs-target="#newPlanningRequestModal">
             <i class="bi bi-plus-circle me-1"></i>Новая заявка
         </button>
         <button type="button" class="btn btn-success" id="upload-requests-button">
             <i class="bi bi-upload me-1"></i>Загрузить заявки
         </button>
+    </div>
+
+    <div id="planning-map-content" class="hide-me mb-3" style="height: 800px; width: 100%;">
+        <div id="planning-map" style="width: 100%; height: 100%;"></div>
     </div>
 
                         <div class="table-responsive t-custom">
@@ -4852,5 +4859,6 @@
 <script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
     <script src="{{ asset('js/report-export.js') }}"></script>
     <script src="{{ asset('js/map-requests.js') }}"></script>
+    <script src="{{ asset('js/map-planning.js') }}"></script>
 </body>
 </html>

@@ -341,6 +341,8 @@ class PlanningRequestController extends Controller
                 '#' || r.id || ', ' || r.number || ', создана ' || TO_CHAR(r.request_date, 'DD.MM.YYYY') AS request,
                 c.fio || ', ' || c.phone || ', ' || c.organization AS client,
                 ct.name || '. ' || addr.district || '. ' || addr.street || '. ' || addr.houses AS address,
+                addr.latitude,
+                addr.longitude,
                 ct.name city,
                 addr.district district,
                 addr.street street,
@@ -349,11 +351,12 @@ class PlanningRequestController extends Controller
                 c.phone,
                 c.organization,
                  rs.name AS status_name,
-                 rs.color,
-                 rt.name AS request_type_name,
-                 rt.color AS request_type_color,
-                 jsonb_agg(
-                    jsonb_build_object(
+                                 rs.color,
+                                 rt.name AS request_type_name,
+                                 rt.color AS request_type_color,
+                                 b.name AS brigade_name,
+                                 bl.fio AS brigade_lead,
+                                  jsonb_agg(                    jsonb_build_object(
                         'comment', co.comment,
                         'created_at', TO_CHAR(co.created_at, 'DD.MM.YYYY HH24:MI'),
                         'author_name', u.name,
@@ -365,6 +368,8 @@ class PlanningRequestController extends Controller
             LEFT JOIN clients c ON r.client_id = c.id
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
             LEFT JOIN request_types rt ON r.request_type_id = rt.id
+            LEFT JOIN brigades b ON r.brigade_id = b.id
+            LEFT JOIN employees bl ON b.leader_id = bl.id
             LEFT JOIN employees op ON r.operator_id = op.id
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
@@ -379,11 +384,13 @@ class PlanningRequestController extends Controller
                 r.id, r.request_type_id, r.brigade_id, r.number, r.request_date,
                 c.fio, c.phone, c.organization,
                 op.fio,
-                ct.name, addr.district, addr.street, addr.houses,
+                ct.name, addr.district, addr.street, addr.houses, addr.latitude, addr.longitude,
                 rs.name,
                 rs.color,
                 rt.name,
-                rt.color
+                rt.color,
+                b.name,
+                bl.fio
             ORDER BY r.id DESC";
 
             $result = DB::select($sql);
