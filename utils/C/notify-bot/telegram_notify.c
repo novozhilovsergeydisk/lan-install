@@ -4,6 +4,7 @@
 #include <libgen.h>
 #include <unistd.h>
 #include <limits.h>
+#include <stdint.h>
 #include <curl/curl.h>
 
 #ifdef __APPLE__
