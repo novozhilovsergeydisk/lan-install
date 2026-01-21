@@ -109,30 +109,22 @@ class PhotoReportController extends Controller
     }
 
     /**
-     * Format file size to human readable format
-     *
-     * @param  int  $bytes
-     * @return string
+     * Очистка имени папки от недопустимых символов
      */
-    private function formatFileSize($bytes)
+    private function sanitizeFolderName($name)
     {
-        if ($bytes >= 1073741824) {
-            return number_format($bytes / 1073741824, 2).' GB';
-        } elseif ($bytes >= 1048576) {
-            return number_format($bytes / 1048576, 2).' MB';
-        } elseif ($bytes >= 1024) {
-            return number_format($bytes / 1024, 2).' KB';
-        } elseif ($bytes > 1) {
-            return $bytes.' bytes';
-        } elseif ($bytes == 1) {
-            return '1 byte';
-        } else {
-            return '0 bytes';
-        }
+        // Декодируем HTML сущности
+        $name = html_entity_decode($name);
+        // Заменяем недопустимые символы на подчеркивание (используем ~ как разделитель regex)
+        $name = preg_replace('~[\\\\/:*?"<>|]~', '_', $name);
+        // Убираем лишние пробелы и точки в начале/конце
+        $name = trim($name, " \t\n\r\0\x0B.");
+        // Обрезаем длину до 50 символов
+        return mb_substr($name, 0, 50);
     }
 
     /**
-     * Скачивание всех фото и файлов заявки архивом
+     * Скачивание всех фото и файлов заявки архивом (структурированным по комментариям)
      *
      * @param int $requestId
      * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\JsonResponse
@@ -140,33 +132,15 @@ class PhotoReportController extends Controller
     public function downloadRequestPhotos($requestId)
     {
         try {
-            // Получаем список фото
-            $photos = DB::table('requests as r')
-                ->join('request_comments as rc', 'r.id', '=', 'rc.request_id')
+            // Получаем комментарии с привязанными файлами и фото
+            $comments = DB::table('request_comments as rc')
                 ->join('comments as c', 'rc.comment_id', '=', 'c.id')
-                ->join('comment_photos as cp', 'c.id', '=', 'cp.comment_id')
-                ->join('photos as p', 'cp.photo_id', '=', 'p.id')
-                ->where('r.id', $requestId)
-                ->select('p.path', 'p.original_name')
-                ->distinct()
+                ->where('rc.request_id', $requestId)
+                ->select('c.id', 'c.comment')
                 ->get();
 
-            // Получаем список файлов
-            $files = DB::table('requests as r')
-                ->join('request_comments as rc', 'r.id', '=', 'rc.request_id')
-                ->join('comments as c', 'rc.comment_id', '=', 'c.id')
-                ->join('comment_files as cf', 'c.id', '=', 'cf.comment_id')
-                ->join('files as f', 'cf.file_id', '=', 'f.id')
-                ->where('r.id', $requestId)
-                ->select('f.path', 'f.original_name')
-                ->distinct()
-                ->get();
-
-            // Объединяем коллекции
-            $allAttachments = $photos->concat($files);
-
-            if ($allAttachments->isEmpty()) {
-                return response()->json(['success' => false, 'message' => 'Файлы не найдены'], 404);
+            if ($comments->isEmpty()) {
+                 return response()->json(['success' => false, 'message' => 'Комментарии не найдены'], 404);
             }
 
             // Создаем временный файл
@@ -179,40 +153,83 @@ class PhotoReportController extends Controller
             }
 
             $zip = new \ZipArchive;
-            if ($zip->open($zipFilePath, \ZipArchive::CREATE) === TRUE) {
-                $addedFiles = 0;
-                
-                foreach ($allAttachments as $file) {
-                    $possiblePaths = [
-                        storage_path('app/public/' . $file->path),
-                        public_path('storage/' . $file->path),
-                        public_path($file->path)
-                    ];
+            if ($zip->open($zipFilePath, \ZipArchive::CREATE) !== TRUE) {
+                 return response()->json(['success' => false, 'message' => 'Не удалось создать архив'], 500);
+            }
 
-                    foreach ($possiblePaths as $filePath) {
-                        if (file_exists($filePath)) {
-                            $entryName = $file->original_name ?: basename($filePath);
-                            
-                            // Уникальное имя
-                            $i = 1;
-                            while ($zip->locateName($entryName) !== false) {
-                                $info = pathinfo($entryName);
-                                $entryName = $info['filename'] . '_' . $i++ . '.' . ($info['extension'] ?? '');
+            $addedFilesCount = 0;
+
+            foreach ($comments as $comment) {
+                // Формируем имя папки из комментария
+                $cleanComment = strip_tags($comment->comment);
+                $folderName = $this->sanitizeFolderName($cleanComment);
+                
+                if (empty($folderName)) {
+                    $folderName = 'comment_' . $comment->id;
+                } else {
+                    // Добавляем ID чтобы избежать коллизий одинаковых комментариев и сделать имена уникальными
+                    $folderName = $folderName . '_' . $comment->id; 
+                }
+
+                // Получаем фото для комментария
+                $photos = DB::table('comment_photos as cp')
+                    ->join('photos as p', 'cp.photo_id', '=', 'p.id')
+                    ->where('cp.comment_id', $comment->id)
+                    ->select('p.path', 'p.original_name')
+                    ->get();
+
+                // Получаем файлы для комментария
+                $files = DB::table('comment_files as cf')
+                    ->join('files as f', 'cf.file_id', '=', 'f.id')
+                    ->where('cf.comment_id', $comment->id)
+                    ->select('f.path', 'f.original_name')
+                    ->get();
+                
+                $attachments = $photos->concat($files);
+
+                if ($attachments->isNotEmpty()) {
+                    // Создаем папку в ZIP
+                    $zip->addEmptyDir($folderName);
+
+                    foreach ($attachments as $file) {
+                        $possiblePaths = [
+                            storage_path('app/public/' . $file->path),
+                            public_path('storage/' . $file->path),
+                            public_path($file->path)
+                        ];
+
+                        foreach ($possiblePaths as $filePath) {
+                            if (file_exists($filePath)) {
+                                $entryName = $file->original_name ?: basename($filePath);
+                                // Путь внутри архива: ИмяПапки/ИмяФайла
+                                $zipPath = $folderName . '/' . $entryName;
+                                
+                                // Проверка на дубликаты имен внутри одной папки
+                                $i = 1;
+                                $originalEntryName = $entryName;
+                                while ($zip->locateName($zipPath) !== false) {
+                                    $info = pathinfo($originalEntryName);
+                                    $entryName = $info['filename'] . '_' . $i++ . '.' . ($info['extension'] ?? '');
+                                    $zipPath = $folderName . '/' . $entryName;
+                                }
+                                
+                                $zip->addFile($filePath, $zipPath);
+                                $addedFilesCount++;
+                                break; 
                             }
-                            
-                            $zip->addFile($filePath, $entryName);
-                            $addedFiles++;
-                            break; 
                         }
                     }
                 }
-                $zip->close();
-                
-                if ($addedFiles === 0) {
-                    return response()->json(['success' => false, 'message' => 'Не удалось найти физические файлы на сервере'], 404);
+            }
+            
+            $zip->close();
+            
+            if ($addedFilesCount === 0) {
+                // Если файл пустой (не было реальных файлов), удаляем его
+                if (file_exists($zipFilePath)) {
+                    unlink($zipFilePath);
                 }
-            } else {
-                return response()->json(['success' => false, 'message' => 'Не удалось создать архив'], 500);
+                return response()->json(['success' => false, 'message' => 'Файлы не найдены или отсутствуют на диске'], 404);
             }
 
             return response()->download($zipFilePath)->deleteFileAfterSend(true);
