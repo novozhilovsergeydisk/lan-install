@@ -2439,8 +2439,128 @@ class HomeController extends Controller
                     }
                 }
 
+                // Собираем данные для уведомления в Telegram (только для "Демонтаж МЭШ")
+                $requestDataForNotify = DB::table('requests')
+                    ->join('request_types', 'requests.request_type_id', '=', 'request_types.id')
+                    ->join('clients', 'requests.client_id', '=', 'clients.id')
+                    ->leftJoin('request_addresses', 'requests.id', '=', 'request_addresses.request_id')
+                    ->leftJoin('addresses', 'request_addresses.address_id', '=', 'addresses.id')
+                    ->select('requests.*', 'request_types.name as type_name', 'clients.organization', 'addresses.street', 'addresses.houses', 'addresses.district')
+                    ->where('requests.id', $id)
+                    ->first();
+
                 // Фиксируем изменения
                 DB::commit();
+
+                // Отправка уведомления в Telegram
+                if ($requestDataForNotify && $requestDataForNotify->type_name == 'Демонтаж МЭШ') {
+                    try {
+                        // Получаем состав бригады
+                        $leaderFio = '';
+                        if ($requestDataForNotify->brigade_id) {
+                            $leaderFio = DB::table('employees')
+                                ->join('brigades', 'employees.id', '=', 'brigades.leader_id')
+                                ->where('brigades.id', $requestDataForNotify->brigade_id)
+                                ->value('fio');
+                        }
+
+                        $membersFio = DB::table('employees')
+                            ->join('brigade_members', 'employees.id', '=', 'brigade_members.employee_id')
+                            ->where('brigade_members.brigade_id', $requestDataForNotify->brigade_id)
+                            ->pluck('fio')
+                            ->toArray();
+
+                        $brigadeListParts = [];
+                        if ($leaderFio) {
+                            $brigadeListParts[] = '- ' . $leaderFio . ' (бригадир)';
+                        }
+                        if (!empty($membersFio)) {
+                            foreach ($membersFio as $member) {
+                                $brigadeListParts[] = '- ' . $member;
+                            }
+                        }
+                        $brigadeListStr = !empty($brigadeListParts) ? implode("\n", $brigadeListParts) : 'Не назначена';
+
+                        $addressStr = trim(($requestDataForNotify->district ?? '') . ' ' . ($requestDataForNotify->street ?? '') . ' ' . ($requestDataForNotify->houses ?? ''));
+
+                        // Берем исходный комментарий пользователя
+                        $rawComment = $request->input('comment', '');
+                        
+                        // Заменяем теги переноса строк на реальные переносы
+                        $rawComment = str_ireplace(['<br />', '<br>', '<br/>'], "\n", $rawComment);
+                        // Заменяем закрывающие теги блоков на переносы (чтобы параграфы не слипались)
+                        $rawComment = str_ireplace(['</p>', '</div>', '</h1>', '</h2>', '</h3>'], "\n", $rawComment);
+                        
+                        // Теперь чистим остальные теги и декодируем сущности
+                        $cleanComment = trim(html_entity_decode(strip_tags($rawComment)));
+                        
+                        if (empty($cleanComment)) {
+                             $cleanComment = 'Нет комментария';
+                        }
+
+                        // Проверяем наличие фото или файлов для формирования ссылки
+                        $hasPhotos = DB::table('comment_photos')
+                            ->join('request_comments', 'comment_photos.comment_id', '=', 'request_comments.comment_id')
+                            ->where('request_comments.request_id', $id)
+                            ->exists();
+                            
+                        $hasFiles = DB::table('comment_files')
+                            ->join('request_comments', 'comment_files.comment_id', '=', 'request_comments.comment_id')
+                            ->where('request_comments.request_id', $id)
+                            ->exists();
+
+                        // Экранируем данные для HTML мода Telegram
+                        $orgName = htmlspecialchars($requestDataForNotify->organization ?? 'Не указана');
+                        $addrName = htmlspecialchars($addressStr ?: 'Не указан');
+                        $brigadeName = htmlspecialchars($brigadeListStr ?: 'Не назначена');
+                        $cleanComment = htmlspecialchars($cleanComment);
+
+                        $notifyMessage = "✅ <b>Заявка #{$id} закрыта (Демонтаж МЭШ)</b>\n\n"
+                                       . "🏢 <b>Организация:</b> {$orgName}\n"
+                                       . "📍 <b>Адрес:</b> {$addrName}\n"
+                                       . "👥 <b>Бригада:</b>\n{$brigadeName}\n\n"
+                                       . "📝 <b>Комментарий:</b>\n{$cleanComment}";
+
+                        // Добавляем ссылку только если есть что скачивать
+                        if ($hasPhotos || $hasFiles) {
+                            $secret = config('app.key');
+                            $token = md5($id . $secret . 'telegram-notify');
+                            $downloadUrl = route('photo-report.download.public', ['requestId' => $id, 'token' => $token]);
+                            
+                            // Используем ДВОЙНЫЕ кавычки для href (стандарт HTML/XML), так как proc_open это позволяет
+                            $notifyMessage .= "\n\n🔗 <a href=\"{$downloadUrl}\">Скачать фото и файлы по заявке #{$id}</a>";
+                        }
+
+                        $scriptPath = base_path('utils/C/notify-bot/telegram_notify');
+                        
+                        if (file_exists($scriptPath)) {
+                            // Используем proc_open для прямой передачи данных в stdin процесса
+                            $descriptorspec = [
+                                0 => ['pipe', 'r'],  // stdin
+                                1 => ['file', '/dev/null', 'w'], // stdout в null (фон)
+                                2 => ['file', '/dev/null', 'w']  // stderr в null (фон)
+                            ];
+                            
+                            // Запускаем синхронно, чтобы гарантировать передачу данных в stdin
+                            // Утилита на C работает быстро, задержка будет минимальной
+                            $process = proc_open($scriptPath, $descriptorspec, $pipes);
+                            
+                            if (is_resource($process)) {
+                                fwrite($pipes[0], $notifyMessage);
+                                fclose($pipes[0]);
+                                
+                                // Ждем завершения процесса (это быстро)
+                                proc_close($process);
+                                
+                                \Log::info('Отправлено подробное уведомление в Telegram для заявки #' . $id);
+                            } else {
+                                \Log::error('Не удалось запустить процесс отправки уведомления');
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Ошибка при формировании/отправке уведомления в Telegram: ' . $e->getMessage());
+                    }
+                }
 
                 // Формируем ответ JSON
                 $response = [

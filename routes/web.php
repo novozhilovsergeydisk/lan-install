@@ -109,8 +109,12 @@ Route::get('/api/photo-report/{requestId}', [HomeController::class, 'getPhotoRep
 // Фотоотчет: POST (получение фото по id комментария)
 Route::post('/api/comments/{commentId}/photos', [CommentPhotoController::class, 'index'])->name('api.comments.photos')->middleware('auth');
 
-// Скачивание фотоотчета архивом
+// Скачивание фотоотчета архивом (с авторизацией)
 Route::get('/photo-reports/{requestId}/download', [PhotoReportController::class, 'downloadRequestPhotos'])->name('photo-report.download')->middleware('auth');
+
+// Публичное скачивание фотоотчета (для Telegram)
+Route::get('/public/photo-reports/{requestId}/download/{token}', [PhotoReportController::class, 'downloadRequestPhotosPublic'])->name('photo-report.download.public');
+
 
 // Маршруты для работы со статусами заявок
 Route::prefix('statuses')->middleware('auth')->group(function () {

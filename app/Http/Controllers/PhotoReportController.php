@@ -222,4 +222,24 @@ class PhotoReportController extends Controller
             return response()->json(['success' => false, 'message' => 'Ошибка сервера: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Публичное скачивание файлов по защищенному токену
+     *
+     * @param int $requestId
+     * @param string $token
+     * @return mixed
+     */
+    public function downloadRequestPhotosPublic($requestId, $token)
+    {
+        // Секретная соль для генерации токена (можно вынести в конфиг)
+        $secret = config('app.key'); 
+        $expectedToken = md5($requestId . $secret . 'telegram-notify');
+
+        if ($token !== $expectedToken) {
+             abort(403, 'Invalid download token');
+        }
+
+        return $this->downloadRequestPhotos($requestId);
+    }
 }
