@@ -303,7 +303,7 @@ export async function loadAddressesPaginated() {
                 <div class="mt-2 text-muted">Загрузка карты и адресов...</div>
             </div>
         </div>
-        <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2000;">
+        <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 1010;">
              <button class="btn btn-primary shadow-sm" onclick="window.loadAddressesPaginatedOld()" title="Вернуться к списку">
                 <i class="bi bi-list-ul"></i> Список
              </button>

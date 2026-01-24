@@ -741,11 +741,14 @@
                                                     <div id="input-excel">
                                                         <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx, .xls" style="width: 23rem;">
                                                     </div>
-                                                    <div>
+                                                    <div class="d-flex gap-1">
                                                         <button type="button" id="uploadExcelBtn" class="btn btn-outline-primary flex-shrink-0">
                                                             <i class="bi bi-upload"></i> Загрузить
                                                         </button>
-                             </div>
+                                                        <button type="button" class="btn btn-outline-info flex-shrink-0" data-bs-toggle="modal" data-bs-target="#excelHelpModal" title="Справка по формату">
+                                                            <i class="bi bi-question-circle"></i>
+                                                        </button>
+                                                    </div>
                          </div>
 
                          <!-- Модальное окно для просмотра дубликатов -->
@@ -759,6 +762,94 @@
                                      <div class="modal-body">
                                          <div id="duplicates-list">
                                              <!-- Здесь будут отображаться дубликаты -->
+                                         </div>
+                                     </div>
+                                     <div class="modal-footer">
+                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+
+                         <!-- Модальное окно справки по загрузке Excel -->
+                         <div class="modal fade" id="excelHelpModal" tabindex="-1" aria-labelledby="excelHelpModalLabel" aria-hidden="true">
+                             <div class="modal-dialog modal-lg">
+                                 <div class="modal-content">
+                                     <div class="modal-header">
+                                         <h5 class="modal-title" id="excelHelpModalLabel">Формат файла для загрузки адресов</h5>
+                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                     </div>
+                                     <div class="modal-body">
+                                         <p>Для корректной загрузки адресов файл должен соответствовать следующим требованиям:</p>
+                                         <ul>
+                                             <li><strong>Формат файла:</strong> .xlsx или .xls</li>
+                                             <li><strong>Структура:</strong>
+                                                 <ul>
+                                                     <li>1-я строка: Название или описание (<strong>обязательна</strong>, всегда игнорируется)</li>
+                                                     <li>2-я строка: Заголовки столбцов (Город, Район, Улица, Дом)</li>
+                                                     <li>3-я строка и далее: Данные</li>
+                                                 </ul>
+                                             </li>
+                                         </ul>
+                                         <p><strong>Пример структуры файла:</strong></p>
+                                         <div class="table-responsive mb-3" style="border: 1px solid #dee2e6;">
+                                             <table class="table table-bordered table-sm mb-0" style="font-family: sans-serif; font-size: 0.9rem; background-color: white !important;">
+                                                 <thead>
+                                                     <tr class="text-center text-secondary">
+                                                         <th style="width: 40px; background-color: #f8f9fa !important;"></th>
+                                                         <th style="background-color: #f8f9fa !important;">A</th>
+                                                         <th style="background-color: #f8f9fa !important;">B</th>
+                                                         <th style="background-color: #f8f9fa !important;">C</th>
+                                                         <th style="background-color: #f8f9fa !important;">D</th>
+                                                     </tr>
+                                                 </thead>
+                                                 <tbody>
+                                                     <tr>
+                                                         <th class="text-center text-secondary" style="background-color: #f8f9fa !important;">1</th>
+                                                         <td colspan="4" class="text-dark fst-italic" style="background-color: white !important;">Список адресов (эта строка игнорируется)</td>
+                                                     </tr>
+                                                     <tr>
+                                                         <th class="text-center text-secondary" style="background-color: #f8f9fa !important;">2</th>
+                                                         <td class="fw-bold" style="background-color: white !important;">Город</td>
+                                                         <td class="fw-bold" style="background-color: white !important;">Район</td>
+                                                         <td class="fw-bold" style="background-color: white !important;">Улица</td>
+                                                         <td class="fw-bold" style="background-color: white !important;">Дом</td>
+                                                     </tr>
+                                                     <tr>
+                                                         <th class="text-center text-secondary" style="background-color: #f8f9fa !important;">3</th>
+                                                         <td style="background-color: white !important;">Москва</td>
+                                                         <td style="background-color: white !important;">ЦАО</td>
+                                                         <td style="background-color: white !important;">Ленина</td>
+                                                         <td style="background-color: white !important;">10</td>
+                                                     </tr>
+                                                     <tr>
+                                                         <th class="text-center text-secondary" style="background-color: #f8f9fa !important;">4</th>
+                                                         <td style="background-color: white !important;">Казань</td>
+                                                         <td style="background-color: white !important;">Вахитовский</td>
+                                                         <td style="background-color: white !important;">Пушкина</td>
+                                                         <td style="background-color: white !important;">5, 7</td>
+                                                     </tr>
+                                                     <tr>
+                                                         <th class="text-center text-secondary" style="background-color: #f8f9fa !important;">5</th>
+                                                         <td style="background-color: white !important;">Новосибирск</td>
+                                                         <td style="background-color: white !important;">Ленинский</td>
+                                                         <td style="background-color: white !important;">Мира</td>
+                                                         <td style="background-color: white !important;">д. 15, корп. 2</td>
+                                                     </tr>
+                                                     <tr>
+                                                         <th class="text-center text-secondary" style="background-color: #f8f9fa !important;">6</th>
+                                                         <td style="background-color: white !important;">Екатеринбург</td>
+                                                         <td style="background-color: white !important;">Октябрьский</td>
+                                                         <td style="background-color: white !important;">Малышева</td>
+                                                         <td style="background-color: white !important;">д. 5, стр. 1</td>
+                                                     </tr>
+                                                 </tbody>
+                                             </table>
+                                         </div>
+                                         <p class="small text-muted mb-0"><i class="bi bi-info-circle me-1"></i> Соблюдайте порядок столбцов и названия заголовков как в примере.</p>
+                                         <div class="alert alert-warning py-2 px-3 mt-2 mb-0" style="font-size: 0.85rem;">
+                                             <i class="bi bi-exclamation-triangle me-2"></i>
+                                             <strong>Внимание:</strong> Первая строка файла всегда должна содержать любое описание (она пропускается). Заголовки должны быть именно во <strong>второй</strong> строке.
                                          </div>
                                      </div>
                                      <div class="modal-footer">
