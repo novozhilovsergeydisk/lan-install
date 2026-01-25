@@ -6230,27 +6230,39 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
                 const isHeic = photo.path?.toLowerCase().endsWith('.heic') || 
                                photo.original_name?.toLowerCase().endsWith('.heic');
 
+                console.log(`Processing photo: ${photo.original_name}, isHeic: ${isHeic}`);
+
                 if (isHeic) {
                     // Показываем заглушку (спиннер)
                     img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MCA1MCI+PHBhdGggZmlsbD0iIzAwNyJkPSJNMjUuMjUxIDZjLTEwLjMxOCAwLTE4LjY4MyA4LjM2NS0xOC42ODMgMTguNjgzIDAgMTAuMzE4IDguMzY1IDE4LjY4MyAxOC42ODMgMTguNjgzIDEwLjMxOCAwIDE4LjY4My04LjM2NSAxOC42ODMtMTguNjgzIDAtMTAuMzE4LTguMzY1LTE4LjY4My0xOC42ODMtMTguNjgzem0wIDMzLjgzNmMtOC4zNzEgMC0xNS4xNTMtNi43ODItMTUuMTUzLTE1LjE1MyAwLTguMzcxIDYuNzgyLTE1LjE1MyAxNS4xNTMtMTUuMTUzIDguMzcxIDAgMTUuMTUzIDYuNzgyIDE1LjE1MyAxNS4xNTMgMCA4LjM3MS02Ljc4MiAxNS4xNTMtMTUuMTUzIDE1LjE1M3oiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDI1IDI1IiB0bz0iMzYwIDI1IDI1IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg==';
                     
                     try {
+                        console.log('Starting HEIC lib load...');
                         await loadHeicLib();
+                        console.log('HEIC lib loaded. Fetching image...');
+                        
                         fetch(photoUrl)
-                            .then(res => res.blob())
-                            .then(blob => heic2any({ blob, toType: "image/jpeg", quality: 0.8 }))
+                            .then(res => {
+                                console.log('Image fetched. Status:', res.status);
+                                return res.blob();
+                            })
+                            .then(blob => {
+                                console.log('Blob received. Size:', blob.size, 'Type:', blob.type);
+                                return heic2any({ blob, toType: "image/jpeg", quality: 0.8 });
+                            })
                             .then(conversionResult => {
+                                console.log('Conversion successful');
                                 const url = URL.createObjectURL(Array.isArray(conversionResult) ? conversionResult[0] : conversionResult);
                                 img.src = url;
                                 img.dataset.convertedSrc = url; // Сохраняем для модального окна
                             })
                             .catch(e => {
-                                console.error('HEIC conversion failed', e);
+                                console.error('HEIC conversion failed detailed:', e);
                                 // Возвращаем оригинал, если конвертация не удалась
                                 img.src = photoUrl;
                             });
                     } catch (e) {
-                         console.error('HEIC lib load failed', e);
+                         console.error('HEIC lib load failed detailed:', e);
                          img.src = photoUrl;
                     }
                 } else {
