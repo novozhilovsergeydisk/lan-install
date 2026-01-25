@@ -6200,8 +6200,20 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
             const photosGrid = document.createElement('div');
             photosGrid.className = 'row g-2';
             
+            // Функция динамической загрузки библиотеки heic2any
+            const loadHeicLib = async () => {
+                if (window.heic2any) return;
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = '/js/heic2any.js';
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            };
+
             // Добавляем фотографии в сетку
-            photos.forEach(photo => {
+            for (const photo of photos) {
                 const photoCol = document.createElement('div');
                 photoCol.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-3';
                 
@@ -6211,9 +6223,39 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
                 photoCard.style.overflow = 'hidden';
                 
                 const img = new Image();
-                img.src = photo.url || `/storage/${photo.path}`;
                 img.className = 'card-img-top img-fluid';
                 img.loading = 'lazy';
+
+                const photoUrl = photo.url || `/storage/${photo.path}`;
+                const isHeic = photo.path?.toLowerCase().endsWith('.heic') || 
+                               photo.original_name?.toLowerCase().endsWith('.heic');
+
+                if (isHeic) {
+                    // Показываем заглушку (спиннер)
+                    img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MCA1MCI+PHBhdGggZmlsbD0iIzAwNyJkPSJNMjUuMjUxIDZjLTEwLjMxOCAwLTE4LjY4MyA4LjM2NS0xOC42ODMgMTguNjgzIDAgMTAuMzE4IDguMzY1IDE4LjY4MyAxOC42ODMgMTguNjgzIDEwLjMxOCAwIDE4LjY4My04LjM2NSAxOC42ODMtMTguNjgzIDAtMTAuMzE4LTguMzY1LTE4LjY4My0xOC42ODMtMTguNjgzem0wIDMzLjgzNmMtOC4zNzEgMC0xNS4xNTMtNi43ODItMTUuMTUzLTE1LjE1MyAwLTguMzcxIDYuNzgyLTE1LjE1MyAxNS4xNTMtMTUuMTUzIDguMzcxIDAgMTUuMTUzIDYuNzgyIDE1LjE1MyAxNS4xNTMgMCA4LjM3MS02Ljc4MiAxNS4xNTMtMTUuMTUzIDE1LjE1M3oiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDI1IDI1IiB0bz0iMzYwIDI1IDI1IiBkdXI9IjAuNnMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg==';
+                    
+                    try {
+                        await loadHeicLib();
+                        fetch(photoUrl)
+                            .then(res => res.blob())
+                            .then(blob => heic2any({ blob, toType: "image/jpeg", quality: 0.8 }))
+                            .then(conversionResult => {
+                                const url = URL.createObjectURL(Array.isArray(conversionResult) ? conversionResult[0] : conversionResult);
+                                img.src = url;
+                                img.dataset.convertedSrc = url; // Сохраняем для модального окна
+                            })
+                            .catch(e => {
+                                console.error('HEIC conversion failed', e);
+                                // Возвращаем оригинал, если конвертация не удалась
+                                img.src = photoUrl;
+                            });
+                    } catch (e) {
+                         console.error('HEIC lib load failed', e);
+                         img.src = photoUrl;
+                    }
+                } else {
+                    img.src = photoUrl;
+                }
                 
                 // Ждем загрузки изображения, чтобы определить его ориентацию
                 img.onload = function() {
@@ -6277,7 +6319,7 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
                     `;
                     
                     const fullImg = document.createElement('img');
-                    fullImg.src = photo.url || `${photo.path}`;
+                    fullImg.src = img.dataset.convertedSrc || photo.url || `/storage/${photo.path}`;
                     fullImg.style.maxWidth = '90%';
                     fullImg.style.maxHeight = '80vh';
                     fullImg.style.objectFit = 'contain';
@@ -6298,7 +6340,7 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
                         document.body.removeChild(fullScreen);
                     });
                 });
-            });
+            }
             
             photosContainer.appendChild(photosGrid);
         }
