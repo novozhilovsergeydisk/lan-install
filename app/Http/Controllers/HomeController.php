@@ -1216,12 +1216,12 @@ class HomeController extends Controller
             $validated = $request->validate([
                 'request_id' => 'required|exists:requests,id',
                 'comment' => 'required|string|max:1000',
-                'photos' => 'nullable|array|max:20',
-                'photos.*' => 'file|max:65536|mimes:jpg,jpeg,png,gif,webp,bmp,tiff,heic,heif',
-                'files' => 'nullable|array|max:20',
+                'photos' => 'nullable|array|max:100',
+                'photos.*' => 'file|max:512000|mimes:jpg,jpeg,png,gif,webp,bmp,tiff,heic,heif',
+                'files' => 'nullable|array|max:100',
                 'files.*' => [
                     'file',
-                    'max:65536',
+                    'max:512000',
                     function ($attribute, $value, $fail) {
                         $allowedMimeTypes = [
                             'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff',
