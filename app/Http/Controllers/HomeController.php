@@ -1530,6 +1530,15 @@ class HomeController extends Controller
                     DB::rollBack();
                 }
 
+                // Логируем ошибку
+                \Log::error('Ошибка при добавлении комментария: ' . $e->getMessage(), [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                    'user_id' => $request->user() ? $request->user()->id : null,
+                    'request_data' => $request->all(),
+                ]);
+
                 $errorInfo = [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
