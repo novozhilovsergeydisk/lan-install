@@ -2107,115 +2107,109 @@
                 // Флаг успешной отправки
                 let formSubmitted = false;
 
-                // Устанавливаем задержку перед отправкой (минимум 2 секунды)
-                const delayPromise = new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Отправляем запрос после задержки
-                Promise.all([
-                    delayPromise,
-                    fetch('{{ route('requests.comment') }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: formData
-                    })
-                ]).then(([_, response]) => {
-                    formSubmitted = true;
-                    return response;
-                })
-                    .then(async response => {
-                        const status = response.status;
+                // Используем XMLHttpRequest вместо fetch для более стабильной работы с файлами в мобильных браузерах
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '{{ route('requests.comment') }}', true);
+                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                // Не устанавливаем Content-Type вручную, XHR сам установит multipart/form-data с правильным boundary для FormData
+
+                xhr.onload = function() {
+                    const status = xhr.status;
+                    
+                    if (status >= 200 && status < 300) {
+                        // Успешный ответ
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            if (data.success) {
+                                formSubmitted = true;
+                                console.log('Ответ от сервера', data);
+
+                                // Очищаем поле ввода комментария
+                                const commentTextarea = commentForm.querySelector('textarea[name="comment"]');
+                                if (commentTextarea) {
+                                    commentTextarea.value = '';
+                                }
+
+                                // Показываем уведомление об успехе
+                                utils.showAlert('Комментарий успешно добавлен', 'success');
+
+                                // Обновляем список комментариев
+                                loadComments(requestId).then(() => {
+                                    // Даем время на обновление DOM
+                                    setTimeout(() => {
+                                        updateCommentsBadge(requestId);
+                                    }, 100);
+                                });
+
+                                sessionStorage.setItem('commentId', data.commentId);
+                                sessionStorage.setItem('data', JSON.stringify({commentId: data.commentId, sessionId: sessionStorage.getItem('sessionId')}));
+                                
+                                console.log('Комментарий успешно добавлен', data.commentId);
+                                console.log('------------ END ------------');
+
+                                // Полностью очищаем форму
+                                commentForm.reset();
+                                
+                                // Очищаем превью фотографий
+                                const photoPreviewNew = document.getElementById('photoPreviewNew');
+                                if (photoPreviewNew) {
+                                    photoPreviewNew.innerHTML = '';
+                                }
+                                
+                                // Очищаем поля загрузки файлов и фотографий
+                                const commentFilesInput = document.getElementById('commentFiles');
+                                const photoUpload = document.getElementById('photoUpload');
+                                
+                                if (commentFilesInput) commentFilesInput.value = '';
+                                if (photoUpload) photoUpload.value = '';
+                                
+                                // Очищаем все остальные поля загрузки файлов на всякий случай
+                                const fileInputs = commentForm.querySelectorAll('input[type="file"]');
+                                fileInputs.forEach(input => {
+                                    input.value = ''; // Сбрасываем значение файлового ввода
+                                });
+                            } else {
+                                throw new Error(data.message || 'Ошибка сервера');
+                            }
+                        } catch (e) {
+                            console.error('Ошибка обработки ответа:', e);
+                            utils.showAlert('Ошибка при обработке ответа от сервера', 'danger');
+                        }
+                    } else {
+                        // Обработка ошибок HTTP
+                        let errorMsg = 'Ошибка при отправке комментария (Код: ' + status + ')';
+                        
                         if (status === 413) {
-                             throw new Error('Размер файлов слишком большой. Пожалуйста, уменьшите размер или количество файлов. (Код: ' + status + ')');
-                        }
-                        if (status === 419) {
-                            throw new Error('Ваша сессия истекла. Пожалуйста, обновите страницу (нажмите F5), чтобы продолжить работу. (Код: ' + status + ')');
-                        }
-                        if (status === 401) {
-                            throw new Error('Вы не авторизованы или сессия завершена. Пожалуйста, обновите страницу и войдите в систему снова. (Код: ' + status + ')');
-                        }
-                        if (!response.ok) {
-                            let errorMsg = 'Ошибка при отправке комментария (Код: ' + status + ')';
+                             errorMsg = 'Размер файлов слишком большой. Пожалуйста, уменьшите размер или количество файлов. (Код: ' + status + ')';
+                        } else if (status === 419) {
+                            errorMsg = 'Ваша сессия истекла. Пожалуйста, обновите страницу (нажмите F5), чтобы продолжить работу. (Код: ' + status + ')';
+                        } else if (status === 401) {
+                            errorMsg = 'Вы не авторизованы или сессия завершена. Пожалуйста, обновите страницу и войдите в систему снова. (Код: ' + status + ')';
+                        } else {
                             try {
-                                const errorData = await response.json();
+                                const errorData = JSON.parse(xhr.responseText);
                                 if (errorData.message) {
                                     errorMsg = errorData.message + ' (Код: ' + status + ')';
                                 }
                             } catch (e) {
-                                // Если ответ не JSON, используем стандартное сообщение с кодом
+                                // Если ответ не JSON, используем стандартное сообщение
                             }
-                            throw new Error(errorMsg);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            console.log('Ответ от сервера', data);
-
-                            // Проверить тестовые данные с сервера
-
-                            // Очищаем поле ввода комментария
-                            const commentTextarea = commentForm.querySelector('textarea[name="comment"]');
-                            if (commentTextarea) {
-                                commentTextarea.value = '';
-                            }
-
-                            // Показываем уведомление об успехе
-                            utils.showAlert('Комментарий успешно добавлен', 'success');
-
-                            // Обновляем список комментариев
-                            loadComments(requestId).then(() => {
-                                // Даем время на обновление DOM
-                                setTimeout(() => {
-                                    updateCommentsBadge(requestId);
-                                }, 100);
-                            });
-
-                            sessionStorage.setItem('commentId', data.commentId);
-                            sessionStorage.setItem('data', JSON.stringify({commentId: data.commentId, sessionId: sessionStorage.getItem('sessionId')}));
-                            
-                            console.log('Комментарий успешно добавлен', data.commentId);
-                            console.log('------------ END ------------');
-
-                            // Полностью очищаем форму
-                            commentForm.reset();
-                            
-                            // Очищаем превью фотографий
-                            const photoPreviewNew = document.getElementById('photoPreviewNew');
-                            if (photoPreviewNew) {
-                                photoPreviewNew.innerHTML = '';
-                            }
-                            
-                            // Очищаем поля загрузки файлов и фотографий
-                            const commentFilesInput = document.getElementById('commentFiles');
-                            const photoUpload = document.getElementById('photoUpload');
-                            
-                            if (commentFilesInput) commentFilesInput.value = '';
-                            if (photoUpload) photoUpload.value = '';
-                            
-                            // Очищаем все остальные поля загрузки файлов на всякий случай
-                            const fileInputs = commentForm.querySelectorAll('input[type="file"]');
-                            fileInputs.forEach(input => {
-                                input.value = ''; // Сбрасываем значение файлового ввода
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Ошибка (детали):', error);
-                        // Если это наша ошибка из throw new Error, она будет в error.message
-                        // Если это системная ошибка, попробуем собрать максимум инфо
-                        let displayError = error.message || 'Неизвестная ошибка';
-                        
-                        if (error.name === 'TypeError' && displayError === 'Failed to fetch') {
-                            displayError = 'Ошибка сети или сервер недоступен (Network Error)';
                         }
                         
-                        utils.showAlert(displayError, 'danger');
-                    })
-                    .finally(() => {
-                        unlockForm();
-                    });
+                        console.error('Ошибка HTTP:', status, xhr.statusText);
+                        utils.showAlert(errorMsg, 'danger');
+                    }
+                    unlockForm();
+                };
+
+                xhr.onerror = function() {
+                    console.error('Сетевая ошибка XHR');
+                    utils.showAlert('Ошибка сети или сервер недоступен (Network Error)', 'danger');
+                    unlockForm();
+                };
+
+                // Отправляем данные
+                xhr.send(formData);
             });
         }
 
