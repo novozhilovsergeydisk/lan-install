@@ -2124,12 +2124,28 @@
                     formSubmitted = true;
                     return response;
                 })
-                    .then(response => {
-                        if (response.status === 413) {
-                             throw new Error('Размер файлов слишком большой. Пожалуйста, уменьшите размер или количество файлов.');
+                    .then(async response => {
+                        const status = response.status;
+                        if (status === 413) {
+                             throw new Error('Размер файлов слишком большой. Пожалуйста, уменьшите размер или количество файлов. (Код: ' + status + ')');
+                        }
+                        if (status === 419) {
+                            throw new Error('Ваша сессия истекла. Пожалуйста, обновите страницу (нажмите F5), чтобы продолжить работу. (Код: ' + status + ')');
+                        }
+                        if (status === 401) {
+                            throw new Error('Вы не авторизованы или сессия завершена. Пожалуйста, обновите страницу и войдите в систему снова. (Код: ' + status + ')');
                         }
                         if (!response.ok) {
-                            throw new Error('Ошибка при отправке комментария');
+                            let errorMsg = 'Ошибка при отправке комментария (Код: ' + status + ')';
+                            try {
+                                const errorData = await response.json();
+                                if (errorData.message) {
+                                    errorMsg = errorData.message + ' (Код: ' + status + ')';
+                                }
+                            } catch (e) {
+                                // Если ответ не JSON, используем стандартное сообщение с кодом
+                            }
+                            throw new Error(errorMsg);
                         }
                         return response.json();
                     })
@@ -2186,8 +2202,16 @@
                         }
                     })
                     .catch(error => {
-                        console.error('Ошибка:', error);
-                        utils.showAlert('Произошла ошибка при добавлении комментария', 'danger');
+                        console.error('Ошибка (детали):', error);
+                        // Если это наша ошибка из throw new Error, она будет в error.message
+                        // Если это системная ошибка, попробуем собрать максимум инфо
+                        let displayError = error.message || 'Неизвестная ошибка';
+                        
+                        if (error.name === 'TypeError' && displayError === 'Failed to fetch') {
+                            displayError = 'Ошибка сети или сервер недоступен (Network Error)';
+                        }
+                        
+                        utils.showAlert(displayError, 'danger');
                     })
                     .finally(() => {
                         unlockForm();
