@@ -477,6 +477,10 @@ class CommentPhotoController extends Controller
 
     public function downloadAllPhotos(Request $request)
     {
+        // Увеличиваем время выполнения скрипта и лимит памяти для больших архивов
+        set_time_limit(600);
+        ini_set('memory_limit', '512M');
+
         try {
             $requestId = $request->input('request_id');
 
