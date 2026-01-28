@@ -2492,6 +2492,23 @@ class HomeController extends Controller
 
                         $addressStr = trim(($requestDataForNotify->district ?? '') . ' ' . ($requestDataForNotify->street ?? '') . ' ' . ($requestDataForNotify->houses ?? ''));
 
+                        // Получаем выполненные работы
+                        $completedWorks = DB::table('work_parameters')
+                            ->join('work_parameter_types', 'work_parameters.parameter_type_id', '=', 'work_parameter_types.id')
+                            ->where('work_parameters.request_id', $id)
+                            ->where('work_parameters.quantity', '>', 0)
+                            ->select('work_parameter_types.name', 'work_parameters.quantity')
+                            ->get();
+
+                        $worksStr = '';
+                        if ($completedWorks->isNotEmpty()) {
+                            $worksStr = "🛠 <b>Выполненные работы:</b>\n";
+                            foreach ($completedWorks as $work) {
+                                $worksStr .= "- " . htmlspecialchars($work->name) . ": " . $work->quantity . "\n";
+                            }
+                            $worksStr .= "\n"; // Добавляем отступ после блока работ
+                        }
+
                         // Берем исходный комментарий пользователя
                         $rawComment = $request->input('comment', '');
                         
@@ -2528,6 +2545,7 @@ class HomeController extends Controller
                                        . "🏢 <b>Организация:</b> {$orgName}\n"
                                        . "📍 <b>Адрес:</b> {$addrName}\n"
                                        . "👥 <b>Бригада:</b>\n{$brigadeName}\n\n"
+                                       . $worksStr
                                        . "📝 <b>Комментарий:</b>\n{$cleanComment}";
 
                         // Добавляем ссылку только если есть что скачивать
