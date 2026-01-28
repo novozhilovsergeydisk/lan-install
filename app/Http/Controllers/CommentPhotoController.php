@@ -477,111 +477,84 @@ class CommentPhotoController extends Controller
 
     public function downloadAllPhotos(Request $request)
     {
-        // Увеличиваем время выполнения скрипта и лимит памяти для больших архивов
-        set_time_limit(600);
-        ini_set('memory_limit', '512M');
-
         try {
             $requestId = $request->input('request_id');
 
             if (! $requestId) {
-                throw new \Exception('Не указан ID заявки');
+                return response()->json(['success' => false, 'message' => 'Не указан ID заявки'], 400);
             }
 
-            // Получаем информацию о заявке и адресе
-            $requestInfo = DB::table('requests as r')
-                ->leftJoin('request_addresses as ra', 'r.id', '=', 'ra.request_id')
-                ->leftJoin('addresses as a', 'ra.address_id', '=', 'a.id')
-                ->select('r.number', 'a.street', 'a.houses')
-                ->where('r.id', $requestId)
-                ->first();
+            $tempDir = storage_path('app/temp');
+            $readyFile = $tempDir . '/archive_' . $requestId . '.ready';
+            $processingFile = $tempDir . '/archive_' . $requestId . '.processing';
 
-            if (! $requestInfo) {
-                throw new \Exception('Заявка не найдена');
+            // 1. Проверяем, не готовится ли архив прямо сейчас
+            if (file_exists($processingFile)) {
+                return response()->json([
+                    'success' => true,
+                    'status' => 'processing',
+                    'message' => 'Архив подготавливается...'
+                ]);
             }
 
-            // Формируем имя архива: Адрес_НомерЗаявки.zip
-            $addressString = ($requestInfo->street ?? 'NoAddress').'_'.($requestInfo->houses ?? '');
-            $zipNameRaw = $addressString.'_'.$requestInfo->number;
-            // Санитизация имени файла
-            $zipName = preg_replace('/[^a-zA-Zа-яА-Я0-9\s\-_]/u', '_', $zipNameRaw).'.zip';
-            $zipName = preg_replace('/_+/', '_', $zipName); // Убираем двойные подчеркивания
-
-            $zipPath = storage_path('app/temp/'.$zipName);
-
-            // Создаем директорию, если она не существует
-            if (! file_exists(dirname($zipPath))) {
-                mkdir(dirname($zipPath), 0755, true);
-            }
-
-            $zip = new \ZipArchive;
-            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-                throw new \Exception('Не удалось создать архив');
-            }
-
-            // Получаем все комментарии с фотографиями для конкретной заявки
-            $comments = DB::table('comments as c')
-                ->join('request_comments as rc', 'c.id', '=', 'rc.comment_id')
-                ->join('comment_photos as cp', 'c.id', '=', 'cp.comment_id')
-                ->join('photos as p', 'cp.photo_id', '=', 'p.id')
-                ->select(
-                    'c.id as comment_id',
-                    'c.comment',
-                    'p.path as photo_path',
-                    'p.original_name',
-                    'cp.created_at as photo_created_at'
-                )
-                ->where('rc.request_id', $requestId)
-                ->whereNotNull('p.path')
-                ->orderBy('c.id')
-                ->orderBy('cp.created_at')
-                ->get()
-                ->groupBy('comment_id');
-
-            foreach ($comments as $commentId => $commentPhotos) {
-                // Имя папки 1-го уровня: Номер заявки
-                $level1 = $requestInfo->number;
+            // 2. Проверяем, есть ли уже готовый архив
+            if (file_exists($readyFile)) {
+                $readyData = json_decode(file_get_contents($readyFile), true);
+                $zipPath = $readyData['path'] ?? null;
                 
-                // Имя папки 2-го уровня: Текст комментария
-                $commentText = $commentPhotos[0]->comment ?? 'NoComment';
-                $level2 = preg_replace('/[^a-zA-Zа-яА-Я0-9\s\-_]/u', ' ', $commentText);
-                $level2 = mb_substr(trim($level2), 0, 50); // Ограничиваем длину
-                if (empty($level2)) {
-                    $level2 = 'Comment_'.$commentId;
+                // Проверяем актуальность архива (например, не старше 1 часа)
+                if ($zipPath && file_exists($zipPath) && (time() - $readyData['created_at'] < 3600)) {
+                    return response()->json([
+                        'success' => true,
+                        'status' => 'ready',
+                        'download_url' => route('download-archive-file', ['requestId' => $requestId])
+                    ]);
                 }
-
-                foreach ($commentPhotos as $index => $photo) {
-                    $photoPath = storage_path('app/public/'.$photo->photo_path);
-
-                    if (file_exists($photoPath)) {
-                        // Уникальное имя файла
-                        $fileName = $index.'_'.$photo->original_name;
-
-                        // Структура: НомерЗаявки / ТекстКомментария / Фото
-                        $zipPathInArchive = $level1.'/'.$level2.'/'.$fileName;
-
-                        $zip->addFile($photoPath, $zipPathInArchive);
-                    }
-                }
+                
+                // Если файл пропал или устарел, удаляем маркер готовности
+                @unlink($readyFile);
             }
 
-            $zip->close();
+            // 3. Запускаем создание архива в фоновом режиме
+            // Используем nohup и перенаправление вывода, чтобы процесс шел в фоне независимо от PHP
+            $command = "nohup php " . base_path('artisan') . " archive:create {$requestId} > /dev/null 2>&1 &";
+            exec($command);
 
-            // Проверяем, что архив не пустой
-            if (filesize($zipPath) === 0) {
-                throw new \Exception('Не найдено фотографий для скачивания или файлы отсутствуют на диске');
-            }
-
-            // Отправляем архив на скачивание
-            return response()->download($zipPath, $zipName)->deleteFileAfterSend(true);
+            return response()->json([
+                'success' => true,
+                'status' => 'processing',
+                'message' => 'Запущен процесс подготовки архива...'
+            ]);
 
         } catch (\Exception $e) {
-            \Log::error('Ошибка при создании архива с фотографиями: '.$e->getMessage());
-            \Log::error($e->getTraceAsString());
+            \Log::error('Ошибка в downloadAllPhotos: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 
-            if (isset($zipPath) && file_exists($zipPath)) {
-                unlink($zipPath);
-            }
+    /**
+     * Метод для скачивания уже готового файла архива
+     */
+    public function downloadArchiveFile($requestId)
+    {
+        $readyFile = storage_path('app/temp/archive_' . $requestId . '.ready');
+        
+        if (!file_exists($readyFile)) {
+            return abort(404, 'Архив не найден или еще не готов');
+        }
+
+        $readyData = json_decode(file_get_contents($readyFile), true);
+        $zipPath = $readyData['path'];
+        $zipName = $readyData['file'];
+
+        if (!file_exists($zipPath)) {
+            @unlink($readyFile);
+            return abort(404, 'Файл архива физически отсутствует на сервере');
+        }
+
+        return response()->download($zipPath, $zipName);
+    }
+
 
             return response()->json([
                 'success' => false,

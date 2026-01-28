@@ -1446,8 +1446,6 @@ export function initDownloadAllPhotos() {
     
     if (downloadAllPhotosBtn) {
         downloadAllPhotosBtn.addEventListener('click', async function() {
-            console.log('Кнопка скачивания архива всех фото нажата');
-
             // Получаем ID заявки
             const requestId = document.getElementById('commentRequestId')?.value;
             
@@ -1456,79 +1454,54 @@ export function initDownloadAllPhotos() {
                 return;
             }
 
+            // Функция для проверки статуса и скачивания
+            const checkStatusAndDownload = async () => {
+                try {
+                    const response = await fetch('/download-all-photos', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ request_id: requestId })
+                    });
+
+                    const result = await response.json();
+
+                    if (!result.success) {
+                        throw new Error(result.message || 'Ошибка сервера');
+                    }
+
+                    if (result.status === 'ready') {
+                        // Если архив готов, переходим по ссылке для скачивания
+                        window.location.href = result.download_url;
+                        
+                        // Восстанавливаем кнопку
+                        downloadAllPhotosBtn.disabled = false;
+                        downloadAllPhotosBtn.innerHTML = originalText;
+                        showAlert('Скачивание архива началось', 'success');
+                    } else if (result.status === 'processing') {
+                        // Если еще готовится, ждем 5 секунд и проверяем снова
+                        setTimeout(checkStatusAndDownload, 5000);
+                    }
+                } catch (error) {
+                    console.error('Ошибка при подготовке архива:', error);
+                    showAlert('Ошибка: ' + error.message, 'danger');
+                    downloadAllPhotosBtn.disabled = false;
+                    downloadAllPhotosBtn.innerHTML = originalText;
+                }
+            };
+
             // Показываем индикатор загрузки
             const originalText = downloadAllPhotosBtn.innerHTML;
             downloadAllPhotosBtn.disabled = true;
             downloadAllPhotosBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Подготовка архива...';
             
-            try {
-                // Отправляем запрос на создание и скачивание архива
-                const response = await fetch('/download-all-photos', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/zip, application/json',
-                    },
-                    body: JSON.stringify({ request_id: requestId }),
-                    responseType: 'blob'
-                });
-
-                if (!response.ok) {
-                    const error = await response.json().catch(() => null);
-                    throw new Error(error?.message || `Ошибка сервера: ${response.status}`);
-                }
-
-                // Получаем blob с архивом
-                const blob = await response.blob();
-                
-                // Проверяем, что это действительно архив
-                if (blob.type !== 'application/zip' && blob.type !== 'application/x-zip-compressed') {
-                    // Пытаемся прочитать текст ошибки из blob
-                    const errorText = await blob.text();
-                    try {
-                        const errorData = JSON.parse(errorText);
-                        throw new Error(errorData.message || 'Неверный формат ответа от сервера');
-                    } catch (e) {
-                        // Если не JSON, значит просто неверный тип файла
-                        throw new Error('Ожидался zip-архив, но получен неверный формат данных');
-                    }
-                }
-                
-                // Создаем ссылку для скачивания
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                
-                // Получаем имя файла из заголовка Content-Disposition или используем имя по умолчанию
-                const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = 'photos_archive.zip';
-                if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-                    if (filenameMatch != null && filenameMatch[1]) {
-                        filename = filenameMatch[1].replace(/['"]/g, '');
-                    }
-                }
-                
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                
-                // Очистка
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                
-                // Показываем уведомление об успешном скачивании
-                showAlert('Архив с фотографиями успешно скачан', 'success');
-                
-            } catch (error) {
-                console.error('Ошибка при скачивании архива:', error);
-                showAlert('Произошла ошибка при подготовке архива: ' + error.message, 'danger');
-            } finally {
-                // Восстанавливаем кнопку в исходное состояние
-                downloadAllPhotosBtn.disabled = false;
-                downloadAllPhotosBtn.innerHTML = originalText;
-            }
+            showAlert('Начата подготовка архива. Для больших заявок это может занять несколько минут. Не закрывайте страницу.', 'info');
+            
+            // Запускаем первую проверку
+            checkStatusAndDownload();
         });
     }
 }
