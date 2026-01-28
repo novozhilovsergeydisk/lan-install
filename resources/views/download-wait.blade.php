@@ -51,6 +51,12 @@
                 <a href="" id="download-link" class="fw-bold text-decoration-underline">нажмите здесь</a> 
                 для скачивания вручную.
             </p>
+
+            <div class="mt-4 pt-3 border-top">
+                <a href="/" class="btn btn-outline-primary btn-sm">
+                    Перейти на главную
+                </a>
+            </div>
         </div>
         
         <p class="small text-muted mt-4" id="footer-hint">
