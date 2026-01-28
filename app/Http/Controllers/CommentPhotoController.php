@@ -554,13 +554,4 @@ class CommentPhotoController extends Controller
 
         return response()->download($zipPath, $zipName);
     }
-
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Не удалось создать архив с фотографиями',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
 }
