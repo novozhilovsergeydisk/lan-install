@@ -4159,10 +4159,11 @@
                                class="form-control" 
                                placeholder="Введите номер дома в соответствии с форматом" 
                                data-required="true"
-                               pattern="^\d+[A-Za-zА-Яа-я]*(?:,\s*(?:корпус\s+\d+[A-Za-zА-Яа-я]*(?:,\s*строение\s+\d+[A-Za-zА-Яа-я]*)?|строение\s+\d+[A-Za-zА-Яа-я]*))?$"
+                               pattern="^\d+[A-Za-zА-Яа-я]*(?:\/\d+[A-Za-zА-Яа-я]*)?(?:,\s*(?:корпус\s+\d+[A-Za-zА-Яа-я]*(?:,\s*строение\s+\d+[A-Za-zА-Яа-я]*)?|строение\s+\d+[A-Za-zА-Яа-я]*))?$"
                                title="Введите номер дома в соответствии с форматом">
                         <div class="form-text text-muted">
                             Формат: <span class="text-info">7</span> или 
+                                    <span class="text-info">7/2</span> или 
                                     <span class="text-info">7A</span> или 
                                     <span class="text-info">7, корпус 2</span> или<br> 
                                     <span class="text-info">7, корпус 2, строение 1</span> или
