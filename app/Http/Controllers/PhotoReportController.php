@@ -257,6 +257,29 @@ class PhotoReportController extends Controller
              abort(403, 'Invalid download token');
         }
 
-        return $this->downloadRequestPhotos($requestId);
+        $tempDir = storage_path('app/temp');
+        $readyFile = $tempDir . '/archive_' . $requestId . '.ready';
+        $processingFile = $tempDir . '/archive_' . $requestId . '.processing';
+
+        // 1. Если архив готов - отдаем
+        if (file_exists($readyFile)) {
+            $readyData = json_decode(file_get_contents($readyFile), true);
+            $zipPath = $readyData['path'] ?? null;
+            $zipName = $readyData['file'] ?? 'archive.zip';
+
+            if ($zipPath && file_exists($zipPath) && (time() - $readyData['created_at'] < 3600)) {
+                return response()->download($zipPath, $zipName);
+            }
+            @unlink($readyFile);
+        }
+
+        // 2. Если не готовится - запускаем
+        if (!file_exists($processingFile)) {
+             $command = "nohup php " . base_path('artisan') . " archive:create {$requestId} > /dev/null 2>&1 &";
+             exec($command);
+        }
+
+        // 3. Возвращаем страницу ожидания
+        return view('download-wait');
     }
 }
