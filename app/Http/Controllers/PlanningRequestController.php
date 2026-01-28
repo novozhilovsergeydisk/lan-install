@@ -559,9 +559,10 @@ class PlanningRequestController extends Controller
             'client_organization' => $input['client_organization_planning_request'] ?? null,
             'comment' => $input['planning_request_comment'] ?? null,
             'address_id' => $addressId,
-            'request_type_id' => 1, // Значение по умолчанию
+            'request_type_id' => $input['request_type_id'] ?? 1, // Используем переданный тип или default
             'status_id' => 6, // Значение по умолчанию
             'user_id' => auth()->id(),
+            'work_parameters' => $input['work_parameters'] ?? null,
         ];
 
         // Валидируем подготовленные данные
@@ -574,6 +575,9 @@ class PlanningRequestController extends Controller
             'request_type_id' => 'required|exists:request_types,id',
             'status_id' => 'required|exists:request_statuses,id',
             'user_id' => 'required|exists:users,id',
+            'work_parameters' => 'nullable|array',
+            'work_parameters.*.parameter_type_id' => 'required|exists:work_parameter_types,id',
+            'work_parameters.*.quantity' => 'required|integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -670,7 +674,7 @@ class PlanningRequestController extends Controller
 
             $validationData['brigade_id'] = $input['brigade_id'] ?? null;
             $validationData['address_id'] = $input['address_id'] ?? null;
-            $validationData['request_type_id'] = 1;
+            $validationData['request_type_id'] = $input['request_type_id'] ?? 1;
             $validationData['status_id'] = 6;
             $validationData['comment'] = $input['planning_request_comment'] ?? null; // Исправлено на правильное имя поля
             $validationData['execution_date'] = $input['execution_date'] ?? null;
@@ -680,6 +684,7 @@ class PlanningRequestController extends Controller
             $validationData['client_name'] = $input['client_name_planning_request'] ?? null;
             $validationData['client_phone'] = $input['client_phone_planning_request'] ?? null;
             $validationData['client_organization'] = $input['client_organization_planning_request'] ?? null;
+            $validationData['work_parameters'] = $input['work_parameters'] ?? null;
 
             \Log::info('Используем для заявки operator_id:', [
                 'user_id' => $userId,
@@ -699,6 +704,9 @@ class PlanningRequestController extends Controller
                 'brigade_id' => 'nullable|exists:brigades,id',
                 'operator_id' => 'nullable|exists:employees,id',
                 'address_id' => 'required|exists:addresses,id',
+                'work_parameters' => 'nullable|array',
+                'work_parameters.*.parameter_type_id' => 'required|exists:work_parameter_types,id',
+                'work_parameters.*.quantity' => 'required|integer|min:1',
             ];
 
             // Логируем входные данные для отладки
@@ -946,6 +954,19 @@ class PlanningRequestController extends Controller
             //     'request_id' => $requestId,
             //     'address_id' => $addressId
             // ]);
+
+            // 6. Сохраняем параметры работ
+            if (! empty($validated['work_parameters'])) {
+                foreach ($validated['work_parameters'] as $param) {
+                    DB::table('work_parameters')->insert([
+                        'request_id' => $requestId,
+                        'parameter_type_id' => $param['parameter_type_id'],
+                        'quantity' => $param['quantity'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
 
             // 🔽 Комплексный запрос получения списка заявок с подключением к employees
             $requestById = DB::select('

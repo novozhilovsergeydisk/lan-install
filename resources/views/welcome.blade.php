@@ -2936,6 +2936,21 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="planningRequestType" class="form-label">Тип заявки <span class="text-danger">*</span></label>
+                        <select class="form-select" id="planningRequestType" name="request_type_id" required>
+                            <option value="" disabled selected>Выберите тип заявки</option>
+                        </select>
+                    </div>
+
+                    <!-- Блок для параметров работ -->
+                    <div id="planningWorkParametersBlock" class="mb-3 d-none">
+                        <h6>Параметры работ</h6>
+                        <div id="planningWorkParametersContainer" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                            <!-- Здесь будут чекбоксы -->
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
                         <h6>Адрес <span class="text-danger">*</span></h6>
                         <div class="mb-3">
                             <select class="form-select" id="addressesPlanningRequest" name="addresses_planning_request_id" required>

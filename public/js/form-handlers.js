@@ -3466,10 +3466,16 @@ function clearPlanningRequestForm() {
     if (!form) return;
     
     // Очищаем все поля ввода
-    form.querySelectorAll('input[type="text"], input[type="tel"], textarea').forEach(input => {
+    form.querySelectorAll('input[type="text"], input[type="tel"], textarea, select').forEach(input => {
         input.value = '';
         input.classList.remove('is-valid', 'is-invalid');
     });
+
+    // Скрываем блок параметров работ и очищаем его
+    const paramsBlock = document.getElementById('planningWorkParametersBlock');
+    const paramsContainer = document.getElementById('planningWorkParametersContainer');
+    if (paramsBlock) paramsBlock.classList.add('d-none');
+    if (paramsContainer) paramsContainer.innerHTML = '';
     
     // Сбрасываем select2, если используется
     if (typeof $.fn.select2 !== 'undefined' && $('.select2').length > 0) {
@@ -3628,6 +3634,77 @@ export function initRequestInWorkHandlers() {
     });
 }
 
+// Функция для загрузки типов заявок в селект
+async function loadRequestTypesForSelect(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    try {
+        const response = await fetch('/api/request-types/');
+        if (!response.ok) throw new Error('Ошибка загрузки типов заявок');
+        
+        const data = await response.json();
+        
+        // Сохраняем текущее значение если есть
+        const currentValue = select.value;
+        
+        select.innerHTML = '<option value="" disabled selected>Выберите тип заявки</option>';
+        data.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.id;
+            option.textContent = type.name;
+            select.appendChild(option);
+        });
+
+        if (currentValue) select.value = currentValue;
+        
+    } catch (error) {
+        console.error('Ошибка загрузки типов заявок:', error);
+    }
+}
+
+// Функция для загрузки параметров работ (адаптированная)
+async function loadWorkParametersForContainer(requestTypeId, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Загрузка работ...</div>';
+
+    try {
+        const response = await fetch(`/api/work-parameter-types/by-request-type/${requestTypeId}`);
+        const data = await response.json();
+
+        container.innerHTML = '';
+
+        if (Array.isArray(data) && data.length > 0) {
+            data.forEach(param => {
+                const row = document.createElement('div');
+                row.className = 'row g-3 mb-2 align-items-center work-parameter-row';
+                row.dataset.id = param.id;
+                
+                row.innerHTML = `
+                    <div class="col-md-8">
+                        <label class="form-label mb-0">${param.name}</label>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="number" class="form-control work-parameter-quantity" placeholder="Кол-во" min="0" value="0">
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+            // Показываем контейнер (родительский блок)
+            const wrapper = container.closest('#planningWorkParametersBlock');
+            if (wrapper) wrapper.classList.remove('d-none');
+            
+        } else {
+            container.innerHTML = '<div class="alert alert-info py-2 mb-0 small">Нет доступных параметров работ для этого типа заявки.</div>';
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке параметров работ:', error);
+        container.innerHTML = '<div class="alert alert-danger py-2 mb-0 small">Ошибка загрузки параметров.</div>';
+    }
+}
+
 export function initPlanningRequestFormHandlers() {
     const submitButton = document.getElementById('submitPlanningRequest');
     
@@ -3641,6 +3718,23 @@ export function initPlanningRequestFormHandlers() {
 
     // Загружаем адреса
     loadAddressesForPlanning();
+
+    // Загружаем типы заявок
+    loadRequestTypesForSelect('planningRequestType');
+
+    // Обработчик изменения типа заявки
+    const planningRequestTypeSelect = document.getElementById('planningRequestType');
+    if (planningRequestTypeSelect) {
+        planningRequestTypeSelect.addEventListener('change', function() {
+            if (this.value) {
+                loadWorkParametersForContainer(this.value, 'planningWorkParametersContainer');
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                document.getElementById('planningWorkParametersBlock').classList.add('d-none');
+            }
+        });
+    }
 
     // Инициализируем кастомный селект, если функция доступна
     if (typeof window.initCustomSelect === 'function') {
@@ -3731,6 +3825,7 @@ export function initPlanningRequestFormHandlers() {
         const clientName = formData.get('client_name_planning_request');
         const clientPhone = formData.get('client_phone_planning_request');
         const clientOrganization = formData.get('client_organization_planning_request');
+        const requestTypeId = formData.get('request_type_id');
         const _token = formData.get('_token');
         
         // Детальное логирование данных формы
@@ -3752,6 +3847,21 @@ export function initPlanningRequestFormHandlers() {
             markFieldAsInvalid('addresses_planning_request_id', 'Пожалуйста, выберите адрес');
             hasErrors = true;
         }
+
+        if (!requestTypeId) {
+            const field = document.getElementById('planningRequestType');
+            if (field) {
+                field.classList.add('is-invalid');
+                let errorElement = field.nextElementSibling;
+                if (!errorElement || !errorElement.classList.contains('invalid-feedback')) {
+                    errorElement = document.createElement('div');
+                    errorElement.className = 'invalid-feedback';
+                    field.parentNode.insertBefore(errorElement, field.nextSibling);
+                }
+                errorElement.textContent = 'Пожалуйста, выберите тип заявки';
+            }
+            hasErrors = true;
+        }
         
         if (!comment) {
             markFieldAsInvalid('planning_request_comment', 'Пожалуйста, введите комментарий');
@@ -3767,6 +3877,22 @@ export function initPlanningRequestFormHandlers() {
             return;
         }
 
+        // Сбор параметров работ
+        const workParameters = [];
+        const parameterRows = document.querySelectorAll('#planningWorkParametersContainer .work-parameter-row');
+        parameterRows.forEach(row => {
+            const typeId = row.dataset.id;
+            const quantityInput = row.querySelector('.work-parameter-quantity');
+            const quantity = quantityInput ? parseInt(quantityInput.value) : 0;
+            
+            if (typeId && quantity > 0) {
+                workParameters.push({
+                    parameter_type_id: typeId,
+                    quantity: quantity
+                });
+            }
+        });
+
         try {
             const formDataObj = {
                 address_id: addressId,
@@ -3774,6 +3900,8 @@ export function initPlanningRequestFormHandlers() {
                 client_name_planning_request: clientName,
                 client_phone_planning_request: clientPhone,
                 client_organization_planning_request: clientOrganization,
+                request_type_id: requestTypeId,
+                work_parameters: workParameters,
                 _token: _token
             };
             
