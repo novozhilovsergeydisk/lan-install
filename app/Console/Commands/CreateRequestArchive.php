@@ -52,7 +52,8 @@ class CreateRequestArchive extends Command
             
             // Пути
             $tempBaseDir = storage_path('app/temp');
-            $workDir = $tempBaseDir . '/work_' . $requestId . '_' . time();
+            // Используем uniqid для избежания коллизий при одновременном запуске
+            $workDir = $tempBaseDir . '/work_' . $requestId . '_' . uniqid();
             $outputZipPath = $tempBaseDir . '/' . $zipName; // Финальный путь
             
             // Маркер обработки (создаем файл .processing)
@@ -109,8 +110,10 @@ class CreateRequestArchive extends Command
                         $destPath = $dirPath . '/' . $fileName;
                         
                         // Создаем симлинк вместо копирования!
-                        symlink($sourcePath, $destPath);
-                        $fileCount++;
+                        if (!file_exists($destPath)) {
+                            symlink($sourcePath, $destPath);
+                            $fileCount++;
+                        }
                     }
                 }
             }
