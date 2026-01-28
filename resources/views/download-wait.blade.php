@@ -42,11 +42,14 @@
         </p>
 
         <div id="download-area" class="d-none mt-4">
-            <a href="" id="download-link" class="btn btn-success btn-lg px-4">
-                Скачать архив
-            </a>
-            <p class="small text-muted mt-2">
-                Скачивание должно начаться автоматически.
+            <div class="alert alert-success mb-3">
+                <strong>Архив готов!</strong> Скачивание началось автоматически.
+            </div>
+            
+            <p class="text-muted">
+                Если загрузка не пошла — 
+                <a href="" id="download-link" class="fw-bold text-decoration-underline">нажмите здесь</a> 
+                для скачивания вручную.
             </p>
         </div>
         
