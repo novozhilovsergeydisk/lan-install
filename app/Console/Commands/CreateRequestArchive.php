@@ -162,9 +162,16 @@ class CreateRequestArchive extends Command
 
         } catch (\Exception $e) {
             $this->error($e->getMessage());
-            Log::error("Archive creation failed: " . $e->getMessage());
-            if (isset($processingFile)) @unlink($processingFile);
+            Log::error("Archive creation failed for request $requestId: " . $e->getMessage());
             return 1;
+        } finally {
+            // Гарантированная очистка: удаляем рабочую директорию и маркер (если не создан ready)
+            if (isset($workDir) && file_exists($workDir)) {
+                exec("rm -rf " . escapeshellarg($workDir));
+            }
+            if (isset($processingFile) && file_exists($processingFile) && !file_exists($tempBaseDir . '/archive_' . $requestId . '.ready')) {
+                @unlink($processingFile);
+            }
         }
 
         return 0;

@@ -515,8 +515,11 @@ class CommentPhotoController extends Controller
                 @unlink($readyFile);
             }
 
-            // 3. Запускаем создание архива в фоновом режиме
-            // Используем nohup и перенаправление вывода, чтобы процесс шел в фоне независимо от PHP
+            // 3. Создаем маркер обработки ПЕРЕД запуском фонового процесса
+            // Это предотвращает race condition (запуск нескольких процессов одновременно)
+            file_put_contents($processingFile, json_encode(['start' => time(), 'pid' => 'pending']));
+
+            // 4. Запускаем создание архива в фоновом режиме
             $command = "nohup php " . base_path('artisan') . " archive:create {$requestId} > /dev/null 2>&1 &";
             exec($command);
 

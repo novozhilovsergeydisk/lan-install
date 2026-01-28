@@ -287,6 +287,9 @@ class PhotoReportController extends Controller
 
         // 2. Если не готовится - запускаем
         if (!file_exists($processingFile)) {
+             // Создаем маркер ПЕРЕД запуском
+             file_put_contents($processingFile, json_encode(['start' => time(), 'pid' => 'pending']));
+             
              $command = "nohup php " . base_path('artisan') . " archive:create {$requestId} > /dev/null 2>&1 &";
              exec($command);
         }
