@@ -247,7 +247,7 @@ class PhotoReportController extends Controller
      * @param string $token
      * @return mixed
      */
-    public function downloadRequestPhotosPublic($requestId, $token)
+    public function downloadRequestPhotosPublic(Request $request, $requestId, $token)
     {
         // Секретная соль для генерации токена (можно вынести в конфиг)
         $secret = config('app.key'); 
@@ -260,6 +260,18 @@ class PhotoReportController extends Controller
         $tempDir = storage_path('app/temp');
         $readyFile = $tempDir . '/archive_' . $requestId . '.ready';
         $processingFile = $tempDir . '/archive_' . $requestId . '.processing';
+
+        // 0. AJAX-проверка статуса (для страницы ожидания)
+        if ($request->has('check_status')) {
+            if (file_exists($readyFile)) {
+                // Проверяем свежесть, как и при скачивании
+                $readyData = json_decode(file_get_contents($readyFile), true);
+                if (time() - ($readyData['created_at'] ?? 0) < 3600) {
+                    return response()->json(['status' => 'ready']);
+                }
+            }
+            return response()->json(['status' => 'processing']);
+        }
 
         // 1. Если архив готов - отдаем
         if (file_exists($readyFile)) {
@@ -279,7 +291,7 @@ class PhotoReportController extends Controller
              exec($command);
         }
 
-        // 3. Возвращаем страницу ожидания
-        return view('download-wait');
+        // 3. Возвращаем страницу ожидания с параметрами для JS
+        return view('download-wait', compact('requestId', 'token'));
     }
 }

@@ -2454,7 +2454,7 @@ class HomeController extends Controller
                     ->join('clients', 'requests.client_id', '=', 'clients.id')
                     ->leftJoin('request_addresses', 'requests.id', '=', 'request_addresses.request_id')
                     ->leftJoin('addresses', 'request_addresses.address_id', '=', 'addresses.id')
-                    ->select('requests.*', 'request_types.name as type_name', 'clients.organization', 'addresses.street', 'addresses.houses', 'addresses.district')
+                    ->select('requests.*', 'request_types.name as type_name', 'clients.organization', 'addresses.street', 'addresses.houses', 'addresses.district', 'addresses.id as address_id')
                     ->where('requests.id', $id)
                     ->first();
 
@@ -2506,7 +2506,13 @@ class HomeController extends Controller
                             foreach ($completedWorks as $work) {
                                 $worksStr .= "- " . htmlspecialchars($work->name) . ": " . $work->quantity . "\n";
                             }
-                            $worksStr .= "\n"; // Добавляем отступ после блока работ
+                            $worksStr .= "\n";
+                        }
+
+                        // Добавляем ссылку на отчет по адресу (независимо от наличия работ)
+                        if (!empty($requestDataForNotify->address_id)) {
+                            $reportUrl = route('reports.address.show', ['addressId' => $requestDataForNotify->address_id]);
+                            $worksStr .= "📊 <a href=\"{$reportUrl}\">История заявок по адресу</a>\n\n";
                         }
 
                         // Берем исходный комментарий пользователя
