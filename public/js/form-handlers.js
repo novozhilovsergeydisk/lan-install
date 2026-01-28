@@ -1498,7 +1498,7 @@ export function initDownloadAllPhotos() {
             downloadAllPhotosBtn.disabled = true;
             downloadAllPhotosBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Подготовка архива...';
             
-            showAlert('Начата подготовка архива. Для больших заявок это может занять несколько минут. Не закрывайте страницу.', 'info');
+            showAlert('Подготовка архива... Обычно это занимает менее минуты.', 'info');
             
             // Запускаем первую проверку
             checkStatusAndDownload();
