@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# === Настройки ===
+SERVER_PATH="lan-install"
+REMOTE_DIR="/var/www/lan-install"
+LOGFILE="$HOME/logs/git-deploy.log"
+
+GREEN='\033[32m'
+BLUE='\033[34m'
+NC='\033[0m' # No Color
+
+info() {
+  echo -e "${BLUE}[*] $1${NC}"
+}
+success() {
+  echo -e "${GREEN}[✓] $1${NC}"
+}
+
+# === Компиляция на сервере ===
+info "Компилируем telegram_notify на сервере..."
+
+ssh "$SERVER_PATH" "gcc -o $REMOTE_DIR/utils/C/notify-bot/telegram_notify $REMOTE_DIR/utils/C/notify-bot/telegram_notify.c -lcurl"
+
+if [ $? -eq 0 ]; then
+  success "Утилита успешно скомпилирована и обновлена!"
+else
+  echo "Ошибка компиляции."
+  exit 1
+fi
