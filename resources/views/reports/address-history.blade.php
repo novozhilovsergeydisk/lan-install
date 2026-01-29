@@ -20,7 +20,7 @@
                             <table class="table table-striped table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 50px;">#</th>
+                                        <th class="d-none d-md-table-cell" style="width: 50px;">#</th>
                                         <th style="width: 140px;">Дата / Инфо</th>
                                         <th style="min-width: 200px;">Клиент / Адрес</th>
                                         <th style="min-width: 300px;">Комментарии</th>
@@ -31,7 +31,7 @@
                                     @foreach($requests as $index => $request)
                                         <tr>
                                             <!-- Номер п/п (обратный отсчет или просто индекс) -->
-                                            <td class="text-center text-muted">{{ $loop->iteration }}</td>
+                                            <td class="text-center text-muted d-none d-md-table-cell">{{ $loop->iteration }}</td>
 
                                             <!-- Дата и Номер заявки -->
                                             <td>
@@ -149,7 +149,7 @@
         }
         .table td {
             display: block;
-            text-align: right;
+            text-align: left;
             border: none;
             padding: 0.5rem;
             position: relative;
