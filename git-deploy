@@ -67,8 +67,8 @@ git push
 
 # === Удалённое обновление на сервере ===
 info "Обновляем проект на сервере ($SERVER_PATH)..."
-ssh "$SERVER_PATH" "cd $REMOTE_DIR && GIT_SSH_COMMAND='ssh -i $SSH_KEY' git pull" || {
-  error "Ошибка при выполнении git pull на сервере"
+ssh "$SERVER_PATH" "cd $REMOTE_DIR && GIT_SSH_COMMAND='ssh -i $SSH_KEY' git pull && gcc -o utils/C/notify-bot/telegram_notify utils/C/notify-bot/telegram_notify.c -lcurl" || {
+  error "Ошибка при выполнении git pull или компиляции на сервере"
   exit 1
 }
 

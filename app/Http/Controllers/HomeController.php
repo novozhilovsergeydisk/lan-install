@@ -2462,8 +2462,17 @@ class HomeController extends Controller
                 DB::commit();
 
                 // Отправка уведомления в Telegram
-                if ($requestDataForNotify && $requestDataForNotify->type_name == 'Демонтаж МЭШ') {
+                if ($requestDataForNotify && in_array($requestDataForNotify->type_name, ['Демонтаж МЭШ', 'Монтаж панелей'])) {
                     try {
+                        // Определяем настройки для уведомления в зависимости от типа заявки
+                        $botToken = ''; // Пусто = из конфига (по умолчанию)
+                        $chatId = '';   // Пусто = из конфига (по умолчанию)
+
+                        if ($requestDataForNotify->type_name == 'Монтаж панелей') {
+                            $botToken = config('services.telegram.mounting_panels.token');
+                            $chatId = config('services.telegram.mounting_panels.chat_id');
+                        }
+
                         // Получаем состав бригады
                         $leaderFio = '';
                         if ($requestDataForNotify->brigade_id) {
@@ -2512,7 +2521,7 @@ class HomeController extends Controller
                         // Добавляем ссылку на отчет по адресу (независимо от наличия работ)
                         if (!empty($requestDataForNotify->address_id)) {
                             $reportUrl = route('reports.address.show', ['addressId' => $requestDataForNotify->address_id]);
-                            $worksStr .= "📊 <a href=\"{$reportUrl}\">История заявок по адресу</a>\n\n";
+                            $worksStr .= "📊 <a href='{$reportUrl}'>История заявок по адресу</a>\n\n";
                         }
 
                         // Берем исходный комментарий пользователя
@@ -2546,8 +2555,9 @@ class HomeController extends Controller
                         $addrName = htmlspecialchars($addressStr ?: 'Не указан');
                         $brigadeName = htmlspecialchars($brigadeListStr ?: 'Не назначена');
                         $cleanComment = htmlspecialchars($cleanComment);
+                        $typeName = htmlspecialchars($requestDataForNotify->type_name);
 
-                        $notifyMessage = "✅ <b>Заявка #{$id} закрыта (Демонтаж МЭШ)</b>\n\n"
+                        $notifyMessage = "✅ <b>Заявка #{$id} закрыта ({$typeName})</b>\n\n"
                                        . "🏢 <b>Организация:</b> {$orgName}\n"
                                        . "📍 <b>Адрес:</b> {$addrName}\n"
                                        . "👥 <b>Бригада:</b>\n{$brigadeName}\n\n"
@@ -2560,13 +2570,22 @@ class HomeController extends Controller
                             $token = md5($id . $secret . 'telegram-notify');
                             $downloadUrl = route('photo-report.download.public', ['requestId' => $id, 'token' => $token]);
                             
-                            // Используем ДВОЙНЫЕ кавычки для href (стандарт HTML/XML), так как proc_open это позволяет
-                            $notifyMessage .= "\n\n🔗 <a href=\"{$downloadUrl}\">Скачать фото и файлы по заявке #{$id}</a>";
+                            // Используем ОДИНАРНЫЕ кавычки для href, чтобы избежать конфликтов экранирования
+                            $notifyMessage .= "\n\n🔗 <a href='{$downloadUrl}'>Скачать фото и файлы по заявке #{$id}</a>";
                         }
 
                         $scriptPath = base_path('utils/C/notify-bot/telegram_notify');
                         
                         if (file_exists($scriptPath)) {
+                            // Формируем команду с аргументами, если они есть
+                            $cmd = $scriptPath;
+                            if (!empty($botToken)) {
+                                $cmd .= ' -t ' . escapeshellarg($botToken);
+                            }
+                            if (!empty($chatId)) {
+                                $cmd .= ' -c ' . escapeshellarg($chatId);
+                            }
+
                             // Используем proc_open для прямой передачи данных в stdin процесса
                             $descriptorspec = [
                                 0 => ['pipe', 'r'],  // stdin
@@ -2575,8 +2594,7 @@ class HomeController extends Controller
                             ];
                             
                             // Запускаем синхронно, чтобы гарантировать передачу данных в stdin
-                            // Утилита на C работает быстро, задержка будет минимальной
-                            $process = proc_open($scriptPath, $descriptorspec, $pipes);
+                            $process = proc_open($cmd, $descriptorspec, $pipes);
                             
                             if (is_resource($process)) {
                                 fwrite($pipes[0], $notifyMessage);
@@ -2585,9 +2603,9 @@ class HomeController extends Controller
                                 // Ждем завершения процесса (это быстро)
                                 proc_close($process);
                                 
-                                \Log::info('Отправлено подробное уведомление в Telegram для заявки #' . $id);
+                                \Log::info('Отправлено подробное уведомление в Telegram для заявки #' . $id . ' (' . $requestDataForNotify->type_name . ')');
                             } else {
-                                \Log::error('Не удалось запустить процесс отправки уведомления');
+                                \Log::error('Не удалось запустить процесс отправки уведомления: ' . $cmd);
                             }
                         }
                     } catch (\Exception $e) {

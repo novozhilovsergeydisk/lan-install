@@ -39,3 +39,4 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 utils/C/notify-bot/telegram.conf
+utils/C/notify-bot/telegram_notify

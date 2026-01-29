@@ -59,46 +59,69 @@ int get_config_value(const char *config_path, const char *key, char *value, size
 
 int main(int argc, char *argv[]) {
     char chat_id[MAX_BUF] = {0};
+    char bot_token[MAX_BUF] = {0};
     char message[MAX_MSG_SIZE] = {0};
+    char bot_name[MAX_BUF] = "Bot";
 
     char exe_dir[PATH_MAX];
     get_exe_dir(exe_dir, sizeof(exe_dir));
     char config_path[PATH_MAX];
     snprintf(config_path, sizeof(config_path), "%s/telegram.conf", exe_dir);
 
-    // Логика аргументов
-    if (argc >= 2) {
-        // Если передан аргумент - считаем его сообщением (старый режим)
-        strncpy(message, argv[1], sizeof(message) - 1);
-        
-        if (!get_config_value(config_path, "CHAT_ID", chat_id, sizeof(chat_id))) {
-             fprintf(stderr, "Ошибка: CHAT_ID не найден в конфиге.\n");
-             return 1;
-        }
-    } else {
-        // Если аргументов нет - читаем из stdin (новый режим)
-        // Читаем ID из конфига
-        if (!get_config_value(config_path, "CHAT_ID", chat_id, sizeof(chat_id))) {
-             fprintf(stderr, "Ошибка: CHAT_ID не найден в конфиге.\n");
-             return 1;
-        }
+    int opt;
+    // Reset optind to 1 just in case, though it's default
+    optind = 1;
 
-        // Читаем stdin
+    while ((opt = getopt(argc, argv, "t:c:")) != -1) {
+        switch (opt) {
+            case 't':
+                strncpy(bot_token, optarg, sizeof(bot_token) - 1);
+                break;
+            case 'c':
+                strncpy(chat_id, optarg, sizeof(chat_id) - 1);
+                break;
+            default: /* '?' */
+                fprintf(stderr, "Usage: %s [-t token] [-c chat_id] [message]\n", argv[0]);
+                return 1;
+        }
+    }
+
+    // Try to load defaults from config if not provided via args
+    if (strlen(bot_token) == 0) {
+        if (!get_config_value(config_path, "BOT_TOKEN", bot_token, sizeof(bot_token))) {
+            // It's possible the user only provided one or the other, or neither.
+            // We check later if we have what we need.
+        }
+    }
+    
+    if (strlen(chat_id) == 0) {
+        get_config_value(config_path, "CHAT_ID", chat_id, sizeof(chat_id));
+    }
+    
+    get_config_value(config_path, "BOT_NAME", bot_name, sizeof(bot_name));
+
+    // Check if we have the required credentials
+    if (strlen(bot_token) == 0) {
+        fprintf(stderr, "Ошибка: BOT_TOKEN не указан (ни в аргументах, ни в конфиге).\n");
+        return 1;
+    }
+    if (strlen(chat_id) == 0) {
+        fprintf(stderr, "Ошибка: CHAT_ID не указан (ни в аргументах, ни в конфиге).\n");
+        return 1;
+    }
+
+    // Handle message: either from remaining arg or stdin
+    if (optind < argc) {
+        // Assume the first non-option argument is the message
+        strncpy(message, argv[optind], sizeof(message) - 1);
+    } else {
+        // Read from stdin
         size_t bytes_read = fread(message, 1, sizeof(message) - 1, stdin);
         if (bytes_read == 0) {
             fprintf(stderr, "Ошибка: пустое сообщение.\n");
             return 1;
         }
     }
-
-    char bot_token[MAX_BUF];
-    if (!get_config_value(config_path, "BOT_TOKEN", bot_token, sizeof(bot_token))) {
-        fprintf(stderr, "Ошибка: BOT_TOKEN не найден в %s\n", config_path);
-        return 1;
-    }
-
-    char bot_name[MAX_BUF] = "Bot"; 
-    get_config_value(config_path, "BOT_NAME", bot_name, sizeof(bot_name));
 
     CURL *curl;
     CURLcode res;

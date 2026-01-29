@@ -39,4 +39,12 @@ return [
         'maps_key' => env('YANDEX_MAPS_API_KEY'),
     ],
 
+    'telegram' => [
+        'mounting_panels' => [
+            'token' => env('TELEGRAM_MOUNTING_PANELS_BOT_TOKEN'),
+            'chat_id' => env('TELEGRAM_MOUNTING_PANELS_CHAT_ID'),
+            'username' => env('TELEGRAM_MOUNTING_PANELS_BOT_USERNAME'),
+        ],
+    ],
+
 ];

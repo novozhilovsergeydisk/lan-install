@@ -723,14 +723,19 @@ class ReportController extends Controller
                     })->toArray();
             }
 
-            return response()->json([
+            // return response()->json([
+            //     'address' => $address,
+            //     'requests' => $requests,
+            //     'brigadeMembers' => $brigadeMembers,
+            //     'comments_by_request' => $commentsByRequest,
+            // ]);
+
+            return view('reports.address', [
                 'address' => $address,
                 'requests' => $requests,
                 'brigadeMembers' => $brigadeMembers,
-                'comments_by_request' => $commentsByRequest,
+                'commentsByRequest' => $commentsByRequest,
             ]);
-
-            // return view('reports.address', compact('address', 'requests'));
         } catch (\Exception $e) {
             Log::error('Error in ReportController@showAddressReports: '.$e->getMessage());
             abort(500, 'Произошла ошибка при получении отчетов');
