@@ -2520,7 +2520,9 @@ class HomeController extends Controller
 
                         // Добавляем ссылку на отчет по адресу (независимо от наличия работ)
                         if (!empty($requestDataForNotify->address_id)) {
-                            $reportUrl = route('reports.address.show', ['addressId' => $requestDataForNotify->address_id]);
+                            $secret = config('app.key');
+                            $token = md5($requestDataForNotify->address_id . $secret . 'address-history');
+                            $reportUrl = route('reports.address-history.public', ['addressId' => $requestDataForNotify->address_id, 'token' => $token]);
                             $worksStr .= "📊 <a href='{$reportUrl}'>История заявок по адресу</a>\n\n";
                         }
 

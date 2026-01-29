@@ -743,6 +743,145 @@ class ReportController extends Controller
     }
 
     /**
+     * Отображение страницы с отчетами по адресу (история для бота)
+     */
+    public function showAddressReportsHistory($addressId, $token)
+    {
+        // Проверка токена
+        $secret = config('app.key');
+        $expectedToken = md5($addressId . $secret . 'address-history');
+
+        if ($token !== $expectedToken) {
+            abort(403, 'Неверный токен доступа');
+        }
+
+        try {
+            // Получить данные адреса
+            $address = DB::table('addresses')
+                ->join('cities', 'addresses.city_id', '=', 'cities.id')
+                ->where('addresses.id', $addressId)
+                ->select('addresses.*', 'cities.name as city_name')
+                ->first();
+
+            if (! $address) {
+                abort(404, 'Адрес не найден');
+            }
+
+            // Получить заявки по адресу за весь период
+            $requests = DB::table('requests as r')
+                ->selectRaw('
+                r.*,
+                c.fio AS client_fio,
+                c.phone AS client_phone,
+                c.organization AS client_organization,
+                rs.name AS status_name,
+                rs.color AS status_color,
+                b.name AS brigade_name,
+                e.fio AS brigade_lead,
+                op.fio AS operator_name,
+                addr.street,
+                addr.houses,
+                addr.district,
+                addr.city_id,
+                ct.name AS city_name,
+                ct.postal_code AS city_postal_code
+            ')
+                ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
+                ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+                ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
+                ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
+                ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
+                ->leftJoin('request_addresses AS ra', 'r.id', '=', 'ra.request_id')
+                ->leftJoin('addresses AS addr', 'ra.address_id', '=', 'addr.id')
+                ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
+                ->where(function ($query) {
+                    $query->where('b.is_deleted', false)
+                        ->orWhereNull('b.id');
+                })
+                ->where('addr.id', $addressId)
+                ->orderBy('r.execution_date', 'DESC')
+                ->orderBy('r.id', 'DESC')
+                ->get();
+
+            // Получить данные о членах бригад для заявок
+            $brigadeIds = $requests->pluck('brigade_id')->filter()->unique();
+            $brigadeMembers = [];
+            if ($brigadeIds->isNotEmpty()) {
+                $brigadeMembers = DB::table('brigade_members as bm')
+                    ->join('brigades as b', 'bm.brigade_id', '=', 'b.id')
+                    ->leftJoin('employees as e', 'bm.employee_id', '=', 'e.id')
+                    ->whereIn('bm.brigade_id', $brigadeIds)
+                    ->where('b.is_deleted', false)
+                    ->select(
+                        'bm.brigade_id',
+                        'e.fio as employee_name',
+                        'e.id as employee_id'
+                    )
+                    ->get()
+                    ->groupBy('brigade_id')
+                    ->map(function ($members, $brigadeId) {
+                        return [
+                            'brigade_id' => $brigadeId,
+                            'members' => $members->map(function ($member) {
+                                return [
+                                    'fio' => $member->employee_name,
+                                    'id' => $member->employee_id,
+                                ];
+                            })->toArray(),
+                        ];
+                    })->values()->toArray();
+            }
+
+            // Получить комментарии для заявок
+            $requestIds = $requests->pluck('id');
+            $commentsByRequest = [];
+            if ($requestIds->isNotEmpty()) {
+                $commentsByRequest = DB::table('request_comments as rc')
+                    ->join('comments as c', 'rc.comment_id', '=', 'c.id')
+                    ->leftJoin('users as u', 'rc.user_id', '=', 'u.id')
+                    ->leftJoin('employees as e', 'u.id', '=', 'e.user_id')
+                    ->whereIn('rc.request_id', $requestIds)
+                    ->select(
+                        'rc.request_id',
+                        'c.id as comment_id',
+                        'c.comment',
+                        'c.created_at',
+                        DB::raw("CASE
+                            WHEN e.fio IS NOT NULL THEN e.fio
+                            WHEN u.name IS NOT NULL THEN u.name
+                            WHEN u.email IS NOT NULL THEN u.email
+                            ELSE 'Система'
+                        END as author_name")
+                    )
+                    ->orderBy('rc.request_id')
+                    ->orderBy('c.created_at')
+                    ->get()
+                    ->groupBy('request_id')
+                    ->map(function ($comments) {
+                        return $comments->map(function ($comment) {
+                            return (object) [
+                                'id' => $comment->comment_id,
+                                'comment' => $comment->comment,
+                                'created_at' => $comment->created_at,
+                                'author_name' => $comment->author_name,
+                            ];
+                        })->toArray();
+                    })->toArray();
+            }
+
+            return view('reports.address-history', [
+                'address' => $address,
+                'requests' => $requests,
+                'brigadeMembers' => $brigadeMembers,
+                'commentsByRequest' => $commentsByRequest,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in ReportController@showAddressReportsHistory: '.$e->getMessage());
+            abort(500, 'Произошла ошибка при получении отчетов');
+        }
+    }
+
+    /**
      * Получение списка адресов для отчетов
      */
     public function getAddresses()

@@ -115,6 +115,9 @@ Route::get('/photo-reports/{requestId}/download', [PhotoReportController::class,
 // Публичное скачивание фотоотчета (для Telegram)
 Route::get('/public/photo-reports/{requestId}/download/{token}', [PhotoReportController::class, 'downloadRequestPhotosPublic'])->name('photo-report.download.public');
 
+// Публичный просмотр истории по адресу (для Telegram)
+Route::get('/public/reports/address-history/{addressId}/{token}', [ReportController::class, 'showAddressReportsHistory'])->name('reports.address-history.public');
+
 
 // Маршруты для работы со статусами заявок
 Route::prefix('statuses')->middleware('auth')->group(function () {
