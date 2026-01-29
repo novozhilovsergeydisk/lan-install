@@ -1,6 +1,7 @@
 #!/bin/bash
+set -e
 
-# === Настройки ===
+# Цвета для вывода
 LOGFILE="$HOME/logs/git-deploy.log"
 PROJECT_DIR="$(pwd)"
 TIMESTAMP=$(date "+%Y-%m-%d %T")

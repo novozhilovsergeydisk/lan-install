@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+set -e
 
 sudo php artisan config:clear
 sudo php artisan cache:clear

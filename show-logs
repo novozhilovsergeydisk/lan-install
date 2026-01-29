@@ -1,3 +1,4 @@
 #!/bin/bash
+set -e
 
 tail -f storage/logs/laravel.log
