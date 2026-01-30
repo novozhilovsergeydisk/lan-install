@@ -2504,13 +2504,14 @@ class HomeController extends Controller
                         // Формируем строку с работами для Telegram (берем данные из БД после транзакции)
                         $worksStr = "";
                         
-                        // Получаем все работы по заявке из БД
+                        // Получаем все работы по заявке из БД с сортировкой по ID
                         $allWorksFromDB = DB::table('work_parameters')
                             ->join('work_parameter_types', 'work_parameters.parameter_type_id', '=', 'work_parameter_types.id')
                             ->where('work_parameters.request_id', $id)
                             ->where('work_parameters.quantity', '>', 0)
                             ->where('work_parameters.is_done', true)
                             ->select('work_parameters.*', 'work_parameter_types.name as type_name')
+                            ->orderBy('work_parameters.id', 'asc')
                             ->get();
 
                         // Разделяем на план и факт на основе ID (plannedWorkParameters были получены в начале метода)
@@ -2533,8 +2534,8 @@ class HomeController extends Controller
                             $worksStr .= "\n";
                         }
 
-                        // 2. Фактически выполненные работы
-                        if ($performedPart->isNotEmpty()) {
+                        // 2. Фактически выполненные работы (показываем только если они были переданы в текущем запросе)
+                        if (!empty($workParameters) && is_array($workParameters) && $performedPart->isNotEmpty()) {
                             $worksStr .= "🛠 <b>Выполненные работы:</b>\n";
                             foreach ($performedPart as $work) {
                                 $worksStr .= "- " . htmlspecialchars($work->type_name) . ": " . $work->quantity . "\n";
