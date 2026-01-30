@@ -112,6 +112,15 @@
                                                             Оп: {{ $request->operator_name }}
                                                         </div>
                                                     @endif
+
+                                                    <!-- Ссылка на скачивание архива -->
+                                                    @if(isset($request->download_url) && $request->download_url)
+                                                        <div class="mt-1">
+                                                            <a href="{{ $request->download_url }}" class="btn btn-sm btn-outline-secondary w-100 p-1" style="font-size: 0.75rem;">
+                                                                <i class="bi bi-archive me-1"></i>Скачать фото
+                                                            </a>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>

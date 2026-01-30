@@ -870,6 +870,27 @@ class ReportController extends Controller
                             ];
                         })->toArray();
                     })->toArray();
+
+                // Add download links for requests with photos/files
+                foreach ($requests as $request) {
+                    $hasPhotos = DB::table('comment_photos')
+                        ->join('request_comments', 'comment_photos.comment_id', '=', 'request_comments.comment_id')
+                        ->where('request_comments.request_id', $request->id)
+                        ->exists();
+
+                    $hasFiles = DB::table('comment_files')
+                        ->join('request_comments', 'comment_files.comment_id', '=', 'request_comments.comment_id')
+                        ->where('request_comments.request_id', $request->id)
+                        ->exists();
+
+                    if ($hasPhotos || $hasFiles) {
+                        $secret = config('app.key');
+                        $token = md5($request->id . $secret . 'telegram-notify');
+                        $request->download_url = route('photo-report.download.public', ['requestId' => $request->id, 'token' => $token]);
+                    } else {
+                        $request->download_url = null;
+                    }
+                }
             }
 
             return view('reports.address-history', [
