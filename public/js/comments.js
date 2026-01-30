@@ -19,8 +19,18 @@ async function loadComments(requestId) {
     `;
 
     try {
-        const comments = await fetchData(`/api/requests/${requestId}/comments`);
-        if (comments.length === 0) {
+        const response = await fetchData(`/api/requests/${requestId}/comments`);
+        let comments = [];
+        let meta = {};
+
+        if (Array.isArray(response)) {
+            comments = response;
+        } else {
+            comments = response.comments || [];
+            meta = response.meta || {};
+        }
+
+        if (comments.length === 0 && !meta.address_history_url) {
             container.innerHTML = '<div class="text-muted text-center py-4">Нет комментариев</div>';
             return;
         }
@@ -43,7 +53,44 @@ async function loadComments(requestId) {
                 </div>`;
         });
         html += '</div>';
+
+        if (meta.address_history_url) {
+            html += `
+                <div class="mt-3 pt-3 border-top">
+                    <label class="form-label small text-muted">История заявок по адресу:</label>
+                    <div class="d-flex gap-2">
+                        <input type="hidden" value="${meta.address_history_url}" id="historyUrlInput">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" id="copyHistoryUrlBtn">
+                            <i class="bi bi-clipboard"></i> Скопировать ссылку
+                        </button>
+                        <a href="${meta.address_history_url}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-box-arrow-up-right"></i> Открыть
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
         container.innerHTML = html;
+
+        if (meta.address_history_url) {
+            const copyBtn = container.querySelector('#copyHistoryUrlBtn');
+            const urlInput = container.querySelector('#historyUrlInput');
+            if (copyBtn && urlInput) {
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(urlInput.value).then(() => {
+                        if (window.utils && window.utils.showAlert) {
+                            window.utils.showAlert('Ссылка скопирована!');
+                        } else {
+                            alert('Ссылка скопирована!');
+                        }
+                    }).catch(err => {
+                        console.error('Ошибка копирования:', err);
+                        alert('Не удалось скопировать ссылку');
+                    });
+                });
+            }
+        }
     } catch (error) {
         container.innerHTML = `<div class="alert alert-danger">Ошибка загрузки комментариев</div>`;
     }

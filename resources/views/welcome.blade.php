@@ -2229,8 +2229,17 @@
 
                 fetch(`/api/requests/${requestId}/comments`)
                     .then(response => response.json())
-                    .then(comments => {
-                        if (comments.length === 0) {
+                    .then(data => {
+                        let comments = [];
+                        let meta = {};
+                        if (Array.isArray(data)) {
+                            comments = data;
+                        } else {
+                            comments = data.comments || [];
+                            meta = data.meta || {};
+                        }
+
+                        if (comments.length === 0 && !meta.address_history_url) {
                             container.innerHTML = '<div class="text-muted text-center py-4">Нет комментариев</div>';
                             resolve(comments);
                             return;
@@ -2372,7 +2381,44 @@
                         });
 
                         html += '</div>';
+
+                        if (meta.address_history_url) {
+                            html += `
+                                <div class="mt-3 pt-3 border-top">
+                                    <label class="form-label small text-muted">История заявок по адресу:</label>
+                                    <div class="d-flex gap-2">
+                                        <input type="hidden" value="${meta.address_history_url}" id="historyUrlInputInline">
+                                        <button class="btn btn-outline-secondary btn-sm" type="button" id="copyHistoryUrlBtnInline">
+                                            <i class="bi bi-clipboard"></i> Скопировать ссылку
+                                        </button>
+                                        <a href="${meta.address_history_url}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-box-arrow-up-right"></i> Открыть
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
                         container.innerHTML = html;
+
+                        if (meta.address_history_url) {
+                            const copyBtn = container.querySelector('#copyHistoryUrlBtnInline');
+                            const urlInput = container.querySelector('#historyUrlInputInline');
+                            if (copyBtn && urlInput) {
+                                copyBtn.addEventListener('click', () => {
+                                    navigator.clipboard.writeText(urlInput.value).then(() => {
+                                        if (window.utils && window.utils.showAlert) {
+                                            window.utils.showAlert('Ссылка скопирована!');
+                                        } else {
+                                            alert('Ссылка скопирована!');
+                                        }
+                                    }).catch(err => {
+                                        console.error('Ошибка копирования:', err);
+                                        alert('Не удалось скопировать ссылку');
+                                    });
+                                });
+                            }
+                        }
                         
                         // Добавляем обработчик для кнопки "Редактировать"
                         const editButtons = container.querySelectorAll('.edit-comment-btn');

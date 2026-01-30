@@ -2080,7 +2080,27 @@ class HomeController extends Controller
                 }
             }
 
-            return response()->json($comments);
+            // Get additional request info (status and address)
+            $requestInfo = DB::table('requests')
+                ->leftJoin('request_addresses', 'requests.id', '=', 'request_addresses.request_id')
+                ->select('requests.status_id', 'request_addresses.address_id')
+                ->where('requests.id', $requestId)
+                ->first();
+
+            $reportUrl = null;
+            // Check if request is completed (status_id = 4) or deleted/closed (status_id = 7) and has address
+            if ($requestInfo && in_array($requestInfo->status_id, [4, 7]) && !empty($requestInfo->address_id)) {
+                $secret = config('app.key');
+                $token = md5($requestInfo->address_id . $secret . 'address-history');
+                $reportUrl = route('reports.address-history.public', ['addressId' => $requestInfo->address_id, 'token' => $token]);
+            }
+
+            return response()->json([
+                'comments' => $comments,
+                'meta' => [
+                    'address_history_url' => $reportUrl
+                ]
+            ]);
         } catch (\Exception $e) {
             \Log::error('Ошибка при получении комментариев: '.$e->getMessage());
 
