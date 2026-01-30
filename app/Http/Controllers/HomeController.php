@@ -1223,6 +1223,12 @@ class HomeController extends Controller
                     'file',
                     'max:512000',
                     function ($attribute, $value, $fail) {
+                        if (! $value->isValid()) {
+                            $fail('Файл поврежден или ошибка загрузки.');
+
+                            return;
+                        }
+
                         $allowedMimeTypes = [
                             'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff',
                             'image/heic', 'image/heif', 'application/pdf', 'application/msword',
@@ -1336,6 +1342,9 @@ class HomeController extends Controller
                 // Обработка загруженных файлов
                 if ($request->hasFile('photos')) {
                     foreach ($request->file('photos') as $file) {
+                        if (! $file->isValid()) {
+                            continue;
+                        }
                         try {
                             // Сохранить файл в папку storage/app/public/images
                             // Используем оригинальное имя файла
@@ -1434,6 +1443,9 @@ class HomeController extends Controller
 
                 if ($request->hasFile('files')) {
                     foreach ($request->file('files') as $file) {
+                        if (! $file->isValid()) {
+                            continue;
+                        }
                         try {
                             // Сохранить файл в папку storage/app/public/files
                             $fileName = $file->getClientOriginalName();

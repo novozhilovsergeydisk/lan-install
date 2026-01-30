@@ -871,12 +871,18 @@ class ReportController extends Controller
                         })->toArray();
                     })->toArray();
 
-                // Add download links for requests with photos/files
+                // Add download links and photos for requests
                 foreach ($requests as $request) {
-                    $hasPhotos = DB::table('comment_photos')
+                    // Get photos
+                    $photos = DB::table('comment_photos')
                         ->join('request_comments', 'comment_photos.comment_id', '=', 'request_comments.comment_id')
+                        ->join('photos', 'comment_photos.photo_id', '=', 'photos.id')
                         ->where('request_comments.request_id', $request->id)
-                        ->exists();
+                        ->select('photos.id', 'photos.path', 'photos.original_name')
+                        ->get();
+
+                    $request->photos = $photos;
+                    $hasPhotos = $photos->isNotEmpty();
 
                     $hasFiles = DB::table('comment_files')
                         ->join('request_comments', 'comment_files.comment_id', '=', 'request_comments.comment_id')

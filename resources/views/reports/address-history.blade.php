@@ -121,9 +121,43 @@
                                                             </a>
                                                         </div>
                                                     @endif
+
+                                                    <!-- Кнопка показа фото -->
+                                                    @if(isset($request->photos) && $request->photos->isNotEmpty())
+                                                        <div class="mt-1">
+                                                            <button type="button" class="btn btn-sm btn-show-photos w-100 p-1 toggle-gallery-btn" 
+                                                                    data-target="#gallery-row-{{ $request->id }}" style="font-size: 0.75rem;">
+                                                                <i class="bi bi-images me-1"></i>Показать фото
+                                                            </button>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>
+                                        <!-- Скрытый ряд с галереей фото -->
+                                        @if(isset($request->photos) && $request->photos->isNotEmpty())
+                                            <tr class="d-none photo-gallery-row bg-light" id="gallery-row-{{ $request->id }}">
+                                                <td colspan="5" class="p-3">
+                                                    <div style="max-height: 350px; overflow-y: auto; overflow-x: hidden;">
+                                                        <div class="row g-2">
+                                                            @foreach($request->photos as $photo)
+                                                                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                                                                    <div class="ratio ratio-1x1 position-relative">
+                                                                        <img src="{{ asset('storage/' . $photo->path) }}" 
+                                                                             class="img-fluid rounded border shadow-sm object-fit-cover cursor-pointer gallery-image"
+                                                                             alt="Фото"
+                                                                             data-bs-toggle="modal" 
+                                                                             data-bs-target="#photoModal"
+                                                                             data-src="{{ asset('storage/' . $photo->path) }}"
+                                                                             style="cursor: pointer; object-fit: cover; width: 100%; height: 100%;">
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endif
                                     @endforeach
                                 </tbody>
                             </table>
@@ -144,7 +178,81 @@
     </div>
 </div>
 
+<!-- Modal for Photo View -->
+<div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw;" data-bs-dismiss="modal">
+        <div class="modal-content bg-transparent border-0 shadow-none" style="cursor: pointer;">
+            <div class="modal-body p-0 text-center position-relative">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-index-10" data-bs-dismiss="modal" aria-label="Close" style="z-index: 1056;"></button>
+                <img src="" id="modalImage" class="img-fluid rounded shadow-lg" 
+                     style="max-height: 95vh; width: auto; max-width: 100%; object-fit: contain;" 
+                     data-bs-dismiss="modal">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle gallery visibility
+        const toggleButtons = document.querySelectorAll('.toggle-gallery-btn');
+        toggleButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const targetRow = document.querySelector(targetId);
+                
+                if (targetRow) {
+                    targetRow.classList.toggle('d-none');
+                    // Change button text/icon based on state
+                    if (targetRow.classList.contains('d-none')) {
+                        this.innerHTML = '<i class="bi bi-images me-1"></i>Показать фото';
+                    } else {
+                        this.innerHTML = '<i class="bi bi-chevron-up me-1"></i>Скрыть фото';
+                    }
+                }
+            });
+        });
+
+        // Handle modal image
+        const galleryImages = document.querySelectorAll('.gallery-image');
+        const modalImage = document.getElementById('modalImage');
+        
+        galleryImages.forEach(img => {
+            img.addEventListener('click', function() {
+                const src = this.getAttribute('data-src');
+                modalImage.src = src;
+            });
+        });
+    });
+</script>
+
 <style>
+    /* Эффект размытия для фона модального окна фото */
+    #photoModal {
+        backdrop-filter: blur(8px);
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Кастомная кнопка Показать фото */
+    .btn-show-photos {
+        background-color: transparent;
+        border: 1px solid #81C784;
+        color: #1b5e20 !important;
+        font-weight: 500;
+    }
+    .btn-show-photos:hover {
+        background-color: #C8E6C9;
+        border-color: #81C784;
+        color: #0d3b10 !important;
+    }
+
+    /* Светлый фон при наведении для кнопки скачивания */
+    .btn-outline-secondary:hover {
+        background-color: #dee2e6 !important;
+        color: #343a40 !important;
+        border-color: #6c757d !important;
+    }
+
     /* Небольшие стили для улучшения читаемости на мобильных */
     @media (max-width: 768px) {
         .table thead {
