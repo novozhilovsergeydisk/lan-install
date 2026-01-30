@@ -723,12 +723,15 @@ class ReportController extends Controller
                     })->toArray();
             }
 
-            // return response()->json([
-            //     'address' => $address,
-            //     'requests' => $requests,
-            //     'brigadeMembers' => $brigadeMembers,
-            //     'comments_by_request' => $commentsByRequest,
-            // ]);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'address' => $address,
+                    'requests' => $requests,
+                    'brigadeMembers' => $brigadeMembers,
+                    'comments_by_request' => $commentsByRequest,
+                ]);
+            }
 
             return view('reports.address', [
                 'address' => $address,

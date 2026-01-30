@@ -2501,12 +2501,14 @@ class HomeController extends Controller
 
                         $addressStr = trim(($requestDataForNotify->district ?? '') . ' ' . ($requestDataForNotify->street ?? '') . ' ' . ($requestDataForNotify->houses ?? ''));
 
-                        // Получаем выполненные работы
+                        // Получаем выполненные работы с группировкой по типу
                         $completedWorks = DB::table('work_parameters')
                             ->join('work_parameter_types', 'work_parameters.parameter_type_id', '=', 'work_parameter_types.id')
                             ->where('work_parameters.request_id', $id)
                             ->where('work_parameters.quantity', '>', 0)
-                            ->select('work_parameter_types.name', 'work_parameters.quantity')
+                            ->where('work_parameters.is_done', true)
+                            ->select('work_parameter_types.name', DB::raw('SUM(work_parameters.quantity) as quantity'))
+                            ->groupBy('work_parameter_types.name')
                             ->get();
 
                         $worksStr = '';
