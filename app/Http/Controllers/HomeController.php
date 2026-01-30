@@ -2501,21 +2501,43 @@ class HomeController extends Controller
 
                         $addressStr = trim(($requestDataForNotify->district ?? '') . ' ' . ($requestDataForNotify->street ?? '') . ' ' . ($requestDataForNotify->houses ?? ''));
 
-                        // Получаем выполненные работы с группировкой по типу
-                        $completedWorks = DB::table('work_parameters')
+                        // Формируем строку с работами для Telegram (берем данные из БД после транзакции)
+                        $worksStr = "";
+                        
+                        // Получаем все работы по заявке из БД
+                        $allWorksFromDB = DB::table('work_parameters')
                             ->join('work_parameter_types', 'work_parameters.parameter_type_id', '=', 'work_parameter_types.id')
                             ->where('work_parameters.request_id', $id)
                             ->where('work_parameters.quantity', '>', 0)
                             ->where('work_parameters.is_done', true)
-                            ->select('work_parameter_types.name', DB::raw('SUM(work_parameters.quantity) as quantity'))
-                            ->groupBy('work_parameter_types.name')
+                            ->select('work_parameters.*', 'work_parameter_types.name as type_name')
                             ->get();
 
-                        $worksStr = '';
-                        if ($completedWorks->isNotEmpty()) {
-                            $worksStr = "🛠 <b>Выполненные работы:</b>\n";
-                            foreach ($completedWorks as $work) {
-                                $worksStr .= "- " . htmlspecialchars($work->name) . ": " . $work->quantity . "\n";
+                        // Разделяем на план и факт на основе ID (plannedWorkParameters были получены в начале метода)
+                        $plannedIds = !empty($plannedWorkParameters) ? $plannedWorkParameters->pluck('id')->toArray() : [];
+                        
+                        $plannedPart = $allWorksFromDB->filter(function($item) use ($plannedIds) {
+                            return in_array($item->id, $plannedIds);
+                        });
+                        
+                        $performedPart = $allWorksFromDB->filter(function($item) use ($plannedIds) {
+                            return !in_array($item->id, $plannedIds);
+                        });
+
+                        // 1. Запланированные работы
+                        if ($plannedPart->isNotEmpty()) {
+                            $worksStr .= "📋 <b>Запланированные работы:</b>\n";
+                            foreach ($plannedPart as $work) {
+                                $worksStr .= "- " . htmlspecialchars($work->type_name) . ": " . $work->quantity . "\n";
+                            }
+                            $worksStr .= "\n";
+                        }
+
+                        // 2. Фактически выполненные работы
+                        if ($performedPart->isNotEmpty()) {
+                            $worksStr .= "🛠 <b>Выполненные работы:</b>\n";
+                            foreach ($performedPart as $work) {
+                                $worksStr .= "- " . htmlspecialchars($work->type_name) . ": " . $work->quantity . "\n";
                             }
                             $worksStr .= "\n";
                         }
