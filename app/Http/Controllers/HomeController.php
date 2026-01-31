@@ -2288,10 +2288,13 @@ class HomeController extends Controller
             // Начинаем транзакцию
             DB::beginTransaction();
 
-            // Обновляем статус заявки на 'выполнена' (ID 4)
+            // Обновляем статус заявки на 'выполнена' (ID 4) и устанавливаем дату закрытия
             $updated = DB::table('requests')
                 ->where('id', $id)
-                ->update(['status_id' => 4]);
+                ->update([
+                    'status_id' => 4,
+                    'closed_at' => now(),
+                ]);
 
             if ($updated) {
                 // Формируем комментарий для закрываемой заявки
@@ -2778,12 +2781,21 @@ class HomeController extends Controller
                 return response()->json(['success' => false, 'message' => 'Заявка не найдена'], 404);
             }
 
-            // Check if the request was created today
-            $request_date = Carbon::parse($request_to_open->request_date)->toDateString();
+            // Проверяем дату закрытия заявки
             $today = Carbon::now()->toDateString();
+            $closedAt = $request_to_open->closed_at ? Carbon::parse($request_to_open->closed_at)->toDateString() : null;
 
-            if ($request_date !== $today) {
-                return response()->json(['success' => false, 'message' => 'Открыть можно только заявку, созданную сегодня'], 403);
+            // Если есть дата закрытия, проверяем её
+            if ($closedAt && $closedAt !== $today) {
+                return response()->json(['success' => false, 'message' => 'Открыть можно только заявку, закрытую сегодня'], 403);
+            }
+
+            // Если даты закрытия нет (старая заявка или миграция не сработала), проверяем дату выполнения как fallback
+            if (! $closedAt) {
+                $executionDate = Carbon::parse($request_to_open->execution_date)->toDateString();
+                if ($executionDate !== $today) {
+                    return response()->json(['success' => false, 'message' => 'Открыть можно только заявку, закрытую сегодня (дата выполнения не совпадает)'], 403);
+                }
             }
 
             // Check if the request status is 'completed' (status_id = 4)
@@ -2793,10 +2805,35 @@ class HomeController extends Controller
 
             DB::beginTransaction();
 
-            // Update request status to 'new' (status_id = 1)
+            // 1. Оставляем только самую старую запись (исходный План) для каждого типа работ.
+            // Удаляем все записи, ID которых не входит в список минимальных ID для каждого типа работ в этой заявке.
+            // Это удалит все "фактические" дубликаты и исправления, оставив только исходную запись.
+            DB::delete("
+                DELETE FROM work_parameters
+                WHERE request_id = ?
+                AND id NOT IN (
+                    SELECT MIN(id)
+                    FROM work_parameters
+                    WHERE request_id = ?
+                    GROUP BY parameter_type_id
+                )
+            ", [$id, $id]);
+
+            // 2. Все оставшиеся параметры (исходный план) возвращаем в статус "План".
+            DB::table('work_parameters')
+                ->where('request_id', $id)
+                ->update([
+                    'is_planning' => true,
+                    'is_done' => false,
+                ]);
+
+            // Update request status to 'new' (status_id = 1) and reset closed_at
             $updated = DB::table('requests')
                 ->where('id', $id)
-                ->update(['status_id' => 1]);
+                ->update([
+                    'status_id' => 1,
+                    'closed_at' => null,
+                ]);
 
             if ($updated) {
                 // Create a system comment

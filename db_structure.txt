@@ -1,0 +1,167 @@
+                     List of relations
+ Schema |            Name             |   Type   |  Owner   
+--------+-----------------------------+----------+----------
+ public | addresses                   | table    | postgres
+ public | addresses_documents         | table    | postgres
+ public | addresses_documents_id_seq  | sequence | postgres
+ public | addresses_id_seq            | sequence | postgres
+ public | brigade_members             | table    | postgres
+ public | brigades                    | table    | postgres
+ public | brigades_id_seq             | sequence | postgres
+ public | cache                       | table    | postgres
+ public | cache_locks                 | table    | postgres
+ public | cars                        | table    | postgres
+ public | cars_id_seq                 | sequence | postgres
+ public | cities                      | table    | postgres
+ public | cities_id_seq               | sequence | postgres
+ public | clients                     | table    | postgres
+ public | clients_backup              | table    | postgres
+ public | clients_id_seq              | sequence | postgres
+ public | comment_edits               | table    | postgres
+ public | comment_edits_id_seq        | sequence | postgres
+ public | comment_files               | table    | postgres
+ public | comment_files_id_seq        | sequence | postgres
+ public | comment_photos              | table    | postgres
+ public | comment_photos_id_seq       | sequence | postgres
+ public | comments                    | table    | postgres
+ public | comments_id_seq             | sequence | postgres
+ public | document_types              | table    | postgres
+ public | document_types_id_seq       | sequence | postgres
+ public | employee_documents          | table    | postgres
+ public | employee_documents_id_seq   | sequence | postgres
+ public | employees                   | table    | postgres
+ public | employees_archive           | table    | postgres
+ public | employees_id_seq            | sequence | postgres
+ public | failed_jobs                 | table    | postgres
+ public | failed_jobs_id_seq          | sequence | postgres
+ public | federal_districts           | table    | postgres
+ public | federal_districts_id_seq    | sequence | postgres
+ public | files                       | table    | postgres
+ public | files_id_seq                | sequence | postgres
+ public | house_types                 | table    | postgres
+ public | house_types_id_seq          | sequence | postgres
+ public | incomplete_works            | table    | postgres
+ public | incomplete_works_id_seq     | sequence | postgres
+ public | job_batches                 | table    | postgres
+ public | jobs                        | table    | postgres
+ public | jobs_id_seq                 | sequence | postgres
+ public | lan_install_schema          | view     | postgres
+ public | migrations                  | table    | postgres
+ public | migrations_id_seq           | sequence | postgres
+ public | passports                   | table    | postgres
+ public | passports_id_seq            | sequence | postgres
+ public | password_reset_tokens       | table    | postgres
+ public | photos                      | table    | postgres
+ public | photos_id_seq               | sequence | postgres
+ public | positions                   | table    | postgres
+ public | positions_id_seq            | sequence | postgres
+ public | regions                     | table    | postgres
+ public | regions_id_seq              | sequence | postgres
+ public | registrations               | table    | postgres
+ public | registrations_id_seq        | sequence | postgres
+ public | request_addresses           | table    | postgres
+ public | request_comments            | table    | postgres
+ public | request_logs                | table    | postgres
+ public | request_logs_id_seq         | sequence | postgres
+ public | request_photos              | table    | postgres
+ public | request_photos_id_seq       | sequence | postgres
+ public | request_statuses            | table    | postgres
+ public | request_statuses_id_seq     | sequence | postgres
+ public | request_types               | table    | postgres
+ public | request_types_id_seq        | sequence | postgres
+ public | requests                    | table    | postgres
+ public | requests_id_seq             | sequence | postgres
+ public | roles                       | table    | postgres
+ public | roles_id_seq                | sequence | postgres
+ public | sessions                    | table    | postgres
+ public | user_roles                  | table    | postgres
+ public | users                       | table    | postgres
+ public | users_id_seq                | sequence | postgres
+ public | work_parameter_types        | table    | postgres
+ public | work_parameter_types_id_seq | sequence | postgres
+ public | work_parameters             | table    | postgres
+ public | work_parameters_id_seq      | sequence | postgres
+(80 rows)
+
+                                        Table "public.requests"
+     Column      |          Type          | Collation | Nullable |               Default                
+-----------------+------------------------+-----------+----------+--------------------------------------
+ id              | integer                |           | not null | nextval('requests_id_seq'::regclass)
+ number          | character varying(50)  |           | not null | 
+ client_id       | integer                |           |          | 
+ brigade_id      | integer                |           |          | 
+ execution_date  | date                   |           |          | 
+ execution_time  | time without time zone |           |          | 
+ request_date    | date                   |           |          | 
+ operator_id     | integer                |           | not null | 
+ status_id       | integer                |           |          | 
+ request_type_id | integer                |           |          | 
+Indexes:
+    "requests_pkey" PRIMARY KEY, btree (id)
+    "idx_requests_brigade_id" btree (brigade_id)
+    "idx_requests_client_id" btree (client_id)
+    "idx_requests_date" btree (request_date)
+    "idx_requests_execution_date" btree (execution_date)
+    "idx_requests_operator_id" btree (operator_id)
+    "idx_requests_request_type_id" btree (request_type_id)
+    "idx_requests_status_id" btree (status_id)
+Foreign-key constraints:
+    "requests_brigade_id_fkey" FOREIGN KEY (brigade_id) REFERENCES brigades(id)
+    "requests_client_id_fkey" FOREIGN KEY (client_id) REFERENCES clients(id)
+    "requests_operator_id_fkey" FOREIGN KEY (operator_id) REFERENCES employees(id)
+    "requests_request_type_id_fkey" FOREIGN KEY (request_type_id) REFERENCES request_types(id) ON DELETE SET NULL
+    "requests_status_id_fkey" FOREIGN KEY (status_id) REFERENCES request_statuses(id)
+Referenced by:
+    TABLE "request_photos" CONSTRAINT "fk_request_photos_request" FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
+    TABLE "incomplete_works" CONSTRAINT "incomplete_works_request_id_fkey" FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
+    TABLE "request_addresses" CONSTRAINT "request_addresses_request_id_fkey" FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
+    TABLE "request_comments" CONSTRAINT "request_comments_request_id_fkey" FOREIGN KEY (request_id) REFERENCES requests(id)
+    TABLE "work_parameters" CONSTRAINT "work_parameters_request_id_fkey" FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
+
+                                    Table "public.request_statuses"
+ Column |          Type          | Collation | Nullable |                   Default                    
+--------+------------------------+-----------+----------+----------------------------------------------
+ id     | integer                |           | not null | nextval('request_statuses_id_seq'::regclass)
+ name   | character varying(255) |           | not null | 
+ color  | character varying(50)  |           |          | 
+Indexes:
+    "request_statuses_pkey" PRIMARY KEY, btree (id)
+    "request_statuses_name_key" UNIQUE CONSTRAINT, btree (name)
+Referenced by:
+    TABLE "requests" CONSTRAINT "requests_status_id_fkey" FOREIGN KEY (status_id) REFERENCES request_statuses(id)
+
+                                        Table "public.comments"
+   Column   |            Type             | Collation | Nullable |               Default                
+------------+-----------------------------+-----------+----------+--------------------------------------
+ id         | integer                     |           | not null | nextval('comments_id_seq'::regclass)
+ comment    | text                        |           |          | 
+ created_at | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+Indexes:
+    "comments_pkey" PRIMARY KEY, btree (id)
+    "idx_comments_created_at" btree (created_at)
+Referenced by:
+    TABLE "comment_edits" CONSTRAINT "comment_edits_comment_id_fkey" FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
+    TABLE "comment_files" CONSTRAINT "fk_comment_files_comment" FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
+    TABLE "comment_photos" CONSTRAINT "fk_comment_photos_comment" FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
+    TABLE "request_comments" CONSTRAINT "request_comments_comment_id_fkey" FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
+
+                           Table "public.request_comments"
+   Column   |            Type             | Collation | Nullable |      Default      
+------------+-----------------------------+-----------+----------+-------------------
+ request_id | integer                     |           | not null | 
+ comment_id | integer                     |           | not null | 
+ user_id    | bigint                      |           |          | 
+ created_at | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+Indexes:
+    "request_comments_new_pkey1" PRIMARY KEY, btree (request_id, comment_id)
+    "idx_request_comments_comment_id" btree (comment_id)
+    "idx_request_comments_request_id" btree (request_id)
+    "request_comments_pkey" UNIQUE, btree (request_id, comment_id)
+Foreign-key constraints:
+    "request_comments_comment_id_fkey" FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
+    "request_comments_request_id_fkey" FOREIGN KEY (request_id) REFERENCES requests(id)
+    "request_comments_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id)
+Triggers:
+    tr_ensure_request_has_comment BEFORE DELETE ON request_comments FOR EACH ROW EXECUTE FUNCTION ensure_request_has_comment()
+    tr_validate_comment_date BEFORE INSERT OR UPDATE ON request_comments FOR EACH ROW EXECUTE FUNCTION validate_comment_date()
+

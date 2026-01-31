@@ -1053,6 +1053,19 @@ async function applyFilters() {
                             const statusName = request.status_name;
                             const executionDate = request.execution_date;
                             const today = new Date().toISOString().split('T')[0];
+
+                            // Логика доступности кнопки "Открыть заявку"
+                            let canOpenRequest = false;
+                            if (isAdmin && statusName == 'выполнена') {
+                                if (request.closed_at) {
+                                    // Если есть дата закрытия, сравниваем с сегодняшней
+                                    const closedDate = request.closed_at.split(/[\sT]/)[0];
+                                    canOpenRequest = (closedDate === today);
+                                } else {
+                                    // Fallback: сравниваем дату выполнения
+                                    canOpenRequest = (executionDate === today);
+                                }
+                            }
                             // const showButton = statusName == 'выполнена' && isAdmin && isToday;
 
                             // Debug logs removed
@@ -1226,7 +1239,7 @@ async function applyFilters() {
                                     </button>
                                 ` : ''}
 
-                                ${isAdmin && statusName == 'выполнена' && (today === executionDate) ? `
+                                ${canOpenRequest ? `
                                     <button data-request-id="${request.id}" type="button"
                                             class="btn btn-sm btn-custom-green p-1 open-request-btn"
                                             data-bs-toggle="tooltip"
