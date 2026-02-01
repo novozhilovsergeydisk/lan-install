@@ -980,13 +980,39 @@ export function renderReportTable(data) {
         const dateCell = document.createElement('td');
         dateCell.innerHTML = `
             <div class="d-flex flex-column">
-                <span>${executionDate}</span>
-                <div style="font-size: 0.8rem;">${request.number || ''}</div>
+                <span class="fw-bold fs-6">${executionDate}</span>
+                <small class="text-muted" style="font-size: 0.75rem;">${request.number || ''}</small>
             </div>
         `;
         row.appendChild(dateCell);
         
-        // Адрес
+        // Адрес и Клиент
+        // Используем структуру как в address-history.blade.php
+        const addressHtml = `
+            <div class="d-flex flex-column">
+                ${request.client_organization ? 
+                    `<span class="fw-bold text-primary">${request.client_organization}</span>` : ''}
+                
+                ${request.street ? 
+                    `<small class="text-muted mb-1" style="line-height: 1.2;"
+                            data-bs-toggle="tooltip" 
+                            title="ул. ${request.street}, д. ${request.houses || ''} (${request.district || ''})">
+                        ${request.city_name && request.city_name !== 'Москва' ? 
+                            `${request.city_name}, ` : ''}ул. ${request.street}, д. ${request.houses || ''}
+                    </small>` : 
+                    '<small class="text-muted d-block">Адрес не указан</small>'}
+
+                ${request.client_fio ? 
+                    `<span style="font-size: 0.9rem;">${request.client_fio}</span>` : ''}
+                
+                ${request.client_phone ? 
+                    `<small class="text-muted">
+                        <i class="bi bi-telephone"></i> ${request.client_phone}
+                    </small>` : 
+                    '<small class="text-muted"><i>Нет телефона</i></small>'}
+            </div>
+        `;
+
         const addressCell = document.createElement('td');
         // addressCell.style.width = '14rem'; // Removed to match address-history styles
         // addressCell.style.maxWidth = '14rem';
