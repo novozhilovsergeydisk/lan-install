@@ -973,7 +973,7 @@ export function renderReportTable(data) {
                     `<span class="fw-bold text-primary">${request.client_organization}</span>` : ''}
                 
                 ${request.street ? 
-                    `<small class="text-muted mb-1" style="line-height: 1.2;"
+                    `<small class="mb-1" style="line-height: 1.2; color: #000;"
                             data-bs-toggle="tooltip" 
                             title="ул. ${request.street}, д. ${request.houses || ''} (${request.district || ''})">
                         ${request.city_name && request.city_name !== 'Москва' ? 
