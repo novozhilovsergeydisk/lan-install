@@ -203,6 +203,12 @@
                     @endif
                 </div>
 
+                <!-- Mobile Menu Button -->
+                <button class="btn btn-dark d-md-none w-100 mb-2 d-flex justify-content-between align-items-center" type="button" id="mobileMenuBtn" aria-expanded="false" aria-controls="mainTabs">
+                    <span><i class="bi bi-list me-2"></i> Меню</span>
+                    <i class="bi bi-chevron-down" id="mobileMenuIcon"></i>
+                </button>
+
                 <!-- Tabs -->
                 <ul class="nav nav-tabs" id="mainTabs" role="tablist">
                     <li class="nav-item" role="presentation">
@@ -254,7 +260,7 @@
                     <li class="nav-item ms-auto">
                         <div id="header-section__right" class="d-flex align-items-center pb-1">
                             <div id="desktop-view-toggle-container" style="display: none;">
-                                <button type="button" id="toggle-desktop-view" style="margin-right: 0.5rem;" class="btn btn-outline-secondary btn-sm px-3">
+                                <button type="button" id="toggle-desktop-view" style="margin-right: 0.5rem;" class="btn btn-outline-secondary btn-sm px-3 d-none d-md-inline-block">
                                     <i class="bi bi-laptop"></i> Десктоп
                                 </button>
                             </div>
@@ -310,7 +316,7 @@
                                 </div>
 
                                  <div class="d-flex justify-content-start" style="flex: 1;">
-                                    <label id="employeeFilterLabel" for="employeeFilter" class="form-label"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-funnel text-slate-400 mr-2 flex-shrink-0" aria-hidden="true"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"></path></svg></label>
+                                    <label id="employeeFilterLabel" for="employeeFilter" class="form-label d-none d-md-block"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-funnel text-slate-400 mr-2 flex-shrink-0" aria-hidden="true"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"></path></svg></label>
                                      <select name="employee_filter" id="employeeFilter" class="form-select w-50 ms-2" style="margin-top: -0.4rem;">
                                          <option value="">Все сотрудники</option>
                                          @foreach ($employeesFilter as $employee)
@@ -323,7 +329,12 @@
                                  </div>
 
                                 @if($user->isAdmin)
-                                <div class="d-flex justify-content-end" style="flex: 1;">
+                                <div class="d-flex justify-content-end align-items-center gap-2" style="flex: 1; flex-direction: row !important;">
+                                    <!-- Mobile Calendar Button -->
+                                    <button type="button" class="btn btn-outline-secondary d-md-none" id="btn-open-calendar-mobile" style="height: 38px; width: 38px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-calendar"></i>
+                                    </button>
+                                    
                                     <button type="button" class="btn btn-primary" id="new-request-button"
                                             data-bs-toggle="modal" data-bs-target="#newRequestModal">
                                         <i class="bi bi-plus-circle me-1"></i>Новая заявка
@@ -337,10 +348,13 @@
 
                         <!-- Calendar and Status Buttons -->
                         <div class="pt-4 ps-4 pb-0 d-flex align-items-center">
-                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
+                            <!-- Desktop Calendar Button -->
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2 d-none d-md-inline-block"
                                     id="btn-open-calendar">
                                 <i class="bi bi-calendar me-1"></i>Календарь
                             </button>
+
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
 
                             <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
                                     id="btn-open-map">
@@ -1390,7 +1404,7 @@
                     </div>
 
                     <div class="tab-pane fade" id="reports" role="tabpanel">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2" style="flex-direction: row !important;">
                             <h4 class="mb-0">Отчеты</h4>
                             <button type="button" class="btn btn-outline-info btn-sm" id="reports-help-btn" data-bs-toggle="modal" data-bs-target="#reportsHelpModal">
                                 <i class="bi bi-question-circle me-1"></i>Справка
@@ -5039,5 +5053,45 @@
     <script src="{{ asset('js/report-export.js') }}"></script>
     <script src="{{ asset('js/map-requests.js') }}"></script>
     <script src="{{ asset('js/map-planning.js') }}"></script>
+
+<script>
+    // Mobile Menu Toggle Script
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mainTabs = document.getElementById('mainTabs');
+        const mobileMenuIcon = document.getElementById('mobileMenuIcon');
+
+        if (mobileMenuBtn && mainTabs) {
+            mobileMenuBtn.addEventListener('click', function() {
+                mainTabs.classList.toggle('show-mobile-menu');
+                const isExpanded = mainTabs.classList.contains('show-mobile-menu');
+                this.setAttribute('aria-expanded', isExpanded);
+                
+                if (mobileMenuIcon) {
+                    if (isExpanded) {
+                        mobileMenuIcon.classList.remove('bi-chevron-down');
+                        mobileMenuIcon.classList.add('bi-chevron-up');
+                    } else {
+                        mobileMenuIcon.classList.remove('bi-chevron-up');
+                        mobileMenuIcon.classList.add('bi-chevron-down');
+                    }
+                }
+            });
+
+            // Auto-close menu when a tab is selected
+            const tabLinks = mainTabs.querySelectorAll('.nav-link');
+            tabLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    mainTabs.classList.remove('show-mobile-menu');
+                    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                    if (mobileMenuIcon) {
+                        mobileMenuIcon.classList.remove('bi-chevron-up');
+                        mobileMenuIcon.classList.add('bi-chevron-down');
+                    }
+                });
+            });
+        }
+    });
+</script>
 </body>
 </html>

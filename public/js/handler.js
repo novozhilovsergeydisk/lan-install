@@ -2294,21 +2294,25 @@ export function initializePage() {
     //******* Календарь *******//
 
     const button = document.getElementById(FILTER_IDS.CALENDAR_BUTTON);
+    const mobileButton = document.getElementById('btn-open-calendar-mobile');
     const calendarContent = document.getElementById(FILTER_IDS.CALENDAR_CONTENT);
 
-    if (button && calendarContent) {
-        button.addEventListener('click', function () {
-            // Логи отображения отключены
+    const toggleCalendar = function () {
+        if (calendarContent.classList.contains('hide-me')) {
+            calendarContent.classList.remove('hide-me');
+            calendarContent.classList.add('show-me');
+        } else {
+            calendarContent.classList.remove('show-me');
+            calendarContent.classList.add('hide-me');
+        }
+    };
 
-            // Переключаем видимость
-            if (calendarContent.classList.contains('hide-me')) {
-                calendarContent.classList.remove('hide-me');
-                calendarContent.classList.add('show-me');
-            } else {
-                calendarContent.classList.remove('show-me');
-                calendarContent.classList.add('hide-me');
-            }
-        });
+    if (button && calendarContent) {
+        button.addEventListener('click', toggleCalendar);
+    }
+    
+    if (mobileButton && calendarContent) {
+        mobileButton.addEventListener('click', toggleCalendar);
     }
 
     // Обработчик клика по кнопке просмотра бригады

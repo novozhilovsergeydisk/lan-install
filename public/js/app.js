@@ -319,33 +319,57 @@ $(document).ready(function() {
     const themeToggle = document.getElementById('themeToggle');
     const sunIcon = document.getElementById('sunIcon');
     const moonIcon = document.getElementById('moonIcon');
+    
+    // Mobile theme elements
+    const mobileThemeToggle = document.getElementById('mobileThemeToggle');
+    const mobileSunIcon = document.getElementById('mobileSunIcon');
+    const mobileMoonIcon = document.getElementById('mobileMoonIcon');
+    
     const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
     const currentTheme = localStorage.getItem('theme');
 
-    // Check for saved theme preference or use system preference
-    if (currentTheme === 'dark' || (!currentTheme && prefersDarkScheme.matches)) {
-        document.documentElement.setAttribute('data-bs-theme', 'dark');
-        sunIcon.classList.remove('d-none'); // Show sun in dark mode
-        moonIcon.classList.add('d-none');
-    } else {
-        document.documentElement.setAttribute('data-bs-theme', 'light');
-        sunIcon.classList.add('d-none');
-        moonIcon.classList.remove('d-none'); // Show moon in light mode
+    // Function to update UI based on theme
+    function updateThemeUI(theme) {
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+            if (sunIcon) sunIcon.classList.remove('d-none');
+            if (moonIcon) moonIcon.classList.add('d-none');
+            
+            if (mobileSunIcon) mobileSunIcon.classList.remove('d-none');
+            if (mobileMoonIcon) mobileMoonIcon.classList.add('d-none');
+        } else {
+            document.documentElement.setAttribute('data-bs-theme', 'light');
+            if (sunIcon) sunIcon.classList.add('d-none');
+            if (moonIcon) sunIcon.classList.remove('d-none'); // Bug fix: previously moonIcon logic might be inverted in original code or logic
+            if (moonIcon) moonIcon.classList.remove('d-none');
+            
+            if (mobileSunIcon) mobileSunIcon.classList.add('d-none');
+            if (mobileMoonIcon) mobileMoonIcon.classList.remove('d-none');
+        }
     }
 
-    // Toggle theme on icon click
-    themeToggle.addEventListener('click', () => {
+    // Check for saved theme preference or use system preference
+    if (currentTheme === 'dark' || (!currentTheme && prefersDarkScheme.matches)) {
+        updateThemeUI('dark');
+    } else {
+        updateThemeUI('light');
+    }
+
+    // Toggle theme function
+    function toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-        if (currentTheme === 'dark') {
-            document.documentElement.setAttribute('data-bs-theme', 'light');
-            localStorage.setItem('theme', 'light');
-            sunIcon.classList.add('d-none');
-            moonIcon.classList.remove('d-none'); // Show moon in light mode
-        } else {
-            document.documentElement.setAttribute('data-bs-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-            sunIcon.classList.remove('d-none'); // Show sun in dark mode
-            moonIcon.classList.add('d-none');
-        }
-    });
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        localStorage.setItem('theme', newTheme);
+        updateThemeUI(newTheme);
+    }
+
+    // Add event listeners
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+    
+    if (mobileThemeToggle) {
+        mobileThemeToggle.addEventListener('click', toggleTheme);
+    }
 });
