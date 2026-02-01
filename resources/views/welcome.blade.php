@@ -259,7 +259,7 @@
                                 </button>
                             </div>
 
-                            <a href="{{ route('home.new') }}" class="btn btn-outline-primary btn-sm px-3 me-2">
+                            <a href="{{ route('home.new') }}" class="btn btn-outline-primary btn-sm px-3 me-2 d-none">
                                 <i class="bi bi-layout-text-window-reverse me-1"></i>Новый дизайн
                             </a>
 

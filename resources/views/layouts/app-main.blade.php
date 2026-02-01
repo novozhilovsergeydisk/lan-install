@@ -248,7 +248,7 @@
 
                         <!-- Switch to Old Design -->
                         <li class="nav-item me-2">
-                            <a href="{{ route('home') }}" class="btn btn-outline-light btn-sm">
+                            <a href="{{ route('home') }}" class="btn btn-outline-light btn-sm d-none">
                                 <i class="bi bi-arrow-counterclockwise me-1"></i>Старый дизайн
                             </a>
                         </li>
