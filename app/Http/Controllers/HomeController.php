@@ -1188,6 +1188,8 @@ class HomeController extends Controller
     }
 
     /**
+     * Добавление комментария к заявке
+     */
     public function addComment(Request $request)
     {
         try {
