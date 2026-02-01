@@ -877,27 +877,6 @@ export function renderReportTable(data) {
             ? new Date(request.execution_date).toLocaleDateString('ru-RU')
             : 'Не указана';
             
-        // Format address and organization like in main table
-        const addressHtml = request.client_organization || request.street || request.client_fio || request.client_phone 
-            ? `
-                ${request.client_organization ? 
-                    `<div style="font-size: 0.8rem;">${request.client_organization}</div>` : ''}
-                ${request.street ? 
-                    `<small class="d-block" 
-                            data-bs-toggle="tooltip" 
-                            title="ул. ${request.street}, д. ${request.houses || ''} (${request.district || ''})">
-                        ${request.city_name && request.city_name !== 'Москва' ? 
-                            `${request.city_name}, ` : ''}ул. ${request.street}, д. ${request.houses || ''}
-                    </small>` : 
-                    '<small class="d-block">Адрес не указан</small>'}
-                ${request.client_fio ? 
-                    `<div style="font-size: 0.8rem;"><i>${request.client_fio}</i></div>` : ''}
-                <small style="font-size: 0.8rem;" 
-                       class="d-block">
-                    <i>${request.client_phone || 'Нет телефона'}</i>
-                </small>
-            `
-            : '<small>Нет данных</small>';
         
         // Format brigade info for display
         let brigadeInfo = '';
