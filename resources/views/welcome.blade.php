@@ -204,9 +204,9 @@
                 </div>
 
                 <!-- Mobile Menu Button -->
-                <button class="btn btn-dark d-md-none w-100 mb-2 d-flex justify-content-between align-items-center" type="button" id="mobileMenuBtn" aria-expanded="false" aria-controls="mainTabs">
-                    <span><i class="bi bi-list me-2"></i> Меню</span>
-                    <i class="bi bi-chevron-down" id="mobileMenuIcon"></i>
+                <button class="btn btn-dark d-md-none mb-2 d-flex align-items-center" type="button" id="mobileMenuBtn" aria-expanded="false" aria-controls="mainTabs" style="width: fit-content;">
+                    <i class="bi bi-list fs-4"></i>
+                    <i class="bi bi-chevron-down ms-1" id="mobileMenuIcon" style="font-size: 0.8rem;"></i>
                 </button>
 
                 <!-- Tabs -->
