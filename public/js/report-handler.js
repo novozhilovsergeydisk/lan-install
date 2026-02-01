@@ -951,7 +951,8 @@ export function renderReportTable(data) {
         
         // Create the row HTML
         const numberCell = document.createElement('td');
-        numberCell.className = 'text-center text-muted d-none d-md-table-cell';
+        numberCell.className = 'text-center d-none d-md-table-cell';
+        numberCell.style.color = '#000';
         numberCell.textContent = index + 1;
         row.appendChild(numberCell);
         
@@ -960,7 +961,7 @@ export function renderReportTable(data) {
         dateCell.innerHTML = `
             <div class="d-flex flex-column">
                 <span class="fw-bold fs-6">${executionDate}</span>
-                <small class="text-muted" style="font-size: 0.75rem;">${request.number || ''}</small>
+                <small style="font-size: 0.75rem; color: #000;">${request.number || ''}</small>
             </div>
         `;
         row.appendChild(dateCell);
@@ -979,16 +980,16 @@ export function renderReportTable(data) {
                         ${request.city_name && request.city_name !== 'Москва' ? 
                             `${request.city_name}, ` : ''}ул. ${request.street}, д. ${request.houses || ''}
                     </small>` : 
-                    '<small class="text-muted d-block">Адрес не указан</small>'}
+                    '<small class="d-block" style="color: #000;">Адрес не указан</small>'}
 
                 ${request.client_fio ? 
-                    `<span style="font-size: 0.9rem;">${request.client_fio}</span>` : ''}
+                    `<span style="font-size: 0.9rem; color: #000;">${request.client_fio}</span>` : ''}
                 
                 ${request.client_phone ? 
-                    `<small class="text-muted">
+                    `<small style="color: #000;">
                         <i class="bi bi-telephone"></i> ${request.client_phone}
                     </small>` : 
-                    '<small class="text-muted"><i>Нет телефона</i></small>'}
+                    '<small style="color: #000;"><i>Нет телефона</i></small>'}
             </div>
         `;
 
@@ -1025,7 +1026,7 @@ export function renderReportTable(data) {
                                 <div class="mb-1 text-break">
                                     ${comment.comment || 'Система'}
                                 </div>
-                                <div class="d-flex justify-content-between text-muted border-top pt-1 mt-1" style="font-size: 0.7rem;">
+                                <div class="d-flex justify-content-between border-top pt-1 mt-1" style="font-size: 0.7rem; color: #000;">
                                     <span>${date}</span>
                                     <span>${comment.author_name}</span>
                                 </div>
@@ -1061,7 +1062,7 @@ export function renderReportTable(data) {
                 
                 `;
         } else {
-            commentHtml = '<span class="text-muted small fst-italic">Комментариев нет</span>';
+            commentHtml = '<span class="small fst-italic" style="color: #000;">Комментариев нет</span>';
         }
         
         commentCell.innerHTML = commentHtml;
@@ -1070,7 +1071,7 @@ export function renderReportTable(data) {
         // Бригада
         const brigadeCell = document.createElement('td');
         brigadeCell.innerHTML = `
-            <div class="brigade-info">
+            <div class="brigade-info" style="color: #000;">
                 ${brigadeInfo}
             </div>
         `;

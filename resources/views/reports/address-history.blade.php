@@ -53,7 +53,7 @@
                                                     @endif
                                                     
                                                     <!-- Адрес (если вдруг он отличается или для контекста) -->
-                                                    <small class="mb-1" style="line-height: 1.2; color: #000;">
+                                                    <small class="text-muted mb-1" style="line-height: 1.2;">
                                                         {{ $address->street }}, {{ $address->houses }}
                                                     </small>
 
