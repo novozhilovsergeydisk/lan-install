@@ -1,0 +1,42 @@
+/* New Design Specific Styles */
+
+/* Ensure html and body take full height but can grow */
+html, body {
+    height: auto;
+    min-height: 100%;
+    margin: 0;
+}
+
+/* Ensure app-container takes full height and uses flex column */
+#app-container {
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Ensure main content grows to push footer down */
+#main-content {
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    /* Ensure it doesn't limit height */
+    height: auto !important; 
+}
+
+#content-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Fix for footer positioning */
+footer.mt-auto {
+    margin-top: auto !important;
+    flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+/* Scoped styles ensuring they don't break if old classes are present */
+.tab-content {
+    width: 100%;
+    flex-grow: 1; /* Allow tabs to grow if needed */
+}

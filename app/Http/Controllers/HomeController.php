@@ -1177,9 +1177,17 @@ class HomeController extends Controller
         }
     }
 
+    public function indexNew()
+    {
+        $result = $this->index();
+        if ($result instanceof \Illuminate\View\View) {
+            return view('welcome-new', $result->getData());
+        }
+
+        return $result;
+    }
+
     /**
-     * Добавление комментария к заявке
-     */
     public function addComment(Request $request)
     {
         try {

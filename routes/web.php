@@ -79,6 +79,7 @@ Route::get('/requests/{id}', [HomeController::class, 'getEditRequest'])->where('
 
 // Главная страница
 Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['auth', 'roles']);
+Route::get('/new-design', [HomeController::class, 'indexNew'])->name('home.new')->middleware(['auth', 'roles']);
 
 // Close request
 Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth')->middleware(['auth', 'roles']);

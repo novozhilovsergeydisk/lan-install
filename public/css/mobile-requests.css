@@ -322,6 +322,43 @@
     footer {
         display: none;
     }
+
+    /* Адаптивность таблицы отчетов (Requests Report Table) */
+    #requestsReportTable thead {
+        display: none;
+    }
+    #requestsReportTable tr {
+        display: block;
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 1rem;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    #requestsReportTable td {
+        display: block;
+        text-align: left;
+        border: none;
+        padding: 0.5rem;
+        position: relative;
+        width: 100% !important;
+    }
+    
+    /* Дата/Инфо - выделяем как заголовок карточки */
+    #requestsReportTable td:nth-child(2) {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        font-weight: bold;
+    }
+    
+    /* Статус/Бригада - выделяем в нижней части карточки */
+    #requestsReportTable td:last-child {
+        border-top: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+    
+    #requestsReportTable td:nth-child(4) .comment-preview {
+        max-width: 100%;
+    }
 }
 
 /* Скрываем иконки в кнопках на очень маленьких экранах */

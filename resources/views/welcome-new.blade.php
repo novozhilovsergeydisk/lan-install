@@ -1,287 +1,9 @@
+@extends('layouts.app-main')
+
+@section('content')
 @php
     use App\Helpers\StringHelper;
 @endphp
-<!DOCTYPE html>
-<html lang="ru">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Система управления заявками</title>
-    <link href="{{ asset('js/editor.css') }}" rel="stylesheet">
-    <style>
-        /* Стили для выпадающего списка адресов */
-        
-        /* Стиль для выделения бригадира */
-        .brigade-leader {
-            border: 2px solid #dc3545 !important;
-            position: relative;
-        }
-        
-        .brigade-leader::after {
-            content: 'Бригадир';
-            position: absolute;
-            top: 18px;
-            left: 50%;
-            transform: translateX(-50%); /* центрирование по горизонтали */
-            font-size: 12px;
-            background-color: #dc3545;
-            color: white;
-            padding: 0 5px;
-            border-radius: 3px;
-            white-space: nowrap; /* предотвращаем перенос текста */
-        }
-        
-        /* Стили для невалидных полей */
-        .form-control.is-invalid {
-            border-color: #dc3545;
-            padding-right: calc(1.5em + 0.75rem);
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-        }
-        
-        .invalid-feedback {
-            width: 100%;
-            margin-top: 0.25rem;
-            font-size: 0.875em;
-            color: #dc3545;
-        }
-        
-        /* Стили для таблицы отчётов - исправлен ID и добавлена читаемость шрифта */
-        #requestsReportTable tbody tr.status-row {
-            --status-color: #ffffff;
-            background-color: var(--status-color);
-            color: #000 !important;
-            --bs-table-striped-color: #000;
-            --bs-table-color-type: #000;
-            transition: background-color 0.2s;
-        }
-
-        /* Временно отключено разбавление цвета белым и эффект наведения */
-        #requestsReportTable tbody tr.status-row[style*="--status-color"] {
-            background-color: var(--status-color);
-        }
-
-        #requestsReportTable tbody tr.status-row:hover {
-            background-color: var(--status-color) !important;
-            color: #000 !important;
-        }
-
-        #requestsReportTable tbody tr.status-row > * {
-            background-color: transparent !important;
-            color: #000 !important;
-            box-shadow: none !important;
-        }
-
-        /* Стили для кастомизации скроллбара в блоке комментариев */
-        .comment-preview {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-            background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller;
-        }
-        
-        /* Для WebKit (Chrome, Safari, Edge) */
-        .comment-preview::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        
-        .comment-preview::-webkit-scrollbar-track {
-            background: transparent;
-            border-radius: 3px;
-        }
-        
-        .comment-preview::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 3px;
-        }
-        
-        .comment-preview::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(0, 0, 0, 0.3);
-        }
-        .comment-preview-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .tab-content {
-            margin-top: -2.7rem;
-        }
-
-        #header-section__right {
-            transform: translateY(-1.5rem);
-        }
-
-        #content-wrapper {
-            margin-top: -2rem;
-        }
-    </style>
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Bootstrap 5 CSS -->
-    <link href="{{ asset('css/bootstrap.css') }}?v={{ time() }}" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <!-- Bootstrap Datepicker CSS -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
-    <link href="{{ asset('css/app.css') }}?v={{ time() }}" rel="stylesheet">
-    <link href="{{ asset('css/table-styles.css') }}?v={{ time() }}" rel="stylesheet">
-    <link href="{{ asset('css/dark-theme.css') }}?v={{ time() }}" rel="stylesheet">
-    <link href="{{ asset('css/custom.css') }}?v={{ time() }}" rel="stylesheet">
-    <link href="{{ asset('css/mobile-requests.css') }}?v={{ time() }}" rel="stylesheet">
-    <link id="desktop-view-css" href="{{ asset('css/desktop-view.css') }}?v={{ time() }}" rel="stylesheet" disabled>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}">
-
-    <script>
-        // Экспортируем роль и флаги ролей в JS
-        window.App = window.App || {};
-        window.App.user = {
-            id: @json($user->id ?? null),
-            roles: @json($user->roles ?? []),
-            isAdmin: @json($user->isAdmin ?? false),
-            isUser: @json($user->isUser ?? false),
-            isFitter: @json($user->isFitter ?? false)
-        };
-        window.App.role = (window.App.user.isAdmin && 'admin')
-            || (window.App.user.isFitter && 'fitter')
-            || (window.App.user.isUser && 'user')
-            || 'guest';
-
-        // console.log(window.App);
-        console.log('Current role:', window.App.role);
-    </script>
-
-    <!-- Проверка загрузки Bootstrap -->
-    <script>
-        // Проверяем, загружен ли Bootstrap
-        window.addEventListener('load', function () {
-            if (typeof bootstrap === 'undefined') {
-                console.error('Bootstrap не загружен!');
-                // Показываем уведомление пользователю
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-danger position-fixed top-0 start-0 w-100 rounded-0 m-0';
-                alertDiv.style.zIndex = '2000';
-                alertDiv.innerHTML = `
-                    <div class="container">
-                        <strong>Ошибка загрузки!</strong> Не удалось загрузить необходимые компоненты Bootstrap.
-                        Пожалуйста, обновите страницу или проверьте подключение к интернету.
-                    </div>`;
-                document.body.prepend(alertDiv);
-            } else {
-                // console.log('Bootstrap успешно загружен:', bootstrap);
-            }
-        });
-    </script>
-    <!-- Стили для темной темы вынесены в отдельный файл dark-theme.css -->
-</head>
-
-<body>
-<div id="app-container" class="container-fluid g-0_">
-    <div id="main-layout" class="row g-0" style_="min-height: 100vh;">
-        <!-- Left Sidebar with Calendar -->
-
-        <!--
-        <div id="sidebar" class="col-auto sidebar p-3">
-
-        </div>
-        -->
-
-        <!-- Main Content -->
-        <div id="main-content" class="main-content">
-            <div id="content-wrapper" class="container-fluid position-relative"
-                 style="min-height: 100vh; overflow-x: hidden;">
-                <div id="header-section" class="mb-2">
-                    @if (session('success'))
-                        <!-- <div style="color: green; font-weight: bold;">
-                            {{ session('success') }}
-                        </div> -->
-                    @endif
-                </div>
-
-                <!-- Tabs -->
-                <ul class="nav nav-tabs" id="mainTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="requests-tab" data-bs-toggle="tab"
-                                data-bs-target="#requests" type="button" role="tab">Заявки
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams"
-                                type="button" role="tab">Бригады
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="addresses-tab" data-bs-toggle="tab" data-bs-target="#addresses"
-                                type="button" role="tab">Адреса
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users"
-                                type="button" role="tab">Пользователи
-                        </button>
-                    </li>
-                    <!-- <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="statuses-tab" data-bs-toggle="tab" data-bs-target="#statuses"
-                                type="button" role="tab">Статусы    
-                        </button>
-                    </li> -->
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports"
-                                type="button" role="tab">Отчеты
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="planning-tab" data-bs-toggle="tab" data-bs-target="#planning"
-                                type="button" role="tab">Планирование
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="request-types-tab" data-bs-toggle="tab" data-bs-target="#request-types"
-                                type="button" role="tab">Типы заявок
-                        </button>
-                    </li>
-                    <!-- <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="photo-reports-tab" data-bs-toggle="tab" data-bs-target="#photo-reports"
-                                type="button" role="tab">Фотоотчеты
-                        </button>
-                    </li> -->
-                    
-                    <li class="nav-item ms-auto">
-                        <div id="header-section__right" class="d-flex align-items-center pb-1">
-                            <div id="desktop-view-toggle-container" style="display: none;">
-                                <button type="button" id="toggle-desktop-view" style="margin-right: 0.5rem;" class="btn btn-outline-secondary btn-sm px-3">
-                                    <i class="bi bi-laptop"></i> Десктоп
-                                </button>
-                            </div>
-
-                            <a href="{{ route('home.new') }}" class="btn btn-outline-primary btn-sm px-3 me-2">
-                                <i class="bi bi-layout-text-window-reverse me-1"></i>Новый дизайн
-                            </a>
-
-                            <!-- Theme Toggle -->
-                            <div class="theme-toggle me-3" id="themeToggle">
-                                <i class="bi bi-sun theme-icon" id="sunIcon"></i>
-                                <i class="bi bi-moon-stars-fill theme-icon d-none" id="moonIcon"></i>
-                            </div>
-
-                            <!-- Logout Button -->
-                            <form action="{{ route('logout') }}" method="POST" class="mb-0">
-                                @csrf
-                                <button type="submit" id="logout-button" class="btn btn-outline-danger btn-sm px-3">
-                                    <i class="bi bi-box-arrow-right me-1"></i>Выход
-                                </button>
-                            </form>
-                        </div>
-                    </li>
-                </ul>
-
-                <!-- mainTabsContent -->
-
                 <div class="tab-content" id="mainTabsContent">
                     <div class="tab-pane fade show active" id="requests" role="tabpanel">
                         <h4>Заявки</h4>
@@ -376,8 +98,7 @@
                             <div id="map" style="width: 100%; height: 100%;"></div>
                         </div>
                         
-                        <!-- Yandex.Maps API -->
-                        <script src="https://api-maps.yandex.ru/2.1/?apikey={{ config('services.yandex.maps_key') }}&lang=ru_RU" type="text/javascript"></script>
+
 
                         <script>
                             // const requestsData = @json($requests);
@@ -1740,27 +1461,6 @@
                         <p>Выбранная дата: <span id="selectedDate" class="fw-bold">не выбрана</span></p>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Mobile Footer Links -->
-            <div id="mobile-footer-links" class="d-md-none py-4 bg-light text-center mt-auto border-top">
-                <div class="container">
-                    <div class="d-flex flex-column gap-3 mb-3">
-                        <a href="https://docs.google.com/spreadsheets/d/1XHFtDmqNkXltwpZ_j83XgQwddBx6JBiQfqtoc9n3ZiA/edit?usp=drivesdk" target="_blank" class="text-dark text-decoration-none"><i class="bi bi-calendar3 me-2"></i>График работы</a>
-                        <a href="https://docs.google.com/spreadsheets/d/1u2V2q3rPj1ajIUZ8do3SNGOIOmBx8wkvCJBeMX2_6jQ/edit?usp=drivesdk" target="_blank" class="text-dark text-decoration-none"><i class="bi bi-cash-stack me-2"></i>График оплаты</a>
-                        <a href="https://storage.lan-install.online/" target="_blank" class="text-dark text-decoration-none"><i class="bi bi-box-seam me-2"></i>Склад</a>
-                    </div>
-                    <div class="small text-muted">
-                        &copy; {{ date('Y') }} lan-install.online. Все права защищены.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Подключение WYSIWYG редактора -->
-<script src="{{ asset('js/editor.js') }}"></script>
 
 <!-- Передаем данные о заявках в JavaScript -->
 <script>
@@ -1901,36 +1601,6 @@
 </style>
 
 <!-- Divider -->
-<hr id="divider" class="my-0 border-top border-2 border-opacity-10">
-
-<!-- Footer -->
-<footer class="bg-dark text-white d-none d-md-block">
-    <div class="container-fluid py-4">
-        <div class="row justify-content-center text-center">
-            <div class="col-12 col-lg-10">
-                <div class="d-flex flex-wrap justify-content-center gap-4 mb-4">
-                    <a href="https://docs.google.com/spreadsheets/d/1XHFtDmqNkXltwpZ_j83XgQwddBx6JBiQfqtoc9n3ZiA/edit?usp=drivesdk" target="_blank" class="text-white text-decoration-none"><i class="bi bi-calendar3 me-2"></i>График работы</a>
-                    <a href="https://docs.google.com/spreadsheets/d/1u2V2q3rPj1ajIUZ8do3SNGOIOmBx8wkvCJBeMX2_6jQ/edit?usp=drivesdk" target="_blank" class="text-white text-decoration-none"><i class="bi bi-cash-stack me-2"></i>График оплаты</a>
-                    <a href="https://storage.lan-install.online/" target="_blank" class="text-white text-decoration-none"><i class="bi bi-box-seam me-2"></i>Склад</a>
-                </div>
-                <hr class="my-4 bg-secondary">
-                <div class="row">
-                    <div class="col-12 text-center">
-                        <div class="small">
-                            &copy; {{ date('Y') }} lan-install.online. Все права защищены.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</footer>
-
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- Bootstrap 5 JS Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function closeRequest(requestId) {
         if (confirm('Вы уверены, что хотите закрыть заявку #' + requestId + '?')) {
@@ -5033,11 +4703,13 @@
   </div>
 </div>
 
+@endsection
+
+@push('scripts')
 <!-- Подключаем скрипт для работы с модальными окнами -->
 <script type="module" src="{{ asset('js/modals.js') }}"></script>
 <script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
     <script src="{{ asset('js/report-export.js') }}"></script>
     <script src="{{ asset('js/map-requests.js') }}"></script>
     <script src="{{ asset('js/map-planning.js') }}"></script>
-</body>
-</html>
+@endpush

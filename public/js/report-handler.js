@@ -972,6 +972,7 @@ export function renderReportTable(data) {
         
         // Create the row HTML
         const numberCell = document.createElement('td');
+        numberCell.className = 'text-center text-muted d-none d-md-table-cell';
         numberCell.textContent = index + 1;
         row.appendChild(numberCell);
         
@@ -987,15 +988,16 @@ export function renderReportTable(data) {
         
         // Адрес
         const addressCell = document.createElement('td');
-        addressCell.style.width = '14rem';
-        addressCell.style.maxWidth = '14rem';
-        addressCell.style.overflow = 'hidden';
-        addressCell.style.textOverflow = 'ellipsis';
+        // addressCell.style.width = '14rem'; // Removed to match address-history styles
+        // addressCell.style.maxWidth = '14rem';
+        // addressCell.style.overflow = 'hidden';
+        // addressCell.style.textOverflow = 'ellipsis';
         addressCell.innerHTML = addressHtml;
         row.appendChild(addressCell);
         
         // Комментарии
         const commentCell = document.createElement('td');
+        commentCell.className = 'p-2'; // Match padding from address-history
         let commentHtml = '';
 
         const isAdmin = window.App.role == 'admin' ?? false;
@@ -1009,17 +1011,19 @@ export function renderReportTable(data) {
         
         if (comments_by_request[request.id] && comments_by_request[request.id].length > 0) {
             commentHtml = `
-                <div class="comment-preview small" 
-                     style="max-height: 100px; overflow: auto; font-size: 0.85rem; max-width: 35rem;">
+                <div class="comment-preview" 
+                     style="max-height: 250px; overflow-y: auto; font-size: 0.85rem; line-height: 1.3;">
                     ${comments_by_request[request.id].map(comment => {
                         const date = new Date(comment.created_at).toLocaleString('ru-RU');
                         return `
-                            <div class="comment-item" style="background-color: white; border: 1px solid gray; border-radius: 3px; padding: 5px; line-height: 16px; font-size: smaller; margin-bottom: 5px;">
-                                <div class="d-flex justify-content-between">
-                                    <span>${comment.comment || 'Система'}</span>
+                            <div class="comment-item mb-2 p-2 bg-white border rounded shadow-sm">
+                                <div class="mb-1 text-break">
+                                    ${comment.comment || 'Система'}
                                 </div>
-                                <div style="color:rgb(66, 68, 69); font-size: 0.9em;">${date}</div>
-                                <div style="color:rgb(66, 68, 69); font-size: 1.0em;">Добавил тест: ${comment.author_name}</div>
+                                <div class="d-flex justify-content-between text-muted border-top pt-1 mt-1" style="font-size: 0.7rem;">
+                                    <span>${date}</span>
+                                    <span>${comment.author_name}</span>
+                                </div>
                             </div>
                         `;
                     }).join('')}
@@ -1052,7 +1056,7 @@ export function renderReportTable(data) {
                 
                 `;
         } else {
-            commentHtml = '<small>Нет комментариев</small>';
+            commentHtml = '<span class="text-muted small fst-italic">Комментариев нет</span>';
         }
         
         commentCell.innerHTML = commentHtml;
