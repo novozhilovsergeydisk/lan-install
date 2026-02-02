@@ -330,31 +330,29 @@
 
                                 @if($user->isAdmin)
                                 <div class="d-flex justify-content-end align-items-center gap-2" style="flex: 1; flex-direction: row !important;">
-                                    <!-- Mobile Calendar Button -->
-                                    <button type="button" class="btn btn-outline-secondary d-md-none" id="btn-open-calendar-mobile" style="height: 38px; width: 38px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                        <i class="bi bi-calendar"></i>
-                                    </button>
-                                    
                                     <button type="button" class="btn btn-primary" id="new-request-button"
                                             data-bs-toggle="modal" data-bs-target="#newRequestModal">
                                         <i class="bi bi-plus-circle me-1"></i>Новая заявка
                                     </button>
                                 </div>
                                 @else
-                                <div class="alert alert-info hide-me">Добавление заявок доступно только для администраторов</div>
+                                <div class="alert alert-info hide-me mb-0">Добавление заявок доступно только для администраторов</div>
                                 @endif
                             </div>
                         </div>
 
                         <!-- Calendar and Status Buttons -->
-                        <div class="pt-4 ps-4 pb-0 d-flex align-items-center">
+                        <div class="pt-4 ps-4 pb-0 d-flex align-items-center flex-wrap">
+                            <!-- Mobile Calendar Button -->
+                            <button type="button" class="btn btn-outline-secondary d-md-none mb-3 me-2" id="btn-open-calendar-mobile" style="height: 31px; width: 38px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-calendar"></i>
+                            </button>
+
                             <!-- Desktop Calendar Button -->
                             <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2 d-none d-md-inline-block"
                                     id="btn-open-calendar">
                                 <i class="bi bi-calendar me-1"></i>Календарь
                             </button>
-
-                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
 
                             <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
                                     id="btn-open-map">
