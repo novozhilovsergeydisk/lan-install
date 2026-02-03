@@ -2507,7 +2507,7 @@ class HomeController extends Controller
                 DB::commit();
 
                 // Отправка уведомления в Telegram
-                if ($requestDataForNotify && in_array($requestDataForNotify->type_name, ['Демонтаж МЭШ', 'Монтаж панелей'])) {
+                if ($requestDataForNotify && in_array($requestDataForNotify->type_name, ['Демонтаж МЭШ', 'Монтаж панелей', 'Осмотр МЭШ'])) {
                     try {
                         // Определяем настройки для уведомления в зависимости от типа заявки
                         $botToken = ''; // Пусто = из конфига (по умолчанию)
