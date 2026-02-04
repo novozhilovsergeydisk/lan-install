@@ -1357,8 +1357,8 @@ class HomeController extends Controller
                         }
                         try {
                             // Сохранить файл в папку storage/app/public/images
-                            // Используем уникальное имя файла с меткой времени
-                            $fileName = time() . '_' . $file->getClientOriginalName();
+                            // Используем уникальное имя файла с меткой времени и случайной строкой
+                            $fileName = time() . '_' . Str::random(5) . '_' . $file->getClientOriginalName();
 
                             // Сохраняем файл напрямую в целевую директорию
                             $path = storage_path('app/public/images');
@@ -1458,8 +1458,8 @@ class HomeController extends Controller
                         }
                         try {
                             // Сохранить файл в папку storage/app/public/files
-                            // Используем уникальное имя файла с меткой времени
-                            $fileName = time() . '_' . $file->getClientOriginalName();
+                            // Используем уникальное имя файла с меткой времени и случайной строкой
+                            $fileName = time() . '_' . Str::random(5) . '_' . $file->getClientOriginalName();
 
                             // Сохраняем файл напрямую в целевую директорию
                             $path = storage_path('app/public/files');
