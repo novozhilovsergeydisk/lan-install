@@ -1357,8 +1357,8 @@ class HomeController extends Controller
                         }
                         try {
                             // Сохранить файл в папку storage/app/public/images
-                            // Используем оригинальное имя файла
-                            $fileName = $file->getClientOriginalName();
+                            // Используем уникальное имя файла с меткой времени
+                            $fileName = time() . '_' . $file->getClientOriginalName();
 
                             // Сохраняем файл напрямую в целевую директорию
                             $path = storage_path('app/public/images');
@@ -1376,7 +1376,7 @@ class HomeController extends Controller
 
                             // Получить основную информацию о файле
                             $fileInfo = [
-                                'name' => $file->getClientOriginalName(),
+                                'name' => $fileName,
                                 'type' => $file->getMimeType(),
                                 'extension' => $file->getClientOriginalExtension(),
                                 'size' => $file->getSize(),
@@ -1458,7 +1458,8 @@ class HomeController extends Controller
                         }
                         try {
                             // Сохранить файл в папку storage/app/public/files
-                            $fileName = $file->getClientOriginalName();
+                            // Используем уникальное имя файла с меткой времени
+                            $fileName = time() . '_' . $file->getClientOriginalName();
 
                             // Сохраняем файл напрямую в целевую директорию
                             $path = storage_path('app/public/files');
@@ -1476,7 +1477,7 @@ class HomeController extends Controller
 
                             // Получить основную информацию о файле
                             $fileInfo = [
-                                'name' => $file->getClientOriginalName(),
+                                'name' => $fileName,
                                 'type' => $file->getMimeType(),
                                 'extension' => $file->getClientOriginalExtension(),
                                 'size' => $file->getSize(),
