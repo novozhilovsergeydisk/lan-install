@@ -2207,6 +2207,21 @@ class HomeController extends Controller
 
             $sql = 'select * from requests where id = ?';
             $result = DB::select($sql, [$id]);
+
+            if (empty($result)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Заявка не найдена',
+                ], 404);
+            }
+
+            if ($result[0]->status_id == 4) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Заявка уже была закрыта ранее одним из пользователей. Пожалуйста, обновите страницу.',
+                ], 409);
+            }
+
             $operator_id = $result[0]->operator_id;
             $employee_id = $employee->id;
 
@@ -2300,8 +2315,10 @@ class HomeController extends Controller
             DB::beginTransaction();
 
             // Обновляем статус заявки на 'выполнена' (ID 4) и устанавливаем дату закрытия
+            // Добавляем условие status_id != 4 для предотвращения повторного закрытия
             $updated = DB::table('requests')
                 ->where('id', $id)
+                ->where('status_id', '!=', 4)
                 ->update([
                     'status_id' => 4,
                     'closed_at' => now(),
@@ -2743,8 +2760,8 @@ class HomeController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Не удалось обновить заявку',
-            ], 400);
+                'message' => 'Не удалось обновить заявку. Возможно, она уже была закрыта другим пользователем. Пожалуйста, обновите страницу.',
+            ], 409);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
