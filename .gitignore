@@ -40,3 +40,5 @@ Homestead.yaml
 Thumbs.db
 utils/C/notify-bot/telegram.conf
 utils/C/notify-bot/telegram_notify
+utils/C/log-pusher/db.conf
+utils/C/log-pusher/log-pusher

@@ -549,3 +549,70 @@ body.dark-mode .custom-select-options li:hover {
 .datepicker tbody td.has-requests {
     position: relative;
 }
+/* WMS Integration Styles */
+.wms-integration-block {
+    background-color: #f8f9fa;
+}
+[data-bs-theme='dark'] .wms-integration-block,
+.dark-mode .wms-integration-block {
+    background-color: #2b3035 !important;
+    border-color: #495057 !important;
+    color: #dee2e6;
+}
+.wms-member-group .text-primary {
+    color: #0d6efd !important;
+}
+[data-bs-theme='dark'] .wms-member-group .text-primary,
+.dark-mode .wms-member-group .text-primary {
+    color: #6ea8fe !important;
+}
+
+
+/* Исправление видимости текста в таблицах WMS для темной темы */
+[data-bs-theme='dark'] .wms-integration-block table,
+.dark-mode .wms-integration-block table {
+    color: #dee2e6 !important;
+}
+
+[data-bs-theme='dark'] .wms-integration-block table thead th,
+.dark-mode .wms-integration-block table thead th {
+    color: #fff !important;
+    background-color: #343a40;
+}
+
+[data-bs-theme='dark'] .wms-integration-block .wms-usage-input,
+.dark-mode .wms-integration-block .wms-usage-input {
+    background-color: #1a1d20;
+    border-color: #495057;
+    color: #fff;
+}
+
+
+/* Гарантированный светлый текст для ячеек WMS в темной теме */
+[data-bs-theme='dark'] .wms-integration-block table td,
+[data-bs-theme='dark'] .wms-integration-block table th,
+.dark-mode .wms-integration-block table td,
+.dark-mode .wms-integration-block table th {
+    color: #e9ecef !important;
+}
+
+/* Исправление цвета для text-muted в темной теме внутри WMS */
+[data-bs-theme='dark'] .wms-integration-block .text-muted,
+.dark-mode .wms-integration-block .text-muted {
+    color: #adb5bd !important;
+}
+
+/* Чтобы инпуты не сливались */
+[data-bs-theme='dark'] .wms-integration-block .form-control:focus,
+.dark-mode .wms-integration-block .form-control:focus {
+    background-color: #2b3035;
+    color: #fff;
+    border-color: #86b7fe;
+}
+
+
+/* Вертикальное выравнивание контента в таблицах WMS */
+.wms-integration-block table td {
+    vertical-align: middle !important;
+}
+

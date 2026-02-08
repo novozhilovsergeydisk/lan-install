@@ -1,0 +1,1 @@
+CONN_INFO=host=127.0.0.1 port=5432 dbname=lan_install user=postgres password=ВАШ_ПАРОЛЬ

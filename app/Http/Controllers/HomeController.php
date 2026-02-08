@@ -7,6 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -2520,6 +2521,37 @@ class HomeController extends Controller
                     ->select('requests.*', 'request_types.name as type_name', 'clients.organization', 'addresses.street', 'addresses.houses', 'addresses.district', 'addresses.id as address_id')
                     ->where('requests.id', $id)
                     ->first();
+
+                // WMS Интеграция: Списание материалов
+                if ($request->input('wms_deduct')) {
+                    $wmsDeductions = $request->input('wms_deductions', []);
+                    $actorEmail = auth()->user()->email;
+
+                    $apiKey = config('services.wms.api_key');
+                    $baseUrl = config('services.wms.base_url');
+
+                    foreach ($wmsDeductions as $employeeEmail => $usage) {
+                        foreach ($usage as $nomenclatureId => $quantity) {
+                            if ($quantity > 0) {
+                                $wmsResponse = Http::withHeaders([
+                                    'X-API-Key' => $apiKey
+                                ])->post("{$baseUrl}/api/external/usage-report", [
+                                    'email' => $employeeEmail,
+                                    'nomenclatureId' => (int)$nomenclatureId,
+                                    'quantity' => (float)$quantity,
+                                    'actorEmail' => $actorEmail,
+                                    'description' => "Списание по заявке #{$id} (автоматически)"
+                                ]);
+
+                                if (!$wmsResponse->successful()) {
+                                    $errorData = $wmsResponse->json();
+                                    $errorMsg = $errorData['message'] ?? 'Неизвестная ошибка склада';
+                                    throw new \Exception("Ошибка склада ({$employeeEmail}): {$errorMsg}");
+                                }
+                            }
+                        }
+                    }
+                }
 
                 // Фиксируем изменения
                 DB::commit();

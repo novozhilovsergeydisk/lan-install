@@ -47,4 +47,9 @@ return [
         ],
     ],
 
+    'wms' => [
+        'api_key' => env('WMS_API_KEY'),
+        'base_url' => env('WMS_BASE_URL', 'https://stock.lan-install.online'),
+    ],
+
 ];

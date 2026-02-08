@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Останавливаем скрипт при ошибках
+set -e
+
+echo "--- Сборка и запуск log-pusher ---"
+
+# Путь к директории утилиты
+PUSHER_DIR="utils/C/log-pusher"
+
+# 1. Сборка
+cd "$PUSHER_DIR"
+echo "Компиляция..."
+make clean
+make
+
+# 2. Остановка старого процесса (если есть)
+echo "Перезапуск процесса..."
+PID=$(pgrep log-pusher) || true
+if [ -n "$PID" ]; then
+    echo "Остановка старого процесса (PID: $PID)..."
+    kill $PID || true
+    sleep 1
+fi
+
+# 3. Запуск в фоне
+# Используем nohup, чтобы процесс не закрылся после выхода из терминала
+nohup ./log-pusher > pusher.log 2>&1 &
+
+echo "--- log-pusher успешно запущен в фоне ---"
+ps aux | grep log-pusher | grep -v grep

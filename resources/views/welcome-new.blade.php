@@ -3377,6 +3377,22 @@
                          <input type="checkbox" id="uncompletedWorks" name="uncompleted_works">
                          <label for="uncompletedWorks">Недоделанные работы</label>
                      </div>
+
+                     <hr>
+
+                     <div class="mb-3">
+                         <div class="form-check form-switch">
+                             <input class="form-check-input" type="checkbox" id="wmsDeductCheckbox" name="wms_deduct">
+                             <label class="form-check-label fw-bold" for="wmsDeductCheckbox">Списать материалы</label>
+                         </div>
+                     </div>
+
+                     <div id="wmsIntegrationSection" style="display: none;" class="border rounded p-3 wms-integration-block">
+                         <div id="wmsStockContainer">
+                             <!-- Здесь будет список материалов по каждому сотруднику -->
+                             <div class="text-muted small text-center">Загрузка данных о материалах бригады...</div>
+                         </div>
+                     </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -3567,6 +3583,48 @@
                 }
             });
 
+            // Валидация WMS
+            const wmsDeduct = document.getElementById('wmsDeductCheckbox').checked;
+            const wmsDeductions = {};
+            
+            if (wmsDeduct) {
+                let hasWmsErrors = false;
+                let hasAnyUsage = false;
+
+                document.querySelectorAll('.wms-member-group').forEach(group => {
+                    const email = group.dataset.email;
+                    const memberUsage = {};
+                    
+                    group.querySelectorAll('.wms-material-row').forEach(row => {
+                        const nomenclatureId = row.dataset.id;
+                        const input = row.querySelector('.wms-usage-input');
+                        const val = parseFloat(input.value);
+                        
+                        if (val > 0) {
+                            if (input.classList.contains('is-invalid')) {
+                                hasWmsErrors = true;
+                            }
+                            memberUsage[nomenclatureId] = val;
+                            hasAnyUsage = true;
+                        }
+                    });
+
+                    if (Object.keys(memberUsage).length > 0) {
+                        wmsDeductions[email] = memberUsage;
+                    }
+                });
+                
+                if (hasWmsErrors) {
+                    showAlert('Исправьте ошибки в количестве материалов (превышен остаток)', 'warning');
+                    return;
+                }
+                
+                if (!hasAnyUsage) {
+                    showAlert('Вы включили списание, но не указали количество ни для одного материала', 'warning');
+                    return;
+                }
+            }
+
             const requestId = document.getElementById('requestIdToClose').value;
             const comment = document.getElementById('closeComment').value;
             const submitBtn = this;
@@ -3580,6 +3638,8 @@
                         comment: comment,
                         work_parameters: workParameters,
                         uncompleted_works: document.getElementById('uncompletedWorks').checked,
+                        wms_deduct: wmsDeduct,
+                        wms_deductions: wmsDeductions,
                         _token: document.querySelector('input[name="_token"]').value
                     };
 
@@ -4709,6 +4769,7 @@
 <!-- Подключаем скрипт для работы с модальными окнами -->
 <script type="module" src="{{ asset('js/modals.js') }}"></script>
 <script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
+<script src="{{ asset('js/wms-integration.js') }}"></script>
     <script src="{{ asset('js/report-export.js') }}"></script>
     <script src="{{ asset('js/map-requests.js') }}"></script>
     <script src="{{ asset('js/map-planning.js') }}"></script>

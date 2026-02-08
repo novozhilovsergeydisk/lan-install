@@ -84,6 +84,10 @@ Route::get('/new-design', [HomeController::class, 'indexNew'])->name('home.new')
 // Close request
 Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth')->middleware(['auth', 'roles']);
 
+// WMS Integration
+Route::get('/api/wms/brigade-stock/{requestId}', [\App\Http\Controllers\WmsIntegrationController::class, 'getBrigadeStock'])->middleware('auth');
+Route::get('/api/wms/user-stock', [\App\Http\Controllers\WmsIntegrationController::class, 'getUserStock'])->middleware('auth');
+
 // Get work parameters for request
 Route::get('/requests/{request}/work-parameters', [HomeController::class, 'getWorkParameters'])->name('requests.work-parameters')->middleware('auth')->middleware(['auth', 'roles']);
 
