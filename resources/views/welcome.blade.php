@@ -7,6 +7,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Система управления заявками</title>
     <link href="{{ asset('js/editor.css') }}" rel="stylesheet">
     <style>
@@ -5111,9 +5114,11 @@
 <script src="{{ asset('js/wms-integration.js') }}"></script>
     <script src="{{ asset('js/report-export.js') }}"></script>
     <script src="{{ asset('js/map-requests.js') }}"></script>
-    <script src="{{ asset('js/map-planning.js') }}"></script>
-
-<script>
+        <script src="{{ asset('js/map-planning.js') }}"></script>
+        <script src="{{ asset('js/session-keepalive.js') }}"></script>
+    
+        <script>
+    
     // Mobile Menu Toggle Script
     document.addEventListener('DOMContentLoaded', function() {
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');

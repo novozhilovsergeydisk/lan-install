@@ -1,4 +1,14 @@
 #!/bin/bash
 set -e
 
-tail -f storage/logs/laravel.log
+# Проверяем, какой лог-файл новее (local.log или laravel.log)
+LOG_FILE="storage/logs/laravel.log"
+
+if [ -f "storage/logs/local.log" ]; then
+    if [ ! -f "storage/logs/laravel.log" ] || [ "storage/logs/local.log" -nt "storage/logs/laravel.log" ]; then
+        LOG_FILE="storage/logs/local.log"
+    fi
+fi
+
+echo "Отслеживание лога: $LOG_FILE"
+tail -f "$LOG_FILE"

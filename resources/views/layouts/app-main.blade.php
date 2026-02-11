@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>@yield('title', 'Система управления заявками')</title>
     
     <!-- Bootstrap CSS -->
@@ -330,6 +333,7 @@
     
     <!-- Yandex Maps (нужен здесь, так как используется в нескольких табах) -->
     <script src="https://api-maps.yandex.ru/2.1/?apikey={{ config('services.yandex.maps_key') }}&lang=ru_RU" type="text/javascript"></script>
+    <script src="{{ asset('js/session-keepalive.js') }}"></script>
 
     @stack('scripts')
 </body>

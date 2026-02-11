@@ -21,6 +21,18 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Логируем ошибку 419 (TokenMismatchException)
+        $exceptions->reportable(function (\Illuminate\Session\TokenMismatchException $e) {
+            \Illuminate\Support\Facades\Log::warning('CSRF Token Mismatch (419 Error)', [
+                'url' => request()->fullUrl(),
+                'method' => request()->method(),
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'user_id' => auth()->id() ?? 'guest',
+                'referer' => request()->header('referer'),
+            ]);
+        });
+
         // Подключаем Sentry для автоматического отлова и отправки ошибок
         // Integration::handles($exceptions);
     })

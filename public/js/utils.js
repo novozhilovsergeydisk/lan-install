@@ -96,11 +96,19 @@ async function fetchData(url) {
         const response = await fetch(url, {
             credentials: 'same-origin'
         });
+        
+        if (response.status === 419) {
+            handle419Error();
+            throw new Error('Сессия истекла. Страница будет обновлена.');
+        }
+        
         if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`);
         return await response.json();
     } catch (error) {
         console.error('Ошибка при запросе:', error);
-        showAlert(`Ошибка загрузки данных: ${error.message}`, 'danger');
+        if (error.message !== 'Сессия истекла. Страница будет обновлена.') {
+            showAlert(`Ошибка загрузки данных: ${error.message}`, 'danger');
+        }
         throw error;
     }
 }
@@ -152,15 +160,22 @@ function makeEscapedPreview(comment, wordLimit = 4) {
 
     // --- helpers ---
     function decodeEntities(str) {
-        // Используем DOM для корректного декодирования сущностей
-        const ta = document.createElement('textarea');
-        ta.innerHTML = str;
-        return ta.value;
+        if (!str) return '';
+        const entities = {
+            '&amp;': '&',
+            '&lt;': '<',
+            '&gt;': '>',
+            '&quot;': '"',
+            '&#39;': "'",
+            '&nbsp;': ' '
+        };
+        return str.replace(/&[#\w\d]+;/g, (m) => entities[m] || m);
     }
     function stripTags(str) {
-        return str.replace(/<[^>]*>/g, '');
+        return str ? str.replace(/<[^>]*>/g, '') : '';
     }
     function escapeHtml(str) {
+        if (!str) return '';
         return str
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
@@ -178,7 +193,9 @@ function makeEscapedPreview(comment, wordLimit = 4) {
  */
 async function postData(url, body) {
     try {
-        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        const token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+        
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -189,6 +206,11 @@ async function postData(url, body) {
             body: JSON.stringify(body),
             credentials: 'same-origin'
         });
+
+        if (response.status === 419) {
+            handle419Error();
+            throw new Error('Сессия истекла. Страница будет обновлена.');
+        }
 
         const responseData = await response.json();
 
@@ -221,7 +243,9 @@ async function postData(url, body) {
         return responseData;
     } catch (error) {
         console.error('Ошибка отправки:', error);
-        if (error.message !== 'EMPLOYEE_NOT_FOUND') {
+        if (error.message === 'Сессия истекла. Страница будет обновлена.') {
+            // Do nothing, handled by handle419Error
+        } else if (error.message !== 'EMPLOYEE_NOT_FOUND') {
             showAlert(error.message || ('Произошла ошибка при отправке данных: ' + (error && error.message ? error.message : '')), 'danger');
         }
         throw error;
@@ -236,7 +260,9 @@ async function postData(url, body) {
  */
 async function sendRequest(url, options) {
     try {
-        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        const token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+        
         const headers = {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': token,
@@ -250,13 +276,31 @@ async function sendRequest(url, options) {
         };
 
         const response = await fetch(url, defaultOptions);
+        
+        if (response.status === 419) {
+            handle419Error();
+            throw new Error('Сессия истекла. Страница будет обновлена.');
+        }
+        
         if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`);
         return await response.json();
     } catch (error) {
         console.error('Ошибка запроса:', error);
-        showAlert(`Ошибка запроса: ${error.message}`, 'danger');
+        if (error.message !== 'Сессия истекла. Страница будет обновлена.') {
+            showAlert(`Ошибка запроса: ${error.message}`, 'danger');
+        }
         throw error;
     }
+}
+
+/**
+ * Обработка ошибки 419 (Page Expired / CSRF mismatch)
+ */
+function handle419Error() {
+    showAlert('Сессия истекла. Страница будет обновлена через 3 секунды...', 'warning');
+    setTimeout(() => {
+        window.location.reload();
+    }, 3000);
 }
 
 // Преобразует текст: оборачивает plain-URL в <a>, не трогая существующие <a>
