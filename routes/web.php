@@ -133,14 +133,14 @@ Route::prefix('statuses')->middleware('auth')->group(function () {
 });
 
 // Маршруты для работы с типами заявок
-Route::prefix('api/request-types')->middleware('auth')->group(function () {
+Route::prefix('api/request-types')->middleware(['auth', 'roles'])->group(function () {
     Route::get('/', [RequestTypeController::class, 'index']);
     Route::post('/', [RequestTypeController::class, 'store']);
     Route::put('/{id}', [RequestTypeController::class, 'update']);
     Route::delete('/{id}', [RequestTypeController::class, 'destroy']);
 });
 
-Route::get('/request-types', [RequestTypeController::class, 'index'])->middleware('auth')->name('request-types.index');
+Route::get('/request-types', [RequestTypeController::class, 'index'])->middleware(['auth', 'roles'])->name('request-types.index');
 
 // Маршруты для работы с параметрами типов заявок
 Route::prefix('api/work-parameter-types')->middleware('auth')->group(function () {

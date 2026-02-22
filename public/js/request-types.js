@@ -1,9 +1,20 @@
 // Функции для работы с типами заявок
 
 /**
+ * Проверка прав администратора
+ */
+function isAdmin() {
+    return window.App && window.App.user && window.App.user.isAdmin;
+}
+
+/**
  * Загрузка списка типов заявок
  */
 export async function loadRequestTypes() {
+    if (!isAdmin()) {
+        return;
+    }
+    
     try {
         const response = await fetch('/api/request-types/');
         if (!response.ok) {
@@ -60,6 +71,11 @@ function renderRequestTypesTable(requestTypes) {
  * Создание нового типа заявки
  */
 export async function createRequestType(name, color) {
+    if (!isAdmin()) {
+        window.utils.showAlert('Доступ запрещен. Требуются права администратора.', 'danger');
+        return false;
+    }
+    
     try {
         const response = await fetch('/api/request-types/', {
             method: 'POST',
@@ -92,6 +108,11 @@ export async function createRequestType(name, color) {
  * Обновление типа заявки
  */
 export async function updateRequestType(id, name, color) {
+    if (!isAdmin()) {
+        window.utils.showAlert('Доступ запрещен. Требуются права администратора.', 'danger');
+        return false;
+    }
+    
     try {
         const response = await fetch(`/api/request-types/${id}/`, {
             method: 'PUT',
@@ -124,6 +145,11 @@ export async function updateRequestType(id, name, color) {
  * Удаление типа заявки
  */
 export async function deleteRequestType(id, name) {
+    if (!isAdmin()) {
+        window.utils.showAlert('Доступ запрещен. Требуются права администратора.', 'danger');
+        return;
+    }
+    
     if (!confirm(`Вы уверены, что хотите удалить тип "${name}"?`)) {
         return;
     }
@@ -155,6 +181,11 @@ export async function deleteRequestType(id, name) {
  * Инициализация обработчиков для типов заявок
  */
 export function initRequestTypesHandlers() {
+    // Инициализируем обработчики только для админов
+    if (!isAdmin()) {
+        return;
+    }
+    
     // Обработчик кнопки сохранения
     document.getElementById('saveRequestTypeBtn').addEventListener('click', async () => {
         const id = document.getElementById('requestTypeId').value;

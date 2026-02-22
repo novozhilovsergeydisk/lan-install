@@ -9,10 +9,24 @@ use Illuminate\Support\Facades\Log;
 class RequestTypeController extends Controller
 {
     /**
+     * Проверка прав администратора
+     */
+    private function checkAdminAccess()
+    {
+        $user = auth()->user();
+        
+        if (!$user || !($user->isAdmin ?? false)) {
+            abort(403, 'Доступ запрещен. Требуются права администратора.');
+        }
+    }
+
+    /**
      * Получить список всех типов заявок
      */
     public function index()
     {
+        $this->checkAdminAccess();
+        
         try {
             $requestTypes = DB::table('request_types')
                 ->where('is_deleted', false)
@@ -40,6 +54,8 @@ class RequestTypeController extends Controller
      */
     public function store(Request $request)
     {
+        $this->checkAdminAccess();
+        
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -72,6 +88,8 @@ class RequestTypeController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $this->checkAdminAccess();
+        
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -112,6 +130,8 @@ class RequestTypeController extends Controller
      */
     public function destroy($id)
     {
+        $this->checkAdminAccess();
+        
         try {
             // Проверяем, есть ли заявки с этим типом
             $hasRequests = DB::table('requests')

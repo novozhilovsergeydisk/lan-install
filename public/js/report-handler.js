@@ -495,10 +495,18 @@ export async function loadOrganizationsForReport() {
     }
 }
 
-// Функция для загрузки списка типов заявок
+// Функция для загрузки списка типов заявок (только для админов)
 export async function loadRequestTypesForReport() {
+    // Проверяем права администратора
+    if (!window.App || !window.App.user || !window.App.user.isAdmin) {
+        return;
+    }
+    
     try {
         const response = await fetch('/request-types');
+        if (!response.ok) {
+            throw new Error('Failed to load request types');
+        }
         const data = await response.json();
 
         const select = document.createElement('select');
@@ -523,7 +531,10 @@ export async function loadRequestTypesForReport() {
         }
     } catch (error) {
         console.error('Ошибка при загрузке типов заявок:', error);
-        showAlert('Не удалось загрузить список типов заявок', 'danger');
+        // Не показываем ошибку не-админам
+        if (window.App && window.App.user && window.App.user.isAdmin) {
+            showAlert('Не удалось загрузить список типов заявок', 'danger');
+        }
     }
 }
 

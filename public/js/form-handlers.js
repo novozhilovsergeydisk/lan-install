@@ -3617,20 +3617,25 @@ export function initRequestInWorkHandlers() {
     });
 }
 
-// Функция для загрузки типов заявок в селект
+// Функция для загрузки типов заявок в селект (только для админов)
 async function loadRequestTypesForSelect(selectId) {
+    // Проверяем права администратора
+    if (!window.App || !window.App.user || !window.App.user.isAdmin) {
+        return;
+    }
+    
     const select = document.getElementById(selectId);
     if (!select) return;
 
     try {
         const response = await fetch('/api/request-types/');
         if (!response.ok) throw new Error('Ошибка загрузки типов заявок');
-        
+
         const data = await response.json();
-        
+
         // Сохраняем текущее значение если есть
         const currentValue = select.value;
-        
+
         select.innerHTML = '<option value="" disabled selected>Выберите тип заявки</option>';
         data.forEach(type => {
             const option = document.createElement('option');
@@ -3640,7 +3645,7 @@ async function loadRequestTypesForSelect(selectId) {
         });
 
         if (currentValue) select.value = currentValue;
-        
+
     } catch (error) {
         console.error('Ошибка загрузки типов заявок:', error);
     }

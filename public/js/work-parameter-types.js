@@ -179,11 +179,21 @@ export async function deleteWorkParameterType(id, name, requestTypeId) {
 }
 
 /**
- * Инициализация обработчиков для параметров типов заявок
+ * Инициализация обработчиков для параметров типов заявок (только для админов)
  */
 export function initWorkParameterTypesHandlers() {
+    // Проверяем права администратора
+    if (!window.App || !window.App.user || !window.App.user.isAdmin) {
+        return;
+    }
+    
     // Обработчик кнопки сохранения
-    document.getElementById('saveWorkParameterTypeBtn').addEventListener('click', async () => {
+    const saveBtn = document.getElementById('saveWorkParameterTypeBtn');
+    if (!saveBtn) {
+        return;
+    }
+    
+    saveBtn.addEventListener('click', async () => {
         const id = document.getElementById('workParameterTypeId').value;
         const name = document.getElementById('workParameterTypeName').value.trim();
         const requestTypeId = document.getElementById('workParameterTypeRequestType').value;

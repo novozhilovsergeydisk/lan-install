@@ -249,11 +249,13 @@
                                 type="button" role="tab">Планирование
                         </button>
                     </li>
+                    @if($user->isAdmin)
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="request-types-tab" data-bs-toggle="tab" data-bs-target="#request-types"
                                 type="button" role="tab">Типы заявок
                         </button>
                     </li>
+                    @endif
                     <!-- <li class="nav-item" role="presentation">
                         <button class="nav-link" id="photo-reports-tab" data-bs-toggle="tab" data-bs-target="#photo-reports"
                                 type="button" role="tab">Фотоотчеты
@@ -1607,6 +1609,7 @@
                          @endif
                     </div>
 
+                    @if($user->isAdmin)
                     <div id="request-types" class="tab-pane fade" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="mb-0">Управление типами заявок</h4>
@@ -1736,6 +1739,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
 
                     <!-- <div id="photo-reports" class="tab-pane fade" role="tabpanel">
                         <h4>Фотоотчеты</h4>
@@ -3406,10 +3410,18 @@
             });
         }
 
-        // Load request types from API
+        // Load request types from API (admin only)
         async function loadRequestTypes() {
+            // Не загружаем типы заявок для не-админов
+            if (!window.App.user.isAdmin) {
+                return;
+            }
+            
             try {
                 const response = await fetch('/api/request-types?is_deleted=false');
+                if (!response.ok) {
+                    throw new Error('Failed to load request types');
+                }
                 const types = await response.json();
                 const select = document.getElementById('requestType');
 
@@ -3434,7 +3446,10 @@
                 });
             } catch (error) {
                 console.error('Error loading request types:', error);
-                throw error;
+                // Не показываем ошибку не-админам
+                if (window.App.user.isAdmin) {
+                    throw error;
+                }
             }
         }
 
