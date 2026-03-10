@@ -17,10 +17,21 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
 {
     protected $filters;
     protected $rowsCount = 0;
+    protected $dynamicColumns = [];
 
     public function __construct(array $filters)
     {
         $this->filters = $filters;
+
+        $requestTypeId = $this->filters['requestTypeId'] ?? null;
+        if ($requestTypeId) {
+            $this->dynamicColumns = DB::table('work_parameter_types')
+                ->where('request_type_id', $requestTypeId)
+                ->where('is_deleted', false)
+                ->orderBy('name')
+                ->pluck('name')
+                ->toArray();
+        }
     }
 
     public function collection()
@@ -70,6 +81,18 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                         ORDER BY wp2.parameter_type_id, wp2.id DESC
                     ) as t
                 ) as actual_works,
+                ( 
+                    SELECT STRING_AGG(t.name || ':::' || t.quantity, '|||' ORDER BY t.name)
+                    FROM ( 
+                        SELECT DISTINCT ON (wp2.parameter_type_id) 
+                               wpt2.name, wp2.quantity
+                        FROM work_parameters wp2
+                        JOIN work_parameter_types wpt2 ON wp2.parameter_type_id = wpt2.id
+                        WHERE wp2.request_id = r.id 
+                          AND (wp2.is_planning = false OR wp2.is_planning IS NULL)
+                        ORDER BY wp2.parameter_type_id, wp2.id DESC
+                    ) as t
+                ) as actual_works_raw,
                 -- Проверка наличия вложений (фото или файлов)
                 EXISTS ( 
                     SELECT 1 FROM request_comments rc
@@ -124,14 +147,23 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
 
     public function headings(): array
     {
-        return [
+        $headings = [
             'Дата и номер',
             'Адрес',
             'Бригада',
             'Комментарий',
             'Выполненные работы',
-            'Фотоотчет',
         ];
+
+        if (!empty($this->dynamicColumns)) {
+            foreach ($this->dynamicColumns as $col) {
+                $headings[] = $col;
+            }
+        }
+
+        $headings[] = 'Фотоотчет';
+
+        return $headings;
     }
 
     public function map($row): array
@@ -149,14 +181,33 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
         $dateAndNumber = ($row->execution_date ? \Carbon\Carbon::parse($row->execution_date)->format('d.m.Y') : 'Не указана') . 
                          "\n" . $row->number;
 
-        return [
+        $rowArray = [
             $dateAndNumber,
             $row->full_address,
             $row->brigade_name ? ($row->brigade_name . ($row->leader_name ? ' (' . $row->leader_name . ')' : '')) : 'Не назначена',
             strip_tags($row->first_comment),
             $actualWorksOutput,
-            $photoLink,
         ];
+
+        if (!empty($this->dynamicColumns)) {
+            $rawWorks = [];
+            if (!empty($row->actual_works_raw)) {
+                $items = explode('|||', $row->actual_works_raw);
+                foreach ($items as $item) {
+                    $parts = explode(':::', $item);
+                    if (count($parts) === 2) {
+                        $rawWorks[$parts[0]] = $parts[1];
+                    }
+                }
+            }
+            foreach ($this->dynamicColumns as $col) {
+                $rowArray[] = $rawWorks[$col] ?? '';
+            }
+        }
+
+        $rowArray[] = $photoLink;
+
+        return $rowArray;
     }
     
     public function registerEvents(): array
@@ -171,11 +222,22 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                 $sheet->getColumnDimension('C')->setWidth(50);
                 $sheet->getColumnDimension('D')->setWidth(80);
                 $sheet->getColumnDimension('E')->setWidth(50);
-                $sheet->getColumnDimension('F')->setWidth(40);
+                
+                $colIndex = 'F';
+                if (!empty($this->dynamicColumns)) {
+                    foreach ($this->dynamicColumns as $col) {
+                        $sheet->getColumnDimension($colIndex)->setWidth(15);
+                        $colIndex++;
+                    }
+                }
+                
+                $sheet->getColumnDimension($colIndex)->setWidth(40); // Фотоотчет
+                
+                $lastCol = $colIndex;
 
                 // Включаем перенос текста
-                $sheet->getStyle('A:F')->getAlignment()->setWrapText(true);
-                $sheet->getStyle('A:F')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
+                $sheet->getStyle('A:' . $lastCol)->getAlignment()->setWrapText(true);
+                $sheet->getStyle('A:' . $lastCol)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
 
                 // Принудительное удаление пустых строк, если они есть
                 $totalExpectedRows = $this->rowsCount + 1; // +1 заголовок
@@ -190,12 +252,12 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                 $highestRow = $totalExpectedRows;
 
                 if ($highestRow > 1) {
-                    $sheet->getStyle('F2:F' . $highestRow)->getFont()->getColor()->setARGB(Color::COLOR_BLUE);
-                    $sheet->getStyle('F2:F' . $highestRow)->getFont()->setUnderline(Font::UNDERLINE_SINGLE);
+                    $sheet->getStyle($colIndex . '2:' . $colIndex . $highestRow)->getFont()->getColor()->setARGB(Color::COLOR_BLUE);
+                    $sheet->getStyle($colIndex . '2:' . $colIndex . $highestRow)->getFont()->setUnderline(Font::UNDERLINE_SINGLE);
                 }
                 
                 // Жирный шрифт для заголовка
-                $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+                $sheet->getStyle('A1:' . $lastCol . '1')->getFont()->setBold(true);
             },
         ];
     }
