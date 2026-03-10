@@ -551,11 +551,20 @@ export async function loadReport(changePage = 0) {
 
     let startDate = $('#datepicker-reports-start').datepicker('getFormattedDate');
     let endDate = $('#datepicker-reports-end').datepicker('getFormattedDate');
+    
     const employeeSelect = document.getElementById('report-employees');
     const addressSelect = document.getElementById('report-addresses');
     const organizationSelect = document.getElementById('report-organizations');
     const requestTypeSelect = document.getElementById('report-request-types');
     const allPeriod = document.getElementById('report-all-period');
+
+    // Безопасно получаем значения
+    const employeeSelectValue = employeeSelect ? employeeSelect.value : 'all_employees';
+    const addressSelectValue = addressSelect ? addressSelect.value : 'all_addresses';
+    const organizationSelectValue = organizationSelect ? organizationSelect.value : 'all_organizations';
+    const requestTypeSelectValue = requestTypeSelect ? requestTypeSelect.value : 'all_request_types';
+    const allPeriodChecked = allPeriod ? allPeriod.checked : false;
+
     let url = '';    
     
     if (!startDate || !endDate) {
@@ -573,25 +582,25 @@ export async function loadReport(changePage = 0) {
         if (currentReportPage > totalReportPages && totalReportPages > 0) currentReportPage = totalReportPages;
     }
 
-    // console.log(employeeSelect.value);
-    // console.log(addressSelect.value);
-    // console.log(allPeriod.checked);
+    // console.log(employeeSelectValue);
+    // console.log(addressSelectValue);
+    // console.log(allPeriodChecked);
 
-    // Сначала проверяем все случаи с allPeriod.checked
-    if (allPeriod.checked) {
+    // Сначала проверяем все случаи с allPeriodChecked
+    if (allPeriodChecked) {
         startDate = null;
         endDate = null;
         
         // Отчет за ВЕСЬ ПЕРИОД по сотруднику
-        if (employeeSelect.value > 0 && (addressSelect.value === 'all_addresses' || addressSelect.value === '')) {
+        if (employeeSelectValue > 0 && (addressSelectValue === 'all_addresses' || addressSelectValue === '')) {
             url = '/reports/requests/by-employee-all-period';
         } 
         // Отчет за ВЕСЬ ПЕРИОД по адресу
-        else if (addressSelect.value > 0 && employeeSelect.value === 'all_employees') {
+        else if (addressSelectValue > 0 && employeeSelectValue === 'all_employees') {
             url = '/reports/requests/by-address-all-period';
         }
         // Отчет за ВЕСЬ ПЕРИОД по сотруднику и адресу
-        else if (employeeSelect.value > 0 && addressSelect.value > 0) {
+        else if (employeeSelectValue > 0 && addressSelectValue > 0) {
             url = '/reports/requests/by-employee-address-all-period';
         }
         // Просто отчет за весь период (без фильтров)
@@ -602,35 +611,35 @@ export async function loadReport(changePage = 0) {
     // Затем проверяем случаи с выбранным диапазоном дат
     else if (startDate && endDate) {
         // Отчет за выбранный диапазон дат по всем сотрудникам и всем адресам
-        if (employeeSelect.value === 'all_employees' && (addressSelect.value === 'all_addresses' || addressSelect.value === '')) {
+        if (employeeSelectValue === 'all_employees' && (addressSelectValue === 'all_addresses' || addressSelectValue === '')) {
             url = '/reports/requests/by-date';
         }
         // Отчет за выбранный диапазон дат по всем сотрудникам и определенному адресу
-        else if (employeeSelect.value > 0 && (addressSelect.value === 'all_addresses' || addressSelect.value === '')) {
+        else if (employeeSelectValue > 0 && (addressSelectValue === 'all_addresses' || addressSelectValue === '')) {
             url = '/reports/requests/by-employee-date';
         } 
         // Отчет за выбранный диапазон дат по определенному адресу и всем сотрудникам
-        else if (addressSelect.value > 0 && employeeSelect.value === 'all_employees') {
+        else if (addressSelectValue > 0 && employeeSelectValue === 'all_employees') {
             url = '/reports/requests/by-address-date';
         }
         // Отчет за выбранный диапазон дат по определенному адресу и определенному сотруднику
-        else if (employeeSelect.value > 0 && addressSelect.value > 0) {
+        else if (employeeSelectValue > 0 && addressSelectValue > 0) {
             url = '/reports/requests/by-employee-address-date';
         }
     }
     
     // Отчет за ВЕСЬ ПЕРИОД по адресу
-    if (!startDate && !endDate && addressSelect.value > 0 && employeeSelect.value === 'all_employees' && allPeriod.checked) {
+    if (!startDate && !endDate && addressSelectValue > 0 && employeeSelectValue === 'all_employees' && allPeriodChecked) {
         url = '/reports/requests/by-address-all-period';
     }
 
     // Отчет за ВЕСЬ ПЕРИОД по сотруднику и адресу
-    if (!startDate && !endDate &&  employeeSelect.value > 0 && addressSelect.value > 0 && allPeriod.checked) {
+    if (!startDate && !endDate &&  employeeSelectValue > 0 && addressSelectValue > 0 && allPeriodChecked) {
         url = '/reports/requests/by-employee-address-all-period';
     }
 
     // Отчет за ПЕРИОД по сотруднику и адресу
-    if (startDate && endDate &&  employeeSelect.value > 0 && addressSelect.value > 0 && !allPeriod.checked) {
+    if (startDate && endDate &&  employeeSelectValue > 0 && addressSelectValue > 0 && !allPeriodChecked) {
         url = '/reports/requests/by-employee-address-date';
     }
     
@@ -640,25 +649,25 @@ export async function loadReport(changePage = 0) {
     const requestData = {
         startDate,
         endDate,
-        employeeId: employeeSelect.value === 'all_employees' ? '' : employeeSelect.value,
-        allPeriod: allPeriod.checked,
+        employeeId: employeeSelectValue === 'all_employees' ? '' : employeeSelectValue,
+        allPeriod: allPeriodChecked,
         page: currentReportPage,
         limit: reportLimit
     };
 
     // Добавляем addressId только если он выбран
-    if (addressSelect.value && addressSelect.value !== 'all_addresses') {
-        requestData.addressId = addressSelect.value;
+    if (addressSelectValue && addressSelectValue !== 'all_addresses') {
+        requestData.addressId = addressSelectValue;
     }
 
     // Добавляем organization только если она выбрана
-    if (organizationSelect.value && organizationSelect.value !== 'all_organizations') {
-        requestData.organization = organizationSelect.value;
+    if (organizationSelectValue && organizationSelectValue !== 'all_organizations') {
+        requestData.organization = organizationSelectValue;
     }
 
     // Добавляем requestTypeId только если он выбран
-    if (requestTypeSelect.value && requestTypeSelect.value !== 'all_request_types') {
-        requestData.requestTypeId = requestTypeSelect.value;
+    if (requestTypeSelectValue && requestTypeSelectValue !== 'all_request_types') {
+        requestData.requestTypeId = requestTypeSelectValue;
     }
     
     console.log('Данные для запроса:', requestData);
