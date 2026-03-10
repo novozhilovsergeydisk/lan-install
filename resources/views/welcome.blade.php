@@ -4605,10 +4605,10 @@
                                             <button type="button" class="btn btn-sm btn-outline-primary" id="editAddressBtn">
                                                 <i class="bi bi-pencil"></i> Редактировать
                                             </button>
-                                            @endif
                                             <button type="button" class="btn btn-sm btn-outline-danger" id="deleteAddressBtn">
                                                 <i class="bi bi-trash"></i> Удалить
                                             </button>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
