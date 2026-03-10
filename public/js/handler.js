@@ -728,6 +728,7 @@ function displayBrigadeInfo(data) {
                             </tr>
                         `).join('')}
                     </tbody>
+                    ${window.App?.user?.isAdmin ? `
                     <div>
                         <button class="btn btn-sm btn-outline-danger delete-member-btn mt-2" 
                                 data-brigade-id="${brigadeId}" 
@@ -735,11 +736,13 @@ function displayBrigadeInfo(data) {
                             Удалить
                         </button>
                     </div>
+                    ` : ''}
                 `;
                 membersList.appendChild(membersTable);
             } else {
                 membersList.innerHTML += `
                     <div class="alert alert-info">Бригадир сам является участником бригады</div>
+                    ${window.App?.user?.isAdmin ? `
                     <div>
                         <button class="btn btn-sm btn-outline-danger delete-member-btn mt-2" 
                                 data-brigade-id="${brigadeId}" 
@@ -747,6 +750,7 @@ function displayBrigadeInfo(data) {
                             Удалить
                         </button>
                     </div>
+                    ` : ''}
                 `;
             }
 
