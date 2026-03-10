@@ -2320,6 +2320,7 @@ function addRequestToTable(result) {
                 <button data-request-id="${requestData.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                     Закрыть заявку
                 </button>
+                ${window.App?.user?.isAdmin ? `
                 <button type="button"
                         class="btn btn-sm btn-outline-purple edit-request-btn p-1"
                         data-bs-toggle="tooltip"
@@ -2328,6 +2329,7 @@ function addRequestToTable(result) {
                         data-request-id="${requestData.id}">
                     <i class="bi bi-pencil"></i>
                 </button>
+                ` : ''}
             </div>
         </td>
         <td class="col-brigade">

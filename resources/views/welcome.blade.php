@@ -529,6 +529,7 @@
                                                 @endif
                                                 
                                                 @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
+                                                    @if($user->isAdmin)
                                                    <button type="button"
                                                             class="btn btn-sm btn-outline-purple edit-request-btn p-1"
                                                             data-bs-toggle="tooltip"
@@ -537,6 +538,7 @@
                                                             data-request-id="{{ $request->id }}">
                                                         <i class="bi bi-pencil"></i>
                                                    </button>
+                                                    @endif
                                                 @endif
                                             </div>
                                          </td>
