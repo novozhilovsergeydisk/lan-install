@@ -85,15 +85,6 @@ class PlanningRequestController extends Controller
 
                 // 4. Get Comment
                 $comment = $rowData['комментарии к монтажу'] ?? '';
-                $panelCount = $row[4] ?? ''; // Assuming 5th column is index 4
-                $panelLocation = $row[5] ?? ''; // Assuming 6th column is index 5
-
-                if (! empty($panelCount)) {
-                    $comment .= (! empty($comment) ? ', ' : '').'количество панелей: '.$panelCount;
-                }
-                if (! empty($panelLocation)) {
-                    $comment .= (! empty($comment) ? ', ' : '').'место установки панели (кабинет): '.$panelLocation;
-                }
 
                 $parsedRowData = [
                     'city_name' => $cityName,

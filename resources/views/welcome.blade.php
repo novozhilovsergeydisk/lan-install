@@ -2708,7 +2708,7 @@
 
 <!-- Модальное окно для загрузки заявок -->
 <div class="modal fade" id="uploadRequestsModal" tabindex="-1" aria-labelledby="uploadRequestsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="uploadRequestsModalLabel">Загрузка заявок из файла</h5>
@@ -2726,17 +2726,57 @@
                         </a>
                         <div class="collapse mt-2" id="helpFormat">
                             <div class="card card-body bg-light text-dark small">
-                                <p class="mb-2"><strong>Файл должен содержать следующие заголовки в первой строке:</strong></p>
+                                <p class="mb-2"><strong>Пример правильного заполнения Excel файла:</strong></p>
+                                <div style="display: block; width: 100%; overflow-x: auto; border: 1px solid #dee2e6; margin-bottom: 1rem;">
+                                    <table class="table table-bordered table-sm mb-0" style="font-family: sans-serif; font-size: 0.8rem; background-color: white !important; color: #212529 !important; min-width: 600px; table-layout: fixed;">
+                                        <thead>
+                                            <tr>
+                                                <th style="background-color: #e9ecef !important; color: #212529 !important; width: 25%;">A (Обязательно)</th>
+                                                <th style="background-color: #e9ecef !important; color: #212529 !important; width: 25%;">B (Обязательно)</th>
+                                                <th style="background-color: #e9ecef !important; color: #212529 !important; width: 25%;">C (Обязательно)</th>
+                                                <th style="background-color: #e9ecef !important; color: #212529 !important; width: 25%;">D (Обязательно)</th>
+                                            </tr>
+                                            <tr>
+                                                <th style="background-color: #f8f9fa !important; color: #212529 !important;">ГБОУ</th>
+                                                <th style="background-color: #f8f9fa !important; color: #212529 !important;">Адрес организации</th>
+                                                <th style="background-color: #f8f9fa !important; color: #212529 !important;">Контакт</th>
+                                                <th style="background-color: #f8f9fa !important; color: #212529 !important;">Комментарии к монтажу</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody style="background-color: white !important; color: #212529 !important;">
+                                            <tr>
+                                                <td style="background-color: white !important; color: #212529 !important;">ГБОУ Школа № 1</td>
+                                                <td style="background-color: white !important; color: #212529 !important;">город Москва, ул. Ленина, д. 1</td>
+                                                <td style="background-color: white !important; color: #212529 !important;">Иванов И.И. 8(999)123-45-01</td>
+                                                <td style="background-color: white !important; color: #212529 !important;">Установка в актовом зале</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="background-color: white !important; color: #212529 !important;">ГБОУ Лицей № 2</td>
+                                                <td style="background-color: white !important; color: #212529 !important;">город Москва, пр. Мира, д. 2</td>
+                                                <td style="background-color: white !important; color: #212529 !important;">Петров П.П. 8(999)123-45-02</td>
+                                                <td style="background-color: white !important; color: #212529 !important;">Требуется лестница</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="background-color: white !important; color: #212529 !important;">ГБОУ ДОУ № 5</td>
+                                                <td style="background-color: white !important; color: #212529 !important;">город Москва, ул. Чехова, д. 5</td>
+                                                <td style="background-color: white !important; color: #212529 !important;">Кузнецов В.В. 8(999)123-45-05</td>
+                                                <td style="background-color: white !important; color: #212529 !important;"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <hr>
+                                <p class="mb-2 text-danger"><strong>Важно: Как обрабатывается Адрес организации</strong></p>
+                                <p class="mb-1">Строка разбивается по первой запятой:</p>
                                 <ul class="mb-2 ps-3">
-                                    <li><code>ГБОУ</code> (Название организации)</li>
-                                    <li><code>Адрес организации</code> (Пример: <em>город Москва, ул. Ленина, д. 1</em>)</li>
-                                    <li><code>Контакт</code> (ФИО и телефон, например: <em>Иванов И.И. 8(999)123-45-67</em>)</li>
-                                    <li><code>Комментарии к монтажу</code></li>
+                                    <li>До первой запятой: считается <strong>Городом</strong>. Слово "город" удаляется автоматически (из "город Москва" получится "Москва").</li>
+                                    <li>После первой запятой: считается <strong>Улицей и домом</strong> (записываются вместе как единая строка улицы).</li>
                                 </ul>
-                                <p class="mb-2"><strong>Дополнительные колонки (без заголовков):</strong></p>
+                                <p class="mb-1">Правила обработки:</p>
                                 <ul class="mb-0 ps-3">
-                                    <li>5-я колонка (D): Количество панелей</li>
-                                    <li>6-я колонка (E): Место установки панели (кабинет)</li>
+                                    <li>Город и улица обязательны, иначе загрузка прервется.</li>
+                                    <li>Город <strong>обязательно</strong> должен существовать в базе данных системы. Новые города не создаются, при отсутствии города файл выдаст ошибку.</li>
+                                    <li>Если точный адрес (по городу и строке улицы) не найден в базе, он будет создан автоматически как новый.</li>
                                 </ul>
                             </div>
                         </div>
