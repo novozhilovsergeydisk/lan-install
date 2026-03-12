@@ -2411,7 +2411,7 @@
                                                 <td style="background-color: white !important; color: #212529 !important;">ГБОУ ДОУ № 5</td>
                                                 <td style="background-color: white !important; color: #212529 !important;">город Москва, ул. Чехова, д. 5</td>
                                                 <td style="background-color: white !important; color: #212529 !important;">Кузнецов В.В. 8(999)123-45-05</td>
-                                                <td style="background-color: white !important; color: #212529 !important;"></td>
+                                                <td style="background-color: white !important; color: #212529 !important;">Монтаж в коридоре 1-го этажа</td>
                                             </tr>
                                         </tbody>
                                     </table>
