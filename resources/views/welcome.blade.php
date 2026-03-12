@@ -2720,6 +2720,27 @@
                         <label for="requestsFile" class="form-label">Выберите файл с заявками</label>
                         <input type="file" class="form-control" id="requestsFile" name="requests_file" accept=".xlsx, .xls, .csv">
                     </div>
+                    <div class="mb-3">
+                        <a href="#helpFormat" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="helpFormat" class="text-decoration-none text-info">
+                            <i class="bi bi-question-circle"></i> Справка по формату Excel-файла
+                        </a>
+                        <div class="collapse mt-2" id="helpFormat">
+                            <div class="card card-body bg-light text-dark small">
+                                <p class="mb-2"><strong>Файл должен содержать следующие заголовки в первой строке:</strong></p>
+                                <ul class="mb-2 ps-3">
+                                    <li><code>ГБОУ</code> (Название организации)</li>
+                                    <li><code>Адрес организации</code> (Пример: <em>город Москва, ул. Ленина, д. 1</em>)</li>
+                                    <li><code>Контакт</code> (ФИО и телефон, например: <em>Иванов И.И. 8(999)123-45-67</em>)</li>
+                                    <li><code>Комментарии к монтажу</code></li>
+                                </ul>
+                                <p class="mb-2"><strong>Дополнительные колонки (без заголовков):</strong></p>
+                                <ul class="mb-0 ps-3">
+                                    <li>5-я колонка (D): Количество панелей</li>
+                                    <li>6-я колонка (E): Место установки панели (кабинет)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">

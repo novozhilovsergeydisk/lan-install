@@ -88,7 +88,7 @@ export async function loadPlanningRequests() {
                 console.error('Ошибка парсинга комментариев:', e);
             }
 
-            const commentsContent = linkifyPreservingAnchors(comments[comments.length - 1].comment);
+            const commentsContent = comments.length > 0 ? linkifyPreservingAnchors(comments[comments.length - 1].comment) : 'Нет комментариев';
             const commentsCount = comments.length;
                 
             
