@@ -77,6 +77,7 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                         FROM work_parameters wp2
                         JOIN work_parameter_types wpt2 ON wp2.parameter_type_id = wpt2.id
                         WHERE wp2.request_id = r.id 
+                          AND wpt2.is_deleted = false
                           AND (wp2.is_planning = false OR wp2.is_planning IS NULL)
                         ORDER BY wp2.parameter_type_id, wp2.id DESC
                     ) as t
@@ -89,10 +90,23 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                         FROM work_parameters wp2
                         JOIN work_parameter_types wpt2 ON wp2.parameter_type_id = wpt2.id
                         WHERE wp2.request_id = r.id 
+                          AND wpt2.is_deleted = false
                           AND (wp2.is_planning = false OR wp2.is_planning IS NULL)
                         ORDER BY wp2.parameter_type_id, wp2.id DESC
                     ) as t
                 ) as actual_works_raw,
+                ( 
+                    SELECT STRING_AGG('- ' || t.name || ': ' || t.quantity, E'\n' ORDER BY t.name)
+                    FROM ( 
+                        SELECT DISTINCT ON (wp2.parameter_type_id) 
+                               wpt2.name, wp2.quantity
+                        FROM work_parameters wp2
+                        JOIN work_parameter_types wpt2 ON wp2.parameter_type_id = wpt2.id
+                        WHERE wp2.request_id = r.id 
+                          AND wpt2.is_deleted = false
+                        ORDER BY wp2.parameter_type_id, wp2.id ASC
+                    ) as t
+                ) as planned_works,
                 -- Проверка наличия вложений (фото или файлов)
                 EXISTS ( 
                     SELECT 1 FROM request_comments rc
@@ -156,6 +170,7 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
         ];
 
         if (!empty($this->dynamicColumns)) {
+            $headings[4] = 'Запланированные работы';
             foreach ($this->dynamicColumns as $col) {
                 $headings[] = $col;
             }
@@ -174,9 +189,15 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
             $photoLink = '=HYPERLINK("' . $url . '", "Скачать файлы")';
         }
 
-        $actualWorksOutput = $row->actual_works 
-            ? "Выполненные работы:\n" . $row->actual_works 
-            : 'Нет данных по выполненным работам';
+        if (!empty($this->dynamicColumns)) {
+            $worksOutput = $row->planned_works 
+                ? $row->planned_works 
+                : '';
+        } else {
+            $worksOutput = $row->actual_works 
+                ? "Выполненные работы:\n" . $row->actual_works 
+                : '';
+        }
 
         $dateAndNumber = ($row->execution_date ? \Carbon\Carbon::parse($row->execution_date)->format('d.m.Y') : 'Не указана') . 
                          "\n" . $row->number;
@@ -186,7 +207,7 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
             $row->full_address,
             $row->brigade_name ? ($row->brigade_name . ($row->leader_name ? ' (' . $row->leader_name . ')' : '')) : 'Не назначена',
             strip_tags($row->first_comment),
-            $actualWorksOutput,
+            $worksOutput,
         ];
 
         if (!empty($this->dynamicColumns)) {
