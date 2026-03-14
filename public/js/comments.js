@@ -35,7 +35,25 @@ async function loadComments(requestId) {
             return;
         }
 
-        let html = '<div class="list-group list-group-flush">';
+        let html = '';
+        if (meta.address_history_url) {
+            html += `
+                <div class="mb-4 pb-3 border-bottom">
+                    <label class="form-label small text-muted">История заявок по адресу:</label>
+                    <div class="d-flex gap-2">
+                        <input type="hidden" value="${meta.address_history_url}" id="historyUrlInput">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" id="copyHistoryUrlBtn">
+                            <i class="bi bi-clipboard"></i> Скопировать ссылку
+                        </button>
+                        <a href="${meta.address_history_url}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-box-arrow-up-right"></i> Открыть
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        html += '<div class="list-group list-group-flush">';
         comments.forEach(comment => {
             const date = new Date(comment.created_at);
             const formattedDate = date.toLocaleString('ru-RU', {
@@ -53,23 +71,6 @@ async function loadComments(requestId) {
                 </div>`;
         });
         html += '</div>';
-
-        if (meta.address_history_url) {
-            html += `
-                <div class="mt-3 pt-3 border-top">
-                    <label class="form-label small text-muted">История заявок по адресу:</label>
-                    <div class="d-flex gap-2">
-                        <input type="hidden" value="${meta.address_history_url}" id="historyUrlInput">
-                        <button class="btn btn-outline-secondary btn-sm" type="button" id="copyHistoryUrlBtn">
-                            <i class="bi bi-clipboard"></i> Скопировать ссылку
-                        </button>
-                        <a href="${meta.address_history_url}" target="_blank" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-box-arrow-up-right"></i> Открыть
-                        </a>
-                    </div>
-                </div>
-            `;
-        }
 
         container.innerHTML = html;
 

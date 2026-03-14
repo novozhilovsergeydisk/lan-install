@@ -1934,7 +1934,25 @@
                             return `hsl(${120 + (hash % 60)},65%,40%)`;
                         }
                         // Оборачивание ссылок вынесено в utils.js -> window.utils.linkifyPreservingAnchors
-                        let html = '<div id="commentUpdateContainer" class="list-group list-group-flush">';
+                        let html = '';
+                        if (meta.address_history_url) {
+                            html += `
+                                <div class="mb-4 pb-3 border-bottom">
+                                    <label class="form-label small text-muted">История заявок по адресу:</label>
+                                    <div class="d-flex gap-2">
+                                        <input type="hidden" value="${meta.address_history_url}" id="historyUrlInputInline">
+                                        <button class="btn btn-outline-secondary btn-sm" type="button" id="copyHistoryUrlBtnInline">
+                                            <i class="bi bi-clipboard"></i> Скопировать ссылку
+                                        </button>
+                                        <a href="${meta.address_history_url}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-box-arrow-up-right"></i> Открыть
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        html += '<div id="commentUpdateContainer" class="list-group list-group-flush">';
                         console.log('Количество комментариев:', comments.length);
 
                         comments.forEach((comment, index) => {
@@ -2061,23 +2079,6 @@
                         });
 
                         html += '</div>';
-
-                        if (meta.address_history_url) {
-                            html += `
-                                <div class="mt-3 pt-3 border-top">
-                                    <label class="form-label small text-muted">История заявок по адресу:</label>
-                                    <div class="d-flex gap-2">
-                                        <input type="hidden" value="${meta.address_history_url}" id="historyUrlInputInline">
-                                        <button class="btn btn-outline-secondary btn-sm" type="button" id="copyHistoryUrlBtnInline">
-                                            <i class="bi bi-clipboard"></i> Скопировать ссылку
-                                        </button>
-                                        <a href="${meta.address_history_url}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                            <i class="bi bi-box-arrow-up-right"></i> Открыть
-                                        </a>
-                                    </div>
-                                </div>
-                            `;
-                        }
 
                         container.innerHTML = html;
 
@@ -2453,72 +2454,74 @@
                 </div>
                 <div id="commentsRequestId" class="w-100 mt-2"></div>
             </div>
-            <div class="modal-body" id="commentsContainer">
-                <!-- Список комментариев будет загружен здесь -->
-                <div class="text-center my-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Загрузка...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <form id="addCommentForm" class="w-100" novalidate>
-                    @csrf
-                    <input type="hidden" name="request_id" id="commentRequestId">
+            <div class="modal-body">
+                <div class="mb-4 pb-3 border-bottom">
+                    <form id="addCommentForm" class="w-100" novalidate>
+                        @csrf
+                        <input type="hidden" name="request_id" id="commentRequestId">
 
-                    <div class="input-group mt-2 mb-4">
-                        <label  for="comment" class="form-label">Введите комментарий</label>
-                        
-                        <div class="w-100 d-flex flex-column gap-2">
-                            <textarea name="comment" id="commentField" class="form-control form-control-lg" rows="3" 
-                                placeholder="Напишите комментарий..." required></textarea>
-                            <div class="invalid-feedback d-none">Пожалуйста, введите комментарий</div>
-                            <button type="submit" class="btn btn-success">
-                                <i class=""></i> Записать комментарий
+                        <div class="input-group mt-2 mb-4">
+                            <label  for="comment" class="form-label">Введите комментарий</label>
+                            
+                            <div class="w-100 d-flex flex-column gap-2">
+                                <textarea name="comment" id="commentField" class="form-control form-control-lg" rows="3" 
+                                    placeholder="Напишите комментарий..." required></textarea>
+                                <div class="invalid-feedback d-none">Пожалуйста, введите комментарий</div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class=""></i> Записать комментарий
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="photoUpload" class="form-label">Выберите фотографии</label>
+                            <div class="w-100 photo-upload-highlight p-1">
+                                <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept=".jpg,.jpeg,.png,.gif,.heic,.heif,.bmp,.tiff,.webp">
+                            </div>
+                            <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: JPG, PNG, GIF, BMP, TIFF, WEBP, HEIC/HEIF.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label d-block" for="commentFilesInput">Выберите файлы</label>
+                            <div class="w-100 file-input-highlight p-1">
+                                <input id="commentFilesInput" type="file" name="files[]" class="form-control" multiple accept="video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.heic,.heif,.mp3,.wav,.ogg,.mp4,.webm,.mov,.avi,.zip,.rar,.7z" />
+                            </div>
+                            <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, ZIP, RAR, 7Z и т.д.</div>
+                        </div>
+                    </form>
+                    
+                    <div class="w-100 d-flex flex-column gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <button data-request-id="" type="button"
+                                    class="btn btn-sm btn-outline-success add-photo-btn d-none">
+                                <i class="bi bi-camera me-1"></i> Фотоотчет
                             </button>
+                            <button id="showPhotosBtn" type="button" class="btn btn-sm btn-outline-info"
+                                    aria-controls="photoReportContainer">
+                                <i class="bi bi-images me-1"></i> Показать все фото
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning download-all-photos-btn">Скачать zip архив всех фото</button>
                         </div>
-                    </div>
 
-                    <div class="mb-3">
-                        <label for="photoUpload" class="form-label">Выберите фотографии</label>
-                        <div class="w-100 photo-upload-highlight p-1">
-                            <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept=".jpg,.jpeg,.png,.gif,.heic,.heif,.bmp,.tiff,.webp">
+                        <div class="mb-3 d-none">
+                            <label class="form-label">Предпросмотр фотографий:</label>
+                            <div id="photoPreviewNew" class="row g-2">
+                                <div class="col-12 text-muted">Здесь будет предпросмотр выбранных фотографий</div>
+                            </div>
                         </div>
-                        <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: JPG, PNG, GIF, BMP, TIFF, WEBP, HEIC/HEIF.</div>
-                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label d-block" for="commentFilesInput">Выберите файлы</label>
-                        <div class="w-100 file-input-highlight p-1">
-                            <input id="commentFilesInput" type="file" name="files[]" class="form-control" multiple accept="video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.pdf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.heic,.heif,.mp3,.wav,.ogg,.mp4,.webm,.mov,.avi,.zip,.rar,.7z" />
-                        </div>
-                        <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: PDF, DOC, DOCX, XLS, XLSX, ZIP, RAR, 7Z и т.д.</div>
+                        <div id="photoReportContainer"></div>
                     </div>
-                </form>
-                
-                <div class="w-100 d-flex flex-column gap-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <button data-request-id="" type="button"
-                                class="btn btn-sm btn-outline-success add-photo-btn d-none">
-                            <i class="bi bi-camera me-1"></i> Фотоотчет
-                        </button>
-                        <button id="showPhotosBtn" type="button" class="btn btn-sm btn-outline-info"
-                                aria-controls="photoReportContainer">
-                            <i class="bi bi-images me-1"></i> Показать все фото
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning download-all-photos-btn">Скачать zip архив всех фото</button>
-                    </div>
-
-                    <div class="mb-3 d-none">
-                        <label class="form-label">Предпросмотр фотографий:</label>
-                        <div id="photoPreviewNew" class="row g-2">
-                            <div class="col-12 text-muted">Здесь будет предпросмотр выбранных фотографий</div>
-                        </div>
-                    </div>
-
-                    <div id="photoReportContainer"></div>
                 </div>
-                
+
+                <div id="commentsContainer">
+                    <!-- Список комментариев будет загружен здесь -->
+                    <div class="text-center my-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
