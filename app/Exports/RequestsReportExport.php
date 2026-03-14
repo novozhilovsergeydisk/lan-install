@@ -70,6 +70,14 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                     LIMIT 1
                 ) as first_comment,
                 ( 
+                    SELECT com.comment 
+                    FROM request_comments rc 
+                    JOIN comments com ON rc.comment_id = com.id 
+                    WHERE rc.request_id = r.id 
+                    ORDER BY com.created_at DESC 
+                    LIMIT 1
+                ) as last_comment,
+                ( 
                     SELECT STRING_AGG('- ' || t.name || ': ' || t.quantity, E'\n' ORDER BY t.name)
                     FROM ( 
                         SELECT DISTINCT ON (wp2.parameter_type_id) 
@@ -202,11 +210,21 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
         $dateAndNumber = ($row->execution_date ? \Carbon\Carbon::parse($row->execution_date)->format('d.m.Y') : 'Не указана') . 
                          "\n" . $row->number;
 
+        $firstComment = strip_tags($row->first_comment);
+        $lastComment = strip_tags($row->last_comment);
+        
+        $commentOutput = $firstComment;
+        if (!empty($firstComment) && !empty($lastComment) && $firstComment !== $lastComment) {
+            $commentOutput .= "\n\nПоследний комментарий:\n" . $lastComment;
+        } elseif (empty($firstComment) && !empty($lastComment)) {
+            $commentOutput = "Последний комментарий:\n" . $lastComment;
+        }
+
         $rowArray = [
             $dateAndNumber,
             $row->full_address,
             $row->brigade_name ? ($row->brigade_name . ($row->leader_name ? ' (' . $row->leader_name . ')' : '')) : 'Не назначена',
-            strip_tags($row->first_comment),
+            $commentOutput,
             $worksOutput,
         ];
 
