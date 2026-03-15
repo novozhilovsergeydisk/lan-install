@@ -72,6 +72,8 @@ async function initPlanningMap() {
     await loadAndDrawPlanningRequests();
 }
 
+window.loadAndDrawPlanningRequests = loadAndDrawPlanningRequests;
+
 async function loadAndDrawPlanningRequests() {
     const map = window.planningYandexMap;
     map.geoObjects.removeAll();
@@ -79,12 +81,16 @@ async function loadAndDrawPlanningRequests() {
     console.log('Loading planning requests for map...');
 
     try {
+        const subtypeFilter = document.getElementById('planningSubtypeFilter');
+        const subtypeId = subtypeFilter ? subtypeFilter.value : '';
+
         const response = await fetch('/get-planning-requests', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
+            },
+            body: JSON.stringify({ subtype_id: subtypeId }),
         });
         
         if (!response.ok) {

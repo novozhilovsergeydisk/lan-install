@@ -1563,7 +1563,13 @@
                         <h4>Список запланированных заявок</h4>
 
     @if($user->isAdmin)
-    <div id="planning-content" class="mb-3 d-flex justify-content-end">
+    <div id="planning-content" class="mb-3 d-flex justify-content-end align-items-center">
+        <select class="form-select me-2 w-auto" id="planningSubtypeFilter">
+            <option value="">Все планирования</option>
+            @foreach($request_subtypes as $subtype)
+                <option value="{{ $subtype->id }}" {{ $subtype->name === 'Стандартное планирование' ? 'selected' : '' }}>{{ $subtype->name }}</option>
+            @endforeach
+        </select>
         <button type="button" class="btn btn-outline-secondary me-2" id="btn-open-planning-map">
             <i class="bi bi-map me-1"></i>На карте
         </button>
@@ -3072,6 +3078,16 @@
                                 <input type="text" class="form-control" id="clientOrganizationPlanningRequest" name="client_organization_planning_request">
                             </div>
                         </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="planningRequestSubtype" class="form-label">Подтип планирования <span class="text-danger">*</span></label>
+                        <select class="form-select" id="planningRequestSubtype" name="subtype_id" required>
+                            <option value="" disabled selected>Выберите подтип</option>
+                            @foreach($request_subtypes as $subtype)
+                                <option value="{{ $subtype->id }}" {{ $subtype->name === 'Стандартное планирование' ? 'selected' : '' }}>{{ $subtype->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div class="mb-3">

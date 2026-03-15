@@ -1136,12 +1136,21 @@ class HomeController extends Controller
             // Получаем список регионов для выпадающего списка
             $regions = DB::table('regions')->orderBy('name')->get();
 
+            // Получаем подтипы для "Планирование"
+            $request_subtypes = DB::table('request_subtypes')
+                ->join('request_statuses', 'request_subtypes.status_id', '=', 'request_statuses.id')
+                ->where('request_statuses.name', 'планирование')
+                ->select('request_subtypes.id', 'request_subtypes.name')
+                ->orderBy('request_subtypes.id')
+                ->get();
+
             // Собираем все переменные для передачи в представление
             $viewData = [
                 'user' => $user,
                 'users' => $users,
                 'clients' => $clients,
                 'request_statuses' => $request_statuses,
+                'request_subtypes' => $request_subtypes,
                 'requests' => $requests,
                 'brigades' => $brigades,
                 'employees' => $employees,

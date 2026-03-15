@@ -319,14 +319,26 @@ class PlanningRequestController extends Controller
         }
     }
 
-    public function getPlanningRequests()
+    public function getPlanningRequests(Request $request)
     {
         try {
+            $subtypeId = $request->input('subtype_id');
+            
+            $whereClause = "AND (rs.name = 'планирование')";
+            $params = [];
+            
+            if (!empty($subtypeId)) {
+                $whereClause .= " AND r.subtype_id = :subtype_id";
+                $params['subtype_id'] = $subtypeId;
+            }
+
             $sql = "
             SELECT
                 r.id,
                 r.request_type_id,
                 r.brigade_id,
+                r.subtype_id,
+                rsub.name AS subtype_name,
                 TO_CHAR(r.request_date, 'DD.MM.YYYY') AS request_date,
                 r.number,
                 '#' || r.id || ', ' || r.number || ', создана ' || TO_CHAR(r.request_date, 'DD.MM.YYYY') AS request,
@@ -356,6 +368,7 @@ class PlanningRequestController extends Controller
                     ) ORDER BY co.created_at DESC
                 ) FILTER (WHERE co.id IS NOT NULL) AS comments
             FROM requests r
+            LEFT JOIN request_subtypes rsub ON r.subtype_id = rsub.id
             LEFT JOIN clients c ON r.client_id = c.id
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
             LEFT JOIN request_types rt ON r.request_type_id = rt.id
@@ -370,9 +383,9 @@ class PlanningRequestController extends Controller
             LEFT JOIN users u ON rc.user_id = u.id
             LEFT JOIN employees emp ON u.id = emp.user_id
             WHERE 1=1
-                AND (rs.name = 'планирование')
+                $whereClause
             GROUP BY
-                r.id, r.request_type_id, r.brigade_id, r.number, r.request_date,
+                r.id, r.request_type_id, r.brigade_id, r.subtype_id, rsub.name, r.number, r.request_date,
                 c.fio, c.phone, c.organization,
                 op.fio,
                 ct.name, addr.district, addr.street, addr.houses, addr.latitude, addr.longitude,
@@ -384,7 +397,7 @@ class PlanningRequestController extends Controller
                 bl.fio
             ORDER BY r.id DESC";
 
-            $result = DB::select($sql);
+            $result = DB::select($sql, $params);
             $brigadeMembersWithDetails = $this->getBrigadeMembersWithDetails();
 
             return response()->json([
@@ -552,6 +565,7 @@ class PlanningRequestController extends Controller
             'address_id' => $addressId,
             'request_type_id' => $input['request_type_id'] ?? 1, // Используем переданный тип или default
             'status_id' => 6, // Значение по умолчанию
+            'subtype_id' => $input['subtype_id'] ?? null,
             'user_id' => auth()->id(),
             'work_parameters' => $input['work_parameters'] ?? null,
         ];
@@ -565,6 +579,7 @@ class PlanningRequestController extends Controller
             'address_id' => 'required|exists:addresses,id',
             'request_type_id' => 'required|exists:request_types,id',
             'status_id' => 'required|exists:request_statuses,id',
+            'subtype_id' => 'required|exists:request_subtypes,id',
             'user_id' => 'required|exists:users,id',
             'work_parameters' => 'nullable|array',
             'work_parameters.*.parameter_type_id' => 'required|exists:work_parameter_types,id',
@@ -667,6 +682,7 @@ class PlanningRequestController extends Controller
             $validationData['address_id'] = $input['address_id'] ?? null;
             $validationData['request_type_id'] = $input['request_type_id'] ?? 1;
             $validationData['status_id'] = 6;
+            $validationData['subtype_id'] = $input['subtype_id'] ?? null;
             $validationData['comment'] = $input['planning_request_comment'] ?? null; // Исправлено на правильное имя поля
             $validationData['execution_date'] = $input['execution_date'] ?? null;
             $validationData['execution_time'] = $input['execution_time'] ?? null;
@@ -689,6 +705,7 @@ class PlanningRequestController extends Controller
                 'client_organization' => 'nullable|string|max:255',
                 'request_type_id' => 'required|exists:request_types,id',
                 'status_id' => 'required|exists:request_statuses,id',
+                'subtype_id' => 'required|exists:request_subtypes,id',
                 'comment' => 'nullable|string',
                 'execution_date' => 'nullable|date',
                 'execution_time' => 'nullable|date_format:H:i',
@@ -850,11 +867,12 @@ class PlanningRequestController extends Controller
 
             // Вставляем заявку с помощью DB::insert и получаем ID
             $result = DB::select(
-                'INSERT INTO requests (client_id, request_type_id, status_id, execution_date, execution_time, brigade_id, operator_id, number, request_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
+                'INSERT INTO requests (client_id, request_type_id, status_id, subtype_id, execution_date, execution_time, brigade_id, operator_id, number, request_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
                 [
                     $clientId,
                     $validated['request_type_id'],
                     $validated['status_id'],
+                    $validated['subtype_id'],
                     null,
                     $validated['execution_time'] ?? null,
                     $validated['brigade_id'] ?? null,

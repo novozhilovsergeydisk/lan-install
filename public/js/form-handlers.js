@@ -3697,15 +3697,28 @@ async function loadWorkParametersForContainer(requestTypeId, containerId) {
 
 export function initPlanningRequestFormHandlers() {
     const submitButton = document.getElementById('submitPlanningRequest');
-    
+
     if (!submitButton) {
         console.error('Кнопка submitPlanningRequest не найдена');
         return;
     }
 
+    // Обработчик для фильтра подтипов планирования
+    const subtypeFilter = document.getElementById('planningSubtypeFilter');
+    if (subtypeFilter) {
+        subtypeFilter.addEventListener('change', function() {
+            loadPlanningRequests();
+
+            // Если карта открыта, обновляем и её
+            const mapContent = document.getElementById('planning-map-content');
+            if (mapContent && !mapContent.classList.contains('hide-me') && typeof window.loadAndDrawPlanningRequests === 'function') {
+                window.loadAndDrawPlanningRequests();
+            }
+        });
+    }
+
     // Загружаем запланированные заявки
     loadPlanningRequests();
-
     // Загружаем адреса
     loadAddressesForPlanning();
 
@@ -3816,6 +3829,7 @@ export function initPlanningRequestFormHandlers() {
         const clientPhone = formData.get('client_phone_planning_request');
         const clientOrganization = formData.get('client_organization_planning_request');
         const requestTypeId = formData.get('request_type_id');
+        const subtypeId = formData.get('subtype_id');
         const _token = formData.get('_token');
         
         // Детальное логирование данных формы
@@ -3835,6 +3849,21 @@ export function initPlanningRequestFormHandlers() {
         
         if (!addressId) {
             markFieldAsInvalid('addresses_planning_request_id', 'Пожалуйста, выберите адрес');
+            hasErrors = true;
+        }
+
+        if (!subtypeId) {
+            const field = document.getElementById('planningRequestSubtype');
+            if (field) {
+                field.classList.add('is-invalid');
+                let errorElement = field.nextElementSibling;
+                if (!errorElement || !errorElement.classList.contains('invalid-feedback')) {
+                    errorElement = document.createElement('div');
+                    errorElement.className = 'invalid-feedback';
+                    field.parentNode.insertBefore(errorElement, field.nextSibling);
+                }
+                errorElement.textContent = 'Пожалуйста, выберите подтип заявки';
+            }
             hasErrors = true;
         }
 
@@ -3891,6 +3920,7 @@ export function initPlanningRequestFormHandlers() {
                 client_phone_planning_request: clientPhone,
                 client_organization_planning_request: clientOrganization,
                 request_type_id: requestTypeId,
+                subtype_id: subtypeId,
                 work_parameters: workParameters,
                 _token: _token
             };

@@ -47,6 +47,10 @@ export async function loadPlanningRequests() {
             </div>
             `;
 
+        // Получаем значение фильтра
+        const subtypeFilter = document.getElementById('planningSubtypeFilter');
+        const subtypeId = subtypeFilter ? subtypeFilter.value : '';
+
         // Загружаем данные с сервера
         const response = await fetch('/get-planning-requests', {
             method: 'POST',
@@ -54,6 +58,7 @@ export async function loadPlanningRequests() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
+            body: JSON.stringify({ subtype_id: subtypeId }),
             credentials: 'same-origin'
         });
 
@@ -137,6 +142,7 @@ export async function loadPlanningRequests() {
                  </td>
                    <td class="col-comments">
                        <div class="col-date__date" ${request.request_type_color ? `style="background-color: ${request.request_type_color}; color: ${window.utils.getContrastColor(request.request_type_color)}"` : ''}>${request.request_date} | ${request.number}${request.request_type_name ? ` <span>${request.request_type_name}</span>` : ''}</div>
+                       ${request.subtype_name ? `<div class="mb-1 mt-1"><span class="badge bg-secondary">${request.subtype_name}</span></div>` : ''}
                       ${commentsContent.length > 0 ? `
                           <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                               <p class="comment-preview-title">Печатный комментарий:</p>
