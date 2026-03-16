@@ -118,18 +118,27 @@ function drawPlanningRequests(map, requests) {
     const usedCoordinates = new Set(); // Для отслеживания занятых координат
 
     requests.forEach(request => {
-        // Проверяем и смещаем координаты при совпадении
         let lat = parseFloat(request.latitude);
         let lon = parseFloat(request.longitude);
+        
+        // Пропускаем заявки без координат
+        if (isNaN(lat) || isNaN(lon)) {
+            console.warn('Пропущена заявка без координат:', request.number);
+            return;
+        }
+
         let coordKey = `${lat.toFixed(6)},${lon.toFixed(6)}`;
 
-        while (usedCoordinates.has(coordKey)) {
+        // Проверяем и смещаем координаты при совпадении (максимум 50 попыток для безопасности)
+        let attempts = 0;
+        while (usedCoordinates.has(coordKey) && attempts < 50) {
             // Добавляем небольшое случайное смещение (примерно 5-10 метров)
             const offsetLat = (Math.random() - 0.5) * 0.0002;
             const offsetLon = (Math.random() - 0.5) * 0.0002;
             lat += offsetLat;
             lon += offsetLon;
             coordKey = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+            attempts++;
         }
 
         usedCoordinates.add(coordKey);
