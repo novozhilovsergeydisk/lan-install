@@ -66,6 +66,47 @@ class PlanningRequestController extends Controller
                 ], 400);
             }
 
+            // Проверка наличия всех колонок параметров работ для выбранного типа заявки
+            if (!empty($workParameterTypes)) {
+                $missingParameters = [];
+                foreach ($workParameterTypes as $parameterName => $parameterInfo) {
+                    $found = false;
+                    foreach ($headers as $header) {
+                        if (trim(mb_strtolower($header)) === trim(mb_strtolower($parameterName))) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if (!$found) {
+                        $missingParameters[] = $parameterName;
+                    }
+                }
+
+                if (!empty($missingParameters)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'В файле отсутствуют обязательные колонки параметров работ для выбранного типа заявки: ' . implode(', ', $missingParameters),
+                    ], 400);
+                }
+            } else {
+                // Если тип заявки не выбран, проверяем, что нет лишних колонок
+                // (разрешаем только обязательные базовые колонки)
+                $extraColumns = [];
+                foreach ($headers as $header) {
+                    $normalizedCurrentHeader = trim(mb_strtolower($header));
+                    if (!in_array($normalizedCurrentHeader, $expectedHeaders) && !empty($normalizedCurrentHeader)) {
+                        $extraColumns[] = $header;
+                    }
+                }
+                
+                if (!empty($extraColumns)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'В файле найдены лишние колонки: ' . implode(', ', $extraColumns) . '. Выберите соответствующий тип заявки или удалите лишние колонки из файла.',
+                    ], 400);
+                }
+            }
+
             DB::beginTransaction();
             $createdRequests = [];
 

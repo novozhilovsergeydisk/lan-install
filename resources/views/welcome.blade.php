@@ -2731,11 +2731,6 @@
                         <div class="form-text">Если выбрать тип заявки, можно добавлять колонки с параметрами работ.</div>
                     </div>
                     <div class="mb-3">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="downloadTemplateBtn">
-                            <i class="bi bi-file-earmark-excel"></i> Скачать шаблон
-                        </button>
-                    </div>
-                    <div class="mb-3">
                         <label for="requestsFile" class="form-label">Выберите файл с заявками</label>
                         <input type="file" class="form-control" id="requestsFile" name="requests_file" accept=".xlsx, .xls, .csv">
                     </div>
@@ -2786,7 +2781,7 @@
                                 </div>
                                 
                                 <div class="alert alert-info py-2 small mb-2 mt-2">
-                                    <i class="bi bi-info-circle me-1"></i> Если выбран тип заявки (например, "Монтаж СВН"), вы можете добавить колонки с названиями запланированных работ (например, "Монтаж камер"). Значения в таких колонках должны быть числами (количество).
+                                    <i class="bi bi-info-circle me-1"></i> Если выбран тип заявки (например, "Осмотр МЭШ"), вы можете добавить колонки с названиями запланированных работ (например, "Коммутатор 48 портов"). Значения в таких колонках должны быть числами (количество).
                                 </div>
                                 <hr>
                                 <p class="mb-2 text-danger"><strong>Важно: Как обрабатывается Адрес организации</strong></p>
@@ -2807,6 +2802,9 @@
                 </form>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary me-auto" id="downloadTemplateBtn">
+                    <i class="bi bi-file-earmark-excel"></i> Скачать шаблон
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 <button type="button" class="btn btn-primary" id="uploadRequestsSubmit">Загрузить</button>
             </div>
