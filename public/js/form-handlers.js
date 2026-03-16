@@ -1904,9 +1904,51 @@ function getStatusColor(statusId) {
 export function initUploadRequestsHandler() {
     const uploadButton = document.getElementById('upload-requests-button');
     if (uploadButton) {
-        uploadButton.addEventListener('click', () => {
+        uploadButton.addEventListener('click', async () => {
             console.log("Кнопка 'Загрузить заявки' нажата");
             const modal = new bootstrap.Modal(document.getElementById('uploadRequestsModal'));
+            
+            // Load request types dynamically
+            const requestTypeSelect = document.getElementById('uploadRequestType');
+            if (requestTypeSelect) {
+                try {
+                    requestTypeSelect.innerHTML = '<option value="" selected>Загрузка...</option>';
+                    const response = await fetch('/api/request-types?is_deleted=false');
+                    if (response.ok) {
+                        const types = await response.json();
+                        requestTypeSelect.innerHTML = '<option value="" selected>Не выбран (по умолчанию)</option>';
+                        types.forEach(type => {
+                            const option = document.createElement('option');
+                            option.value = type.id;
+                            option.textContent = type.name;
+                            requestTypeSelect.appendChild(option);
+                        });
+                    } else {
+                         requestTypeSelect.innerHTML = '<option value="" selected>Ошибка загрузки типов</option>';
+                    }
+                } catch (error) {
+                    console.error('Ошибка при загрузке типов заявок:', error);
+                    requestTypeSelect.innerHTML = '<option value="" selected>Ошибка загрузки</option>';
+                }
+            }
+            
+            // Handle template download
+            const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+            if (downloadTemplateBtn) {
+                // Remove existing listener to avoid multiple triggers if opened multiple times
+                const newDownloadTemplateBtn = downloadTemplateBtn.cloneNode(true);
+                downloadTemplateBtn.parentNode.replaceChild(newDownloadTemplateBtn, downloadTemplateBtn);
+                
+                newDownloadTemplateBtn.addEventListener('click', () => {
+                    const selectedTypeId = requestTypeSelect ? requestTypeSelect.value : '';
+                    let url = '/planning-requests/download-template';
+                    if (selectedTypeId) {
+                        url += `?request_type_id=${selectedTypeId}`;
+                    }
+                    window.location.href = url;
+                });
+            }
+
             modal.show();
         });
     }
@@ -1917,12 +1959,18 @@ export function initUploadRequestsHandler() {
             // showAlert('Функция загрузки заявок из Excel в разработке', 'warning');
             // return;
             const requestsFileElement = document.getElementById('requestsFile');
+            const requestTypeSelect = document.getElementById('uploadRequestType');
+            
             if (requestsFileElement && requestsFileElement.files.length > 0) {
                 const file = requestsFileElement.files[0];
                 console.log('Выбран файл для загрузки:', file.name);
 
                 const formData = new FormData();
                 formData.append('requests_file', file);
+                
+                if (requestTypeSelect && requestTypeSelect.value) {
+                    formData.append('request_type_id', requestTypeSelect.value);
+                }
 
                 // Add loading indicator
                 uploadSubmitButton.disabled = true;

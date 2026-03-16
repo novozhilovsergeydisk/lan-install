@@ -15,7 +15,20 @@ class PlanningRequestController extends Controller
         try {
             $validated = $request->validate([
                 'requests_file' => 'required|file|mimes:xlsx,xls|max:10240',
+                'request_type_id' => 'nullable|integer|exists:request_types,id',
             ]);
+
+            $requestTypeId = $validated['request_type_id'] ?? null;
+            $workParameterTypes = [];
+            
+            if ($requestTypeId) {
+                $workParameterTypes = DB::table('work_parameter_types')
+                    ->where('request_type_id', $requestTypeId)
+                    ->where('is_deleted', false)
+                    ->get()
+                    ->keyBy('name')
+                    ->toArray();
+            }
 
             $file = $request->file('requests_file');
             $reader = IOFactory::createReaderForFile($file->getRealPath());
@@ -57,6 +70,17 @@ class PlanningRequestController extends Controller
             $createdRequests = [];
 
             $headerMap = array_flip($normalizedHeaders);
+            
+            // Находим колонки, которые соответствуют параметрам работ (с учетом регистра оригинальных заголовков, чтобы сравнивать)
+            $parameterColumns = [];
+            if (!empty($workParameterTypes)) {
+                foreach ($headers as $index => $originalHeader) {
+                    $trimmedHeader = trim($originalHeader);
+                    if (isset($workParameterTypes[$trimmedHeader])) {
+                        $parameterColumns[$index] = $workParameterTypes[$trimmedHeader]->id;
+                    }
+                }
+            }
 
             foreach ($data as $rowIndex => $row) {
                 $rowData = [];
@@ -69,7 +93,7 @@ class PlanningRequestController extends Controller
                 $addressParts = explode(',', $addressString, 2);
                 $cityString = trim($addressParts[0] ?? '');
                 $streetString = trim($addressParts[1] ?? '');
-                $cityName = str_replace('город ', '', $cityString);
+                $cityName = trim(preg_replace('/^(г\.|город|г\s)\s*/iu', '', $cityString));
 
                 // 2. Parse Contact
                 $contactString = $rowData['контакт'] ?? '';
@@ -102,9 +126,30 @@ class PlanningRequestController extends Controller
                     'client_id' => $clientId,
                     'address_id' => $addressId,
                     'comment' => $parsedRowData['comment'],
+                    'request_type_id' => $requestTypeId,
                 ];
 
                 $newRequest = $this->createPlanningRequest($requestData);
+                
+                // Добавляем параметры работ
+                if (!empty($parameterColumns)) {
+                    foreach ($parameterColumns as $columnIndex => $parameterTypeId) {
+                        $value = $row[$columnIndex] ?? null;
+                        // Проверяем, что значение является числом и больше 0
+                        if (is_numeric($value) && $value > 0) {
+                            DB::table('work_parameters')->insert([
+                                'request_id' => is_array($newRequest) ? $newRequest['id'] : $newRequest->id,
+                                'parameter_type_id' => $parameterTypeId,
+                                'quantity' => (int) $value,
+                                'is_planning' => true,
+                                'is_done' => false,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
+                }
+                
                 $createdRequests[] = $newRequest;
             }
 
@@ -188,8 +233,9 @@ class PlanningRequestController extends Controller
 
         $requestId = DB::table('requests')->insertGetId([
             'client_id' => $data['client_id'],
-            'request_type_id' => 1, // default
+            'request_type_id' => $data['request_type_id'] ?? 1, // default 1 if not provided
             'status_id' => 6, // 'планирование'
+            'subtype_id' => 1, // 'Стандартное планирование' по умолчанию
             'operator_id' => $employeeId,
             'number' => $requestNumber,
             'request_date' => now()->toDateString(),

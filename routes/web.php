@@ -388,6 +388,10 @@ Route::post('/planning-requests/upload-excel', [PlanningRequestController::class
     ->name('planning-requests.upload-excel')
     ->middleware('auth');
 
+Route::get('/planning-requests/download-template', [\App\Http\Controllers\ExcelTemplateController::class, 'downloadTemplate'])
+    ->name('planning-requests.download-template')
+    ->middleware('auth');
+
 Route::post('/get-planning-requests', [PlanningRequestController::class, 'getPlanningRequests'])
     ->name('get-planning-requests')
     ->middleware('auth');
