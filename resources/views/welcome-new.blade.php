@@ -4619,12 +4619,11 @@
                         <!-- Здесь будут отображаться параметры работ -->
                     </div>
 
-                    <div class="mb-3">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="editExecutionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="editExecutionDate" name="execution_date" required />
-                                <!-- min устанавливается динамически через JavaScript -->
+                    <div class="mb-3" id="editExecutionDateTimeContainer">
+                         <div class="row g-3">
+                             <div class="col-md-6">
+                                 <label for="editExecutionDate" class="form-label">Дата выполнения <span class="text-danger">*</span></label>
+                                 <input type="date" class="form-control" id="editExecutionDate" name="execution_date" required />                                <!-- min устанавливается динамически через JavaScript -->
                             </div>
                             <div class="col-md-6">
                                 <label for="editExecutionTime" class="form-label">Время выполнения</label>

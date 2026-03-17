@@ -109,7 +109,7 @@ class HomeController extends Controller
                 'client_organization' => 'nullable|string|max:255',
                 'request_type_id' => 'nullable|integer|exists:request_types,id',
                 'status_id' => 'nullable|integer|exists:request_statuses,id',
-                'execution_date' => 'required|date',
+                'execution_date' => 'required_unless:status_id,6|nullable|date',
                 'execution_time' => 'nullable|date_format:H:i',
                 'addresses_id' => 'required|integer|exists:addresses,id',
                 'work_parameters' => 'nullable|array',

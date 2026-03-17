@@ -130,6 +130,23 @@ async function initEditRequestHandler() {
                         });
                         // Устанавливаем значение после заполнения
                         requestStatusEl.value = data.status_id || data.statusId || '';
+
+                        // Скрываем/показываем дату в зависимости от статуса (6 = планирование)
+                        const executionDateContainer = document.getElementById('editExecutionDateTimeContainer');
+                        const toggleExecutionDateVisibility = () => {
+                            if (executionDateContainer && executionDateEl) {
+                                if (requestStatusEl.value === '6') {
+                                    executionDateContainer.classList.add('d-none');
+                                    executionDateEl.required = false;
+                                } else {
+                                    executionDateContainer.classList.remove('d-none');
+                                    executionDateEl.required = true;
+                                }
+                            }
+                        };
+
+                        requestStatusEl.onchange = toggleExecutionDateVisibility;
+                        toggleExecutionDateVisibility(); // Вызов при инициализации
                     }
 
                     // 4. Заполняем и устанавливаем адрес
@@ -268,20 +285,26 @@ async function initEditRequestFormHandler() {
 
         // Валидация обязательных полей
         if (document.getElementById('editExecutionDate') && document.getElementById('editAddressesId')) {
-            const executionDate = document.getElementById('editExecutionDate').value.trim();
+            const executionDateEl = document.getElementById('editExecutionDate');
+            const executionDate = executionDateEl.value.trim();
             const addressesId = document.getElementById('editAddressesId').value.trim();
+            const statusId = document.getElementById('editRequestStatus') ? document.getElementById('editRequestStatus').value : null;
 
-            if (!executionDate || !addressesId) {
-                showAlert('Пожалуйста, заполните все обязательные поля: Дата выполнения и Адрес.', 'warning');
+            const isDateRequired = statusId !== '6'; // 6 = планирование
+            const isDateInvalid = isDateRequired && !executionDate;
+            const isAddressInvalid = !addressesId;
 
-                if (!executionDate) {
-                    document.getElementById('editExecutionDate').classList.add('is-invalid');
+            if (isDateInvalid || isAddressInvalid) {
+                showAlert('Пожалуйста, заполните все обязательные поля' + (isDateRequired ? ': Дата выполнения и Адрес.' : ': Адрес.'), 'warning');
+
+                if (isDateInvalid) {
+                    executionDateEl.classList.add('is-invalid');
                 } else {
-                    document.getElementById('editExecutionDate').classList.remove('is-invalid');
-                    document.getElementById('editExecutionDate').classList.add('is-valid');
+                    executionDateEl.classList.remove('is-invalid');
+                    if (executionDate) executionDateEl.classList.add('is-valid');
                 }
 
-                if (!addressesId) {
+                if (isAddressInvalid) {
                     document.getElementById('custom-select-wrapper-editAddressesId').classList.add('is-invalid');
                     document.querySelector('#custom-select-wrapper-editAddressesId .custom-select-input').classList.add('is-invalid');
                 } else {
@@ -292,6 +315,8 @@ async function initEditRequestFormHandler() {
                 }
 
                 return;
+            } else {
+                executionDateEl.classList.remove('is-invalid');
             }
         }
 
