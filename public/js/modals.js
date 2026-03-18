@@ -152,6 +152,9 @@ export function initAdditionalTaskModal() {
     document.addEventListener('click', async function(e) {
         if (e.target.id === 'submitAdditionalTask') {
             e.preventDefault();
+            
+            const submitBtn = e.target;
+            if (submitBtn.disabled) return; // Защита от двойного клика
 
             // Синхронизируем содержимое WYSIWYG-редактора с textarea перед сбором данных
             const editor = document.getElementById('additionalCommentEditor');
@@ -203,6 +206,11 @@ export function initAdditionalTaskModal() {
             console.log('Входные данные формы дополнительного задания:', data);
             console.log('Request ID:', data.request_id);
 
+            // Блокируем кнопку перед отправкой
+            submitBtn.disabled = true;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Создание...';
+
             try {
                 // Отправка данных на сервер
                 const response = await fetch('/api/requests', {
@@ -231,10 +239,14 @@ export function initAdditionalTaskModal() {
                     }, 1000);
                 } else {
                     showAlert(result.message || 'Ошибка при создании дополнительного задания', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
                 }
             } catch (error) {
                 console.error('Ошибка при отправке формы:', error);
                 showAlert('Произошла ошибка при создании дополнительного задания', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
             }
         }
     });
