@@ -6274,10 +6274,9 @@ async function loadCommentFiles(commentId, showFilesBtn) {
             filesContainer.style.width = '100%';
         } catch (e) {}
         
-        // Вставляем контейнер после кнопки, если она существует
+        // Вставляем контейнер после родительского блока кнопок, чтобы он занимал 100% ширины
         if (showFilesBtn && showFilesBtn.parentNode) {
-            // Находим родительский элемент кнопки и вставляем контейнер после неё
-            showFilesBtn.parentNode.insertBefore(filesContainer, showFilesBtn.nextSibling);
+            showFilesBtn.parentNode.insertAdjacentElement('afterend', filesContainer);
         } else {
             // Или в начало контейнера комментариев, если кнопка не передана
             const commentsContainer = commentsModal.querySelector('#commentsContainer');
@@ -6358,12 +6357,15 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
         // Создаем новый контейнер для фотографий
         const photosContainer = document.createElement('div');
         photosContainer.id = photosContainerId;
-        photosContainer.className = 'comment-photos-container mt-3';
+        photosContainer.className = 'comment-photos-container mt-3 w-100 overflow-hidden';
+        photosContainer.style.flex = '1 1 100%';
+        photosContainer.style.width = '100%';
+        photosContainer.style.maxWidth = '100%';
+        photosContainer.style.minWidth = '0';
         
-        // Вставляем контейнер после кнопки, если она существует
+        // Вставляем контейнер после родительского блока кнопок, чтобы он занимал 100% ширины
         if (showPhotoBtn && showPhotoBtn.parentNode) {
-            // Находим родительский элемент кнопки и вставляем контейнер после неё
-            showPhotoBtn.parentNode.insertBefore(photosContainer, showPhotoBtn.nextSibling);
+            showPhotoBtn.parentNode.insertAdjacentElement('afterend', photosContainer);
         } else {
             // Или в начало контейнера комментариев, если кнопка не передана
             const commentsContainer = commentsModal.querySelector('#commentsContainer');
@@ -6419,7 +6421,7 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
             
             // Создаем контейнер для сетки фотографий
             const photosGrid = document.createElement('div');
-            photosGrid.className = 'row g-2';
+            photosGrid.className = 'row g-2 mx-0';
             
             // Функция динамической загрузки библиотеки heic2any
             const loadHeicLib = async () => {
@@ -6436,10 +6438,10 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
             // Добавляем фотографии в сетку
             for (const photo of photos) {
                 const photoCol = document.createElement('div');
-                photoCol.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-3';
+                photoCol.className = 'col-12 col-sm-6 col-md-4 col-lg-3';
                 
                 const photoCard = document.createElement('div');
-                photoCard.className = 'card h-100';
+                photoCard.className = 'card h-100 w-100';
                 photoCard.style.cursor = 'pointer';
                 photoCard.style.overflow = 'hidden';
                 
@@ -6522,6 +6524,8 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
                 photoCard.addEventListener('click', (e) => {
                     e.stopPropagation();
                     
+                    let currentIndex = photos.indexOf(photo);
+                    
                     const fullScreen = document.createElement('div');
                     fullScreen.style.cssText = `
                         position: fixed;
@@ -6535,31 +6539,164 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
                         justify-content: center;
                         align-items: center;
                         z-index: 2000;
-                        cursor: pointer;
                         padding: 20px;
                     `;
                     
+                    const contentContainer = document.createElement('div');
+                    contentContainer.style.cssText = `
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 100%;
+                        height: 100%;
+                    `;
+                    
                     const fullImg = document.createElement('img');
-                    fullImg.src = img.dataset.convertedSrc || photo.url || `/storage/${photo.path}`;
                     fullImg.style.maxWidth = '90%';
                     fullImg.style.maxHeight = '80vh';
                     fullImg.style.objectFit = 'contain';
+                    fullImg.style.cursor = 'default';
                     
                     const imgInfo = document.createElement('div');
                     imgInfo.className = 'text-white text-center mt-3';
-                    imgInfo.innerHTML = `
-                        <div>${photo.original_name || 'Фото'}</div>
-                        <div class="small text-muted">${photo.file_size ? `${(photo.file_size / 1024).toFixed(1)} KB` : ''}</div>
+                    imgInfo.style.position = 'absolute';
+                    imgInfo.style.bottom = '20px';
+                    imgInfo.style.left = '50%';
+                    imgInfo.style.transform = 'translateX(-50%)';
+                    imgInfo.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                    imgInfo.style.padding = '10px 20px';
+                    imgInfo.style.borderRadius = '8px';
+                    imgInfo.style.maxWidth = '90%';
+                    imgInfo.style.wordBreak = 'break-all';
+                    
+                    const closeBtn = document.createElement('div');
+                    closeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                    closeBtn.style.cssText = `
+                        position: absolute;
+                        top: 20px;
+                        right: 20px;
+                        color: white;
+                        cursor: pointer;
+                        z-index: 2010;
+                        opacity: 0.8;
+                        transition: opacity 0.2s;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 10px;
                     `;
-                    
-                    fullScreen.appendChild(fullImg);
-                    fullScreen.appendChild(imgInfo);
-                    document.body.appendChild(fullScreen);
-                    
-                    // Закрытие при клике
-                    fullScreen.addEventListener('click', () => {
-                        document.body.removeChild(fullScreen);
+                    closeBtn.addEventListener('mouseenter', () => closeBtn.style.opacity = '1');
+                    closeBtn.addEventListener('mouseleave', () => closeBtn.style.opacity = '0.8');
+                    closeBtn.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        closeGallery();
                     });
+                    
+                    const prevBtn = document.createElement('div');
+                    prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+                    prevBtn.style.cssText = `
+                        position: absolute;
+                        left: 10px;
+                        color: white;
+                        cursor: pointer;
+                        user-select: none;
+                        z-index: 2010;
+                        padding: 20px 10px;
+                        display: ${photos.length > 1 ? 'flex' : 'none'};
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 0.7;
+                        transition: opacity 0.2s, transform 0.2s;
+                    `;
+                    prevBtn.addEventListener('mouseenter', () => { prevBtn.style.opacity = '1'; prevBtn.style.transform = 'scale(1.1)'; });
+                    prevBtn.addEventListener('mouseleave', () => { prevBtn.style.opacity = '0.7'; prevBtn.style.transform = 'scale(1)'; });
+                    
+                    const nextBtn = document.createElement('div');
+                    nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+                    nextBtn.style.cssText = `
+                        position: absolute;
+                        right: 10px;
+                        color: white;
+                        cursor: pointer;
+                        user-select: none;
+                        z-index: 2010;
+                        padding: 20px 10px;
+                        display: ${photos.length > 1 ? 'flex' : 'none'};
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 0.7;
+                        transition: opacity 0.2s, transform 0.2s;
+                    `;
+                    nextBtn.addEventListener('mouseenter', () => { nextBtn.style.opacity = '1'; nextBtn.style.transform = 'scale(1.1)'; });
+                    nextBtn.addEventListener('mouseleave', () => { nextBtn.style.opacity = '0.7'; nextBtn.style.transform = 'scale(1)'; });
+
+                    const updateGallery = (index) => {
+                        const currentPhoto = photos[index];
+                        // Попытаемся найти соответствующий img элемент в DOM, чтобы получить конвертированный src (если heic)
+                        const gridCards = photosGrid.querySelectorAll('.card-img-top');
+                        let srcToUse = currentPhoto.url || `/storage/${currentPhoto.path}`;
+                        
+                        if (gridCards[index]) {
+                            srcToUse = gridCards[index].dataset.convertedSrc || gridCards[index].src || srcToUse;
+                        }
+                        
+                        fullImg.src = srcToUse;
+                        imgInfo.innerHTML = `
+                            <div>${currentPhoto.original_name || 'Фото'} (${index + 1} из ${photos.length})</div>
+                            <div class="small text-muted">${currentPhoto.file_size ? `${(currentPhoto.file_size / 1024).toFixed(1)} KB` : ''}</div>
+                        `;
+                    };
+
+                    const nextPhoto = (ev) => {
+                        if (ev) ev.stopPropagation();
+                        currentIndex = (currentIndex + 1) % photos.length;
+                        updateGallery(currentIndex);
+                    };
+
+                    const prevPhoto = (ev) => {
+                        if (ev) ev.stopPropagation();
+                        currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+                        updateGallery(currentIndex);
+                    };
+
+                    prevBtn.addEventListener('click', prevPhoto);
+                    nextBtn.addEventListener('click', nextPhoto);
+                    
+                    const handleKeyDown = (e) => {
+                        if (e.key === 'ArrowRight') nextPhoto();
+                        if (e.key === 'ArrowLeft') prevPhoto();
+                        if (e.key === 'Escape') closeGallery();
+                    };
+
+                    const closeGallery = () => {
+                        document.removeEventListener('keydown', handleKeyDown);
+                        if (document.body.contains(fullScreen)) {
+                            document.body.removeChild(fullScreen);
+                        }
+                    };
+
+                    document.addEventListener('keydown', handleKeyDown);
+                    
+                    // Закрытие при клике вне картинки (на фон)
+                    fullScreen.addEventListener('click', (ev) => {
+                        if (ev.target === fullScreen || ev.target === contentContainer) {
+                            closeGallery();
+                        }
+                    });
+
+                    // Инициализация первой картинки
+                    updateGallery(currentIndex);
+
+                    contentContainer.appendChild(prevBtn);
+                    contentContainer.appendChild(fullImg);
+                    contentContainer.appendChild(nextBtn);
+                    
+                    fullScreen.appendChild(closeBtn);
+                    fullScreen.appendChild(contentContainer);
+                    fullScreen.appendChild(imgInfo);
+                    
+                    document.body.appendChild(fullScreen);
                 });
             }
             
