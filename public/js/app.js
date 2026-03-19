@@ -332,6 +332,7 @@ $(document).ready(function() {
     function updateThemeUI(theme) {
         if (theme === 'dark') {
             document.documentElement.setAttribute('data-bs-theme', 'dark');
+            // В темной теме показываем солнце, чтобы переключить на светлую
             if (sunIcon) sunIcon.classList.remove('d-none');
             if (moonIcon) moonIcon.classList.add('d-none');
             
@@ -339,8 +340,8 @@ $(document).ready(function() {
             if (mobileMoonIcon) mobileMoonIcon.classList.add('d-none');
         } else {
             document.documentElement.setAttribute('data-bs-theme', 'light');
+            // В светлой теме показываем луну, чтобы переключить на темную
             if (sunIcon) sunIcon.classList.add('d-none');
-            if (moonIcon) sunIcon.classList.remove('d-none'); // Bug fix: previously moonIcon logic might be inverted in original code or logic
             if (moonIcon) moonIcon.classList.remove('d-none');
             
             if (mobileSunIcon) mobileSunIcon.classList.add('d-none');

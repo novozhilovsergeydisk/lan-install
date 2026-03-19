@@ -29,10 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Функция форматирования байт в читаемый вид
     const formatBytes = (bytes, decimals = 2) => {
-        if (!+bytes) return '0 Bytes';
+        if (!+bytes) return '0 Байт';
         const k = 1024;
         const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        const sizes = ['Байт', 'КБ', 'МБ', 'ГБ', 'ТБ', 'ПБ', 'ЭБ', 'ЗБ', 'ИБ'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
     };

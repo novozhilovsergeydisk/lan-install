@@ -281,8 +281,8 @@
 
                             <!-- Theme Toggle -->
                             <div class="theme-toggle me-3" id="themeToggle">
-                                <i class="bi bi-sun theme-icon" id="sunIcon"></i>
-                                <i class="bi bi-moon-stars-fill theme-icon d-none" id="moonIcon"></i>
+                                <i class="bi bi-sun theme-icon d-none" id="sunIcon"></i>
+                                <i class="bi bi-moon-stars-fill theme-icon" id="moonIcon"></i>
                             </div>
 
                             <!-- Logout Button -->
@@ -1781,7 +1781,7 @@
                                         </div>
                                         <div class="text-muted small">
                                             <div>Ядер: <span id="cpu-cores" class="fw-bold text-dark">0</span></div>
-                                            <div>Load Average (1m, 5m, 15m): <span id="cpu-load" class="fw-bold text-dark">0.0, 0.0, 0.0</span></div>
+                                            <div>Средняя нагрузка (1м, 5м, 15м): <span id="cpu-load" class="fw-bold text-dark">0.0, 0.0, 0.0</span></div>
                                         </div>
                                     </div>
                                 </div>
