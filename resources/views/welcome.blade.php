@@ -1768,7 +1768,7 @@
                             <!-- CPU Card -->
                             <div class="col-md-4">
                                 <div class="card h-100 shadow-sm">
-                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0"><i class="bi bi-cpu text-primary me-2"></i>Процессор (CPU)</h5>
                                     </div>
                                     <div class="card-body">
@@ -1790,7 +1790,7 @@
                             <!-- RAM Card -->
                             <div class="col-md-4">
                                 <div class="card h-100 shadow-sm">
-                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0"><i class="bi bi-memory text-success me-2"></i>Оперативная память</h5>
                                     </div>
                                     <div class="card-body">
@@ -1811,7 +1811,7 @@
                             <!-- DISK Card -->
                             <div class="col-md-4">
                                 <div class="card h-100 shadow-sm">
-                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0"><i class="bi bi-hdd-network text-info me-2"></i>Дисковое пространство</h5>
                                     </div>
                                     <div class="card-body">

@@ -121,3 +121,28 @@
     font-weight: bold;
     margin-right: 5px;
 }
+
+/* Стили для таба мониторинга системы в темной теме */
+[data-bs-theme="dark"] #system .card {
+    background-color: #2b3035 !important;
+    border-color: #373b3e !important;
+}
+
+[data-bs-theme="dark"] #system .card-header {
+    background-color: #212529 !important;
+    border-bottom: 1px solid #373b3e !important;
+    color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] #system .card-body {
+    color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] #system .text-dark {
+    color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] #system .text-muted {
+    color: #adb5bd !important;
+}
+
