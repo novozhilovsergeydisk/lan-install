@@ -39,9 +39,12 @@ class SystemController extends Controller
 
         // Добавляем список топ-процессов
         $isMac = PHP_OS_FAMILY === 'Darwin';
+        
+        // Фильтр grep -v ps скрывает саму утилиту мониторинга из списка, чтобы не сбивать пользователя.
+        // Чтобы снова видеть процесс ps в списке, удалите "| grep -v ps" из команд ниже.
         $psCommand = $isMac 
-            ? "ps -rcax -o user,pid,pcpu,pmem,comm | head -n 6 | tail -n +2" 
-            : "ps -eo user,pid,pcpu,pmem,comm --sort=-pcpu | head -n 6 | tail -n +2";
+            ? "ps -rcax -o user,pid,pcpu,pmem,comm | grep -v ps | head -n 6 | tail -n +2" 
+            : "ps -eo user,pid,pcpu,pmem,comm --sort=-pcpu | grep -v ps | head -n 6 | tail -n +2";
         
         $psOutput = shell_exec($psCommand);
         $processes = [];
