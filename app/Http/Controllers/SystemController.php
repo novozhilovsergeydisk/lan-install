@@ -37,6 +37,33 @@ class SystemController extends Controller
             return response()->json(['error' => 'Failed to parse system monitor output.'], 500);
         }
 
+        // Добавляем список топ-процессов
+        $isMac = PHP_OS_FAMILY === 'Darwin';
+        $psCommand = $isMac 
+            ? "ps -rcax -o user,pid,pcpu,pmem,comm | head -n 6 | tail -n +2" 
+            : "ps -eo user,pid,pcpu,pmem,comm --sort=-pcpu | head -n 6 | tail -n +2";
+        
+        $psOutput = shell_exec($psCommand);
+        $processes = [];
+        
+        if ($psOutput) {
+            $lines = explode("\n", trim($psOutput));
+            foreach ($lines as $line) {
+                $cols = preg_split('/\s+/', trim($line), 5);
+                if (count($cols) >= 5) {
+                    $processes[] = [
+                        'user' => $cols[0],
+                        'pid' => $cols[1],
+                        'cpu' => $cols[2],
+                        'mem' => $cols[3],
+                        'command' => $cols[4]
+                    ];
+                }
+            }
+        }
+        
+        $data['top_processes'] = $processes;
+
         return response()->json($data);
     }
 }

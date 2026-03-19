@@ -146,3 +146,15 @@
     color: #adb5bd !important;
 }
 
+/* Бейдж пользователя в таблице процессов */
+.theme-user-badge {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+[data-bs-theme="dark"] .theme-user-badge {
+    background-color: #343a40 !important;
+    color: #f8f9fa !important;
+    border-color: #495057 !important;
+}
+

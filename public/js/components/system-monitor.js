@@ -53,7 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Обновляем CPU
             updateProgress('cpu', data.cpu.usage_percent);
             document.getElementById('cpu-cores').innerText = data.cpu.cores;
-            document.getElementById('cpu-load').innerText = `${data.cpu.load_1m.toFixed(2)}, ${data.cpu.load_5m.toFixed(2)}, ${data.cpu.load_15m.toFixed(2)}`;
+            
+            const cpuLoadElement = document.getElementById('cpu-load');
+            if (cpuLoadElement) cpuLoadElement.innerText = data.cpu.load_1m.toFixed(2);
+            
+            const cpuPercentElement = document.getElementById('cpu-load-percent');
+            if (cpuPercentElement) cpuPercentElement.innerText = data.cpu.usage_percent.toFixed(1);
 
             // Обновляем ОЗУ
             updateProgress('ram', data.memory.usage_percent);
@@ -62,6 +67,31 @@ document.addEventListener('DOMContentLoaded', () => {
             // Обновляем Диск
             updateProgress('disk', data.disk.usage_percent);
             document.getElementById('disk-info').innerText = `${formatBytes(data.disk.used)} / ${formatBytes(data.disk.total)}`;
+
+            // Обновляем список процессов
+            const processesList = document.getElementById('top-processes-list');
+            if (processesList && data.top_processes) {
+                processesList.innerHTML = ''; // Очищаем спиннер
+                
+                if (data.top_processes.length === 0) {
+                    processesList.innerHTML = '<tr><td colspan="5" class="text-center py-3">Процессы не найдены</td></tr>';
+                } else {
+                    data.top_processes.forEach(proc => {
+                        const row = `
+                            <tr>
+                                <td class="text-truncate" style="max-width: 250px;" title="${proc.command}">
+                                    <code class="text-primary fw-bold">${proc.command}</code>
+                                </td>
+                                <td><span class="badge border theme-user-badge">${proc.user}</span></td>
+                                <td class="text-end px-3 fw-bold text-danger">${proc.cpu}%</td>
+                                <td class="text-end px-3">${proc.mem}%</td>
+                                <td class="text-end px-3 text-muted small">${proc.pid}</td>
+                            </tr>
+                        `;
+                        processesList.insertAdjacentHTML('beforeend', row);
+                    });
+                }
+            }
 
         } catch (error) {
             console.error('Error fetching system metrics:', error);

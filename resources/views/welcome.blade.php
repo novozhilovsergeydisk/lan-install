@@ -1781,7 +1781,11 @@
                                         </div>
                                         <div class="text-muted small">
                                             <div>Ядер: <span id="cpu-cores" class="fw-bold text-dark">0</span></div>
-                                            <div>Средняя нагрузка (1м, 5м, 15м): <span id="cpu-load" class="fw-bold text-dark">0.0, 0.0, 0.0</span></div>
+                                            <div class="mt-2 text-muted small">Средняя нагрузка (за 1 мин):</div>
+                                            <div class="fw-bold text-dark fs-5">
+                                                <span id="cpu-load">0.00</span> процессов 
+                                                <span class="text-muted fs-6">(<span id="cpu-load-percent">0</span>% мощности)</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1827,6 +1831,32 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Processes Section -->
+                        <div class="mt-5">
+                            <h5 class="mb-3 text-primary"><i class="bi bi-list-stars me-2"></i>ТОП-5 активных процессов (по загрузке CPU)</h5>
+                            <div class="table-responsive rounded shadow-sm border">
+                                <table class="table table-sm table-hover align-middle mb-0 dark-theme-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Команда (процесс)</th>
+                                            <th>Пользователь</th>
+                                            <th class="text-end px-3">CPU (%)</th>
+                                            <th class="text-end px-3">RAM (%)</th>
+                                            <th class="text-end px-3">PID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="top-processes-list">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">
+                                                <div class="spinner-border spinner-border-sm me-2 text-primary" role="status"></div>
+                                                Загрузка списка процессов...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
