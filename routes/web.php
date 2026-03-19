@@ -132,6 +132,9 @@ Route::prefix('statuses')->middleware('auth')->group(function () {
     // Route::delete('/{id}', [StatusController::class, 'destroy']);
 });
 
+// Система (мониторинг)
+Route::get('/api/system/metrics', [\App\Http\Controllers\SystemController::class, 'metrics'])->name('api.system.metrics')->middleware(['auth', 'roles']);
+
 // Маршруты для работы с типами заявок
 Route::prefix('api/request-types')->middleware(['auth', 'roles'])->group(function () {
     Route::get('/', [RequestTypeController::class, 'index']);

@@ -19,11 +19,13 @@ success() {
 
 # === Компиляция на сервере ===
 info "Компилируем telegram_notify на сервере..."
-
 ssh "$SERVER_PATH" "gcc -o $REMOTE_DIR/utils/C/notify-bot/telegram_notify $REMOTE_DIR/utils/C/notify-bot/telegram_notify.c -lcurl"
 
+info "Компилируем sys-monitor на сервере..."
+ssh "$SERVER_PATH" "gcc -o $REMOTE_DIR/utils/C/sys-monitor/sys-monitor $REMOTE_DIR/utils/C/sys-monitor/sys-monitor.c"
+
 if [ $? -eq 0 ]; then
-  success "Утилита успешно скомпилирована и обновлена!"
+  success "Утилиты успешно скомпилированы и обновлены!"
 else
   echo "Ошибка компиляции."
   exit 1

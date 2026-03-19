@@ -255,6 +255,11 @@
                                 type="button" role="tab">Типы заявок
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system"
+                                type="button" role="tab">Система
+                        </button>
+                    </li>
                     @endif
                     <!-- <li class="nav-item" role="presentation">
                         <button class="nav-link" id="photo-reports-tab" data-bs-toggle="tab" data-bs-target="#photo-reports"
@@ -1742,6 +1747,84 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
                                         <button type="button" class="btn btn-primary" id="saveWorkParameterTypeBtn">Сохранить</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                    
+                    @if($user->isAdmin)
+                    <div id="system" class="tab-pane fade" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0"><i class="bi bi-server me-2"></i>Мониторинг системы</h4>
+                        </div>
+                        
+                        <div id="system-error" class="alert alert-danger d-none">
+                            Не удалось загрузить данные мониторинга.
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- CPU Card -->
+                            <div class="col-md-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0"><i class="bi bi-cpu text-primary me-2"></i>Процессор (CPU)</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Загрузка</span>
+                                            <span id="cpu-text" class="fw-bold">0%</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 20px;">
+                                            <div id="cpu-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div class="text-muted small">
+                                            <div>Ядер: <span id="cpu-cores" class="fw-bold text-dark">0</span></div>
+                                            <div>Load Average (1m, 5m, 15m): <span id="cpu-load" class="fw-bold text-dark">0.0, 0.0, 0.0</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- RAM Card -->
+                            <div class="col-md-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0"><i class="bi bi-memory text-success me-2"></i>Оперативная память</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Использовано</span>
+                                            <span id="ram-text" class="fw-bold">0%</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 20px;">
+                                            <div id="ram-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div class="text-center fw-bold" id="ram-info">
+                                            0 GB / 0 GB
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- DISK Card -->
+                            <div class="col-md-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0"><i class="bi bi-hdd-network text-info me-2"></i>Дисковое пространство</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Занято (/)</span>
+                                            <span id="disk-text" class="fw-bold">0%</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 20px;">
+                                            <div id="disk-bar" class="progress-bar bg-info" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div class="text-center fw-bold" id="disk-info">
+                                            0 GB / 0 GB
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -5226,6 +5309,10 @@
     <script src="{{ asset('js/map-requests.js') }}"></script>
         <script src="{{ asset('js/map-planning.js') }}"></script>
         <script src="{{ asset('js/session-keepalive.js') }}"></script>
+        
+        @if($user->isAdmin)
+        <script src="{{ asset('js/components/system-monitor.js') }}"></script>
+        @endif
     
         <script>
     
