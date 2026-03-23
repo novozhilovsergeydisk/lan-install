@@ -238,6 +238,11 @@
                                 <i class="bi bi-tags me-1"></i>Типы заявок
                             </a>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="wms-mapping-tab" data-bs-toggle="tab" data-bs-target="#wms-mapping" role="tab" aria-controls="wms-mapping" aria-selected="false">
+                                <i class="bi bi-link-45deg me-1"></i>WMS склады
+                            </a>
+                        </li>
                     </ul>
                     
                     <!-- Right Side Menu -->

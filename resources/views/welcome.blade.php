@@ -256,7 +256,13 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="wms-mapping-tab" data-bs-toggle="tab" data-bs-target="#wms-mapping"
+                                type="button" role="tab">WMS склады
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
                         <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system"
+
                                 type="button" role="tab">Система
                         </button>
                     </li>
@@ -1755,6 +1761,96 @@
                     @endif
                     
                     @if($user->isAdmin)
+                    <div id="wms-mapping" class="tab-pane fade" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Привязка складов WMS</h4>
+                        </div>
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header py-3 border-0 bg-transparent">
+                                <h6 class="m-0 font-weight-bold text-secondary"><i class="bi bi-plus-square me-2"></i>Добавить или обновить привязку</h6>
+                            </div>
+                            <div class="card-body pt-0">
+                                <form action="{{ route('wms-mappings.store') }}" method="POST">
+                                    @csrf
+                                    <div class="row align-items-end g-3">
+                                        <div class="col-md-4">
+                                            <label for="mapping_request_type_id" class="form-label small fw-bold text-muted">Тип заявки</label>
+                                            <select name="request_type_id" id="mapping_request_type_id" class="form-select form-select-sm" required>
+                                                <option value="" disabled selected>-- Выберите тип --</option>
+                                                @foreach ($requests_types as $type)
+                                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="mapping_wms_warehouse_id" class="form-label small fw-bold text-muted">Склад WMS</label>
+                                            <select name="wms_warehouse_id" id="mapping_wms_warehouse_id" class="form-select form-select-sm" required>
+                                                <option value="" disabled selected>-- Выберите склад --</option>
+                                                @foreach ($wmsWarehouses as $warehouse)
+                                                    <option value="{{ $warehouse['id'] }}">{{ $warehouse['name'] }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                <i class="bi bi-save me-1"></i> Сохранить
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header py-3 border-0 bg-transparent">
+                                <h6 class="m-0 font-weight-bold text-secondary"><i class="bi bi-list-check me-2"></i>Текущие привязки</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered table-striped text-center align-middle mb-0 dark-theme-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 40%;">Тип заявки</th>
+                                                <th style="width: 40%;">Склад WMS</th>
+                                                <th style="width: 20%;">Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @php
+                                                // Создаем карту имен складов для удобства
+                                                $whNames = [];
+                                                foreach($wmsWarehouses as $wh) $whNames[$wh['id']] = $wh['name'];
+                                            @endphp
+                                            @forelse ($wmsMappings as $mapping)
+                                                @php
+                                                    $typeName = 'Неизвестный тип';
+                                                    foreach($requests_types as $rt) if($rt->id == $mapping->request_type_id) $typeName = $rt->name;
+                                                @endphp
+                                                <tr>
+                                                    <td class="text-start ps-3">{{ $typeName }}</td>
+                                                    <td class="text-start ps-3">{{ $whNames[$mapping->wms_warehouse_id] ?? 'Склад #'.$mapping->wms_warehouse_id }}</td>
+                                                    <td>
+                                                        <form action="{{ route('wms-mappings.destroy', $mapping->id) }}" method="POST" onsubmit="return confirm('Вы уверены, что хотите удалить эту привязку?');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-link text-danger p-0" title="Удалить">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="3" class="text-center text-muted py-4">Нет активных привязок.</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="system" class="tab-pane fade" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="mb-0"><i class="bi bi-server me-2"></i>Мониторинг системы</h4>
@@ -3957,11 +4053,37 @@
                      </div>
 
                      <div id="wmsIntegrationSection" style="display: none;" class="border rounded p-3 wms-integration-block">
+                         <!-- Источник списания -->
+                         <div id="wmsSourceContainer" class="mb-3 d-none">
+                             <label class="form-label small fw-bold mb-1">Источник списания:</label>
+                             <div class="d-flex gap-3 mb-2">
+                                 <div class="form-check">
+                                     <input class="form-check-input" type="radio" name="wms_source_radio" id="wmsSourcePersonal" value="personal" checked>
+                                     <label class="form-check-label small" for="wmsSourcePersonal">Личные остатки</label>
+                                 </div>
+                                 <div class="form-check">
+                                     <input class="form-check-input" type="radio" name="wms_source_radio" id="wmsSourceWarehouse" value="warehouse">
+                                     <label class="form-check-label small" for="wmsSourceWarehouse" id="wmsWarehouseLabel">Склад</label>
+                                 </div>
+                             </div>
+                             <input type="hidden" id="wmsMappedWarehouseId" value="">
+                         </div>
+
+                         <!-- Поиск для склада -->
+                         <div id="wmsWarehouseSearchContainer" class="mb-3 d-none">
+                             <div class="input-group input-group-sm">
+                                 <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                                 <input type="text" id="wmsWarehouseSearchInput" class="form-control" placeholder="Фильтр по названию материала...">
+                             </div>
+                         </div>
+
                          <div id="wmsStockContainer">
+
                              <!-- Здесь будет список материалов по каждому сотруднику -->
                              <div class="text-muted small text-center">Загрузка данных о материалах бригады...</div>
                          </div>
                      </div>
+
                 </form>
             </div>
             <div class="modal-footer">
@@ -4155,33 +4277,56 @@
             // Валидация WMS
             const wmsDeduct = document.getElementById('wmsDeductCheckbox').checked;
             const wmsDeductions = {};
+            let wmsSource = 'personal';
+            let wmsWarehouseId = null;
             
             if (wmsDeduct) {
                 let hasWmsErrors = false;
                 let hasAnyUsage = false;
 
-                document.querySelectorAll('.wms-member-group').forEach(group => {
-                    const email = group.dataset.email;
-                    const memberUsage = {};
-                    
-                    group.querySelectorAll('.wms-material-row').forEach(row => {
+                const sourceRadio = document.querySelector('input[name="wms_source_radio"]:checked');
+                wmsSource = sourceRadio ? sourceRadio.value : 'personal';
+                wmsWarehouseId = document.getElementById('wmsMappedWarehouseId').value;
+
+                if (wmsSource === 'warehouse') {
+                    document.querySelectorAll('.wms-warehouse-row').forEach(row => {
                         const nomenclatureId = row.dataset.id;
                         const input = row.querySelector('.wms-usage-input');
                         const val = parseFloat(input.value);
-                        
+
                         if (val > 0) {
                             if (input.classList.contains('is-invalid')) {
                                 hasWmsErrors = true;
                             }
-                            memberUsage[nomenclatureId] = val;
+                            if (!wmsDeductions[wmsWarehouseId]) wmsDeductions[wmsWarehouseId] = {};
+                            wmsDeductions[wmsWarehouseId][nomenclatureId] = val;
                             hasAnyUsage = true;
                         }
                     });
+                } else {
+                    document.querySelectorAll('.wms-member-group').forEach(group => {
+                        const email = group.dataset.email;
+                        const memberUsage = {};
+                        
+                        group.querySelectorAll('.wms-material-row').forEach(row => {
+                            const nomenclatureId = row.dataset.id;
+                            const input = row.querySelector('.wms-usage-input');
+                            const val = parseFloat(input.value);
+                            
+                            if (val > 0) {
+                                if (input.classList.contains('is-invalid')) {
+                                    hasWmsErrors = true;
+                                }
+                                memberUsage[nomenclatureId] = val;
+                                hasAnyUsage = true;
+                            }
+                        });
 
-                    if (Object.keys(memberUsage).length > 0) {
-                        wmsDeductions[email] = memberUsage;
-                    }
-                });
+                        if (Object.keys(memberUsage).length > 0) {
+                            wmsDeductions[email] = memberUsage;
+                        }
+                    });
+                }
                 
                 if (hasWmsErrors) {
                     showAlert('Исправьте ошибки в количестве материалов (превышен остаток)', 'warning');
@@ -4208,6 +4353,8 @@
                         work_parameters: workParameters,
                         uncompleted_works: document.getElementById('uncompletedWorks').checked,
                         wms_deduct: wmsDeduct,
+                        wms_source: wmsSource,
+                        wms_warehouse_id: wmsWarehouseId,
                         wms_deductions: wmsDeductions,
                         _token: document.querySelector('input[name="_token"]').value
                     };

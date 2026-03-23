@@ -1144,6 +1144,24 @@ class HomeController extends Controller
                 ->orderBy('request_subtypes.id')
                 ->get();
 
+            // WMS Интеграция: Маппинги складов
+            $wmsMappings = DB::table('request_type_wms_warehouses')->get()->keyBy('request_type_id');
+            $wmsWarehouses = [];
+            try {
+                $apiKey = config('services.wms.api_key');
+                $baseUrl = config('services.wms.base_url');
+                if ($apiKey && $baseUrl) {
+                    $response = \Illuminate\Support\Facades\Http::withHeaders(['X-API-Key' => $apiKey])
+                        ->timeout(3)
+                        ->get("{$baseUrl}/api/external/warehouses");
+                    if ($response->successful()) {
+                        $wmsWarehouses = $response->json()['data'] ?? [];
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("WMS: Error fetching warehouses for index: " . $e->getMessage());
+            }
+
             // Собираем все переменные для передачи в представление
             $viewData = [
                 'user' => $user,
@@ -1161,6 +1179,8 @@ class HomeController extends Controller
                 'comments_by_request' => $comments_by_request,
                 'request_addresses' => $request_addresses,
                 'requests_types' => $requests_types,
+                'wmsMappings' => $wmsMappings,
+                'wmsWarehouses' => $wmsWarehouses,
                 'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
                 'brigadeMembersCurrentDay' => $brigadeMembersCurrentDay,
                 'brigadesCurrentDay' => $brigadesCurrentDay,
@@ -2534,28 +2554,47 @@ class HomeController extends Controller
                 // WMS Интеграция: Списание материалов
                 if ($request->input('wms_deduct')) {
                     $wmsDeductions = $request->input('wms_deductions', []);
+                    $wmsSource = $request->input('wms_source', 'personal'); // 'personal' or 'warehouse'
+                    $warehouseId = $request->input('wms_warehouse_id');
                     $actorEmail = auth()->user()->email;
 
                     $apiKey = config('services.wms.api_key');
                     $baseUrl = config('services.wms.base_url');
 
-                    foreach ($wmsDeductions as $employeeEmail => $usage) {
+                    foreach ($wmsDeductions as $key => $usage) {
+                        // $key is employeeEmail if personal, or warehouseId if warehouse (actually it's usually employeeEmail)
+                        // In case of warehouse, we take first leader's email to associate deduction with him in WMS
+                        $targetEmail = $wmsSource === 'warehouse' ? $actorEmail : $key;
+
                         foreach ($usage as $nomenclatureId => $quantity) {
                             if ($quantity > 0) {
-                                $wmsResponse = Http::withHeaders([
-                                    'X-API-Key' => $apiKey
-                                ])->post("{$baseUrl}/api/external/usage-report", [
-                                    'email' => $employeeEmail,
-                                    'nomenclatureId' => (int)$nomenclatureId,
-                                    'quantity' => (float)$quantity,
-                                    'actorEmail' => $actorEmail,
-                                    'description' => "Списание по заявке #{$id} (автоматически)"
-                                ]);
+                                if ($wmsSource === 'warehouse' && $warehouseId) {
+                                    $wmsResponse = Http::withHeaders([
+                                        'X-API-Key' => $apiKey
+                                    ])->post("{$baseUrl}/api/external/deduct-warehouse", [
+                                        'email' => $targetEmail,
+                                        'warehouseId' => (int)$warehouseId,
+                                        'nomenclatureId' => (int)$nomenclatureId,
+                                        'quantity' => (float)$quantity,
+                                        'actorEmail' => $actorEmail,
+                                        'description' => "Списание со склада по заявке #{$id} (автоматически)"
+                                    ]);
+                                } else {
+                                    $wmsResponse = Http::withHeaders([
+                                        'X-API-Key' => $apiKey
+                                    ])->post("{$baseUrl}/api/external/usage-report", [
+                                        'email' => $targetEmail,
+                                        'nomenclatureId' => (int)$nomenclatureId,
+                                        'quantity' => (float)$quantity,
+                                        'actorEmail' => $actorEmail,
+                                        'description' => "Списание по заявке #{$id} (автоматически)"
+                                    ]);
+                                }
 
                                 if (!$wmsResponse->successful()) {
                                     $errorData = $wmsResponse->json();
                                     $errorMsg = $errorData['message'] ?? 'Неизвестная ошибка склада';
-                                    throw new \Exception("Ошибка склада ({$employeeEmail}): {$errorMsg}");
+                                    throw new \Exception("Ошибка склада ({$targetEmail}): {$errorMsg}");
                                 }
                             }
                         }

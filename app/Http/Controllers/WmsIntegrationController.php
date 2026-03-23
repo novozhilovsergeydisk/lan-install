@@ -71,6 +71,68 @@ class WmsIntegrationController extends Controller
         }
     }
 
+    public function getMappingByRequest($requestId)
+    {
+        $request = DB::table('requests')->where('id', $requestId)->first();
+        if (!$request) return response()->json(['success' => false, 'message' => 'Request not found'], 404);
+
+        $mapping = DB::table('request_type_wms_warehouses')
+            ->where('request_type_id', $request->request_type_id)
+            ->first();
+
+        if ($mapping) {
+            // Get warehouse name if possible
+            $warehouseName = 'Склад #' . $mapping->wms_warehouse_id;
+            try {
+                $apiKey = config('services.wms.api_key');
+                $baseUrl = config('services.wms.base_url');
+                $response = Http::withHeaders(['X-API-Key' => $apiKey])->get("{$baseUrl}/api/external/warehouses");
+                if ($response->successful()) {
+                    $warehouses = $response->json()['data'] ?? [];
+                    foreach ($warehouses as $wh) {
+                        if ($wh['id'] == $mapping->wms_warehouse_id) {
+                            $warehouseName = $wh['name'];
+                            break;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {}
+
+            return response()->json([
+                'success' => true,
+                'mapping' => [
+                    'request_type_id' => $mapping->request_type_id,
+                    'wms_warehouse_id' => $mapping->wms_warehouse_id,
+                    'warehouse_name' => $warehouseName
+                ]
+            ]);
+        }
+
+        return response()->json(['success' => true, 'mapping' => null]);
+    }
+
+    public function searchWarehouseStock(Request $request)
+    {
+        $warehouseId = $request->query('warehouseId');
+        $query = $request->query('q');
+
+        if (!$warehouseId) return response()->json(['success' => false, 'message' => 'Warehouse ID required'], 400);
+
+        try {
+            $apiKey = config('services.wms.api_key');
+            $baseUrl = config('services.wms.base_url');
+            $response = Http::withHeaders(['X-API-Key' => $apiKey])
+                ->get("{$baseUrl}/api/external/warehouses/{$warehouseId}/search-stock", ['q' => $query]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+            return response()->json(['success' => false, 'message' => 'WMS Error'], 500);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
     /**
      * Получить остатки сотрудника из API склада.
      */

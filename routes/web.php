@@ -84,9 +84,16 @@ Route::get('/new-design', [HomeController::class, 'indexNew'])->name('home.new')
 // Close request
 Route::post('/requests/{request}/close', [HomeController::class, 'closeRequest'])->name('requests.close')->middleware('auth')->middleware(['auth', 'roles']);
 
-// WMS Integration
-Route::get('/api/wms/brigade-stock/{requestId}', [\App\Http\Controllers\WmsIntegrationController::class, 'getBrigadeStock'])->middleware('auth');
-Route::get('/api/wms/user-stock', [\App\Http\Controllers\WmsIntegrationController::class, 'getUserStock'])->middleware('auth');
+// WMS Mapping
+Route::middleware('auth')->group(function () {
+    Route::post('/wms-mappings', [\App\Http\Controllers\WmsMappingController::class, 'store'])->name('wms-mappings.store');
+    Route::delete('/wms-mappings/{id}', [\App\Http\Controllers\WmsMappingController::class, 'destroy'])->name('wms-mappings.destroy');
+    Route::get('/api/wms/warehouse-stock/{warehouseId}', [\App\Http\Controllers\WmsIntegrationController::class, 'getWarehouseStock']);
+    Route::get('/api/wms/warehouse-search', [\App\Http\Controllers\WmsIntegrationController::class, 'searchWarehouseStock']);
+    Route::get('/api/wms/mapping/{requestId}', [\App\Http\Controllers\WmsIntegrationController::class, 'getMappingByRequest']);
+    Route::get('/api/wms/brigade-stock/{requestId}', [\App\Http\Controllers\WmsIntegrationController::class, 'getBrigadeStock']);
+    Route::get('/api/wms/user-stock', [\App\Http\Controllers\WmsIntegrationController::class, 'getUserStock']);
+});
 
 // Get work parameters for request
 Route::get('/requests/{request}/work-parameters', [HomeController::class, 'getWorkParameters'])->name('requests.work-parameters')->middleware('auth')->middleware(['auth', 'roles']);
