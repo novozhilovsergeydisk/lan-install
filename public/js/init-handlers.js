@@ -9,6 +9,7 @@ import { initPhotoReportModal } from './modals.js';
 import { initAddressDocumentHandlers } from './address-documents.js';
 import { initRequestTypesHandlers, loadRequestTypes } from './request-types.js';
 import { initWorkParameterTypesHandlers } from './work-parameter-types.js';
+import { initWmsMappingSettings } from './wms-mapping-settings.js';
 import {
     initFormHandlers,
     initEmployeeEditHandlers,
@@ -72,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initAddressDocumentHandlers();
     initRequestTypesHandlers();
     initWorkParameterTypesHandlers();
+    initWmsMappingSettings();
     initDownloadAllPhotos();
 
     // Очищаем контейнер фотоотчета при закрытии модального окна комментариев
