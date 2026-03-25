@@ -2561,6 +2561,8 @@ class HomeController extends Controller
                     $apiKey = config('services.wms.api_key');
                     $baseUrl = config('services.wms.base_url');
 
+                    $deductedItems = [];
+
                     foreach ($wmsDeductions as $key => $usage) {
                         // $key is employeeEmail if personal, or warehouseId if warehouse (actually it's usually employeeEmail)
                         // In case of warehouse, we take first leader's email to associate deduction with him in WMS
@@ -2596,8 +2598,34 @@ class HomeController extends Controller
                                     $errorMsg = $errorData['message'] ?? 'Неизвестная ошибка склада';
                                     throw new \Exception("Ошибка склада ({$targetEmail}): {$errorMsg}");
                                 }
+
+                                // Добавляем информацию о списании для комментария
+                                $resData = $wmsResponse->json();
+                                $nomName = $resData['nomenclatureName'] ?? 'Материал #' . $nomenclatureId;
+                                $unitName = $resData['unitName'] ?? '';
+                                
+                                $itemName = $nomName . ($unitName ? " ($unitName)" : "");
+                                if (!isset($deductedItems[$itemName])) {
+                                    $deductedItems[$itemName] = 0;
+                                }
+                                $deductedItems[$itemName] += (float)$quantity;
                             }
                         }
+                    }
+
+                    // Если были списания, дописываем их в комментарий
+                    if (!empty($deductedItems)) {
+                        $sourceText = ($wmsSource === 'warehouse') ? "со склада" : "с рук";
+                        $wmsCommentPart = "<br><br><b>Списано {$sourceText}:</b>";
+                        foreach ($deductedItems as $name => $qty) {
+                            $wmsCommentPart .= "<br>- {$name}: {$qty}";
+                        }
+
+                        DB::table('comments')
+                            ->where('id', $commentId)
+                            ->update([
+                                'comment' => DB::raw("comment || '" . addslashes($wmsCommentPart) . "'")
+                            ]);
                     }
                 }
 

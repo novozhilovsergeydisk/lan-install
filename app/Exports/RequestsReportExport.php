@@ -78,6 +78,15 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                     LIMIT 1
                 ) as last_comment,
                 ( 
+                    SELECT com.comment 
+                    FROM request_comments rc 
+                    JOIN comments com ON rc.comment_id = com.id 
+                    WHERE rc.request_id = r.id 
+                      AND com.comment LIKE '%Списано со склада:%'
+                    ORDER BY com.created_at DESC 
+                    LIMIT 1
+                ) as wms_comment,
+                ( 
                     SELECT STRING_AGG('- ' || t.name || ': ' || t.quantity, E'\n' ORDER BY t.name)
                     FROM ( 
                         SELECT DISTINCT ON (wp2.parameter_type_id) 
@@ -174,11 +183,12 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
             'Адрес',
             'Бригада',
             'Комментарий',
+            'Списанные материалы (WMS)',
             'Выполненные работы',
         ];
 
         if (!empty($this->dynamicColumns)) {
-            $headings[4] = 'Запланированные работы';
+            $headings[5] = 'Запланированные работы';
             foreach ($this->dynamicColumns as $col) {
                 $headings[] = $col;
             }
@@ -220,11 +230,20 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
             $commentOutput = "Последний комментарий:\n" . $lastComment;
         }
 
+        // Извлекаем списанные материалы из комментария
+        $wmsMaterials = '';
+        if (!empty($row->wms_comment)) {
+            if (preg_match('/<b>Списано (со склада|с рук):<\/b>(.*)$/s', $row->wms_comment, $matches)) {
+                $wmsMaterials = trim(strip_tags(str_replace('<br>', "\n", $matches[2])));
+            }
+        }
+
         $rowArray = [
             $dateAndNumber,
             $row->full_address,
             $row->brigade_name ? ($row->brigade_name . ($row->leader_name ? ' (' . $row->leader_name . ')' : '')) : 'Не назначена',
             $commentOutput,
+            $wmsMaterials,
             $worksOutput,
         ];
 
