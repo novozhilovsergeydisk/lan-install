@@ -993,7 +993,7 @@ class HomeController extends Controller
             $request_statuses = DB::select('SELECT * FROM request_statuses ORDER BY id');
 
             // Запрашиваем request_types
-            $requests_types = DB::select('SELECT * FROM request_types ORDER BY id');
+            $requests_types = DB::select('SELECT * FROM request_types WHERE is_deleted = false ORDER BY id');
 
             $today = now()->toDateString();
 

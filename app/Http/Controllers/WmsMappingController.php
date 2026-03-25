@@ -12,7 +12,7 @@ class WmsMappingController extends Controller
     public function index()
     {
         // 1. Получаем список типов заявок
-        $requestTypes = DB::table('request_types')->orderBy('name')->get();
+        $requestTypes = DB::table('request_types')->where('is_deleted', false)->orderBy('name')->get();
 
         // 2. Получаем текущие маппинги (с именами типов заявок)
         $mappings = DB::table('request_type_wms_warehouses')
