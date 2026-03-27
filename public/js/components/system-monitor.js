@@ -62,7 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Обновляем ОЗУ
             updateProgress('ram', data.memory.usage_percent);
+            updateProgress('ram-apps', data.memory.apps_percent);
+            
             document.getElementById('ram-info').innerText = `${formatBytes(data.memory.used)} / ${formatBytes(data.memory.total)}`;
+            
+            const ramAvailableElement = document.getElementById('ram-available');
+            if (ramAvailableElement) ramAvailableElement.innerText = formatBytes(data.memory.available);
 
             // Обновляем Диск
             updateProgress('disk', data.disk.usage_percent);

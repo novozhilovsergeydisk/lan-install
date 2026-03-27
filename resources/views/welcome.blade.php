@@ -1895,14 +1895,26 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between mb-1">
-                                            <span>Использовано</span>
+                                            <span>Общая занятость (с кэшем)</span>
                                             <span id="ram-text" class="fw-bold">0%</span>
                                         </div>
-                                        <div class="progress mb-3" style="height: 20px;">
-                                            <div id="ram-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        <div class="progress mb-3" style="height: 12px;">
+                                            <div id="ram-bar" class="progress-bar bg-secondary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                                         </div>
-                                        <div class="text-center fw-bold" id="ram-info">
+
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Память приложений</span>
+                                            <span id="ram-apps-text" class="fw-bold">0%</span>
+                                        </div>
+                                        <div class="progress mb-3" style="height: 20px;">
+                                            <div id="ram-apps-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+
+                                        <div class="text-center small mt-2" id="ram-info">
                                             0 GB / 0 GB
+                                        </div>
+                                        <div class="text-center text-muted x-small mt-1">
+                                            Доступно (свободно + кэш): <span id="ram-available">0 GB</span>
                                         </div>
                                     </div>
                                 </div>
