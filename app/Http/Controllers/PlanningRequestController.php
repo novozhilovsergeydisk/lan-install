@@ -45,11 +45,8 @@ class PlanningRequestController extends Controller
                 return response()->json(['success' => false, 'message' => 'Файл не содержит данных'], 400);
             }
 
+            // Извлекаем заголовки из первой строки
             $headers = array_shift($data);
-
-            $normalizedHeaders = array_map(function ($h) {
-                return trim(mb_strtolower($h));
-            }, $headers);
 
             $expectedHeaders = [
                 'гбоу',
@@ -58,11 +55,15 @@ class PlanningRequestController extends Controller
                 'комментарии к монтажу',
             ];
 
+            $normalizedHeaders = array_map(function ($h) {
+                return trim(mb_strtolower($h));
+            }, $headers ?? []);
+
             if (count(array_intersect($expectedHeaders, $normalizedHeaders)) !== count($expectedHeaders)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Неверные заголовки в файле. Обязательные колонки: '.implode(', ', $expectedHeaders),
-                    'headers_found' => $headers,
+                    'message' => 'Неверные заголовки в первой строке файла. Обязательные колонки: '.implode(', ', $expectedHeaders),
+                    'headers_found' => $headers ?? [],
                 ], 400);
             }
 

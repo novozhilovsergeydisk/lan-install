@@ -209,24 +209,17 @@ class CommentPhotoController extends Controller
             \DB::beginTransaction();
             \Log::info('Начата транзакция');
 
-            // Игнорируем первую строку (название файла)
-            $title = array_shift($data);
-
-            // Вторая строка - заголовки
+            // Первая строка - заголовки (обязательно в первой строке)
             $headers = array_shift($data);
-            \Log::info('Data rows count after shifts: '.count($data));
+            \Log::info('Заголовки из первой строки:', $headers);
 
-            // Убираем пробелы в заголовках
-            $headers = array_map(function ($header) {
-                return is_string($header) ? trim($header) : $header;
-            }, $headers);
+            // Проверяем формат заголовков (Город, Район, Улица, Дом)
+            $expected = ['город', 'район', 'улица', 'дом'];
+            $headerCheck = false;
 
-            \Log::info('Headers after trim:', $headers);
-
-            // Проверяем формат заголовков (принимаем разные регистры и частичные совпадения)
-            $headerCheck = count($headers) < 4;
-            if (! $headerCheck) {
-                $expected = ['город', 'район', 'улица', 'дом'];
+            if (!$headers || count($headers) < 4) {
+                $headerCheck = true;
+            } else {
                 for ($i = 0; $i < 4; $i++) {
                     $h = mb_strtolower(trim($headers[$i] ?? ''));
                     if (mb_strpos($h, $expected[$i]) === false) {
@@ -236,17 +229,20 @@ class CommentPhotoController extends Controller
                 }
             }
 
-            \Log::info('count = '.count($headers));
-            \Log::info('Header check result: '.($headerCheck ? 'true' : 'false'));
-
             if ($headerCheck) {
-                \Log::info('Entering header check if');
-
+                \Log::info('Заголовки не соответствуют формату');
                 return response()->json([
                     'success' => false,
-                    'message' => 'Формат файла не соответствует названиям столбцов: Город, Район, Улица, Дом',
+                    'message' => 'Формат файла не соответствует названиям столбцов в первой строке: Город, Район, Улица, Дом',
                 ], 400);
             }
+
+            \Log::info('Количество строк данных после извлечения заголовков: ' . count($data));
+
+            // Убираем пробелы в заголовках
+            $headers = array_map(function ($header) {
+                return is_string($header) ? trim($header) : $header;
+            }, $headers);
 
             $result = [];
             $citiesNotFound = [];
