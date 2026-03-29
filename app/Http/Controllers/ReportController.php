@@ -82,6 +82,8 @@ class ReportController extends Controller
                 c.organization AS client_organization,
                 rs.name AS status_name,
                 rs.color AS status_color,
+                rt.name AS request_type_name,
+                rt.color AS request_type_color,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -95,6 +97,7 @@ class ReportController extends Controller
             ")
                 ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
                 ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+                ->leftJoin('request_types AS rt', 'r.request_type_id', '=', 'rt.id')
                 ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
                 ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
                 ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
@@ -118,7 +121,7 @@ class ReportController extends Controller
                 })
                 ->groupBy([
                     'r.id', 'c.fio', 'c.phone', 'c.organization',
-                    'rs.name', 'rs.color', 'b.name', 'e.fio', 'op.fio',
+                    'rs.name', 'rs.color', 'rt.name', 'rt.color', 'b.name', 'e.fio', 'op.fio',
                     'addr.street', 'addr.houses', 'addr.district',
                     'addr.city_id', 'ct.name', 'ct.postal_code',
                 ]);
@@ -256,6 +259,8 @@ class ReportController extends Controller
                 c.organization AS client_organization,
                 rs.name AS status_name,
                 rs.color AS status_color,
+                rt.name AS request_type_name,
+                rt.color AS request_type_color,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -269,6 +274,7 @@ class ReportController extends Controller
             ")
                 ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
                 ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+                ->leftJoin('request_types AS rt', 'r.request_type_id', '=', 'rt.id')
                 ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
                 ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
                 ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
@@ -293,7 +299,7 @@ class ReportController extends Controller
                 })
                 ->groupBy([
                     'r.id', 'c.fio', 'c.phone', 'c.organization',
-                    'rs.name', 'rs.color', 'b.name', 'e.fio', 'op.fio',
+                    'rs.name', 'rs.color', 'rt.name', 'rt.color', 'b.name', 'e.fio', 'op.fio',
                     'addr.street', 'addr.houses', 'addr.district',
                     'addr.city_id', 'ct.name', 'ct.postal_code',
                 ])
@@ -340,6 +346,7 @@ class ReportController extends Controller
             FROM requests r
             LEFT JOIN clients c ON r.client_id = c.id
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
+            LEFT JOIN request_types rt ON r.request_type_id = rt.id
             LEFT JOIN brigades b ON r.brigade_id = b.id
             LEFT JOIN employees e ON b.leader_id = e.id
             LEFT JOIN employees op ON r.operator_id = op.id
@@ -360,6 +367,8 @@ class ReportController extends Controller
                 c.organization AS client_organization,
                 rs.name AS status_name,
                 rs.color AS status_color,
+                rt.name AS request_type_name,
+                rt.color AS request_type_color,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -557,6 +566,8 @@ class ReportController extends Controller
                 c.organization AS client_organization,
                 rs.name AS status_name,
                 rs.color AS status_color,
+                rt.name AS request_type_name,
+                rt.color AS request_type_color,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -569,6 +580,7 @@ class ReportController extends Controller
             FROM requests r
             LEFT JOIN clients c ON r.client_id = c.id
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
+            LEFT JOIN request_types rt ON r.request_type_id = rt.id
             LEFT JOIN brigades b ON r.brigade_id = b.id
             LEFT JOIN employees e ON b.leader_id = e.id
             LEFT JOIN employees op ON r.operator_id = op.id
@@ -630,6 +642,8 @@ class ReportController extends Controller
                 c.organization AS client_organization,
                 rs.name AS status_name,
                 rs.color AS status_color,
+                rt.name AS request_type_name,
+                rt.color AS request_type_color,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -642,6 +656,7 @@ class ReportController extends Controller
             ')
                 ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
                 ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+                ->leftJoin('request_types AS rt', 'r.request_type_id', '=', 'rt.id')
                 ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
                 ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
                 ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
@@ -779,6 +794,8 @@ class ReportController extends Controller
                 c.organization AS client_organization,
                 rs.name AS status_name,
                 rs.color AS status_color,
+                rt.name AS request_type_name,
+                rt.color AS request_type_color,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -791,6 +808,7 @@ class ReportController extends Controller
             ')
                 ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
                 ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+                ->leftJoin('request_types AS rt', 'r.request_type_id', '=', 'rt.id')
                 ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
                 ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
                 ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
@@ -1005,6 +1023,7 @@ class ReportController extends Controller
                 rs.name AS status_name,
                 rs.color AS status_color,
                 rt.name AS request_type_name,
+                rt.color AS request_type_color,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -1050,10 +1069,12 @@ class ReportController extends Controller
                 $query->where('r.request_type_id', $request->requestTypeId);
             }
 
-            $query->groupBy(
-                'r.id', 'c.id', 'rs.id', 'rt.id', 'b.id', 'e.id',
-                'op.id', 'addr.id', 'ct.id'
-            );
+            $query->groupBy([
+                'r.id', 'c.fio', 'c.phone', 'c.organization',
+                'rs.name', 'rs.color', 'rt.name', 'rt.color', 'b.name', 'e.fio', 'op.fio',
+                'addr.street', 'addr.houses', 'addr.district',
+                'addr.city_id', 'ct.name', 'ct.postal_code',
+            ]);
 
             // Calculate total before ordering and limiting
             $total = DB::table(DB::raw("({$query->toSql()}) as sub"))
@@ -1232,6 +1253,7 @@ class ReportController extends Controller
                         rs.name AS status_name,
                         rs.color AS status_color,
                         rt.name AS request_type_name,
+                        rt.color AS request_type_color,
                         b.name AS brigade_name,
                         e.fio AS brigade_lead,
                         op.fio AS operator_name,
@@ -1472,6 +1494,7 @@ class ReportController extends Controller
                     rs.name AS status_name,
                     rs.color AS status_color,
                     rt.name AS request_type_name,
+                    rt.color AS request_type_color,
                     b.name AS brigade_name,
                     e.fio AS brigade_lead,
                     op.fio AS operator_name,
@@ -1635,6 +1658,7 @@ class ReportController extends Controller
                 rs.name AS status_name,
                 rs.color AS status_color,
                 rt.name AS request_type_name,
+                rt.color AS request_type_color,
                 b.name AS brigade_name,
                 e.fio AS brigade_lead,
                 op.fio AS operator_name,
@@ -1682,10 +1706,12 @@ class ReportController extends Controller
                 $query->where('r.request_type_id', $request->requestTypeId);
             }
 
-            $query->groupBy(
-                'r.id', 'c.id', 'rs.id', 'rt.id', 'b.id', 'e.id',
-                'op.id', 'addr.id', 'ct.id'
-            )
+            $query->groupBy([
+                'r.id', 'c.fio', 'c.phone', 'c.organization',
+                'rs.name', 'rs.color', 'rt.name', 'rt.color', 'b.name', 'e.fio', 'op.fio',
+                'addr.street', 'addr.houses', 'addr.district',
+                'addr.city_id', 'ct.name', 'ct.postal_code',
+            ])
                 ->orderByDesc('r.execution_date')
                 ->orderByDesc('r.id');
 

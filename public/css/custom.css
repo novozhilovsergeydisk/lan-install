@@ -152,29 +152,24 @@
 
 /**/
 
-/* 1-й Дата исполнения */
+/* 1-й # */
 #requestsReportTable tr td:nth-child(1) {
     width: 4%;
 }
 
 /* 2-й Адрес */
 #requestsReportTable tr td:nth-child(2) {
-    width: 24%;
+    width: 32%;
 }
 
 /* 3-й Комментарии */
 #requestsReportTable tr td:nth-child(3) {
-    width: 24%;
+    width: 32%;
 }
 
 /* 4-й Бригада */
 #requestsReportTable tr td:nth-child(4) {
-    width: 24%;
-}
-
-/* 5-й Кнопки действий */
-#requestsReportTable tr td:nth-child(5) {
-    width: 24%;
+    width: 32%;
 }
 
 /* TABLE CUSTOM STYLES */

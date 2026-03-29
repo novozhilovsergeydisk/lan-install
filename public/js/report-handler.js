@@ -1,4 +1,4 @@
-import { showAlert, postData } from './utils.js';
+import { showAlert, postData, getContrastColor } from './utils.js';
 
 // Инициализация календарей для отчётов
 export function initReportDatepickers() {
@@ -976,16 +976,10 @@ export function renderReportTable(data) {
         numberCell.textContent = index + 1;
         row.appendChild(numberCell);
         
-        // Дата заявки
-        const dateCell = document.createElement('td');
-        dateCell.innerHTML = `
-            <div class="d-flex flex-column">
-                <span class="fw-bold fs-6">${executionDate}</span>
-                <small style="font-size: 0.75rem; color: #000;">${request.number || ''}</small>
-            </div>
-        `;
-        row.appendChild(dateCell);
-        
+        const typeColor = request.request_type_color;
+        const typeName = request.request_type_name;
+        const contrastColor = typeColor ? getContrastColor(typeColor) : '#000000';
+
         // Адрес и Клиент
         // Используем структуру как в address-history.blade.php
         const addressHtml = `
@@ -1034,11 +1028,17 @@ export function renderReportTable(data) {
         // console.log('statusName', statusName);
         // console.log('========================');
 
+        const headerHtml = `
+            <div class="p-1 rounded-top" ${typeColor ? `style="background-color: ${typeColor}; color: ${contrastColor}; font-size: 0.8rem;"` : 'style="background-color: #f8f9fa; color: #000; font-size: 0.8rem; border: 1px solid #dee2e6; border-bottom: 0;"'}>
+                ${executionDate} | ${request.number || ''} ${typeName ? `<span class="ms-1">[${typeName}]</span>` : ''}
+            </div>
+        `;
         
         if (comments_by_request[request.id] && comments_by_request[request.id].length > 0) {
             commentHtml = `
+                ${headerHtml}
                 <div class="comment-preview" 
-                     style="max-height: 250px; overflow-y: auto; font-size: 0.85rem; line-height: 1.3;">
+                     style="max-height: 250px; overflow-y: auto; font-size: 0.85rem; line-height: 1.3; ${typeColor ? `border: 5px solid ${typeColor}; border-top: 0px;` : 'border: 1px solid #dee2e6; border-top: 0px;' }">
                     ${comments_by_request[request.id].map(comment => {
                         const date = new Date(comment.created_at).toLocaleString('ru-RU');
                         return `
@@ -1082,7 +1082,12 @@ export function renderReportTable(data) {
                 
                 `;
         } else {
-            commentHtml = '<span class="small fst-italic" style="color: #000;">Комментариев нет</span>';
+            commentHtml = `
+                ${headerHtml}
+                <div class="p-2 border rounded-bottom" style="${typeColor ? `border: 5px solid ${typeColor} !important; border-top: 0px !important;` : 'border: 1px solid #dee2e6; border-top: 0px;' }">
+                    <span class="small fst-italic" style="color: #000;">Комментариев нет</span>
+                </div>
+            `;
         }
         
         commentCell.innerHTML = commentHtml;

@@ -1203,12 +1203,12 @@
                                 <thead class="table-light">
                                 <tr>
                                     <th class="d-none d-md-table-cell" style="width: 50px;">#</th>
-                                    <th style="width: 140px;">Дата / Инфо</th>
                                     <th style="min-width: 200px;">Клиент / Адрес</th>
                                     <th style="min-width: 300px;">Комментарии</th>
                                     <th id="brigadeHeader" style="width: 180px;">Статус / Бригада <span id="brigadeSortIcon"></span></th>
                                 </tr>
                                 </thead>
+
                                 <tbody id="requestsReportBody">
                                 </tbody>
                             </table>
