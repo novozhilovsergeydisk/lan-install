@@ -36,7 +36,7 @@ import {
     initTooltips,
     initRequestButtons,
     initAllCustomSelects,
-    setupBrigadeAttachment,
+
     handlerCreateBrigade,
     hanlerAddToBrigade,
     handlerAddEmployee,
@@ -146,12 +146,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Обработчик для кнопки "Назначить" в модальном окне назначения бригады
+    // Обработчик для кнопки "Назначить" в модальном окне назначения бригады
     const confirmAssignTeamBtn = document.getElementById('confirm-assign-team-btn');
     if (confirmAssignTeamBtn) {
         confirmAssignTeamBtn.addEventListener('click', async function() {
             const modal = document.getElementById('assign-team-modal');
             const requestId = modal.dataset.requestId;
-            console.log('request_id =', requestId);
+            const requestIdsRaw = modal.dataset.requestIds;
+            let requestIds = [];
+
+            if (requestIdsRaw) {
+                try {
+                    requestIds = JSON.parse(requestIdsRaw);
+                } catch (e) {
+                    console.error('Не удалось распарсить requestIds:', e);
+                }
+            } else if (requestId) {
+                requestIds = [requestId];
+            }
+
+            if (!requestIds || requestIds.length === 0) {
+                 showAlert('Не выбрана ни одна заявка!', 'warning');
+                 return;
+            }
 
             const selectElement = document.getElementById('assign-team-select');
             const selectedTeamId = selectElement.value;
@@ -176,28 +193,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const brigadeName = selectedTeamName;
 
-            // console.log(`ID выбранной заявки: ${requestId}`);
-            // console.log(`ID выбранного бригадира: ${leaderId}`);
-            // console.log(`ID бригады: ${brigade_id}`);
-            // console.log(`Название бригады: ${brigadeName}`);
-
             try {
-                // Отправляем запрос на обновление заявки
-                const updateResponse = await fetch('/api/requests/update-brigade', {
+                // Если заявок несколько, используем маршрут массового обновления
+                const url = requestIds.length > 1 ? '/api/requests/update-brigade-mass' : '/api/requests/update-brigade';
+                const bodyData = requestIds.length > 1 
+                    ? { brigade_id: brigade_id, request_ids: requestIds }
+                    : { brigade_id: brigade_id, request_id: requestIds[0] };
+
+                // Отправляем запрос на обновление заявки(ок)
+                const updateResponse = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
-                        brigade_id: brigade_id,
-                        request_id: requestId
-                    })
+                    body: JSON.stringify(bodyData)
                 });
 
                 const updateData = await updateResponse.json().catch(() => ({}));
-                console.log('Ответ от API обновления заявки:', updateResponse.status, updateData);
 
                 if (!updateResponse.ok) {
                     const errorMessage = updateData.message ||
@@ -206,19 +220,45 @@ document.addEventListener('DOMContentLoaded', function () {
                     throw new Error(`Ошибка ${updateResponse.status}: ${errorMessage}`);
                 }
 
-                // console.log(`Бригадир ${brigadeName} (ID: ${leaderId}) успешно прикреплен к заявке ${requestId}`);
+                // Обновляем данные заявок без перезагрузки страницы
+                if (typeof updateRequest === 'function') {
+                    requestIds.forEach(id => {
+                        updateRequest({
+                            id: id,
+                            brigade_id: brigade_id,
+                            brigade_name: brigadeName,
+                            brigadeMembers: updateData.data.brigadeMembers,
+                            date: typeof currentDateState !== 'undefined' ? currentDateState.date : null
+                        });
+                    });
+                } else {
+                    window.location.reload();
+                    return;
+                }
+                
+                // Скрываем модальное окно с помощью Bootstrap 5 API
+                if (typeof bootstrap !== 'undefined') {
+                    const modalInstance = bootstrap.Modal.getInstance(modal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                }
 
-                // 3. Обновляем страницу для отображения изменений
-                // window.location.reload();
-
-                // Обновляем данные заявки без перезагрузки страницы
-                updateRequest({
-                    id: requestId,
-                    brigade_id: brigade_id,
-                    brigade_name: brigadeName,
-                    brigadeMembers: updateData.data.brigadeMembers,
-                    date: currentDateState.date // Add current date to request data
+                // Снимаем выделение с чекбоксов
+                document.querySelectorAll('.request-checkbox:checked').forEach(cb => {
+                    cb.checked = false;
+                    // Триггерим событие change чтобы отработали другие слушатели (снятие подсветки)
+                    cb.dispatchEvent(new Event('change', { bubbles: true }));
                 });
+                
+                // Снимаем главный чекбокс
+                const selectAll = document.getElementById('selectAllRequests');
+                if(selectAll) {
+                    selectAll.checked = false;
+                    selectAll.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                
+                showAlert('Бригада успешно назначена', 'success');
 
             } catch (error) {
                 console.error('Ошибка при прикреплении бригады:', error.message);
@@ -228,12 +268,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     showAlert(`Ошибка: ${error.message}`, 'danger');
                 }
             }
-
-            // Закрываем модальное окно
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            bsModal.hide();
         });
     }
+
 
     function updateRequest(requestData) {
         console.log('Updating request with data:', requestData);
@@ -429,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
 
-    setupBrigadeAttachment();
+    
     // Запускаем инициализацию с небольшой задержкой, чтобы убедиться, что DOM полностью загружен
     setTimeout(() => {
         // console.log('Вызов handlerCreateBrigade...');

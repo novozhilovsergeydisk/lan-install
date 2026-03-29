@@ -144,4 +144,92 @@ class ControllerRequestModification extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Массово обновить бригаду у заявок
+     *
+     * @return IlluminateHttpJsonResponse
+     */
+    public function updateRequestBrigadeMass(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'brigade_id' => 'required|integer|exists:brigades,id',
+                'request_ids' => 'required|array|min:1',
+                'request_ids.*' => 'integer|exists:requests,id',
+            ]);
+
+            $requestIds = $validated['request_ids'];
+            $brigadeId = $validated['brigade_id'];
+
+            // Создаем строку с плейсхолдерами ?, ?, ? для IN (...)
+            $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
+            $sql = "UPDATE requests SET brigade_id = ? WHERE id IN ($placeholders)";
+            
+            // Собираем параметры: сначала brigade_id, затем все request_ids
+            $params = array_merge([$brigadeId], $requestIds);
+            
+            $updated = DB::update($sql, $params);
+
+            if ($updated > 0) {
+                // Получаем информацию о бригаде для ответа (как в одиночном методе)
+                $sql = "SELECT
+                    b.id AS brigade_id,
+                    b.name AS brigade_name,
+                    bl.fio AS leader_fio,
+                    b.formation_date,
+                    string_agg(
+                        CASE
+                            WHEN bm.employee_id IS NOT NULL AND bm.employee_id != b.leader_id THEN bm_employee.fio
+                            ELSE NULL
+                        END,
+                        ', ' ORDER BY bm_employee.fio
+                    ) AS members
+                FROM
+                    brigades b
+                JOIN
+                    employees bl ON b.leader_id = bl.id
+                LEFT JOIN
+                    brigade_members bm ON bm.brigade_id = b.id
+                LEFT JOIN
+                    employees bm_employee ON bm.employee_id = bm_employee.id
+                WHERE 1=1
+                    AND b.id = ?
+                    AND b.is_deleted = false
+                    AND bl.is_deleted = false
+                GROUP BY
+                    b.id, b.name, bl.fio
+                ORDER BY
+                    b.id desc;";
+                $brigadeMembers = DB::select($sql, [$brigadeId]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Бригада успешно назначена на ' . $updated . ' заявки(ок)',
+                    'data' => [
+                        'request_ids' => $requestIds,
+                        'brigade_id' => $brigadeId,
+                        'brigadeMembers' => $brigadeMembers,
+                    ],
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Не удалось обновить заявки. Возможно они уже обновлены или не существуют.',
+            ], 400);
+
+        } catch (Exception $e) {
+            Log::error('Ошибка при массовом обновлении заявок', [
+                'message' => $e->getMessage(),
+                'request' => $request->all(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обновлении заявок: '.$e->getMessage(),
+            ], 500);
+        }
+    }
 }
+

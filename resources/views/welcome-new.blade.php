@@ -81,6 +81,11 @@
                                     id="btn-print-work-permit">
                                 <i class="bi bi-printer me-1"></i>Распечатать
                             </button>
+                            
+                            <button type="button" class="btn btn-outline-primary btn-sm mb-3 me-2 d-none"
+                                    id="btn-mass-assign-team">
+                                <i class="bi bi-people me-1"></i>Назначить бригаду
+                            </button>
 
                             <div id="status-buttons" class="d-flex flex-wrap gap-2  hide-me">
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->

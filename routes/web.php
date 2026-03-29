@@ -213,6 +213,7 @@ Route::prefix('api/requests')->middleware('auth')->group(function () {
 
     // Обновить бригаду у заявки
     Route::post('/update-brigade', [\App\Http\Controllers\ControllerRequestModification::class, 'updateRequestBrigade']);
+    Route::post('/update-brigade-mass', [\App\Http\Controllers\ControllerRequestModification::class, 'updateRequestBrigadeMass']);
 });
 
 // API Route for getting all statuses
