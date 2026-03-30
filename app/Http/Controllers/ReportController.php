@@ -1789,7 +1789,7 @@ class ReportController extends Controller
     public function getOrganizations()
     {
         try {
-            $organizations = DB::select('SELECT DISTINCT organization FROM clients WHERE organization IS NOT NULL AND organization != \'\' ORDER BY organization');
+            $organizations = DB::select("SELECT DISTINCT organization FROM clients WHERE organization IS NOT NULL AND organization != '' AND LENGTH(organization) > 2 AND organization != '-' ORDER BY organization");
 
             return response()->json($organizations);
         } catch (\Exception $e) {

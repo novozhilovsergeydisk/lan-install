@@ -611,3 +611,63 @@ body.dark-mode .custom-select-options li:hover {
     vertical-align: middle !important;
 }
 
+/* Organization Autocomplete Styles */
+.autocomplete-container {
+    position: relative;
+    width: 100%;
+}
+
+.autocomplete-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: #fff;
+    color: #212529;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    margin-top: 2px;
+}
+
+.autocomplete-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    color: #212529;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    background-color: #f8f9fa;
+    color: #0d6efd;
+}
+
+.autocomplete-item:not(:last-child) {
+    border-bottom: 1px solid #f8f9fa;
+}
+
+/* Dark theme support for autocomplete */
+[data-bs-theme="dark"] .autocomplete-results {
+    background-color: #2b3035 !important;
+    border-color: #495057 !important;
+    color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] .autocomplete-item {
+    color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] .autocomplete-item:hover,
+[data-bs-theme="dark"] .autocomplete-item.active {
+    background-color: #343a40 !important;
+    color: #0d6efd !important;
+}
+
+[data-bs-theme="dark"] .autocomplete-item:not(:last-child) {
+    border-bottom: 1px solid #495057;
+}
+
