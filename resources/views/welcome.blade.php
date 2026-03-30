@@ -5498,7 +5498,7 @@
 <!-- Подключаем скрипт для работы с модальными окнами -->
 <script type="module" src="{{ asset('js/modals.js') }}"></script>
 <script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
-<script src="{{ asset('js/organization-autocomplete.js') }}"></script>
+<script src="{{ asset('js/organization-autocomplete.js') }}?v={{ time() }}"></script>
 <script src="{{ asset('js/wms-integration.js') }}"></script>
     <script src="{{ asset('js/report-export.js') }}"></script>
     <script src="{{ asset('js/map-requests.js') }}"></script>
