@@ -2755,12 +2755,16 @@ class HomeController extends Controller
                         $cleanComment = htmlspecialchars($cleanComment);
                         $typeName = htmlspecialchars($requestDataForNotify->type_name);
 
+                        // Формируем ссылку на заявку
+                        $requestUrl = config('app.url') . '/requests/' . $id;
+
                         $notifyMessage = "✅ <b>Заявка #{$id} закрыта ({$typeName})</b>\n\n"
                                        . "🏢 <b>Организация:</b> {$orgName}\n"
                                        . "📍 <b>Адрес:</b> {$addrName}\n"
                                        . "👥 <b>Бригада:</b>\n{$brigadeName}\n\n"
                                        . $worksStr
-                                       . "📝 <b>Комментарий:</b>\n{$cleanComment}";
+                                       . "📝 <b>Комментарий:</b>\n{$cleanComment}"
+                                       . "\n\n🔗 <a href='{$requestUrl}'>Открыть заявку #{$id}</a>";
 
                         // Добавляем ссылку только если есть что скачивать
                         if ($hasPhotos || $hasFiles) {
