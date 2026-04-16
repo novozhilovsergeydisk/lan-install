@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\RequestsReportExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
-use App\Exports\RequestsReportExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
@@ -24,17 +23,25 @@ class ReportController extends Controller
                 'addressId',
                 'organization',
                 'requestTypeId',
-                'allPeriod'
+                'allPeriod',
             ]);
-            
+
             // Маппинг 'all_employees' и прочих пустых значений в null
-            if (($filters['employeeId'] ?? '') === 'all_employees') $filters['employeeId'] = null;
-            if (($filters['addressId'] ?? '') === 'all_addresses') $filters['addressId'] = null;
-            if (($filters['organization'] ?? '') === 'all_organizations') $filters['organization'] = null;
-            if (($filters['requestTypeId'] ?? '') === 'all_request_types') $filters['requestTypeId'] = null;
+            if (($filters['employeeId'] ?? '') === 'all_employees') {
+                $filters['employeeId'] = null;
+            }
+            if (($filters['addressId'] ?? '') === 'all_addresses') {
+                $filters['addressId'] = null;
+            }
+            if (($filters['organization'] ?? '') === 'all_organizations') {
+                $filters['organization'] = null;
+            }
+            if (($filters['requestTypeId'] ?? '') === 'all_request_types') {
+                $filters['requestTypeId'] = null;
+            }
 
             // Преобразование дат в Y-m-d для БД
-            if (!empty($filters['startDate']) && empty($filters['allPeriod'])) {
+            if (! empty($filters['startDate']) && empty($filters['allPeriod'])) {
                 try {
                     $filters['startDate'] = \Carbon\Carbon::createFromFormat('d.m.Y', $filters['startDate'])->format('Y-m-d');
                     $filters['endDate'] = \Carbon\Carbon::createFromFormat('d.m.Y', $filters['endDate'])->format('Y-m-d');
@@ -47,11 +54,12 @@ class ReportController extends Controller
             // Логируем фильтры для отладки
             \Illuminate\Support\Facades\Log::info('Export filters:', $filters);
 
-            return Excel::download(new RequestsReportExport($filters), 'export_' . now()->format('d_m_Y_H_i') . '.xlsx');
+            return Excel::download(new RequestsReportExport($filters), 'export_'.now()->format('d_m_Y_H_i').'.xlsx');
 
         } catch (\Exception $e) {
-            Log::error('Error in ReportController@export: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Ошибка экспорта: ' . $e->getMessage()], 500);
+            Log::error('Error in ReportController@export: '.$e->getMessage());
+
+            return response()->json(['success' => false, 'message' => 'Ошибка экспорта: '.$e->getMessage()], 500);
         }
     }
 
@@ -142,12 +150,12 @@ class ReportController extends Controller
             // Optimization: Fetch only relevant brigade members and comments
             $requestIds = $requests->pluck('id')->toArray();
             $brigadeIds = $requests->pluck('brigade_id')->filter()->unique()->toArray();
-            
+
             // Get Brigade Members
             $brigadeMembersWithDetails = [];
-            if (!empty($brigadeIds)) {
-                 $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
-                 $brigadeMembersWithDetails = DB::select(
+            if (! empty($brigadeIds)) {
+                $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
+                $brigadeMembersWithDetails = DB::select(
                     "SELECT
                         bm.*,
                         b.name as brigade_name,
@@ -166,14 +174,14 @@ class ReportController extends Controller
                     JOIN brigades b ON bm.brigade_id = b.id
                     LEFT JOIN employees e ON bm.employee_id = e.id
                     LEFT JOIN employees el ON b.leader_id = el.id
-                    WHERE bm.brigade_id IN ($placeholders)", 
+                    WHERE bm.brigade_id IN ($placeholders)",
                     array_values($brigadeIds)
                 );
             }
 
             // Get Comments
             $commentsByRequest = [];
-            if (!empty($requestIds)) {
+            if (! empty($requestIds)) {
                 $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
                 $requestComments = DB::select("
                     SELECT
@@ -196,17 +204,17 @@ class ReportController extends Controller
                 ", array_values($requestIds));
 
                 $commentsByRequest = collect($requestComments)
-                ->groupBy('request_id')
-                ->map(function ($comments) {
-                    return collect($comments)->map(function ($comment) {
-                        return (object) [
-                            'id' => $comment->comment_id,
-                            'comment' => $comment->comment,
-                            'created_at' => $comment->created_at,
-                            'author_name' => $comment->author_name,
-                        ];
+                    ->groupBy('request_id')
+                    ->map(function ($comments) {
+                        return collect($comments)->map(function ($comment) {
+                            return (object) [
+                                'id' => $comment->comment_id,
+                                'comment' => $comment->comment,
+                                'created_at' => $comment->created_at,
+                                'author_name' => $comment->author_name,
+                            ];
+                        })->toArray();
                     })->toArray();
-                })->toArray();
             }
 
             $data = [
@@ -218,7 +226,7 @@ class ReportController extends Controller
                 'commentsByRequest' => $commentsByRequest,
                 'page' => $page,
                 'limit' => $limit,
-                'total' => $total
+                'total' => $total,
             ];
 
             return response()->json($data);
@@ -357,7 +365,7 @@ class ReportController extends Controller
             AND addr.id = ?';
 
             // Calculate total
-            $total = DB::select('SELECT COUNT(*) as total ' . $sqlBase, [$addressId])[0]->total;
+            $total = DB::select('SELECT COUNT(*) as total '.$sqlBase, [$addressId])[0]->total;
 
             $sql = '
             SELECT
@@ -378,22 +386,22 @@ class ReportController extends Controller
                 addr.city_id,
                 ct.name AS city_name,
                 ct.postal_code AS city_postal_code
-            ' . $sqlBase . '
+            '.$sqlBase.'
             ORDER BY r.execution_date DESC, r.id DESC
             LIMIT ? OFFSET ?
             ';
 
             $requestsByAddressAndDateRange = DB::select($sql, [$addressId, $limit, $offset]);
 
-             // Optimization: Fetch only relevant brigade members and comments
-             $requestIds = array_column($requestsByAddressAndDateRange, 'id');
-             $brigadeIds = array_filter(array_unique(array_column($requestsByAddressAndDateRange, 'brigade_id')));
- 
-             $brigadeMembersWithDetails = [];
-             if (!empty($brigadeIds)) {
-                 $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
-                                 $brigadeMembersWithDetails = DB::select(
-                                     "SELECT
+            // Optimization: Fetch only relevant brigade members and comments
+            $requestIds = array_column($requestsByAddressAndDateRange, 'id');
+            $brigadeIds = array_filter(array_unique(array_column($requestsByAddressAndDateRange, 'brigade_id')));
+
+            $brigadeMembersWithDetails = [];
+            if (! empty($brigadeIds)) {
+                $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
+                $brigadeMembersWithDetails = DB::select(
+                    "SELECT
                                          bm.*,
                                          b.name as brigade_name,
                                          b.leader_id,
@@ -411,14 +419,15 @@ class ReportController extends Controller
                                      JOIN brigades b ON bm.brigade_id = b.id
                                      LEFT JOIN employees e ON bm.employee_id = e.id
                                      LEFT JOIN employees el ON b.leader_id = el.id
-                                     WHERE bm.brigade_id IN ($placeholders)", 
-                                     array_values($brigadeIds)
-                                 );             }
- 
-             $commentsByRequest = [];
-             if (!empty($requestIds)) {
-                 $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
-                 $requestComments = DB::select("
+                                     WHERE bm.brigade_id IN ($placeholders)",
+                    array_values($brigadeIds)
+                );
+            }
+
+            $commentsByRequest = [];
+            if (! empty($requestIds)) {
+                $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
+                $requestComments = DB::select("
                      SELECT
                          rc.request_id,
                          c.id as comment_id,
@@ -437,20 +446,20 @@ class ReportController extends Controller
                      WHERE rc.request_id IN ($placeholders)
                      ORDER BY rc.request_id, c.created_at
                  ", array_values($requestIds));
- 
-                 $commentsByRequest = collect($requestComments)
-                     ->groupBy('request_id')
-                     ->map(function ($comments) {
-                         return collect($comments)->map(function ($comment) {
-                             return (object) [
-                                 'id' => $comment->comment_id,
-                                 'comment' => $comment->comment,
-                                 'created_at' => $comment->created_at,
-                                 'author_name' => $comment->author_name,
-                             ];
-                         })->toArray();
-                     })->toArray();
-             }
+
+                $commentsByRequest = collect($requestComments)
+                    ->groupBy('request_id')
+                    ->map(function ($comments) {
+                        return collect($comments)->map(function ($comment) {
+                            return (object) [
+                                'id' => $comment->comment_id,
+                                'comment' => $comment->comment,
+                                'created_at' => $comment->created_at,
+                                'author_name' => $comment->author_name,
+                            ];
+                        })->toArray();
+                    })->toArray();
+            }
 
             $data = [
                 'success' => true,
@@ -461,7 +470,7 @@ class ReportController extends Controller
                 'commentsByRequest' => $commentsByRequest,
                 'page' => $page,
                 'limit' => $limit,
-                'total' => $total
+                'total' => $total,
             ];
 
             return response()->json($data);
@@ -672,33 +681,24 @@ class ReportController extends Controller
                 ->orderBy('r.id', 'DESC')
                 ->get();
 
-            // Получить данные о членах бригад для заявок
+            // Получить данные о членах бригад для заявок (плоский формат)
             $brigadeIds = $requests->pluck('brigade_id')->filter()->unique();
             $brigadeMembers = [];
             if ($brigadeIds->isNotEmpty()) {
-                $brigadeMembers = DB::table('brigade_members as bm')
-                    ->join('brigades as b', 'bm.brigade_id', '=', 'b.id')
-                    ->leftJoin('employees as e', 'bm.employee_id', '=', 'e.id')
-                    ->whereIn('bm.brigade_id', $brigadeIds)
-                    ->where('b.is_deleted', false)
-                    ->select(
-                        'bm.brigade_id',
-                        'e.fio as employee_name',
-                        'e.id as employee_id'
-                    )
-                    ->get()
-                    ->groupBy('brigade_id')
-                    ->map(function ($members, $brigadeId) {
-                        return [
-                            'brigade_id' => $brigadeId,
-                            'members' => $members->map(function ($member) {
-                                return [
-                                    'fio' => $member->employee_name,
-                                    'id' => $member->employee_id,
-                                ];
-                            })->toArray(),
-                        ];
-                    })->values()->toArray();
+                $brigadeMembers = DB::select('
+                    SELECT
+                        bm.brigade_id,
+                        b.name as brigade_name,
+                        b.leader_id,
+                        e.fio as employee_name,
+                        el.fio as employee_leader_name
+                    FROM brigade_members bm
+                    JOIN brigades b ON bm.brigade_id = b.id
+                    LEFT JOIN employees e ON bm.employee_id = e.id
+                    LEFT JOIN employees el ON b.leader_id = el.id
+                    WHERE bm.brigade_id IN ('.$brigadeIds->implode(',').')
+                    AND (b.is_deleted = false OR b.id IS NULL)
+                ');
             }
 
             // Получить комментарии для заявок
@@ -767,7 +767,7 @@ class ReportController extends Controller
     {
         // Проверка токена
         $secret = config('app.key');
-        $expectedToken = md5($addressId . $secret . 'address-history');
+        $expectedToken = md5($addressId.$secret.'address-history');
 
         if ($token !== $expectedToken) {
             abort(403, 'Неверный токен доступа');
@@ -909,7 +909,7 @@ class ReportController extends Controller
 
                     if ($hasPhotos || $hasFiles) {
                         $secret = config('app.key');
-                        $token = md5($request->id . $secret . 'telegram-notify');
+                        $token = md5($request->id.$secret.'telegram-notify');
                         $request->download_url = route('photo-report.download.public', ['requestId' => $request->id, 'token' => $token]);
                     } else {
                         $request->download_url = null;
@@ -1097,18 +1097,18 @@ class ReportController extends Controller
                 'organization' => $request->organization ?? null,
                 'requestTypeId' => $request->requestTypeId ?? null,
                 'page' => $page,
-                'limit' => $limit
+                'limit' => $limit,
             ]);
 
             // Optimization: Fetch only relevant brigade members and comments
             $requestIds = $requestsAllPeriodByEmployee->pluck('id')->toArray();
             $brigadeIds = $requestsAllPeriodByEmployee->pluck('brigade_id')->filter()->unique()->toArray();
-            
+
             // Get Brigade Members
             $brigadeMembersWithDetails = [];
-            if (!empty($brigadeIds)) {
-                 $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
-                 $brigadeMembersWithDetails = DB::select(
+            if (! empty($brigadeIds)) {
+                $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
+                $brigadeMembersWithDetails = DB::select(
                     "SELECT
                         bm.*,
                         b.name as brigade_name,
@@ -1127,14 +1127,14 @@ class ReportController extends Controller
                     JOIN brigades b ON bm.brigade_id = b.id
                     LEFT JOIN employees e ON bm.employee_id = e.id
                     LEFT JOIN employees el ON b.leader_id = el.id
-                    WHERE bm.brigade_id IN ($placeholders)", 
+                    WHERE bm.brigade_id IN ($placeholders)",
                     array_values($brigadeIds)
                 );
             }
 
             // Get Comments
             $commentsByRequest = [];
-            if (!empty($requestIds)) {
+            if (! empty($requestIds)) {
                 $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
                 $requestComments = DB::select("
                     SELECT
@@ -1157,17 +1157,17 @@ class ReportController extends Controller
                 ", array_values($requestIds));
 
                 $commentsByRequest = collect($requestComments)
-                ->groupBy('request_id')
-                ->map(function ($comments) {
-                    return collect($comments)->map(function ($comment) {
-                        return (object) [
-                            'id' => $comment->comment_id,
-                            'comment' => $comment->comment,
-                            'created_at' => $comment->created_at,
-                            'author_name' => $comment->author_name,
-                        ];
+                    ->groupBy('request_id')
+                    ->map(function ($comments) {
+                        return collect($comments)->map(function ($comment) {
+                            return (object) [
+                                'id' => $comment->comment_id,
+                                'comment' => $comment->comment,
+                                'created_at' => $comment->created_at,
+                                'author_name' => $comment->author_name,
+                            ];
+                        })->toArray();
                     })->toArray();
-                })->toArray();
             }
 
             $data = [
@@ -1179,7 +1179,7 @@ class ReportController extends Controller
                 'commentsByRequest' => $commentsByRequest,
                 'page' => $page,
                 'limit' => $limit,
-                'total' => $total
+                'total' => $total,
             ];
 
             return response()->json($data);
@@ -1194,30 +1194,30 @@ class ReportController extends Controller
         }
     }
 
-        /**
-         * Поиск заявок за весь период
-         */
-        public function getAllPeriod(Request $request)
-        {
-            try {
-                // Тест
-                // $data = [
-                //     'success' => true,
-                //     'debug' => false,
-                //     'message' => 'Заявки успешно получены',
-                //     'request-all' => $request->all(),
-                // ];
-    
-                // return response()->json($data);
-    
-                $bindings = [];
-    
-                // Pagination parameters
-                $page = (int) $request->input('page', 1);
-                $limit = (int) $request->input('limit', 20);
-                $offset = ($page - 1) * $limit;
-    
-                $sqlBase = '
+    /**
+     * Поиск заявок за весь период
+     */
+    public function getAllPeriod(Request $request)
+    {
+        try {
+            // Тест
+            // $data = [
+            //     'success' => true,
+            //     'debug' => false,
+            //     'message' => 'Заявки успешно получены',
+            //     'request-all' => $request->all(),
+            // ];
+
+            // return response()->json($data);
+
+            $bindings = [];
+
+            // Pagination parameters
+            $page = (int) $request->input('page', 1);
+            $limit = (int) $request->input('limit', 20);
+            $offset = ($page - 1) * $limit;
+
+            $sqlBase = '
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1229,23 +1229,23 @@ class ReportController extends Controller
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
                     WHERE 1=1';
-    
-                // Добавляем фильтр по организации
-                if ($request->has('organization') && ! empty($request->organization)) {
-                    $sqlBase .= ' AND c.organization = ?';
-                    $bindings[] = $request->organization;
-                }
-    
-                // Добавляем фильтр по типу заявки
-                if ($request->has('requestTypeId') && ! empty($request->requestTypeId)) {
-                    $sqlBase .= ' AND r.request_type_id = ?';
-                    $bindings[] = $request->requestTypeId;
-                }
-    
-                // Calculate total
-                $total = DB::select("SELECT COUNT(*) as total $sqlBase", $bindings)[0]->total;
-    
-                $sql = "
+
+            // Добавляем фильтр по организации
+            if ($request->has('organization') && ! empty($request->organization)) {
+                $sqlBase .= ' AND c.organization = ?';
+                $bindings[] = $request->organization;
+            }
+
+            // Добавляем фильтр по типу заявки
+            if ($request->has('requestTypeId') && ! empty($request->requestTypeId)) {
+                $sqlBase .= ' AND r.request_type_id = ?';
+                $bindings[] = $request->requestTypeId;
+            }
+
+            // Calculate total
+            $total = DB::select("SELECT COUNT(*) as total $sqlBase", $bindings)[0]->total;
+
+            $sql = "
                     SELECT r.*,
                         c.fio AS client_fio,
                         c.phone AS client_phone,
@@ -1267,28 +1267,28 @@ class ReportController extends Controller
                     ORDER BY execution_date DESC
                     LIMIT ? OFFSET ?
                 ";
-    
-                $bindings[] = $limit;
-                $bindings[] = $offset;
-    
-                // Логируем SQL-запрос для отладки
-                \Log::info('SQL Query in getAllPeriod:', [
-                    'sql' => $sql,
-                    'bindings' => $bindings,
-                    'page' => $page
-                ]);
-    
-                $requestsAllPeriod = DB::select($sql, $bindings);
-    
-                // Optimization: Fetch only relevant brigade members and comments
-                $requestIds = array_column($requestsAllPeriod, 'id');
-                $brigadeIds = array_filter(array_unique(array_column($requestsAllPeriod, 'brigade_id')));
-    
-                $brigadeMembersWithDetails = [];
-                if (!empty($brigadeIds)) {
-                    $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
-                                    $brigadeMembersWithDetails = DB::select(
-                                        "SELECT
+
+            $bindings[] = $limit;
+            $bindings[] = $offset;
+
+            // Логируем SQL-запрос для отладки
+            \Log::info('SQL Query in getAllPeriod:', [
+                'sql' => $sql,
+                'bindings' => $bindings,
+                'page' => $page,
+            ]);
+
+            $requestsAllPeriod = DB::select($sql, $bindings);
+
+            // Optimization: Fetch only relevant brigade members and comments
+            $requestIds = array_column($requestsAllPeriod, 'id');
+            $brigadeIds = array_filter(array_unique(array_column($requestsAllPeriod, 'brigade_id')));
+
+            $brigadeMembersWithDetails = [];
+            if (! empty($brigadeIds)) {
+                $placeholders = implode(',', array_fill(0, count($brigadeIds), '?'));
+                $brigadeMembersWithDetails = DB::select(
+                    "SELECT
                                             bm.*,
                                             b.name as brigade_name,
                                             b.leader_id,
@@ -1306,14 +1306,15 @@ class ReportController extends Controller
                                         JOIN brigades b ON bm.brigade_id = b.id
                                         LEFT JOIN employees e ON bm.employee_id = e.id
                                         LEFT JOIN employees el ON b.leader_id = el.id
-                                        WHERE bm.brigade_id IN ($placeholders)", 
-                                        array_values($brigadeIds)
-                                    );                }
-    
-                $comments_by_request = [];
-                if (!empty($requestIds)) {
-                    $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
-                    $requestComments = DB::select(" 
+                                        WHERE bm.brigade_id IN ($placeholders)",
+                    array_values($brigadeIds)
+                );
+            }
+
+            $comments_by_request = [];
+            if (! empty($requestIds)) {
+                $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
+                $requestComments = DB::select(" 
                         SELECT
                             rc.request_id,
                             c.id as comment_id,
@@ -1332,45 +1333,46 @@ class ReportController extends Controller
                         WHERE rc.request_id IN ($placeholders)
                         ORDER BY rc.request_id, c.created_at
                     ", array_values($requestIds));
-    
-                    $commentsByRequest = collect($requestComments)
-                        ->groupBy('request_id')
-                        ->map(function ($comments) {
-                            return collect($comments)->map(function ($comment) {
-                                return (object) [
-                                    'id' => $comment->comment_id,
-                                    'comment' => $comment->comment,
-                                    'created_at' => $comment->created_at,
-                                    'author_name' => $comment->author_name,
-                                ];
-                            })->toArray();
-                        });
-                    $comments_by_request = $commentsByRequest->toArray();
-                }
-    
-                $data = [
-                    'success' => true,
-                    'debug' => false,
-                    'message' => 'Заявки успешно получены',
-                    'requestsAllPeriod' => $requestsAllPeriod,
-                    'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
-                    'comments_by_request' => $comments_by_request,
-                    'page' => $page,
-                    'limit' => $limit,
-                    'total' => $total
-                ];
-    
-                return response()->json($data);
-            } catch (\Exception $e) {
-                Log::error('Error in ReportController@getAllPeriod: '.$e->getMessage());
-    
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Произошла ошибка при получении отчета',
-                    'error' => $e->getMessage(),
-                ], 500);
+
+                $commentsByRequest = collect($requestComments)
+                    ->groupBy('request_id')
+                    ->map(function ($comments) {
+                        return collect($comments)->map(function ($comment) {
+                            return (object) [
+                                'id' => $comment->comment_id,
+                                'comment' => $comment->comment,
+                                'created_at' => $comment->created_at,
+                                'author_name' => $comment->author_name,
+                            ];
+                        })->toArray();
+                    });
+                $comments_by_request = $commentsByRequest->toArray();
             }
+
+            $data = [
+                'success' => true,
+                'debug' => false,
+                'message' => 'Заявки успешно получены',
+                'requestsAllPeriod' => $requestsAllPeriod,
+                'brigadeMembersWithDetails' => $brigadeMembersWithDetails,
+                'comments_by_request' => $comments_by_request,
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+            ];
+
+            return response()->json($data);
+        } catch (\Exception $e) {
+            Log::error('Error in ReportController@getAllPeriod: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при получении отчета',
+                'error' => $e->getMessage(),
+            ], 500);
         }
+    }
+
     /**
      * Поиск заявок за период по датам
      */
@@ -1899,10 +1901,10 @@ class ReportController extends Controller
         $requests = DB::select($sql, $ids);
 
         // Получаем членов бригад
-        $brigadeIds = array_unique(array_filter(array_map(fn($r) => $r->brigade_id, $requests)));
+        $brigadeIds = array_unique(array_filter(array_map(fn ($r) => $r->brigade_id, $requests)));
         $membersByBrigade = [];
 
-        if (!empty($brigadeIds)) {
+        if (! empty($brigadeIds)) {
             $brigadePlaceholders = implode(',', array_fill(0, count($brigadeIds), '?'));
             $membersSql = "
                 SELECT bm.brigade_id, e.fio, e.group_role
@@ -1911,7 +1913,7 @@ class ReportController extends Controller
                 WHERE bm.brigade_id IN ($brigadePlaceholders)
             ";
             $members = DB::select($membersSql, array_values($brigadeIds));
-            
+
             foreach ($members as $member) {
                 $membersByBrigade[$member->brigade_id][] = $member;
             }
@@ -1921,13 +1923,13 @@ class ReportController extends Controller
         $groupedRequests = [];
         foreach ($requests as $req) {
             $brigadeId = $req->brigade_id ?? 0;
-            if (!isset($groupedRequests[$brigadeId])) {
+            if (! isset($groupedRequests[$brigadeId])) {
                 $groupedRequests[$brigadeId] = [
                     'brigade_name' => $req->brigade_name,
                     'brigade_leader_fio' => $req->brigade_leader_fio,
                     'dates' => [],
                     'requests' => [],
-                    'brigade_members' => $membersByBrigade[$brigadeId] ?? []
+                    'brigade_members' => $membersByBrigade[$brigadeId] ?? [],
                 ];
             }
             $groupedRequests[$brigadeId]['requests'][] = $req;
@@ -1944,7 +1946,7 @@ class ReportController extends Controller
 
         return view('reports.work-permit', [
             'groupedRequests' => $groupedRequests,
-            'issuerFio' => $issuerFio
+            'issuerFio' => $issuerFio,
         ]);
     }
 }
