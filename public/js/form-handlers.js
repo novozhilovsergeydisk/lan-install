@@ -1215,16 +1215,17 @@ function showMap() {
 
 function initOpenMapBtn() {
     const btnOpenMap = document.getElementById('btn-open-map');
-    
-    btnOpenMap.addEventListener('click', function() {
-        console.log('Кнопка открытия карты нажата');
 
-        // const requestsData = localStorage.getItem('requestsData');
+    if (btnOpenMap) {
+        btnOpenMap.addEventListener('click', function() {
+            console.log('Кнопка открытия карты нажата');
 
-        showMap();
-    });
+            // const requestsData = localStorage.getItem('requestsData');
+
+            showMap();
+        });
+    }
 }
-
 // Обработчик для кнопки экспорта отчета в Excel
 function initExportReportBtn() {
     console.log('Функция initExportReportBtn вызвана');
@@ -6041,6 +6042,50 @@ function initEmployeeDocumentUpload() {
             }
         });
     }
+
+    // Делегирование для кнопок удаления загруженных документов
+    document.addEventListener('click', async function(e) {
+        const deleteBtn = e.target.closest('.delete-employee-document-btn');
+        if (deleteBtn) {
+            e.preventDefault();
+            const documentId = deleteBtn.dataset.documentId;
+            
+            if (confirm('Вы уверены, что хотите удалить этот документ?')) {
+                try {
+                    deleteBtn.disabled = true;
+                    const response = await fetch(`/api/employee-documents/${documentId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Находим строку сотрудника (tr)
+                        const row = deleteBtn.closest('tr[data-employee-id]');
+                        if (row) {
+                            const employeeId = row.dataset.employeeId;
+                            // Обновляем ячейку
+                            updateEmployeeDocumentsCell(employeeId);
+                        } else {
+                            // Если не удалось найти строку, просто перезагружаем страницу
+                            location.reload();
+                        }
+                    } else {
+                        alert('Ошибка при удалении: ' + (result.message || 'Неизвестная ошибка'));
+                        deleteBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    alert('Произошла ошибка при удалении документа');
+                    deleteBtn.disabled = false;
+                }
+            }
+        }
+    });
 }
 
 // Функция для обновления ячейки документов сотрудника
@@ -6064,7 +6109,16 @@ async function updateEmployeeDocumentsCell(employeeId) {
                     const parts = fileName.split('_');
                     const originalName = parts.length > 1 ? parts.slice(1).join('_') : fileName;
 
-                    html += `<a href="/api/employee-documents/${doc.id}/download" class="btn btn-sm btn-outline-secondary mb-1" target="_blank" title="${doc.document_type}">${originalName}</a><br>`;
+                    html += `<div class="d-flex align-items-center mb-1">
+                                <a href="/api/employee-documents/${doc.id}/download" class="btn btn-sm btn-outline-secondary me-1 text-truncate" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" target="_blank" title="${doc.document_type}">${originalName}</a>`;
+                    
+                    if (window.App && window.App.user && window.App.user.isAdmin) {
+                        html += `<button type="button" class="btn btn-sm btn-outline-danger delete-employee-document-btn" data-document-id="${doc.id}" title="Удалить документ">
+                                    <i class="bi bi-trash"></i>
+                                 </button>`;
+                    }
+                    
+                    html += `</div>`;
                 });
             } else {
                 html = 'Нет документов';

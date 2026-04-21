@@ -963,10 +963,14 @@
                                                                                $parts = explode('_', $fileName, 2);
                                                                                $originalName = isset($parts[1]) ? $parts[1] : $fileName;
                                                                            @endphp
-                                                                           <a href="{{ route('employee-documents.download', $doc->id) }}" class="btn btn-sm btn-outline-secondary mb-1" target="_blank" title="{{ $doc->document_type }}">
-                                                                               {{ $originalName }}
-                                                                           </a><br>
-                                                                       @endforeach
+                                                                           <div class="d-flex align-items-center mb-1">
+                                                                               <a href="{{ route('employee-documents.download', $doc->id) }}" class="btn btn-sm btn-outline-secondary me-1 text-truncate" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" target="_blank" title="{{ $doc->document_type }}">
+                                                                                   {{ $originalName }}
+                                                                               </a>
+                                                                               <button type="button" class="btn btn-sm btn-outline-danger delete-employee-document-btn" data-document-id="{{ $doc->id }}" title="Удалить документ">
+                                                                                   <i class="bi bi-trash"></i>
+                                                                               </button>
+                                                                           </div>                                                                       @endforeach
                                                                    @else
                                                                        Нет документов
                                                                    @endif

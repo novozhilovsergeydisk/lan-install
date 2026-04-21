@@ -443,3 +443,4 @@ Route::get('/api/comments/{commentId}/history', [App\Http\Controllers\HomeContro
 Route::post('/api/employee-documents', [EmployeeDocumentController::class, 'store'])->middleware('auth')->name('employee-documents.store');
 Route::get('/api/employee-documents/employee/{employeeId}', [EmployeeDocumentController::class, 'getByEmployee'])->middleware('auth')->name('employee-documents.getByEmployee');
 Route::get('/api/employee-documents/{id}/download', [EmployeeDocumentController::class, 'download'])->middleware('auth')->name('employee-documents.download');
+Route::delete('/api/employee-documents/{id}', [EmployeeDocumentController::class, 'destroy'])->middleware('auth')->name('employee-documents.destroy');

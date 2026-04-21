@@ -159,4 +159,55 @@ class EmployeeDocumentController extends Controller
             abort(500, 'Произошла ошибка при скачивании файла');
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            // Проверка роли пользователя - только admin
+            $user = auth()->user();
+            if (! $user || ! DB::table('user_roles')->join('roles', 'user_roles.role_id', '=', 'roles.id')->where('user_roles.user_id', $user->id)->where('roles.name', 'admin')->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Доступ запрещен. Требуется роль администратора.',
+                ], 403);
+            }
+
+            // Получить документ
+            $document = DB::table('employee_documents')->where('id', $id)->first();
+            if (! $document) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Документ не найден.',
+                ], 404);
+            }
+
+            // Удалить файл из хранилища
+            $filePath = storage_path('app/private/'.$document->file_path);
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+
+            // Удалить запись из БД
+            DB::table('employee_documents')->where('id', $id)->delete();
+
+            Log::info('== END delete EmployeeDocument ==', ['id' => $id, 'deleted_by' => $user->id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Документ успешно удален.',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('== ERROR delete EmployeeDocument ==', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при удалении документа',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
