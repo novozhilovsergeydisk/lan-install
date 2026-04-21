@@ -1166,9 +1166,10 @@
                                                   </select>
                                               </div>
                                               <div class="mb-3">
-                                                  <label for="documentFile" class="form-label">Файл документа</label>
-                                                  <input type="file" class="form-control" id="documentFile" name="file" accept=".jpg,.jpeg,.png,.pdf" required>
+                                                  <label for="documentFile" class="form-label">Файл(ы) документа</label>
+                                                  <input type="file" class="form-control" id="documentFile" name="files[]" accept=".jpg,.jpeg,.png,.pdf" multiple required>
                                                   <div class="form-text">Поддерживаемые форматы: JPG, PNG, PDF. Максимальный размер: 20MB</div>
+                                                  <ul id="selectedFilesList" class="list-group mt-2 d-none"></ul>
                                               </div>
                                           </form>
                                       </div>

@@ -27,39 +27,45 @@ class EmployeeDocumentController extends Controller
             $validated = $request->validate([
                 'employee_id' => 'required|integer|exists:employees,id',
                 'document_type' => 'required|string|max:50',
-                'file' => 'required|file|mimes:jpeg,jpg,png,pdf|max:20480', // до 20MB
+                'files' => 'required|array|min:1',
+                'files.*' => 'required|file|mimes:jpeg,jpg,png,pdf|max:20480', // до 20MB
             ]);
 
             \Log::info('Validation passed', $validated);
 
-            // Сохранение файла
-            $file = $request->file('file');
-            $fileName = time().'_'.$file->getClientOriginalName();
-            try {
-                $path = $file->storeAs('employee_documents', $fileName, 'private');
-            } catch (\Exception $e) {
-                \Log::error('File save error', ['error' => $e->getMessage()]);
+            $uploadedFiles = [];
+            $files = $request->file('files');
+            foreach ($files as $file) {
+                // Сохранение файла
+                $fileName = time().'_'.$file->getClientOriginalName();
+                try {
+                    $path = $file->storeAs('employee_documents', $fileName, 'private');
+                    
+                    // Вставка в базу данных
+                    DB::insert('INSERT INTO employee_documents (employee_id, document_type, file_path, uploaded_by, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())', [
+                        $validated['employee_id'],
+                        $validated['document_type'],
+                        $path,
+                        $user->id,
+                    ]);
+                    
+                    $uploadedFiles[] = $path;
+                } catch (\Exception $e) {
+                    \Log::error('File save error', ['error' => $e->getMessage()]);
 
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ошибка сохранения файла',
-                    'error' => $e->getMessage(),
-                ], 500);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ошибка сохранения файла: ' . $file->getClientOriginalName(),
+                        'error' => $e->getMessage(),
+                    ], 500);
+                }
             }
 
-            // Вставка в базу данных
-            DB::insert('INSERT INTO employee_documents (employee_id, document_type, file_path, uploaded_by, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())', [
-                $validated['employee_id'],
-                $validated['document_type'],
-                $path,
-                $user->id,
-            ]);
-
-            Log::info('== END store EmployeeDocument ==', ['employee_id' => $validated['employee_id'], 'file' => $path]);
+            Log::info('== END store EmployeeDocument ==', ['employee_id' => $validated['employee_id'], 'files' => $uploadedFiles]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Файл успешно загружен.',
+                'message' => 'Файл(ы) успешно загружен(ы).',
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {

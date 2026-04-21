@@ -5924,9 +5924,78 @@ function initEmployeeButtons() {
 // Обработчик для загрузки документов сотрудников
 function initEmployeeDocumentUpload() {
     const uploadBtn = document.getElementById('uploadDocumentBtn');
+    const fileInput = document.getElementById('documentFile');
+    const selectedFilesList = document.getElementById('selectedFilesList');
+    const form = document.getElementById('uploadEmployeeDocumentForm');
+    
+    // Используем DataTransfer для накопления файлов
+    let dataTransfer = new DataTransfer();
+
+    function updateFilesList() {
+        if (!selectedFilesList) return;
+        selectedFilesList.innerHTML = '';
+        
+        if (dataTransfer.files.length === 0) {
+            selectedFilesList.classList.add('d-none');
+            return;
+        }
+        
+        selectedFilesList.classList.remove('d-none');
+        Array.from(dataTransfer.files).forEach((file, index) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center py-1 px-2';
+            li.innerHTML = `
+                <span class="text-truncate" style="max-width: 85%; font-size: 0.9em;">${file.name}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger border-0 remove-file-btn" data-index="${index}" style="padding: 0 5px;">&times;</button>
+            `;
+            selectedFilesList.appendChild(li);
+        });
+
+        // Синхронизируем с реальным input
+        if (fileInput) {
+            fileInput.files = dataTransfer.files;
+        }
+
+        // Обработчики для кнопок удаления
+        selectedFilesList.querySelectorAll('.remove-file-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                const dt = new DataTransfer();
+                Array.from(dataTransfer.files).forEach((file, i) => {
+                    if (i !== idx) dt.items.add(file);
+                });
+                dataTransfer = dt;
+                updateFilesList();
+            });
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            Array.from(this.files).forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            updateFilesList();
+            // Сбрасываем input, чтобы можно было выбрать тот же файл снова, 
+            // но нам нужно сохранить валидацию, поэтому updateFilesList уже обновил fileInput.files.
+            // Если мы обнулим this.value, то fileInput.files тоже обнулится.
+            // Поэтому оставляем как есть, DataTransfer уже синхронизирован с input в updateFilesList.
+        });
+    }
+
+    // Очистка при закрытии модального окна
+    const modalEl = document.getElementById('uploadEmployeeDocumentModal');
+    if (modalEl) {
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            if (form) form.reset();
+            dataTransfer = new DataTransfer();
+            updateFilesList();
+        });
+    }
+
     if (uploadBtn) {
         uploadBtn.addEventListener('click', async function() {
-            const form = document.getElementById('uploadEmployeeDocumentForm');
+            if (!form) return;
             const formData = new FormData(form);
 
             // Проверка валидности формы
@@ -5951,12 +6020,11 @@ function initEmployeeDocumentUpload() {
                 const result = await response.json();
 
                 if (result.success) {
-                    alert('Файл успешно загружен.');
+                    alert(result.message || 'Файлы успешно загружены.');
                     // Закрыть модальное окно
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('uploadEmployeeDocumentModal'));
-                    modal.hide();
-                    // Очистить форму
-                    form.reset();
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                    
                     // Обновить ячейку документов в таблице
                     const employeeId = document.getElementById('documentEmployeeId').value;
                     updateEmployeeDocumentsCell(employeeId);
