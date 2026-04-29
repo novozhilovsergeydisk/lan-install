@@ -1637,7 +1637,7 @@
 
 <!-- Импортируем необходимые функции из form-handlers.js -->
 <script type="module">
-    import { initEmployeeButtons, initCommentHistoryModalHandler } from "{{ asset('js/form-handlers.js') }}";
+    import { initEmployeeButtons, initCommentHistoryModalHandler } from "{{ asset('js/form-handlers.js') }}?v={{ time() }}";
     
     // Инициализируем кнопки при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
@@ -2343,7 +2343,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <!-- Form Handlers -->
-    <script type="module" src="{{ asset('js/form-handlers.js') }}"></script>
+    <script type="module" src="{{ asset('js/form-handlers.js') }}?v={{ time() }}"></script>
     <script src="{{ asset('js/print-work-permit.js') }}"></script>
 
 <script type="module" src="{{ asset('js/employee-export.js') }}"></script>
@@ -5014,7 +5014,7 @@
 @push('scripts')
 <!-- Подключаем скрипт для работы с модальными окнами -->
 <script type="module" src="{{ asset('js/modals.js') }}"></script>
-<script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
+<script type="module" src="{{ asset('js/init-handlers.js') }}?v={{ time() }}"></script>
 <script src="{{ asset('js/organization-autocomplete.js') }}?v={{ time() }}"></script>
 <script src="{{ asset('js/wms-integration.js') }}"></script>
     <script src="{{ asset('js/report-export.js') }}"></script>

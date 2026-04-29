@@ -3,7 +3,7 @@
 import { showAlert, postData, fetchData, getElement, getValue, validateRequiredField } from './utils.js';
 import { loadAddresses, loadAddressesPaginated, loadPlanningRequests } from './handler.js';
 import { loadAddressesForPlanning } from './handler.js';
-import { renderReportTable } from './report-handler.js';
+import { renderReportTable } from './report-handler.js?v=1.1';
 import HouseNumberValidator from './validators/house-number-validator.js';
 
 // Функция для установки значения в кастомный селект

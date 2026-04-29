@@ -4,7 +4,7 @@ sessionStorage.setItem('sessionId', randomHash);
 console.log('randomHash', randomHash);
 
 import { showAlert, postData } from './utils.js';
-import { initReportHandlers } from './report-handler.js';
+import { initReportHandlers } from './report-handler.js?v=1.1';
 import { initPhotoReportModal } from './modals.js';
 import { initAddressDocumentHandlers } from './address-documents.js';
 import { initRequestTypesHandlers, loadRequestTypes } from './request-types.js';
