@@ -150,8 +150,6 @@ Route::prefix('api/request-types')->middleware(['auth', 'roles'])->group(functio
     Route::delete('/{id}', [RequestTypeController::class, 'destroy']);
 });
 
-Route::get('/request-types', [RequestTypeController::class, 'index'])->middleware(['auth', 'roles'])->name('request-types.index');
-
 // Маршруты для работы с параметрами типов заявок
 Route::prefix('api/work-parameter-types')->middleware('auth')->group(function () {
     Route::get('/', [WorkParameterTypeController::class, 'index']);

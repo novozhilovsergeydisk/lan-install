@@ -503,7 +503,7 @@ export async function loadRequestTypesForReport() {
     }
     
     try {
-        const response = await fetch('/request-types');
+        const response = await fetch('/api/request-types');
         if (!response.ok) {
             throw new Error('Failed to load request types');
         }
