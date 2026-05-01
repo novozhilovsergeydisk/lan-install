@@ -37,7 +37,7 @@ Route::get('/testlog', function () {
 // Update request
 Route::match(['PUT'], '/requests/{id}', [HomeController::class, 'updateRequest'])->where('id', '[0-9]+')->name('requests.update')->middleware('auth')->middleware(['auth', 'roles']);
 
-Route::get('/brigades/date/{date}', [BrigadeController::class, 'getBrigadesByDate'])->name('brigades.date');
+Route::get('/brigades/date/{date}', [BrigadeController::class, 'getBrigadesByDate'])->name('brigades.date')->middleware('auth');
 
 // Города добавление
 Route::post('/cities/store', [CityController::class, 'store'])
@@ -45,7 +45,7 @@ Route::post('/cities/store', [CityController::class, 'store'])
     ->name('cities.store');
 
 // Получение саписка регионов
-Route::get('/regions', [CityController::class, 'getRegions'])->name('regions.index');
+Route::get('/regions', [CityController::class, 'getRegions'])->name('regions.index')->middleware('auth');
 
 // Photo reports
 Route::post('/photo-list', [PhotoReportController::class, 'index'])->name('photo-list.index')->middleware('auth');
@@ -53,7 +53,7 @@ Route::post('/photo-list', [PhotoReportController::class, 'index'])->name('photo
 // Яндекс.Карты
 Route::get('/yandex-maps', [GeoController::class, 'getAddressesYandex'])->name('geo.addresses-yandex')->middleware('auth');
 
-Route::get('/employees', [EmployeesUserPositionPassportController::class, 'index'])->name('employees.index');
+Route::get('/employees', [EmployeesUserPositionPassportController::class, 'index'])->name('employees.index')->middleware('auth');
 
 Route::middleware(['auth', 'roles'])->group(function () {
     Route::get('/brigades/create', [BrigadeController::class, 'create'])->name('brigades.create');
@@ -177,7 +177,7 @@ Route::put('/api/comments/{id}', [HomeController::class, 'updateComment'])
     ->name('api.comments.update');
 
 // API Route for getting brigade data
-Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'getBrigadeData'])->name('brigade.data');
+Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'getBrigadeData'])->name('brigade.data')->middleware('auth');
 
 // API Route for getting current brigades
 Route::get('/api/brigades/current', [HomeController::class, 'getCurrentBrigades'])
