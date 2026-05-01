@@ -13,9 +13,13 @@ class RequestTypeController extends Controller
      */
     private function checkAdminAccess()
     {
-        $user = auth()->user();
+        // Проверяем аутентификацию
+        if (!auth()->check()) {
+            abort(401, 'Требуется аутентификация.');
+        }
         
-        if (!$user || !($user->isAdmin ?? false)) {
+        // Проверяем права администратора
+        if (!(auth()->user()->isAdmin ?? false)) {
             abort(403, 'Доступ запрещен. Требуются права администратора.');
         }
     }

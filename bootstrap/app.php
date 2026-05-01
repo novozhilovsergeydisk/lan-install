@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Алиасы
         $middleware->alias([
             'roles' => \App\Http\Middleware\AddUserRolesToView::class,
+            'auth.api' => \App\Http\Middleware\AuthenticateApi::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

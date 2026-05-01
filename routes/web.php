@@ -143,7 +143,7 @@ Route::prefix('statuses')->middleware('auth')->group(function () {
 Route::get('/api/system/metrics', [\App\Http\Controllers\SystemController::class, 'metrics'])->name('api.system.metrics')->middleware(['auth', 'roles']);
 
 // Маршруты для работы с типами заявок
-Route::prefix('api/request-types')->middleware(['auth', 'roles'])->group(function () {
+Route::prefix('api/request-types')->middleware(['auth.api', 'roles'])->group(function () {
     Route::get('/', [RequestTypeController::class, 'index']);
     Route::post('/', [RequestTypeController::class, 'store']);
     Route::put('/{id}', [RequestTypeController::class, 'update']);
