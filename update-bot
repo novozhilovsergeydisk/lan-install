@@ -24,6 +24,9 @@ ssh "$SERVER_PATH" "gcc -o $REMOTE_DIR/utils/C/notify-bot/telegram_notify $REMOT
 info "Компилируем log-monitor на сервере..."
 ssh "$SERVER_PATH" "mkdir -p $REMOTE_DIR/utils/C/log-monitor && gcc -o $REMOTE_DIR/utils/C/log-monitor/log-monitor $REMOTE_DIR/utils/C/log-monitor/log-monitor.c"
 
+info "Компилируем sys-monitor на сервере..."
+ssh "$SERVER_PATH" "mkdir -p $REMOTE_DIR/utils/C/sys-monitor && gcc -o $REMOTE_DIR/utils/C/sys-monitor/sys-monitor $REMOTE_DIR/utils/C/sys-monitor/sys-monitor.c"
+
 if [ $? -eq 0 ]; then
   success "Утилиты успешно скомпилированы и обновлены!"
 else
