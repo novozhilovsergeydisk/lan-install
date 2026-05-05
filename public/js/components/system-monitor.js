@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const systemTab = document.getElementById('system-tab');
+    const systemTab = document.getElementById('system-monitor-tab');
     if (!systemTab) return; // Не инициализируем, если вкладки нет (не админ)
 
-    const systemContainer = document.getElementById('system');
+    const systemContainer = document.getElementById('pane-system-monitor');
     let monitorInterval = null;
 
     // Функция для обновления графиков/баров
@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fetchMetrics = async () => {
         try {
             const response = await fetch('/api/system/metrics', {
+                cache: 'no-store',
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'

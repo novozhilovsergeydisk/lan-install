@@ -804,7 +804,7 @@ const FILTER_IDS = {
 };
 
 // Навигационные вкладки
-const NAV_TABS = ['requests', 'teams', 'addresses', 'users', 'reports'];
+const NAV_TABS = ['requests', 'teams', 'addresses', 'users', 'reports', 'planning', 'request-types', 'wms-mapping', 'system-monitor'];
 
 // Состояние фильтров
 const filterState = {
@@ -1073,7 +1073,11 @@ async function applyFilters() {
                             const isAdmin = window.App.role == 'admin' ?? false;
                             const statusName = request.status_name;
                             const executionDate = request.execution_date;
-                            const today = new Date().toISOString().split('T')[0];
+                            
+                            // Получаем дату с учетом локального часового пояса
+                            const now = new Date();
+                            const tzOffset = now.getTimezoneOffset() * 60000; // смещение в миллисекундах
+                            const today = new Date(now.getTime() - tzOffset).toISOString().split('T')[0];
 
                             // Логика доступности кнопки "Открыть заявку"
                             let canOpenRequest = false;

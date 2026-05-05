@@ -261,8 +261,7 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system"
-
+                        <button class="nav-link" id="system-monitor-tab" data-bs-toggle="tab" data-bs-target="#pane-system-monitor"
                                 type="button" role="tab">Система
                         </button>
                     </li>
@@ -1861,7 +1860,7 @@
                         </div>
                     </div>
 
-                    <div id="system" class="tab-pane fade" role="tabpanel">
+                    <div id="pane-system-monitor" class="tab-pane fade" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="mb-0"><i class="bi bi-server me-2"></i>Мониторинг системы</h4>
                         </div>
@@ -5502,7 +5501,7 @@
 
 <!-- Подключаем скрипт для работы с модальными окнами -->
 <script type="module" src="{{ asset('js/modals.js') }}"></script>
-<script type="module" src="{{ asset('js/init-handlers.js') }}"></script>
+<script type="module" src="{{ asset('js/init-handlers.js') }}?v={{ time() }}"></script>
 <script src="{{ asset('js/organization-autocomplete.js') }}?v={{ time() }}"></script>
 <script src="{{ asset('js/wms-integration.js') }}"></script>
     <script src="{{ asset('js/report-export.js') }}"></script>
@@ -5511,7 +5510,7 @@
         <script src="{{ asset('js/session-keepalive.js') }}"></script>
         
         @if($user->isAdmin)
-        <script src="{{ asset('js/components/system-monitor.js') }}"></script>
+        <script src="{{ asset('js/components/system-monitor.js') }}?v={{ time() }}"></script>
         @endif
     
         <script>

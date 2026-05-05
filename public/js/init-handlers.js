@@ -457,6 +457,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Вкладка "Система" обрабатывается Bootstrap автоматически через атрибут data-bs-toggle="tab".
+    // Пользовательские click-обработчики здесь не нужны и могут вызывать конфликт с анимацией Bootstrap.
+
     // Перехватываем вызов applyFilters для обновления обработчиков после фильтрации
     const originalApplyFilters = window.applyFilters;
     window.applyFilters = function () {
