@@ -1257,7 +1257,7 @@ class HomeController extends Controller
                 'request_id' => 'required|exists:requests,id',
                 'comment' => 'required|string|max:1000',
                 'photos' => 'nullable|array|max:100',
-                'photos.*' => 'file|max:512000|mimes:jpg,jpeg,png,gif,webp,bmp,tiff,heic,heif',
+                'photos.*' => 'file|max:20480|mimes:jpeg,png,jpg,webp,heic,heif',
                 'files' => 'nullable|array|max:100',
                 'files.*' => [
                     'file',
