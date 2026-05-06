@@ -2377,9 +2377,64 @@
                 xhr.open('POST', '{{ route('requests.comment') }}', true);
                 xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
                 // Не устанавливаем Content-Type вручную, XHR сам установит multipart/form-data с правильным boundary для FormData
-
+                
+                // Прогресс-бар
+                const progressBox    = document.getElementById('commentUploadProgress');
+                const progressBar    = document.getElementById('commentUploadProgressBar');
+                const percentText    = document.getElementById('commentUploadPercentText');
+                const statusText     = document.getElementById('commentUploadStatusText');
+                const detailText     = document.getElementById('commentUploadDetailText');
+                
+                // Показываем и сбрасываем
+                if (progressBox) progressBox.style.display = 'block';
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                    progressBar.setAttribute('aria-valuenow', '0');
+                }
+                if (percentText) percentText.textContent = '0%';
+                if (statusText)  statusText.textContent  = 'Подготовка к загрузке...';
+                if (detailText)  detailText.textContent  = '';
+                
+                // Замер скорости
+                const uploadStartTime = Date.now();
+                
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (!e.lengthComputable) return;
+                    
+                    const percent  = Math.round((e.loaded / e.total) * 100);
+                    const loadedMB = (e.loaded / 1024 / 1024).toFixed(1);
+                    const totalMB  = (e.total  / 1024 / 1024).toFixed(1);
+                    
+                    // Скорость и оставшееся время
+                    const elapsedSec = (Date.now() - uploadStartTime) / 1000;
+                    let detailLine = '';
+                    if (elapsedSec > 1 && e.loaded > 0) {
+                        const speedMBs   = (e.loaded / 1024 / 1024) / elapsedSec;
+                        const remainBytes = e.total - e.loaded;
+                        const remainSec  = remainBytes / (e.loaded / elapsedSec);
+                        detailLine = `Скорость: ${speedMBs.toFixed(2)} МБ/с, осталось ~${Math.ceil(remainSec)} сек`;
+                    }
+                    
+                    if (progressBar) {
+                        progressBar.style.width = percent + '%';
+                        progressBar.setAttribute('aria-valuenow', percent);
+                    }
+                    if (percentText) percentText.textContent = percent + '%';
+                    
+                    if (percent < 100) {
+                        if (statusText) statusText.textContent = `Загружено ${loadedMB} МБ из ${totalMB} МБ`;
+                        if (detailText) detailText.textContent = detailLine;
+                    } else {
+                        if (statusText) statusText.textContent = 'Файлы получены, обработка на сервере...';
+                        if (detailText) detailText.textContent = '';
+                    }
+                });
+                
                 xhr.onload = function() {
                     const status = xhr.status;
+
+                    // Скрываем прогресс-бар
+                    if (progressBox) progressBox.style.display = 'none';
                     
                     if (status >= 200 && status < 300) {
                         // Успешный ответ
@@ -2442,6 +2497,9 @@
                         }
                     } else {
                         // Обработка ошибок HTTP
+                        // Скрываем прогресс-бар
+                        if (progressBox) progressBox.style.display = 'none';
+
                         let errorMsg = 'Ошибка при отправке комментария (Код: ' + status + ')';
                         
                         if (status === 413) {
@@ -2470,9 +2528,10 @@
                 xhr.onerror = function() {
                     console.error('Сетевая ошибка XHR');
                     utils.showAlert('Ошибка сети или сервер недоступен (Network Error)', 'danger');
+                    if (progressBox) progressBox.style.display = 'none';
                     unlockForm();
                 };
-
+                
                 // Отправляем данные
                 xhr.send(formData);
             });
@@ -3078,6 +3137,21 @@
                                 <input class="form-control" type="file" id="photoUpload" name="photos[]" multiple accept=".jpg,.jpeg,.png,.gif,.heic,.heif,.bmp,.tiff,.webp">
                             </div>
                             <div class="form-text">Можно выбрать несколько. Поддерживаются форматы: JPG, PNG, GIF, BMP, TIFF, WEBP, HEIC/HEIF.</div>
+                        </div>
+
+                        <div id="commentUploadProgress" class="mt-2" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted" id="commentUploadStatusText">Подготовка к загрузке...</small>
+                                <small class="text-muted" id="commentUploadPercentText">0%</small>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div id="commentUploadProgressBar"
+                                     class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                     role="progressbar"
+                                     style="width: 0%;"
+                                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted mt-1 d-block" id="commentUploadDetailText"></small>
                         </div>
 
                         <div class="mb-3">
