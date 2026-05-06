@@ -4,11 +4,11 @@ return [
     'custom' => [
         'photos' => [
             'max' => 'Максимальное количество фотографий: 100.',
-            'mimes' => 'Фотографии должны быть в формате: jpeg, png, jpg, webp, heic.',
+            'mimes' => 'Фотографии должны быть в формате: jpeg, png, jpg, webp, heic, heif.',
         ],
         'photos.*' => [
             'max' => 'Размер каждого файла не должен превышать 50 МБ.',
-            'mimes' => 'Фотографии должны быть в формате: jpeg, png, jpg, webp, heic.',
+            'mimes' => 'Фотографии должны быть в формате: jpeg, png, jpg, webp, heic, heif.',
         ],
     ],
 ];
