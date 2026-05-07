@@ -36,7 +36,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}">
+            <form id="lanLoginForm" method="POST" action="{{ route('login') }}">
                 @csrf
 
                 <div class="mb-3 text-start">
@@ -68,8 +68,9 @@
                     @enderror
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 mb-3">
-                    <i class="bi bi-box-arrow-in-right me-1"></i> Войти
+                <button type="submit" id="lanLoginSubmitBtn" class="btn btn-primary w-100 mb-3">
+                    <span id="lanLoginSubmitSpinner" class="spinner-border spinner-border-sm d-none me-1" role="status" aria-hidden="true"></span>
+                    <i class="bi bi-box-arrow-in-right me-1" id="lanLoginIcon"></i><span id="lanLoginSubmitText">Войти</span>
                 </button>
 
                 <!-- <p class="mb-0">
@@ -124,6 +125,33 @@
                 setTheme(newTheme);
             });
         });
+
+        (function() {
+            const form = document.getElementById('lanLoginForm');
+            if (!form) return;
+
+            let isSubmitting = false;
+
+            form.addEventListener('submit', function(e) {
+                if (isSubmitting) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+
+                isSubmitting = true;
+
+                const btn = document.getElementById('lanLoginSubmitBtn');
+                const textEl = document.getElementById('lanLoginSubmitText');
+                const spinnerEl = document.getElementById('lanLoginSubmitSpinner');
+                const iconEl = document.getElementById('lanLoginIcon');
+
+                if (btn) btn.disabled = true;
+                if (textEl) textEl.textContent = 'Вход...';
+                if (spinnerEl) spinnerEl.classList.remove('d-none');
+                if (iconEl) iconEl.classList.add('d-none');
+            });
+        })();
     </script>
 </body>
 </html>
