@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+# Защита от запуска на сервере
+if [ "$(uname -s)" != "Darwin" ]; then
+    echo "🛑 Ошибка безопасности: Этот скрипт предназначен для запуска ТОЛЬКО на локальной машине разработчика (macOS)."
+    exit 1
+fi
+
 # === Настройки ===
 SERVER_PATH="lan-install"
 REMOTE_DIR="/var/www/lan-install"

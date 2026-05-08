@@ -2504,23 +2504,38 @@ class HomeController extends Controller
 
                     // Создаем параметры работы (запланированные) для новой заявки (недоделанные работы)
                     try {
-                        if (! empty($workParameters) && is_array($workParameters)) {
-                            foreach ($workParameters as $param) {
-                                DB::table('work_parameters')->insert([
-                                    'request_id' => $newRequestId,
-                                    'parameter_type_id' => $param['parameter_type_id'],
-                                    'quantity' => $param['quantity'],
-                                    'is_planning' => true, // Запланированные
-                                    'is_done' => false,
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
+                        $uncompletedWorksCount = 0;
+                        if (! empty($plannedWorkParameters) && count($plannedWorkParameters) > 0) {
+                            foreach ($plannedWorkParameters as $planned) {
+                                $completedQuantity = 0;
+                                if (! empty($workParameters) && is_array($workParameters)) {
+                                    foreach ($workParameters as $completed) {
+                                        if ($completed['parameter_type_id'] == $planned->parameter_type_id) {
+                                            $completedQuantity = $completed['quantity'];
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                $remainingQuantity = $planned->quantity - $completedQuantity;
+                                if ($remainingQuantity > 0) {
+                                    DB::table('work_parameters')->insert([
+                                        'request_id' => $newRequestId,
+                                        'parameter_type_id' => $planned->parameter_type_id,
+                                        'quantity' => $remainingQuantity,
+                                        'is_planning' => true, // Запланированные
+                                        'is_done' => false,
+                                        'created_at' => now(),
+                                        'updated_at' => now(),
+                                    ]);
+                                    $uncompletedWorksCount++;
+                                }
                             }
                         }
 
                         \Log::info('Созданы параметры запланированной работы для новой заявки:', [
                             'new_request_id' => $newRequestId,
-                            'count' => count($workParameters),
+                            'count' => $uncompletedWorksCount,
                         ]);
                     } catch (\Exception $e) {
                         \Log::error('Ошибка при создании параметров запланированной работы для новой заявки: '.$e->getMessage());

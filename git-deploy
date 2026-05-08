@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+# Защита от запуска на сервере
+if [ "$(uname -s)" != "Darwin" ]; then
+    echo "🛑 Ошибка безопасности: Этот скрипт предназначен для запуска ТОЛЬКО на локальной машине разработчика (macOS)."
+    exit 1
+fi
+
 # Цвета для вывода
 LOGFILE="$HOME/logs/git-deploy.log"
 PROJECT_DIR="$(pwd)"

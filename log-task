@@ -1,0 +1,74 @@
+#!/bin/bash
+set -e
+
+# Защита от запуска на сервере
+if [ "$(uname -s)" != "Darwin" ]; then
+    echo "🛑 Ошибка безопасности: Этот скрипт предназначен для запуска ТОЛЬКО на локальной машине разработчика (macOS)."
+    exit 1
+fi
+
+ACTION=$1
+DB_NAME="lan_install"
+TABLE="ai_tasks"
+
+# Проверка действия
+if [[ "$ACTION" != "start" && "$ACTION" != "finish" ]]; then
+    echo "Использование:"
+    echo "  ./log-task start 'Описание задачи'"
+    echo "  ./log-task finish <ID> <tokens_in> <tokens_out> '<оценка_времени>' <фактическое_время_в_секундах>"
+    exit 1
+fi
+
+# Подготовка локальной и удаленной команд
+LOCAL_CMD="sudo psql -U postgres -d $DB_NAME"
+REMOTE_CMD="ssh lan-install \"sudo -u postgres psql -d $DB_NAME"
+
+if [ "$ACTION" == "start" ]; then
+    DESC=$2
+    if [ -z "$DESC" ]; then
+        echo "Ошибка: Не указано описание задачи."
+        exit 1
+    fi
+    
+    # Экранируем одинарные кавычки для SQL
+    SAFE_DESC=$(echo "$DESC" | sed "s/'/''/g")
+    
+    SQL="INSERT INTO $TABLE (description, status, started_at) VALUES ('$SAFE_DESC', 'in_progress', CURRENT_TIMESTAMP) RETURNING id;"
+    
+    echo "=== ЗАПИСЬ ЛОКАЛЬНО ==="
+    # Использован eval, так как нужно выполнить запрос внутри psql. awk извлекает только цифры ID.
+    LOCAL_ID=$(eval "$LOCAL_CMD -t -q -c \"$SQL\"" | grep -o '[0-9]\+' | head -n 1)
+    echo "Локальный ID задачи: $LOCAL_ID"
+    
+    echo "=== ЗАПИСЬ НА PROD ==="
+    # Пробрасываем запрос по SSH
+    REMOTE_ID=$(eval "$REMOTE_CMD -t -q -c \\\"$SQL\\\"\"" | grep -o '[0-9]\+' | head -n 1)
+    echo "Удаленный ID задачи: $REMOTE_ID"
+    
+    echo "✅ Задача успешно начата (ID: $LOCAL_ID)."
+
+elif [ "$ACTION" == "finish" ]; then
+    ID=$2
+    IN=$3
+    OUT=$4
+    EST=$5
+    ACT=$6
+    
+    if [ -z "$ACT" ]; then
+        echo "Ошибка: Не указаны все параметры."
+        echo "Пример: ./scripts/log-task finish 42 1500 800 '1.5 часа' 3600"
+        exit 1
+    fi
+    
+    SAFE_EST=$(echo "$EST" | sed "s/'/''/g")
+    
+    SQL="UPDATE $TABLE SET status = 'completed', tokens_in = $IN, tokens_out = $OUT, estimated_time = '$SAFE_EST', actual_time_seconds = $ACT, completed_at = CURRENT_TIMESTAMP WHERE id = $ID;"
+    
+    echo "=== ОБНОВЛЕНИЕ ЛОКАЛЬНО ==="
+    eval "$LOCAL_CMD -c \"$SQL\""
+    
+    echo "=== ОБНОВЛЕНИЕ НА PROD ==="
+    eval "$REMOTE_CMD -c \\\"$SQL\\\"\""
+    
+    echo "✅ Задача (ID: $ID) успешно завершена и залогирована."
+fi
