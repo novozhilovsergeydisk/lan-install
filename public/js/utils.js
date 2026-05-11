@@ -370,13 +370,28 @@ function getContrastColor(hexColor) {
     return luminance > 0.5 ? '#000000' : '#FFFFFF';
 }
 
+/**
+ * Показывает подтверждение (обертка над стандартным confirm для удобства callbacks)
+ * @param {string} message
+ * @param {Function} onConfirm
+ * @param {Function} [onCancel]
+ */
+function showConfirm(message, onConfirm, onCancel) {
+    if (confirm(message)) {
+        if (typeof onConfirm === 'function') onConfirm();
+    } else {
+        if (typeof onCancel === 'function') onCancel();
+    }
+}
+
 // Экспорт для модулей
-export { showAlert, fetchData, postData, sendRequest, linkifyPreservingAnchors, makeEscapedPreview, showModal, getElement, setValue, getValue, validateRequiredField, getContrastColor };
+export { showAlert, showConfirm, fetchData, postData, sendRequest, linkifyPreservingAnchors, makeEscapedPreview, showModal, getElement, setValue, getValue, validateRequiredField, getContrastColor };
 
 // Экспорт глобально
 if (typeof window !== 'undefined') {
     window.utils = {
         showAlert,
+        showConfirm,
         fetchData,
         postData,
         sendRequest,
@@ -385,4 +400,5 @@ if (typeof window !== 'undefined') {
         validateRequiredField,
         getContrastColor
     };
+    window.showConfirm = showConfirm; // Добавляем в глобальную область видимости
 }

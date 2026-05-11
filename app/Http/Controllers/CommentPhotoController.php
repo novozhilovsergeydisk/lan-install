@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CommentPhotoController extends Controller
@@ -62,6 +64,234 @@ class CommentPhotoController extends Controller
                 'success' => false,
                 'error' => 'Не удалось загрузить фотографии',
                 'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Удалить фотографию из комментария
+     *
+     * @param  int  $commentId
+     * @param  int  $photoId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deletePhoto($commentId, $photoId)
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        \Log::info('Запрос на удаление фото из комментария:', [
+            'comment_id' => $commentId,
+            'photo_id' => $photoId,
+            'user_id' => $user->id,
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Проверка прав доступа через комментарий
+            $commentQuery = DB::table('comments as c')
+                ->join('request_comments as rc', 'c.id', '=', 'rc.comment_id')
+                ->select('rc.user_id')
+                ->where('c.id', $commentId);
+
+            $comment = $commentQuery->first();
+
+            if (! $comment) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Комментарий не найден'], 404);
+            }
+
+            $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
+            $isAdmin = DB::table('user_roles')->where('user_id', $user->id)->where('role_id', $adminRoleId)->exists();
+            $isAuthor = ($comment->user_id == $user->id);
+
+            if (! ($isAdmin || $isAuthor)) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'У вас нет прав на редактирование этого комментария'], 403);
+            }
+
+            // Проверяем, привязано ли фото к этому комментарию
+            $linkExists = DB::table('comment_photos')
+                ->where('comment_id', $commentId)
+                ->where('photo_id', $photoId)
+                ->exists();
+
+            if (!$linkExists) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Фотография не привязана к данному комментарию'], 404);
+            }
+
+            // Получаем путь к файлу
+            $photo = DB::table('photos')->where('id', $photoId)->first();
+
+            // Отвязываем от комментария
+            DB::table('comment_photos')
+                ->where('comment_id', $commentId)
+                ->where('photo_id', $photoId)
+                ->delete();
+
+            // Отвязываем от заявки (ВАЖНО: чтобы фото не висело в общем списке "Показать все фото")
+            // Получаем request_id из связи комментария
+            $requestId = DB::table('request_comments')->where('comment_id', $commentId)->value('request_id');
+            if ($requestId) {
+                DB::table('request_photos')
+                    ->where('request_id', $requestId)
+                    ->where('photo_id', $photoId)
+                    ->delete();
+            }
+
+            // Если фото найдено, проверяем, нужно ли удалять файл с диска
+            if ($photo) {
+                // Удаляем запись из таблицы photos и файл, ТОЛЬКО если фото больше нигде не используется
+                $isUsedInRequests = DB::table('request_photos')->where('photo_id', $photoId)->exists();
+                $isUsedInOtherComments = DB::table('comment_photos')->where('photo_id', $photoId)->exists();
+                
+                if (!$isUsedInRequests && !$isUsedInOtherComments) {
+                    // Теперь безопасно удаляем файл
+                    $path = str_replace('storage/', 'public/', $photo->path);
+                    if (\Storage::disk('public')->exists($path)) {
+                        \Storage::disk('public')->delete($path);
+                        \Log::info("Файл физически удален с диска: " . $path);
+                    }
+                    
+                    // И удаляем саму запись в таблице photos
+                    DB::table('photos')->where('id', $photoId)->delete();
+                } else {
+                    \Log::info("Фото ID {$photoId} остается на диске, так как используется в других записях.");
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Фотография успешно удалена'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при удалении фотографии:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при удалении фотографии: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Массовое удаление фотографий из комментария
+     *
+     * @param  int  $commentId
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deletePhotosMass($commentId, Request $request)
+    {
+        $user = Auth::user();
+        $photoIds = $request->input('photo_ids');
+
+        if (!is_array($photoIds) || empty($photoIds)) {
+            return response()->json(['success' => false, 'message' => 'Не выбраны фотографии для удаления'], 400);
+        }
+
+        \Log::info('Запрос на массовое удаление фото из комментария:', [
+            'comment_id' => $commentId,
+            'photo_ids' => $photoIds,
+            'user_id' => $user->id,
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Проверка прав доступа через комментарий
+            $commentQuery = DB::table('comments as c')
+                ->join('request_comments as rc', 'c.id', '=', 'rc.comment_id')
+                ->select('rc.user_id')
+                ->where('c.id', $commentId);
+
+            $comment = $commentQuery->first();
+
+            if (! $comment) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Комментарий не найден'], 404);
+            }
+
+            $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
+            $isAdmin = DB::table('user_roles')->where('user_id', $user->id)->where('role_id', $adminRoleId)->exists();
+            $isAuthor = ($comment->user_id == $user->id);
+
+            if (! ($isAdmin || $isAuthor)) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'У вас нет прав на редактирование этого комментария'], 403);
+            }
+
+            foreach ($photoIds as $photoId) {
+                // Проверяем, привязано ли фото к этому комментарию
+                $linkExists = DB::table('comment_photos')
+                    ->where('comment_id', $commentId)
+                    ->where('photo_id', $photoId)
+                    ->exists();
+
+                if (!$linkExists) continue;
+
+                // Получаем путь к файлу
+                $photo = DB::table('photos')->where('id', $photoId)->first();
+
+                // Отвязываем от комментария
+                DB::table('comment_photos')
+                    ->where('comment_id', $commentId)
+                    ->where('photo_id', $photoId)
+                    ->delete();
+
+                // Отвязываем от заявки
+                $requestId = DB::table('request_comments')->where('comment_id', $commentId)->value('request_id');
+                if ($requestId) {
+                    DB::table('request_photos')
+                        ->where('request_id', $requestId)
+                        ->where('photo_id', $photoId)
+                        ->delete();
+                }
+
+                // Если фото найдено, проверяем использование
+                if ($photo) {
+                    // Проверяем использование в других местах ПЕРЕД удалением файла
+                    $isUsedInRequests = DB::table('request_photos')->where('photo_id', $photoId)->exists();
+                    $isUsedInOtherComments = DB::table('comment_photos')->where('photo_id', $photoId)->exists();
+
+                    if (!$isUsedInRequests && !$isUsedInOtherComments) {
+                        $path = str_replace('storage/', 'public/', $photo->path);
+                        if (Storage::disk('public')->exists($path)) {
+                            Storage::disk('public')->delete($path);
+                            \Log::info("Файл удален при массовом удалении: " . $path);
+                        }
+                        DB::table('photos')->where('id', $photoId)->delete();
+                    } else {
+                        \Log::info("Фото ID {$photoId} остается на диске при массовом удалении (есть другие связи).");
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Выбранные фотографии успешно удалены'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при массовом удалении фотографий:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при массовом удалении фотографий: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -516,7 +746,7 @@ class CommentPhotoController extends Controller
             file_put_contents($processingFile, json_encode(['start' => time(), 'pid' => 'pending']));
 
             // 4. Запускаем создание архива в фоновом режиме
-            $command = "nohup php " . base_path('artisan') . " archive:create {$requestId} > /dev/null 2>&1 &";
+            $command = "nohup php " . base_path('artisan') . " archive:create " . escapeshellarg($requestId) . " > /dev/null 2>&1 &";
             exec($command);
 
             return response()->json([

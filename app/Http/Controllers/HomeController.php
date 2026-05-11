@@ -1239,6 +1239,7 @@ class HomeController extends Controller
             // Собираем информацию о фото
             $photosInfo = [];
             if ($request->hasFile('photos')) {
+                \Log::info('Количество полученных фото в запросе: ' . count($request->file('photos')));
                 foreach ($request->file('photos') as $index => $photo) {
                     $photosInfo[] = [
                         'name' => $photo->getClientOriginalName(),
@@ -1256,9 +1257,9 @@ class HomeController extends Controller
             $validated = $request->validate([
                 'request_id' => 'required|exists:requests,id',
                 'comment' => 'required|string|max:1000',
-                'photos' => 'nullable|array|max:100',
+                'photos' => 'nullable|array|max:200',
                 'photos.*' => 'file|max:51200|mimes:jpeg,png,jpg,webp,heic,heif',
-                'files' => 'nullable|array|max:100',
+                'files' => 'nullable|array|max:200',
                 'files.*' => [
                     'file',
                     'max:512000',
@@ -1386,22 +1387,14 @@ class HomeController extends Controller
                             continue;
                         }
                         try {
-                            // Сохранить файл в папку storage/app/public/images
                             // Используем уникальное имя файла с меткой времени и случайной строкой
                             $fileName = time() . '_' . Str::random(5) . '_' . $file->getClientOriginalName();
 
-                            // Сохраняем файл напрямую в целевую директорию
-                            $path = storage_path('app/public/images');
-                            if (! file_exists($path)) {
-                                mkdir($path, 0755, true);
-                            }
-                            $stored = file_put_contents(
-                                $path.'/'.$fileName,
-                                file_get_contents($file->getRealPath())
-                            ) !== false;
+                            // Сохраняем файл через Laravel Storage для экономии памяти и надежности
+                            $stored = $file->storeAs('images', $fileName, 'public');
 
                             if ($stored === false) {
-                                throw new \RuntimeException('Не удалось сохранить файл. Проверьте права на запись в директорию: '.storage_path('app/public/images'));
+                                throw new \RuntimeException('Не удалось сохранить файл через Storage::disk(public)');
                             }
 
                             // Получить основную информацию о файле
@@ -1410,8 +1403,8 @@ class HomeController extends Controller
                                 'type' => $file->getMimeType(),
                                 'extension' => $file->getClientOriginalExtension(),
                                 'size' => $file->getSize(),
-                                'path' => $path.'/'.$fileName,
-                                'url' => asset('storage/images/'.$fileName),
+                                'path' => storage_path('app/public/'.$stored),
+                                'url' => asset('storage/'.$stored),
                             ];
 
                         } catch (\Exception $e) {
@@ -1487,22 +1480,14 @@ class HomeController extends Controller
                             continue;
                         }
                         try {
-                            // Сохранить файл в папку storage/app/public/files
                             // Используем уникальное имя файла с меткой времени и случайной строкой
                             $fileName = time() . '_' . Str::random(5) . '_' . $file->getClientOriginalName();
 
-                            // Сохраняем файл напрямую в целевую директорию
-                            $path = storage_path('app/public/files');
-                            if (! file_exists($path)) {
-                                mkdir($path, 0755, true);
-                            }
-                            $stored = file_put_contents(
-                                $path.'/'.$fileName,
-                                file_get_contents($file->getRealPath())
-                            ) !== false;
+                            // Сохраняем файл через Laravel Storage
+                            $stored = $file->storeAs('files', $fileName, 'public');
 
                             if ($stored === false) {
-                                throw new \RuntimeException('Не удалось сохранить файл. Проверьте права на запись в директорию: '.storage_path('app/public/files'));
+                                throw new \RuntimeException('Не удалось сохранить файл через Storage::disk(public)');
                             }
 
                             // Получить основную информацию о файле
@@ -1511,8 +1496,8 @@ class HomeController extends Controller
                                 'type' => $file->getMimeType(),
                                 'extension' => $file->getClientOriginalExtension(),
                                 'size' => $file->getSize(),
-                                'path' => $path.'/'.$fileName,
-                                'url' => asset('storage/files/'.$fileName),
+                                'path' => storage_path('app/public/'.$stored),
+                                'url' => asset('storage/'.$stored),
                             ];
 
                             $relativePath = 'files/'.$fileInfo['name'];
@@ -3244,11 +3229,10 @@ class HomeController extends Controller
             $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
             $isAdmin = DB::table('user_roles')->where('user_id', $user->id)->where('role_id', $adminRoleId)->exists();
             $isAuthor = ($comment->user_id == $user->id);
-            $isToday = Carbon::parse($comment->created_at)->isToday();
 
-            \Log::info('Permission check:', ['isAdmin' => $isAdmin, 'isAuthor' => $isAuthor, 'isToday' => $isToday]);
+            \Log::info('Permission check:', ['isAdmin' => $isAdmin, 'isAuthor' => $isAuthor]);
 
-            if (! ($isAdmin || ($isAuthor && $isToday))) {
+            if (! ($isAdmin || $isAuthor)) {
                 DB::rollBack();
                 \Log::warning('Permission denied, transaction rolled back.');
 
@@ -3291,6 +3275,104 @@ class HomeController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при обновлении комментария: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Удаление комментария
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteComment($id)
+    {
+        $user = Auth::user();
+
+        \Log::info('Получен запрос на удаление комментария:', [
+            'comment_id' => $id,
+            'user_id' => $user->id,
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $commentQuery = DB::table('comments as c')
+                ->join('request_comments as rc', 'c.id', '=', 'rc.comment_id')
+                ->select('c.id', 'rc.user_id')
+                ->where('c.id', $id);
+
+            $comment = $commentQuery->first();
+
+            if (! $comment) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Комментарий не найден'], 404);
+            }
+
+            // Права доступа
+            $adminRoleId = DB::table('roles')->where('name', 'admin')->value('id');
+            $isAdmin = DB::table('user_roles')->where('user_id', $user->id)->where('role_id', $adminRoleId)->exists();
+            $isAuthor = ($comment->user_id == $user->id);
+
+            if (! ($isAdmin || $isAuthor)) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'У вас нет прав на удаление этого комментария'], 403);
+            }
+
+            // Получаем список привязанных фото
+            $photos = DB::table('photos as p')
+                ->join('comment_photos as cp', 'p.id', '=', 'cp.photo_id')
+                ->select('p.id', 'p.path')
+                ->where('cp.comment_id', $id)
+                ->get();
+
+            // Отвязываем фото и удаляем файлы
+            if ($photos->isNotEmpty()) {
+                DB::table('comment_photos')->where('comment_id', $id)->delete();
+                
+                foreach ($photos as $photo) {
+                    $path = str_replace('storage/', 'public/', $photo->path); // Преобразуем путь для Storage::disk('public')
+                    if (\Storage::disk('public')->exists($path)) {
+                        \Storage::disk('public')->delete($path);
+                        \Log::info("Файл удален: " . $path);
+                    }
+                    
+                    // Удаляем саму запись из photos (только если она больше нигде не используется, но обычно для комментариев они уникальны)
+                    // Проверим, не используется ли фото в заявках (request_photos)
+                    $isUsedInRequests = DB::table('request_photos')->where('photo_id', $photo->id)->exists();
+                    if (!$isUsedInRequests) {
+                        DB::table('photos')->where('id', $photo->id)->delete();
+                    }
+                }
+            }
+
+            // Удаляем историю редактирования
+            DB::table('comment_edits')->where('comment_id', $id)->delete();
+            
+            // Удаляем связь комментария и заявки
+            DB::table('request_comments')->where('comment_id', $id)->delete();
+            
+            // Удаляем сам комментарий
+            DB::table('comments')->where('id', $id)->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Комментарий успешно удален!',
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при удалении комментария:', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при удалении комментария: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -3982,11 +4064,11 @@ class HomeController extends Controller
     public function uploadPhotoReport(Request $request)
     {
         try {
-            // Валидация входящих данных
+            // Валидация входящих данных: делаем комментарий необязательным для режима редактирования
             $validated = $request->validate([
                 'request_id' => 'required|integer|exists:requests,id',
                 'photos' => 'required|array|min:1',
-                'photos.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // до 10MB
+                'photos.*' => 'required|image|mimes:jpeg,png,jpg,gif,webp,heic,heif|max:51200', // до 50MB
                 'comment' => 'nullable|string|max:1000',
             ]);
 
@@ -3995,7 +4077,7 @@ class HomeController extends Controller
             $userId = auth()->id();
             $now = now();
 
-            // Дополнительная проверка наличия файлов (на случай если PHP отбросил файлы из-за ограничений)
+            // Дополнительная проверка наличия файлов
             if (! $request->hasFile('photos')) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'photos' => ['Не загружены файлы фотоотчета'],
@@ -4005,24 +4087,25 @@ class HomeController extends Controller
             // Начинаем транзакцию
             DB::beginTransaction();
 
-            // Создаем комментарий, если он есть
+            // Создаем комментарий только если он передан (для нового фотоотчета)
+            // При редактировании комментария фото загружаются без текста, так как привязываются к существующему позже
             $commentId = null;
-            // if ($comment) {
-            //     $commentId = DB::table('comments')->insertGetId([
-            //         'comment' => $comment,
-            //         'created_at' => $now,
-            //         'updated_at' => $now,
-            //     ]);
+            if ($comment) {
+                $commentId = DB::table('comments')->insertGetId([
+                    'comment' => $comment,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
 
-            //     // Связываем комментарий с заявкой
-            //     DB::table('request_comments')->insert([
-            //         'request_id' => $requestId,
-            //         'comment_id' => $commentId,
-            //         'user_id' => $userId,
-            //         'created_at' => $now,
-            //         'updated_at' => $now,
-            //     ]);
-            // }
+                // Связываем комментарий с заявкой
+                DB::table('request_comments')->insert([
+                    'request_id' => $requestId,
+                    'comment_id' => $commentId,
+                    'user_id' => $userId,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
 
             // Обрабатываем загруженные фотографии
             $uploadedPhotos = [];
@@ -4103,6 +4186,16 @@ class HomeController extends Controller
                         'created_at' => $now,
                         'updated_at' => $now,
                     ]);
+
+                    // Связываем фото с комментарием (если он был создан)
+                    if ($commentId) {
+                        DB::table('comment_photos')->insert([
+                            'comment_id' => $commentId,
+                            'photo_id' => $photoId,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ]);
+                    }
 
                     $uploadedPhotos[] = [
                         'id' => $photoId,

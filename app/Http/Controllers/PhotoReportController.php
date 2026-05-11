@@ -290,7 +290,7 @@ class PhotoReportController extends Controller
              // Создаем маркер ПЕРЕД запуском
              file_put_contents($processingFile, json_encode(['start' => time(), 'pid' => 'pending']));
              
-             $command = "nohup php " . base_path('artisan') . " archive:create {$requestId} > /dev/null 2>&1 &";
+             $command = "nohup php " . base_path('artisan') . " archive:create " . escapeshellarg($requestId) . " > /dev/null 2>&1 &";
              exec($command);
         }
 

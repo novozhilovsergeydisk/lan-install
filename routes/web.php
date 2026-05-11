@@ -176,6 +176,21 @@ Route::put('/api/comments/{id}', [HomeController::class, 'updateComment'])
     ->middleware('auth')
     ->name('api.comments.update');
 
+// Удаление комментария
+Route::delete('/api/comments/{id}', [HomeController::class, 'deleteComment'])
+    ->middleware('auth')
+    ->name('api.comments.delete');
+
+// Удаление фото из комментария
+Route::delete('/api/comments/{commentId}/photos/{photoId}', [CommentPhotoController::class, 'deletePhoto'])
+    ->middleware('auth')
+    ->name('api.comments.photos.delete');
+
+// Массовое удаление фото из комментария
+Route::delete('/api/comments/{commentId}/photos-mass', [CommentPhotoController::class, 'deletePhotosMass'])
+    ->middleware('auth')
+    ->name('api.comments.photos.delete-mass');
+
 // API Route for getting brigade data
 Route::post('/brigade/{id}', [\App\Http\Controllers\BrigadeController::class, 'getBrigadeData'])->name('brigade.data')->middleware('auth');
 

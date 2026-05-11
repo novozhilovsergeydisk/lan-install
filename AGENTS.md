@@ -1,91 +1,44 @@
-# AGENTS.md
+# GEMINI.md
 
-## Project Overview
+## Обзор проекта
+Это веб-приложение на базе Laravel 12 под названием **lan-install.online**. Его основная цель — управление заявками на установку и обслуживание локальных сетей, установки систем видеонаблюдения и мониторинга в организациях. Приложение включает функции управления бригадами, заявками, создания отчетов и обработки геоданных через Яндекс.Карты.
 
-**lan-install.online** - Laravel 12 application for managing LAN installation requests, monitoring systems, and video surveillance in educational institutions. Features brigade management, request tracking, reporting, and Yandex Maps integration.
-
-## Key Commands
-
-```bash
-# Setup
-composer install && npm install
-cp .env.example .env && php artisan key:generate
-php artisan migrate
-
-# Development
-composer run dev           # Full dev environment (server + queue + logs + vite)
-php artisan serve          # Quick start
-npm run build              # Frontend build
-
-# Code quality
-vendor/bin/pint            # PHP linting/formatting
-php artisan test           # Run tests
-
-# Useful scripts
-./clear-cash               # Clear Laravel caches
-./show-logs                # Tail Laravel logs (storage/logs/local.log)
-./url_gen.sh [address_id]  # Generate public link with token
-./git-deploy "message"     # Deploy to server
-./update-bot               # Recompile C binaries on server
-./commit-list              # View recent commits
-./backup_db_remote         # Backup database
-```
-
-## Architecture
-
-- **No Eloquent models** - Uses raw SQL via `DB` facade
-- **Controllers**: `app/Http/Controllers/`
-- **Views**: `resources/views/` (Blade templates)
-- **Routes**: `routes/web.php`, `routes/api.php`
-- **JS handlers**: `public/js/` (individual files, not in Blade)
-
-## Database
-
-- PostgreSQL (`lan_install` database)
-- Check schema:
+## База данных
+* В проекте НЕ используются Eloquent модели, применяются нативные SQL запросы и фасад DB.
+* КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО использовать миграции Laravel (`php artisan make:migration`, `php artisan migrate`). Любое изменение структуры БД должно выполняться исключительно "голыми" SQL-запросами через `psql` (напрямую в консоли или через скрипты).
+* Команды для просмотра структуры базы `lan_install`:
   - macOS: `sudo psql -U postgres -d lan_install -c "\d"`
-  - Linux: `sudo -u postgres psql -d lan_install -c "\d"`
+  - Linux (сервер): `sudo -u postgres psql -d lan_install -c "\d"`
+* **Таблица `request_logs`**: содержит логи HTTP запросов (`method`, `url`, `created_at`), используется для отслеживания действий, например закрытия заявок.
+* **Таблица `requests`**: имеет колонку `closed_at` для фиксации времени завершения, что позволяет переоткрывать заявки в день закрытия.
 
-## JavaScript Conventions
+## Фронтенд (JavaScript)
+* Новые JS-обработчики создавать в отдельных файлах в `public/js/` и подключать в шаблонах. Избегать добавления кода в общий `form-handlers.js`, если это не общая логика.
+* Не размещать JS код напрямую в Blade-шаблонах (например, `welcome.blade.php`).
+* Использовать `public/js/init.js` для инициализации обработчиков после загрузки DOM.
 
-- New handlers → `public/js/[descriptive-name].js`
-- Include via Blade templates as needed
-- Avoid adding to `form-handlers.js` unless generic
-- Use `public/js/init.js` for DOM-ready initialization
-- No inline JS in Blade templates
+## Telegram-уведомления
+* Для тестирования на локальной машине использовать тестового бота (например, `@FlowboxNotifyBot`). Его токен и ID чата хранить **только** в локальном `utils/C/notify-bot/telegram.conf` (в `.gitignore`).
+* **Обновление бинарников:** Скомпилированные файлы `telegram_notify` исключены из Git. При изменении C-кода нужно запускать скрипт `./update-bot` для перекомпиляции на сервере.
 
-## C Binaries (Telegram Bot)
+## Скрипты автоматизации
+(Во все новые bash-скрипты добавлять `set -e` после шебанга)
+* `./git-deploy "коммент"` — Деплой (добавление, коммит, push, обновление на сервере, очистка кэша).
+* `./update-bot` — Перекомпиляция Telegram-бота.
+* `./clear-cash` — Очистка всех кэшей Laravel.
+* `./url_gen.sh [ID_адреса]` — Генерация публичной ссылки с токеном.
+* `./show-logs` — Просмотр логов (`tail -f`).
+* `./serve` — Запуск локального сервера.
+* `./ls-controllers-views` — Список контроллеров и шаблонов.
+* `./commit-list` — История коммитов за 2 недели.
+* `./backup_db_remote` — Резервное копирование БД.
 
-- Source: `utils/C/notify-bot/telegram_notify.c`
-- Config: `utils/C/notify-bot/telegram.conf` (gitignored)
-- Recompile after changes: `./update-bot` (run on server)
-- Test bot token: local file only (not committed)
+## Логирование
+* **Важно:** Основные логи на сервере: `storage/logs/local.log`. Проверять при ошибках "Ошибка сервера" или "Network Error".
 
-## Security
+## Архитектура и Сборка
+Проект следует стандартной MVC архитектуре Laravel. Представления в `resources/views/`, контроллеры в `app/Http/Controllers/`, маршруты в `routes/web.php` и `routes/api.php`. Документация API: `docs/API.md`.
 
-- Never hardcode secrets - use `.env` or local config files
-- Sensitive files in `.gitignore`: `.env`, `telegram.conf`, compiled binaries
-
-## Logs
-
-Errors → `storage/logs/local.log` (check first for "Server Error" or "Network Error")
-
-## Deployment
-
-Before deploying:
-1. Review `git status` and `git diff`
-2. Check for regressions, sensitive data, logic changes
-3. Verify no `.env` or credentials in changes
-4. Get user confirmation before running `./git-deploy`
-
-## API Documentation
-
-Full API reference: `docs/API.md`
-
-## Code Style
-
-PHP formatting: `laravel/pint` via `vendor/bin/pint`
-
-## Bash Scripts
-
-New scripts must include `set -e` after shebang for fail-fast behavior.
+* **Требования:** PHP 8.2+, Composer, Node.js, Postgresql.
+* **Стиль кода PHP:** `laravel/pint` (запуск: `vendor/bin/pint`).
+* **Запуск разработки:** `composer run dev` или `php artisan serve` + `npm run build`.

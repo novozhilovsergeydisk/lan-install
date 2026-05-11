@@ -1,6 +1,6 @@
 // form-handlers.js
 
-import { showAlert, postData, fetchData, getElement, getValue, validateRequiredField } from './utils.js';
+import { showAlert, showConfirm, postData, fetchData, getElement, getValue, validateRequiredField } from './utils.js';
 import { loadAddresses, loadAddressesPaginated, loadPlanningRequests } from './handler.js';
 import { loadAddressesForPlanning } from './handler.js';
 import { renderReportTable } from './report-handler.js';
@@ -7001,11 +7001,56 @@ export function initCommentEditHandlers() {
 
                     document.getElementById('editCommentId').value = commentId;
                     document.getElementById('editCommentContent').value = commentText.trim();
-                    
+
                     currentRequestIdForEdit = document.getElementById('commentRequestId').value;
-                    
+
+                    // Очищаем форму от старых файлов и загружаем существующие фото
+                    document.getElementById('editCommentNewPhotos').value = '';
+                    loadCommentPhotosForEdit(commentId);
+
                     editModal.show();
                 }
+            } else if (event.target.classList.contains('delete-comment-btn') || event.target.closest('.delete-comment-btn')) {
+                const button = event.target.classList.contains('delete-comment-btn') ? event.target : event.target.closest('.delete-comment-btn');
+                const commentId = button.dataset.commentId;
+                
+                showConfirm('Вы уверены, что хотите удалить этот комментарий?', function () {
+                    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    button.disabled = true;
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                    fetch(`/api/comments/${commentId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlert('Комментарий удален', 'success');
+                            const currentRequestIdForEdit = document.getElementById('commentRequestId').value;
+                            if (currentRequestIdForEdit) {
+                                if (typeof window.loadComments === 'function') {
+                                    window.loadComments(currentRequestIdForEdit);
+                                } else {
+                                    location.reload();
+                                }
+                            }
+                        } else {
+                            showAlert(data.message || 'Ошибка при удалении', 'danger');
+                            button.disabled = false;
+                            button.innerHTML = '<i class="bi bi-trash"></i>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка:', error);
+                        showAlert('Произошла ошибка при удалении комментария', 'danger');
+                        button.disabled = false;
+                        button.innerHTML = '<i class="bi bi-trash"></i>';
+                    });
+                });
             }
         });
     }
@@ -7013,48 +7058,97 @@ export function initCommentEditHandlers() {
     // 2. Event listener for the "Save" button in the edit modal
     const saveButton = document.getElementById('saveCommentChangesBtn');
     if (saveButton) {
-        saveButton.addEventListener('click', function () {
+        saveButton.addEventListener('click', async function () {
             const commentId = document.getElementById('editCommentId').value;
             const content = document.getElementById('editCommentContent').value;
+            const currentRequestIdForEdit = document.getElementById('commentRequestId').value;
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const fileInput = document.getElementById('editCommentNewPhotos');
 
             this.disabled = true;
             this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
 
-            fetch(`/api/comments/${commentId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ content: content })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showAlert('Комментарий успешно обновлен', 'success');
-                    editModal.hide();
-                    if (currentRequestIdForEdit) {
-                        if (typeof window.loadComments === 'function') {
-                            window.loadComments(currentRequestIdForEdit);
-                        } else {
-                            console.warn('Global function loadComments not found. Reloading page as a fallback.');
-                            location.reload();
-                        }
-                    }
-                } else {
-                    showAlert(data.message || 'Ошибка при обновлении', 'danger');
+            try {
+                // 1. Обновляем текст комментария
+                const updateRes = await fetch(`/api/comments/${commentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+                
+                const updateData = await updateRes.json();
+                if (!updateData.success) {
+                    throw new Error(updateData.message || 'Ошибка при обновлении текста');
                 }
-            })
-            .catch(error => {
-                console.error('Error updating comment:', error);
-                showAlert('Произошла ошибка.', 'danger');
-            })
-            .finally(() => {
+
+                // 2. Загружаем новые фото, если они есть
+                if (fileInput && fileInput.files.length > 0) {
+                    const formData = new FormData();
+                    formData.append('request_id', currentRequestIdForEdit);
+                    Array.from(fileInput.files).forEach(file => {
+                        formData.append('photos[]', file);
+                    });
+
+                    // Загружаем файлы на сервер
+                    const uploadRes = await fetch('/api/requests/photo-report', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    });
+                    
+                    const uploadData = await uploadRes.json();
+                    if (!uploadData.success || !uploadData.data || !uploadData.data.photos) {
+                        throw new Error(uploadData.message || 'Ошибка при загрузке новых фото');
+                    }
+
+                    const photoIds = uploadData.data.photos.map(p => p.id);
+
+                    // Привязываем загруженные фото к комментарию
+                    const linkFormData = new FormData();
+                    linkFormData.append('request_id', currentRequestIdForEdit);
+                    linkFormData.append('comment', commentId);
+                    linkFormData.append('photo_ids', JSON.stringify(photoIds));
+
+                    const linkRes = await fetch('/api/requests/photo-comment', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json'
+                        },
+                        body: linkFormData
+                    });
+
+                    const linkData = await linkRes.json();
+                    if (!linkData.success) {
+                        throw new Error(linkData.message || 'Ошибка при привязке фото к комментарию');
+                    }
+                }
+
+                showAlert('Комментарий успешно обновлен', 'success');
+                editModal.hide();
+                
+                if (currentRequestIdForEdit) {
+                    if (typeof window.loadComments === 'function') {
+                        window.loadComments(currentRequestIdForEdit);
+                    } else {
+                        location.reload();
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showAlert(error.message || 'Произошла ошибка при обновлении', 'danger');
+            } finally {
                 this.disabled = false;
                 this.innerHTML = 'Сохранить';
-            });
+                if (fileInput) fileInput.value = '';
+            }
         });
     }
 }
@@ -7179,3 +7273,155 @@ document.addEventListener('change', function(event) {
         console.log('Выбрать все: установлено', isChecked, 'для', checkboxes.length, 'заявок');
     }
 });
+
+export async function loadCommentPhotosForEdit(commentId) {
+    const container = document.getElementById('editCommentPhotosContainer');
+    const block = document.getElementById('editCommentPhotosBlock');
+    if (!container || !block) return;
+
+    container.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm" role="status"></span> Загрузка...</div>';
+    block.style.display = 'block';
+
+    try {
+        const response = await fetch(`/api/comments/${commentId}/photos`);
+        const data = await response.json();
+
+        const massControls = document.getElementById('massDeleteControls');
+        const selectAllBtn = document.getElementById('selectAllPhotosBtn');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedPhotosBtn');
+
+        if (data.success && data.data && data.data.length > 0) {
+            let html = '';
+            data.data.forEach(photo => {
+                html += `
+                    <div class="position-relative d-inline-block" style="width: 100px; height: 100px; border: 1px solid #dee2e6; border-radius: 4px; overflow: hidden;" id="edit-photo-container-${photo.id}">
+                        <img src="${photo.url}" alt="${photo.original_name}" style="width: 100%; height: 100%; object-fit: cover;">
+                        
+                        <div class="position-absolute top-0 start-0 m-1" style="z-index: 10;">
+                            <input type="checkbox" class="form-check-input photo-delete-checkbox" data-photo-id="${photo.id}" style="width: 18px; height: 18px; cursor: pointer; border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,0.5);">
+                        </div>
+
+                        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 delete-comment-photo-btn" data-photo-id="${photo.id}" data-comment-id="${commentId}" style="padding: 0 4px; font-size: 10px; opacity: 0.8; z-index: 5;">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            // Показываем кнопки массового удаления если фото > 1
+            if (massControls) {
+                massControls.style.display = data.data.length > 1 ? 'block' : 'none';
+            }
+
+            // Логика "Выбрать все"
+            if (selectAllBtn) {
+                selectAllBtn.onclick = () => {
+                    const checkboxes = container.querySelectorAll('.photo-delete-checkbox');
+                    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                    checkboxes.forEach(cb => cb.checked = !allChecked);
+                    selectAllBtn.textContent = !allChecked ? 'Снять выделение' : 'Выбрать все';
+                };
+            }
+
+            // Логика удаления выбранных
+            if (deleteSelectedBtn) {
+                deleteSelectedBtn.onclick = async () => {
+                    const selectedIds = Array.from(container.querySelectorAll('.photo-delete-checkbox:checked'))
+                        .map(cb => cb.dataset.photoId);
+
+                    if (selectedIds.length === 0) {
+                        showAlert('Выберите хотя бы одну фотографию', 'warning');
+                        return;
+                    }
+
+                    showConfirm(`Удалить выбранные фотографии (${selectedIds.length} шт.)?`, async () => {
+                        deleteSelectedBtn.disabled = true;
+                        deleteSelectedBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+
+                        try {
+                            const res = await fetch(`/api/comments/${commentId}/photos-mass`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({ photo_ids: selectedIds })
+                            });
+                            
+                            const result = await res.json();
+                            if (result.success) {
+                                selectedIds.forEach(id => {
+                                    const el = document.getElementById(`edit-photo-container-${id}`);
+                                    if (el) el.remove();
+                                });
+                                
+                                if (container.children.length === 0) {
+                                    block.style.display = 'none';
+                                } else if (container.children.length <= 1 && massControls) {
+                                    massControls.style.display = 'none';
+                                }
+                                
+                                showAlert(result.message, 'success');
+                            } else {
+                                throw new Error(result.message);
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            showAlert(err.message || 'Ошибка при массовом удалении', 'danger');
+                        } finally {
+                            deleteSelectedBtn.disabled = false;
+                            deleteSelectedBtn.innerHTML = 'Удалить выбранные';
+                        }
+                    });
+                };
+            }
+
+            // Обработчики одиночного удаления (сохраняем существующую логику)
+            container.querySelectorAll('.delete-comment-photo-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const pid = this.dataset.photoId;
+                    const cid = this.dataset.commentId;
+                    
+                    showConfirm('Удалить эту фотографию?', async () => {
+                        this.disabled = true;
+                        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                        
+                        try {
+                            const delRes = await fetch(`/api/comments/${cid}/photos/${pid}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'Accept': 'application/json'
+                                }
+                            });
+                            const delData = await delRes.json();
+                            if (delData.success) {
+                                document.getElementById(`edit-photo-container-${pid}`).remove();
+                                if (container.children.length === 0) {
+                                    block.style.display = 'none';
+                                }
+                                showAlert('Фото удалено', 'success');
+                            } else {
+                                throw new Error(delData.message);
+                            }
+                        } catch (e) {
+                            console.error(e);
+                            showAlert(e.message || 'Ошибка при удалении фото', 'danger');
+                            this.disabled = false;
+                            this.innerHTML = '<i class="bi bi-x-lg"></i>';
+                        }
+                    });
+                });
+            });
+        } else {
+            block.style.display = 'none';
+            container.innerHTML = '';
+        }
+    } catch (e) {
+        console.error('Ошибка при загрузке фото комментария:', e);
+        container.innerHTML = '<div class="text-danger small">Ошибка загрузки фотографий</div>';
+    }
+}
+

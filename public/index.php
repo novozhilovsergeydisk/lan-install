@@ -5,6 +5,13 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+// Отключаем вывод ошибок в браузер, чтобы не ломать JSON-ответы.
+// Все ошибки будут записываться в storage/logs/laravel.log
+ini_set('display_errors', '0');
+ini_set('memory_limit', '2048M');
+set_time_limit(300);
+error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
+
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;

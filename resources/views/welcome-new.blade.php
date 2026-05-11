@@ -2163,21 +2163,23 @@
                                                                 </button>`;
                                                     } else {
                                                         // For older comments, use the new modal-triggering button
-                                                        if (window.App.user.isAdmin || (isAuthor && isToday)) {
-                                                            editButton = `<button class="btn btn-sm btn-outline-secondary edit-older-comment-btn" data-comment-id="${comment.id}">
-                                                                        Редактировать
-                                                                    </button>`;
-                                                        }
+                                                        editButton = `<button class="btn btn-sm btn-outline-secondary edit-older-comment-btn" data-comment-id="${comment.id}">
+                                                                    Редактировать
+                                                                </button>`;
                                                     }
+
+                                                    let deleteButton = `<button class="btn btn-sm btn-outline-danger ms-1 delete-comment-btn" data-comment-id="${comment.id}">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>`;
 
                                                     let historyButton = '';
                                                     if (comment.edits_count > 0 && window.App.user.isAdmin) {
-                                                        historyButton = `<button type="button" class="btn btn-sm btn-outline-info view-comment-history-btn" data-bs-toggle="modal" data-bs-target="#commentHistoryModal" data-comment-id="${comment.id}">
+                                                        historyButton = `<button type="button" class="btn btn-sm btn-outline-info ms-1 view-comment-history-btn" data-bs-toggle="modal" data-bs-target="#commentHistoryModal" data-comment-id="${comment.id}">
                                                                             История
                                                                         </button>`;
                                                     }
 
-                                                    return editButton + historyButton;
+                                                    return editButton + deleteButton + historyButton;
                                                 })()}
                                             </div>
                                         </div>
@@ -4998,6 +5000,21 @@
           <div class="mb-3">
             <label for="editCommentContent" class="form-label">Текст комментария</label>
             <textarea class="form-control" id="editCommentContent" name="content" rows="5" required></textarea>
+          </div>
+          <div class="mb-3" id="editCommentPhotosBlock" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label mb-0">Прикрепленные фотографии</label>
+              <div id="massDeleteControls" style="display: none;">
+                <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="selectAllPhotosBtn">Выбрать все</button>
+                <button type="button" class="btn btn-sm btn-danger" id="deleteSelectedPhotosBtn">Удалить выбранные</button>
+              </div>
+            </div>
+            <div id="editCommentPhotosContainer" class="d-flex flex-wrap gap-2 mb-2">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="editCommentNewPhotos" class="form-label">Добавить новые фотографии</label>
+            <input class="form-control" type="file" id="editCommentNewPhotos" name="new_photos[]" multiple accept="image/jpeg,image/png,image/gif,image/webp,.heic">
           </div>
         </form>
       </div>

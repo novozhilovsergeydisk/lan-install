@@ -1,5 +1,16 @@
 #!/bin/bash
 set -e
 
-php artisan serve --host=0.0.0.0 --port=8000
-# php artisan serve
+# Определяем директорию, где лежит сам скрипт
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR/public"
+
+echo "🚀 Запуск сервера с лимитами 1Гб, 200 файлов и 2Гб RAM..."
+
+# Запускаем PHP-сервер напрямую с МАКСИМАЛЬНЫМИ лимитами.
+# max_file_uploads=200 - разрешаем до 200 файлов в одном запросе
+php -d post_max_size=1024M -d upload_max_filesize=1024M -d memory_limit=2048M \
+    -d max_file_uploads=200 -d max_execution_time=0 -d max_input_time=0 \
+    -d max_input_vars=10000 -d display_errors=Off -d log_errors=On \
+    -S 0.0.0.0:8000 \
+    ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php
