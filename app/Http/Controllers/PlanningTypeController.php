@@ -13,10 +13,16 @@ class PlanningTypeController extends Controller
     public function index()
     {
         $types = DB::table('request_subtypes')
-            ->where('status_id', 6) // Статус "планирование"
-            ->where('is_deleted', false)
-            ->orderBy('id')
-            ->get(['id', 'name']);
+            ->leftJoin('requests', function($join) {
+                $join->on('request_subtypes.id', '=', 'requests.subtype_id')
+                     ->where('requests.status_id', '=', 6); // 6 - статус "планирование"
+            })
+            ->where('request_subtypes.status_id', 6) // Статус "планирование"
+            ->where('request_subtypes.is_deleted', false)
+            ->select('request_subtypes.id', 'request_subtypes.name', DB::raw('COUNT(requests.id) as requests_count'))
+            ->groupBy('request_subtypes.id', 'request_subtypes.name')
+            ->orderBy('request_subtypes.id')
+            ->get();
 
         return response()->json($types);
     }

@@ -1136,12 +1136,17 @@ class HomeController extends Controller
             // Получаем список регионов для выпадающего списка
             $regions = DB::table('regions')->orderBy('name')->get();
 
-            // Получаем подтипы для "Планирование"
+            // Получаем подтипы для "Планирование" с количеством заявок
             $request_subtypes = DB::table('request_subtypes')
                 ->join('request_statuses', 'request_subtypes.status_id', '=', 'request_statuses.id')
+                ->leftJoin('requests', function($join) {
+                    $join->on('request_subtypes.id', '=', 'requests.subtype_id')
+                         ->where('requests.status_id', '=', 6); // 6 - статус "планирование"
+                })
                 ->where('request_statuses.name', 'планирование')
                 ->where('request_subtypes.is_deleted', false)
-                ->select('request_subtypes.id', 'request_subtypes.name')
+                ->select('request_subtypes.id', 'request_subtypes.name', DB::raw('COUNT(requests.id) as requests_count'))
+                ->groupBy('request_subtypes.id', 'request_subtypes.name')
                 ->orderBy('request_subtypes.id')
                 ->get();
 

@@ -76,7 +76,7 @@ export function initPlanningTypesHandlers() {
             const div = document.createElement('div');
             div.className = 'list-group-item d-flex justify-content-between align-items-center';
             div.innerHTML = `
-                <span class="type-name" data-id="${type.id}">${type.name}</span>
+                <span class="type-name" data-id="${type.id}">${type.name} <span class="badge bg-secondary rounded-pill ms-2">${type.requests_count || 0}</span></span>
                 <div>
                     <button class="btn btn-sm btn-outline-primary me-1 btn-edit-type" data-id="${type.id}" data-name="${type.name}">
                         <i class="bi bi-pencil"></i>
@@ -178,7 +178,7 @@ export function initPlanningTypesHandlers() {
                     types.forEach(type => {
                         const option = document.createElement('option');
                         option.value = type.id;
-                        option.textContent = type.name;
+                        option.textContent = `${type.name} (${type.requests_count || 0})`;
                         // Select "Стандартное планирование" as default or keep current
                         if (currentValue === String(type.id)) {
                             option.selected = true;

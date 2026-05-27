@@ -1587,7 +1587,7 @@
         <select class="form-select me-2 w-auto" id="planningSubtypeFilter">
             <option value="">Все планирования</option>
             @foreach($request_subtypes as $subtype)
-                <option value="{{ $subtype->id }}" {{ $subtype->name === 'Стандартное планирование' ? 'selected' : '' }}>{{ $subtype->name }}</option>
+                <option value="{{ $subtype->id }}" {{ $subtype->name === 'Стандартное планирование' ? 'selected' : '' }}>{{ $subtype->name }} ({{ $subtype->requests_count }})</option>
             @endforeach
         </select>
         <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#planningTypesModal" title="Настройки типов планирования">
@@ -3429,7 +3429,7 @@
                         <select class="form-select" id="planningRequestSubtype" name="subtype_id" required>
                             <option value="" disabled selected>Выберите подтип</option>
                             @foreach($request_subtypes as $subtype)
-                                <option value="{{ $subtype->id }}" {{ $subtype->name === 'Стандартное планирование' ? 'selected' : '' }}>{{ $subtype->name }}</option>
+                                <option value="{{ $subtype->id }}" {{ $subtype->name === 'Стандартное планирование' ? 'selected' : '' }}>{{ $subtype->name }} ({{ $subtype->requests_count }})</option>
                             @endforeach
                         </select>
                     </div>
