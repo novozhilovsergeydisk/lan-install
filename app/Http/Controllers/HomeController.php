@@ -1140,6 +1140,7 @@ class HomeController extends Controller
             $request_subtypes = DB::table('request_subtypes')
                 ->join('request_statuses', 'request_subtypes.status_id', '=', 'request_statuses.id')
                 ->where('request_statuses.name', 'планирование')
+                ->where('request_subtypes.is_deleted', false)
                 ->select('request_subtypes.id', 'request_subtypes.name')
                 ->orderBy('request_subtypes.id')
                 ->get();
@@ -2810,7 +2811,7 @@ class HomeController extends Controller
 
                             // 2. Отправка через VPN-сервер (в обход блокировок)
                             $remotePath = "/var/www/lan-install/utils/C/notify-bot/telegram_notify";
-                            $sshCmd = "ssh vpn-server " . escapeshellarg(
+                            $sshCmd = "ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no vpn-server " . escapeshellarg(
                                 $remotePath . 
                                 (!empty($botToken) ? " -t " . escapeshellarg($botToken) : "") . 
                                 (!empty($chatId) ? " -c " . escapeshellarg($chatId) : "")

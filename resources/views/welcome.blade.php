@@ -1590,6 +1590,9 @@
                 <option value="{{ $subtype->id }}" {{ $subtype->name === 'Стандартное планирование' ? 'selected' : '' }}>{{ $subtype->name }}</option>
             @endforeach
         </select>
+        <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#planningTypesModal" title="Настройки типов планирования">
+            <i class="bi bi-gear"></i>
+        </button>
         <button type="button" class="btn btn-outline-secondary me-2" id="btn-open-planning-map">
             <i class="bi bi-map me-1"></i>На карте
         </button>
@@ -3366,6 +3369,27 @@
             </div>
             <div class="modal-footer">
                 
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Planning Types Modal -->
+<div class="modal fade" id="planningTypesModal" tabindex="-1" aria-labelledby="planningTypesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="planningTypesModalLabel">Управление типами планирования</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPlanningTypeForm" class="mb-3 d-flex">
+                    <input type="text" class="form-control me-2" id="newPlanningTypeName" placeholder="Название нового типа" required>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </form>
+                <div class="list-group" id="planningTypesList">
+                    <div class="text-center my-3"><div class="spinner-border text-primary" role="status"></div></div>
+                </div>
             </div>
         </div>
     </div>

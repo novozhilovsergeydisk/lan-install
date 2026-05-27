@@ -12,6 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Исключения из CSRF
+        $middleware->validateCsrfTokens(except: [
+            'api/planning-types/*',
+            'api/planning-types',
+        ]);
+
         // Твой существующий middleware
         $middleware->append(\App\Http\Middleware\LogRequestMiddleware::class);
 

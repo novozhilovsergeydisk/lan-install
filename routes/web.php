@@ -142,6 +142,14 @@ Route::prefix('statuses')->middleware('auth')->group(function () {
 // Система (мониторинг)
 Route::get('/api/system/metrics', [\App\Http\Controllers\SystemController::class, 'metrics'])->name('api.system.metrics')->middleware(['auth', 'roles']);
 
+// Маршруты для работы с типами планирования
+Route::prefix('api/planning-types')->middleware(['auth.api', 'roles'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\PlanningTypeController::class, 'index']);
+    Route::post('/', [\App\Http\Controllers\PlanningTypeController::class, 'store']);
+    Route::put('/{id}', [\App\Http\Controllers\PlanningTypeController::class, 'update']);
+    Route::delete('/{id}', [\App\Http\Controllers\PlanningTypeController::class, 'destroy']);
+});
+
 // Маршруты для работы с типами заявок
 Route::prefix('api/request-types')->middleware(['auth.api', 'roles'])->group(function () {
     Route::get('/', [RequestTypeController::class, 'index']);

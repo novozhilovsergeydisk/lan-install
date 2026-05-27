@@ -8,6 +8,7 @@ import { initReportHandlers } from './report-handler.js';
 import { initPhotoReportModal } from './modals.js';
 import { initAddressDocumentHandlers } from './address-documents.js';
 import { initRequestTypesHandlers, loadRequestTypes } from './request-types.js';
+import { initPlanningTypesHandlers } from './planning-types.js';
 import { initWorkParameterTypesHandlers } from './work-parameter-types.js';
 import { initWmsMappingSettings } from './wms-mapping-settings.js';
 import {
@@ -56,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initEmployeeFilter();
     initDeleteEmployee();
     initReportHandlers();
+    initPlanningTypesHandlers();
     initAddressEditButton();
     initDeleteMember();
     initTooltips();
