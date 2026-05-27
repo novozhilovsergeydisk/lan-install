@@ -407,6 +407,42 @@ class PlanningRequestController extends Controller
         }
     }
 
+    /**
+     * Изменить тип планирования (подтип) для заявки.
+     */
+    public function updateSubtype(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'subtype_id' => 'required|exists:request_subtypes,id,is_deleted,false',
+            ]);
+
+            $affected = DB::table('requests')
+                ->where('id', $id)
+                ->where('status_id', 6) // Только для заявок в планировании
+                ->update([
+                    'subtype_id' => $request->input('subtype_id'),
+                ]);
+
+            if (!$affected) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Заявка не найдена или не находится в статусе планирования',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Тип планирования успешно изменен',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function getPlanningRequests(Request $request)
     {
         try {

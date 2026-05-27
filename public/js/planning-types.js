@@ -151,6 +151,85 @@ export function initPlanningTypesHandlers() {
         });
     }
 
+    // Обработчик открытия модального окна смены типа для заявки
+    document.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.change-planning-subtype-btn');
+        if (btn) {
+            const requestId = btn.getAttribute('data-request-id');
+            const requestNumber = btn.getAttribute('data-request-number');
+            
+            document.getElementById('changeSubtypeRequestId').value = requestId;
+            document.getElementById('changeSubtypeRequestNumber').textContent = requestNumber;
+            
+            // Заполняем селект текущими типами
+            const select = document.getElementById('newPlanningSubtypeSelect');
+            if (select) {
+                try {
+                    const response = await fetch('/api/planning-types');
+                    if (response.ok) {
+                        const types = await response.json();
+                        select.innerHTML = '<option value="" disabled selected>Выберите новый тип</option>';
+                        types.forEach(type => {
+                            const option = document.createElement('option');
+                            option.value = type.id;
+                            option.textContent = `${type.name} (${type.requests_count || 0})`;
+                            select.appendChild(option);
+                        });
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('changePlanningSubtypeModal'));
+                        modal.show();
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        }
+    });
+
+    // Обработка отправки формы смены типа
+    const changeSubtypeForm = document.getElementById('changePlanningSubtypeForm');
+    if (changeSubtypeForm) {
+        changeSubtypeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const requestId = document.getElementById('changeSubtypeRequestId').value;
+            const subtypeId = document.getElementById('newPlanningSubtypeSelect').value;
+            
+            if (!subtypeId) return;
+
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/planning-types/requests/${requestId}/subtype`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ subtype_id: subtypeId })
+                });
+
+                if (response.ok) {
+                    const modalEl = document.getElementById('changePlanningSubtypeModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                    
+                    // Обновляем селекты и счетчики
+                    await updatePlanningSelects();
+                } else {
+                    const result = await response.json();
+                    alert(result.message || 'Ошибка при смене типа');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка сети');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    }
+
     async function updatePlanningSelects() {
         try {
             const response = await fetch('/api/planning-types');

@@ -2842,6 +2842,36 @@
     </div>
 </div>
 
+<!-- Change Planning Subtype Modal -->
+<div class="modal fade" id="changePlanningSubtypeModal" tabindex="-1" aria-labelledby="changePlanningSubtypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePlanningSubtypeModalLabel">Изменить тип планирования</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changePlanningSubtypeForm">
+                    <input type="hidden" id="changeSubtypeRequestId">
+                    <div class="mb-3">
+                        <label class="form-label">Заявка: <strong id="changeSubtypeRequestNumber"></strong></label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPlanningSubtypeSelect" class="form-label">Выберите новый тип планирования</label>
+                        <select class="form-select" id="newPlanningSubtypeSelect" required>
+                            <!-- Будет заполнено через JS -->
+                        </select>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- New Planning Request Modal -->
 <div class="modal fade" id="newPlanningRequestModal" tabindex="-1" aria-labelledby="newPlanningRequestModalLabel" aria-hidden="true">
     <div class="modal-dialog">

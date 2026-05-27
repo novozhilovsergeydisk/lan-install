@@ -218,6 +218,15 @@ export async function loadPlanningRequests() {
                          </button>
 
                          ${window.App?.user?.isAdmin ? `
+                            <button type="button" class="btn btn-sm btn-outline-info change-planning-subtype-btn" 
+                                    data-request-id="${request.id}" 
+                                    data-request-number="${request.number}"
+                                    title="Изменить тип планирования">
+                                <i class="bi bi-folder-symlink"></i> Тип
+                            </button>
+                         ` : ''}
+
+                         ${window.App?.user?.isAdmin ? `
                          <button type="button"
                                  class="btn btn-sm btn-outline-purple edit-request-btn p-1"
                                  data-bs-toggle="tooltip"
@@ -1213,6 +1222,14 @@ async function applyFilters() {
                                          <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                              Закрыть заявку
                                          </button>
+                                         ${window.App?.user?.isAdmin && request.status_name === 'планирование' ? `
+                                            <button type="button" class="btn btn-sm btn-outline-info p-1 change-planning-subtype-btn" 
+                                                    data-request-id="${request.id}" 
+                                                    data-request-number="${request.number}"
+                                                    title="Изменить тип планирования">
+                                                <i class="bi bi-folder-symlink"></i>
+                                            </button>
+                                         ` : ''}
                                          ${window.App?.user?.isAdmin ? `
                                          <button type="button"
                                                  class="btn btn-sm btn-outline-purple edit-request-btn p-1"

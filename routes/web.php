@@ -148,6 +148,7 @@ Route::prefix('api/planning-types')->middleware(['auth.api', 'roles'])->group(fu
     Route::post('/', [\App\Http\Controllers\PlanningTypeController::class, 'store']);
     Route::put('/{id}', [\App\Http\Controllers\PlanningTypeController::class, 'update']);
     Route::delete('/{id}', [\App\Http\Controllers\PlanningTypeController::class, 'destroy']);
+    Route::patch('/requests/{id}/subtype', [\App\Http\Controllers\PlanningRequestController::class, 'updateSubtype']);
 });
 
 // Маршруты для работы с типами заявок
