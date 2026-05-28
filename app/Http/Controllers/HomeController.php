@@ -2794,42 +2794,64 @@ class HomeController extends Controller
                                 $cmd .= ' -c ' . escapeshellarg($chatId);
                             }
 
-                            // Используем proc_open для прямой передачи данных в stdin процесса
+                            // Используем proc_open для прямой передачи данных в stdin процесса и перехвата вывода
                             $descriptorspec = [
                                 0 => ['pipe', 'r'],  // stdin
-                                1 => ['file', '/dev/null', 'w'], // stdout в null (фон)
-                                2 => ['file', '/dev/null', 'w']  // stderr в null (фон)
+                                1 => ['pipe', 'w'],  // stdout (перехватываем)
+                                2 => ['pipe', 'w']   // stderr (перехватываем)
                             ];
                             
-                            /*
-                            // 1. Локальная отправка
-                            $process = proc_open($cmd, $descriptorspec, $pipes);
-                            if (is_resource($process)) {
-                                fwrite($pipes[0], $notifyMessage);
-                                fclose($pipes[0]);
-                                proc_close($process);
-                                \Log::info('Отправлено подробное уведомление в Telegram (локально) для заявки #' . $id);
+                            if (app()->environment('local')) {
+                                // 1. Локальная отправка
+                                $process = proc_open($cmd, $descriptorspec, $pipes);
+                                if (is_resource($process)) {
+                                    fwrite($pipes[0], $notifyMessage);
+                                    fclose($pipes[0]);
+                                    
+                                    $stdout = stream_get_contents($pipes[1]);
+                                    $stderr = stream_get_contents($pipes[2]);
+                                    fclose($pipes[1]);
+                                    fclose($pipes[2]);
+                                    
+                                    $exitCode = proc_close($process);
+                                    
+                                    if ($exitCode === 0) {
+                                        \Log::info('Отправлено подробное уведомление в Telegram (локально) для заявки #' . $id . '. Ответ: ' . trim($stdout));
+                                    } else {
+                                        \Log::error('Ошибка отправки уведомления (локально) для заявки #' . $id . '. Код: ' . $exitCode . '. Ошибка: ' . trim($stderr) . '. Вывод: ' . trim($stdout));
+                                    }
+                                } else {
+                                    \Log::error('Не удалось запустить локальный процесс отправки уведомления: ' . $cmd);
+                                }
                             } else {
-                                \Log::error('Не удалось запустить локальный процесс отправки уведомления: ' . $cmd);
-                            }
-                            */
+                                // 2. Отправка через VPN-сервер (в обход блокировок)
+                                $remotePath = "/var/www/lan-install/utils/C/notify-bot/telegram_notify";
+                                $sshCmd = "ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no vpn-server " . escapeshellarg(
+                                    $remotePath . 
+                                    (!empty($botToken) ? " -t " . escapeshellarg($botToken) : "") . 
+                                    (!empty($chatId) ? " -c " . escapeshellarg($chatId) : "")
+                                );
 
-                            // 2. Отправка через VPN-сервер (в обход блокировок)
-                            $remotePath = "/var/www/lan-install/utils/C/notify-bot/telegram_notify";
-                            $sshCmd = "ssh -o ConnectTimeout=2 -o StrictHostKeyChecking=no vpn-server " . escapeshellarg(
-                                $remotePath . 
-                                (!empty($botToken) ? " -t " . escapeshellarg($botToken) : "") . 
-                                (!empty($chatId) ? " -c " . escapeshellarg($chatId) : "")
-                            );
-
-                            $processRemote = proc_open($sshCmd, $descriptorspec, $pipesRemote);
-                            if (is_resource($processRemote)) {
-                                fwrite($pipesRemote[0], $notifyMessage);
-                                fclose($pipesRemote[0]);
-                                proc_close($processRemote);
-                                \Log::info('Отправлено уведомление через SSH vpn-server для заявки #' . $id);
-                            } else {
-                                \Log::error('Не удалось запустить удаленный процесс отправки уведомления через SSH: ' . $sshCmd);
+                                $processRemote = proc_open($sshCmd, $descriptorspec, $pipesRemote);
+                                if (is_resource($processRemote)) {
+                                    fwrite($pipesRemote[0], $notifyMessage);
+                                    fclose($pipesRemote[0]);
+                                    
+                                    $stdout = stream_get_contents($pipesRemote[1]);
+                                    $stderr = stream_get_contents($pipesRemote[2]);
+                                    fclose($pipesRemote[1]);
+                                    fclose($pipesRemote[2]);
+                                    
+                                    $exitCode = proc_close($processRemote);
+                                    
+                                    if ($exitCode === 0) {
+                                        \Log::info('Отправлено уведомление через SSH vpn-server для заявки #' . $id . '. Ответ: ' . trim($stdout));
+                                    } else {
+                                        \Log::error('Ошибка отправки уведомления через SSH vpn-server для заявки #' . $id . '. Код: ' . $exitCode . '. Ошибка: ' . trim($stderr) . '. Вывод: ' . trim($stdout));
+                                    }
+                                } else {
+                                    \Log::error('Не удалось запустить удаленный процесс отправки уведомления через SSH: ' . $sshCmd);
+                                }
                             }
                         }
                     } catch (\Exception $e) {
