@@ -2155,6 +2155,53 @@ class HomeController extends Controller
         }
     }
 
+    public function deleteRequestMass(Request $request)
+    {
+        try {
+            \Log::info('=== START deleteRequestMass ===', []);
+
+            $validated = $request->validate([
+                'request_ids' => 'required|array',
+                'request_ids.*' => 'integer|exists:requests,id',
+            ]);
+
+            $request_ids = $validated['request_ids'];
+
+            // Получаем ID статуса "удалена" из БД, избегая хардкода
+            $deletedStatusId = DB::table('request_statuses')
+                ->where('name', 'удалена')
+                ->value('id');
+
+            if (!$deletedStatusId) {
+                throw new \Exception('Статус "удалена" не найден в базе данных');
+            }
+
+            DB::beginTransaction();
+            $result = DB::table('requests')
+                ->whereIn('id', $request_ids)
+                ->update(['status_id' => $deletedStatusId]);
+
+            DB::commit();
+
+            \Log::info('=== END deleteRequestMass ===', ['affected' => $result]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Заявки удалены: ' . $result,
+                'affected' => $result,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Ошибка при массовом удалении заявок: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при массовом удалении',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function deleteRequest($id, Request $request)
     {
         try {
@@ -2162,31 +2209,27 @@ class HomeController extends Controller
 
             $user = auth()->user();
             $user->method = 'HomeController::deleteRequest';
-            $employee = $user->employee;
-            $employee_role = $user->roles[0];
-
+            
             $validated = $request->validate([
                 'request_id' => 'required|exists:requests,id',
             ]);
 
             $request_id = $validated['request_id'];
 
-            \Log::info('=== Все входные данные ===', ['request_id' => $request_id]);
+            // Получаем ID статуса "удалена" из БД
+            $deletedStatusId = DB::table('request_statuses')
+                ->where('name', 'удалена')
+                ->value('id');
 
-            // Тестовый ответ
+            if (!$deletedStatusId) {
+                throw new \Exception('Статус "удалена" не найден в базе данных');
+            }
 
-            // return response()->json([
-            //     'success' => true,
-            //     'message' => 'Заявка завершена (test)',
-            //     'data' => $request_id
-            // ]);
+            $result = DB::table('requests')
+                ->where('id', $request_id)
+                ->update(['status_id' => $deletedStatusId]);
 
-            $sql = 'update requests set status_id = 7 where id = ?';
-            $result = DB::update($sql, [$request_id]);
-
-            \Log::info('=== Все выходные данные ===', ['sql' => 'update requests set status_id = 7 where id ='.$request_id, 'result' => $result]);
-
-            \Log::info('=== END deleteRequest ===', []);
+            \Log::info('=== END deleteRequest ===', ['request_id' => $request_id, 'result' => $result]);
 
             return response()->json([
                 'success' => true,

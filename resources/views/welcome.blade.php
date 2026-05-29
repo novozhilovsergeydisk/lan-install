@@ -1603,6 +1603,9 @@
             <i class="bi bi-upload me-1"></i>Загрузить заявки
         </button>
         @if(auth()->user()->isAdmin)
+        <button type="button" class="btn btn-outline-danger ms-2 d-none" id="btn-mass-delete-planning">
+            <i class="bi bi-trash me-1"></i>Удалить
+        </button>
         <button type="button" class="btn btn-outline-primary ms-2 d-none" id="btn-mass-in-work-planning">
             <i class="bi bi-pencil-square me-1"></i>В работу
         </button>

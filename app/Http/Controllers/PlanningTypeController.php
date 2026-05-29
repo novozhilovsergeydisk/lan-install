@@ -12,12 +12,18 @@ class PlanningTypeController extends Controller
      */
     public function index()
     {
+        $planningStatusId = DB::table('request_statuses')->where('name', 'планирование')->value('id');
+
+        if (!$planningStatusId) {
+            return response()->json([]);
+        }
+
         $types = DB::table('request_subtypes')
-            ->leftJoin('requests', function($join) {
+            ->leftJoin('requests', function($join) use ($planningStatusId) {
                 $join->on('request_subtypes.id', '=', 'requests.subtype_id')
-                     ->where('requests.status_id', '=', 6); // 6 - статус "планирование"
+                     ->where('requests.status_id', '=', $planningStatusId);
             })
-            ->where('request_subtypes.status_id', 6) // Статус "планирование"
+            ->where('request_subtypes.status_id', $planningStatusId)
             ->where('request_subtypes.is_deleted', false)
             ->select('request_subtypes.id', 'request_subtypes.name', DB::raw('COUNT(requests.id) as requests_count'))
             ->groupBy('request_subtypes.id', 'request_subtypes.name')
@@ -36,8 +42,10 @@ class PlanningTypeController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
+        $planningStatusId = DB::table('request_statuses')->where('name', 'планирование')->value('id');
+
         $id = DB::table('request_subtypes')->insertGetId([
-            'status_id' => 6, // Статус "планирование"
+            'status_id' => $planningStatusId, 
             'name' => $request->input('name'),
             'is_deleted' => false,
             'created_at' => now(),
@@ -60,9 +68,11 @@ class PlanningTypeController extends Controller
             'name' => 'required|string|max:255',
         ]);
 
+        $planningStatusId = DB::table('request_statuses')->where('name', 'планирование')->value('id');
+
         $updated = DB::table('request_subtypes')
             ->where('id', $id)
-            ->where('status_id', 6)
+            ->where('status_id', $planningStatusId)
             ->update([
                 'name' => $request->input('name'),
                 'updated_at' => now(),
@@ -82,9 +92,11 @@ class PlanningTypeController extends Controller
      */
     public function destroy($id)
     {
+        $planningStatusId = DB::table('request_statuses')->where('name', 'планирование')->value('id');
+
         $deleted = DB::table('request_subtypes')
             ->where('id', $id)
-            ->where('status_id', 6)
+            ->where('status_id', $planningStatusId)
             ->update([
                 'is_deleted' => true,
                 'updated_at' => now(),

@@ -3,6 +3,7 @@
 import { showAlert, showConfirm, postData, fetchData, getElement, getValue, validateRequiredField } from './utils.js';
 import { loadAddresses, loadAddressesPaginated, loadPlanningRequests } from './handler.js';
 import { loadAddressesForPlanning } from './handler.js';
+import { updatePlanningSelects } from './planning-types.js';
 import { renderReportTable } from './report-handler.js';
 import HouseNumberValidator from './validators/house-number-validator.js';
 
@@ -3648,6 +3649,13 @@ export function initRequestInWorkHandlers() {
             }
         });
     });
+}
+
+// Инициализация массовых действий и кнопок сохранения статуса (вызывается один раз)
+export function initPlanningMassActionsHandlers() {
+    // Предотвращаем повторную инициализацию
+    if (window.planningMassActionsInitialized) return;
+    window.planningMassActionsInitialized = true;
 
     // Обработчик массового перевода "В работу"
     document.addEventListener('click', function(e) {
@@ -3669,6 +3677,58 @@ export function initRequestInWorkHandlers() {
                 }
 
                 modal.show();
+            }
+        }
+    });
+
+    // Обработчик массового удаления
+    document.addEventListener('click', async function(e) {
+        const massDeleteBtn = e.target.closest('#btn-mass-delete-planning');
+        if (massDeleteBtn) {
+            const selectedCheckboxes = document.querySelectorAll('#requestsPlanningTable .request-checkbox:checked');
+            const requestIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            if (requestIds.length === 0) return;
+
+            if (!confirm(`Вы уверены, что хотите удалить выбранные заявки (${requestIds.length} шт.)?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/requests/delete-mass', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ request_ids: requestIds })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('success', result.message || 'Заявки успешно удалены');
+                    
+                    // Снимаем выделение
+                    document.querySelectorAll('.request-checkbox:checked').forEach(cb => cb.checked = false);
+                    const selectAllPlanning = document.getElementById('selectAllRequestsPlanning');
+                    if (selectAllPlanning) selectAllPlanning.checked = false;
+
+                    if (typeof window.updatePrintButtonVisibility === 'function') {
+                        window.updatePrintButtonVisibility();
+                    }
+
+                    // Обновляем таблицу
+                    await loadPlanningRequests();
+                    // Обновляем счетчики в селектах
+                    await updatePlanningSelects();
+                } else {
+                    showAlert('danger', result.message || 'Произошла ошибка при удалении');
+                }
+            } catch (error) {
+                console.error('Ошибка при массовом удалении:', error);
+                showAlert('danger', 'Произошла ошибка при отправке запроса');
             }
         }
     });
@@ -3735,6 +3795,9 @@ export function initRequestInWorkHandlers() {
 
                     // Обновляем таблицу с запланированными заявками
                     await loadPlanningRequests();
+
+                    // Обновляем счетчики в селектах
+                    await updatePlanningSelects();
 
                     // Обновляем основной список заявок (если функция доступна)
                     if (typeof window.applyFilters === 'function') {

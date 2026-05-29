@@ -328,14 +328,25 @@ class PlanningRequestController extends Controller
         $requestIds = $request->input('request_ids');
         $planningExecutionDate = $request->input('planning_execution_date');
 
+        // Получаем ID статусов из БД, избегая хардкода
+        $newStatusId = DB::table('request_statuses')->where('name', 'новая')->value('id');
+        $planningStatusId = DB::table('request_statuses')->where('name', 'планирование')->value('id');
+
+        if (!$newStatusId || !$planningStatusId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Необходимые статусы (новая/планирование) не найдены в БД',
+            ], 500);
+        }
+
         DB::beginTransaction();
 
         try {
             $affected = DB::table('requests')
                 ->whereIn('id', $requestIds)
-                ->where('status_id', 6) // Только для заявок в планировании
+                ->where('status_id', $planningStatusId) // Только для заявок в планировании
                 ->update([
-                    'status_id' => 1,
+                    'status_id' => $newStatusId,
                     'execution_date' => $planningExecutionDate,
                 ]);
 
@@ -401,7 +412,11 @@ class PlanningRequestController extends Controller
         $requestId = $request->input('planning_request_id');
         $planningExecutionDate = $request->input('planning_execution_date');
 
-        $sql_update = 'UPDATE requests SET status_id = 6, execution_date = ? WHERE id = ?';
+        // Получаем ID статуса "новая" из БД
+        $newStatusId = DB::table('request_statuses')->where('name', 'новая')->value('id');
+        if (!$newStatusId) {
+            return response()->json(['success' => false, 'message' => 'Статус "новая" не найден в БД'], 500);
+        }
 
         // Начинаем транзакцию
         DB::beginTransaction();
@@ -416,8 +431,8 @@ class PlanningRequestController extends Controller
             ]);
 
             // Выполняем обновление с помощью прямого SQL
-            $sql = 'UPDATE requests SET status_id = 1, execution_date = ? WHERE id = ?';
-            $bindings = [$planningExecutionDate, $requestId];
+            $sql = 'UPDATE requests SET status_id = ?, execution_date = ? WHERE id = ?';
+            $bindings = [$newStatusId, $planningExecutionDate, $requestId];
 
             // Логируем SQL-запрос для отладки
             $fullSql = \Illuminate\Support\Str::replaceArray('?', array_map(function ($param) {
@@ -433,7 +448,7 @@ class PlanningRequestController extends Controller
 
             // Проверяем, изменился ли статус
             $statusChanged = $updatedRequest && $currentRequest &&
-                           $updatedRequest->status_id == 1;
+                           $updatedRequest->status_id == $newStatusId;
 
             if ($statusChanged) {
                 // Фиксируем изменения, если статус изменился

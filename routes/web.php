@@ -102,6 +102,7 @@ Route::get('/requests/{request}/work-parameters', [HomeController::class, 'getWo
 Route::post('/requests/{request}/open', [HomeController::class, 'openRequest'])->name('requests.open')->middleware('auth')->middleware(['auth', 'roles']);
 
 // Завершить заявку
+Route::post('/requests/delete-mass', [\App\Http\Controllers\HomeController::class, 'deleteRequestMass'])->name('requests.delete-mass')->middleware('auth');
 Route::post('/requests/{request}/delete', [HomeController::class, 'deleteRequest'])->name('requests.delete')->middleware('auth')->middleware(['auth', 'roles']);
 
 // Transfer request

@@ -227,13 +227,9 @@ export async function loadPlanningRequests() {
                              <i class="bi bi-pencil"></i>
                          </button>
                          ` : ''}
-
-                         <button type="button" class="btn btn-outline-danger request-delete" data-request-id="${request.id}">
-                             <i class="bi bi-x-circle"></i> Удалить
-                         </button>
-                     </div>
-                 </td>
-            `;
+                         </div>
+                         </td>
+                         `;
             
             tbody.appendChild(row);
         });

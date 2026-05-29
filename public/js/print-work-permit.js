@@ -8,6 +8,7 @@ function updatePrintButtonVisibility() {
     const btnChangeSubtype = document.getElementById('btn-mass-change-subtype');
     const btnChangeSubtypePlanning = document.getElementById('btn-mass-change-subtype-planning');
     const btnInWorkPlanning = document.getElementById('btn-mass-in-work-planning');
+    const btnDeletePlanning = document.getElementById('btn-mass-delete-planning');
 
     if (btnPrint) {
         if (checkedCount > 0 || checkedCountPlanning > 0) {
@@ -42,6 +43,14 @@ function updatePrintButtonVisibility() {
             btnInWorkPlanning.classList.remove('d-none');
         } else {
             btnInWorkPlanning.classList.add('d-none');
+        }
+    }
+
+    if (btnDeletePlanning) {
+        if (checkedCountPlanning > 0) {
+            btnDeletePlanning.classList.remove('d-none');
+        } else {
+            btnDeletePlanning.classList.add('d-none');
         }
     }
 }

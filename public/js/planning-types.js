@@ -268,50 +268,52 @@ export function initPlanningTypesHandlers() {
             }
         });
     }
+}
 
-    async function updatePlanningSelects() {
-        try {
-            const response = await fetch('/api/planning-types');
-            if (!response.ok) return;
-            const types = await response.json();
+export async function updatePlanningSelects() {
+    try {
+        const response = await fetch('/api/planning-types');
+        if (!response.ok) return;
+        const types = await response.json();
 
-            const selectsToUpdate = [
-                { id: 'planningSubtypeFilter', hasAllOption: true },
-                { id: 'planningRequestSubtype', hasAllOption: false }
-            ];
+        const selectsToUpdate = [
+            { id: 'planningSubtypeFilter', hasAllOption: true },
+            { id: 'planningRequestSubtype', hasAllOption: false }
+        ];
 
-            selectsToUpdate.forEach(item => {
-                const select = document.getElementById(item.id);
-                if (select) {
-                    const currentValue = select.value;
-                    select.innerHTML = '';
-                    
-                    if (item.hasAllOption) {
-                        const allOption = document.createElement('option');
-                        allOption.value = '';
-                        allOption.textContent = 'Все планирования';
-                        select.appendChild(allOption);
-                    }
-
-                    types.forEach(type => {
-                        const option = document.createElement('option');
-                        option.value = type.id;
-                        option.textContent = `${type.name} (${type.requests_count || 0})`;
-                        // Select "Стандартное планирование" as default or keep current
-                        if (currentValue === String(type.id)) {
-                            option.selected = true;
-                        } else if (!currentValue && type.name === 'Стандартное планирование' && !item.hasAllOption) {
-                            option.selected = true;
-                        }
-                        select.appendChild(option);
-                    });
-                    
-                    // Trigger change to update table
-                    select.dispatchEvent(new Event('change'));
+        selectsToUpdate.forEach(item => {
+            const select = document.getElementById(item.id);
+            if (select) {
+                const currentValue = select.value;
+                select.innerHTML = '';
+                
+                if (item.hasAllOption) {
+                    const allOption = document.createElement('option');
+                    allOption.value = '';
+                    allOption.textContent = 'Все планирования';
+                    select.appendChild(allOption);
                 }
-            });
-        } catch (err) {
-            console.error('Ошибка обновления селектов:', err);
-        }
+
+                types.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type.id;
+                    option.textContent = `${type.name} (${type.requests_count || 0})`;
+                    // Select "Стандартное планирование" as default or keep current
+                    if (currentValue === String(type.id)) {
+                        option.selected = true;
+                    } else if (!currentValue && type.name === 'Стандартное планирование' && !item.hasAllOption) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+                
+                // Trigger change to update table
+                // select.dispatchEvent(new Event('change'));
+            }
+        });
+    } catch (err) {
+        console.error('Ошибка обновления селектов:', err);
     }
 }
+
+window.updatePlanningSelects = updatePlanningSelects;
