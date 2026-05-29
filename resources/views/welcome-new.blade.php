@@ -1296,6 +1296,9 @@
             <i class="bi bi-upload me-1"></i>Загрузить заявки
         </button>
         @if(auth()->user()->isAdmin)
+        <button type="button" class="btn btn-outline-primary ms-2 d-none" id="btn-mass-in-work-planning">
+            <i class="bi bi-pencil-square me-1"></i>В работу
+        </button>
         <button type="button" class="btn btn-outline-info ms-2 d-none" id="btn-mass-change-subtype-planning">
             <i class="bi bi-folder-symlink me-1"></i>Тип планирования
         </button>

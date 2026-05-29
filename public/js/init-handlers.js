@@ -464,11 +464,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Перехватываем вызов applyFilters для обновления обработчиков после фильтрации
     const originalApplyFilters = window.applyFilters;
-    window.applyFilters = function () {
-        return originalApplyFilters.apply(this, arguments).then(() => {
-            initRequestButtons();
-        });
-    };
+    if (typeof originalApplyFilters === 'function') {
+        window.applyFilters = function () {
+            const result = originalApplyFilters.apply(this, arguments);
+            if (result instanceof Promise) {
+                return result.then(() => {
+                    initRequestButtons();
+                });
+            } else {
+                initRequestButtons();
+                return result;
+            }
+        };
+    }
 
 
     

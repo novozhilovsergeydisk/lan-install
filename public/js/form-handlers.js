@@ -3649,48 +3649,107 @@ export function initRequestInWorkHandlers() {
         });
     });
 
-    savePlanningRequestStatusBtn.addEventListener('click', async function () {
-        const form = document.getElementById('changeRequestStatusForm');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('changePlanningRequestStatusModal'));
-        
-        try {
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
+    // Обработчик массового перевода "В работу"
+    document.addEventListener('click', function(e) {
+        const massBtn = e.target.closest('#btn-mass-in-work-planning');
+        if (massBtn) {
+            const selectedCheckboxes = document.querySelectorAll('#requestsPlanningTable .request-checkbox:checked');
+            const requestIds = Array.from(selectedCheckboxes).map(cb => cb.value);
 
-            console.log('data', data);
+            if (requestIds.length === 0) return;
 
-            const response = await fetch('/change-planning-request-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify(data)
-            });
+            const modalElement = document.getElementById('changePlanningRequestStatusModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
 
-            const result = await response.json();
-            console.log('Ответ от сервера:', result);
-            
-            if (result.success) {
-                // Показываем уведомление об успехе
-                showAlert('success', 'Статус заявки успешно обновлен');
-                
-                // Закрываем модальное окно
-                if (modal) {
-                    modal.hide();
+                // Сохраняем массив ID в скрытое поле в формате JSON
+                const requestIdInput = document.getElementById('planningRequestId');
+                if (requestIdInput) {
+                    requestIdInput.value = JSON.stringify(requestIds);
                 }
-                
-                // Обновляем таблицу с заявками
-                await loadPlanningRequests();
-            } else {
-                showAlert('danger', result.message || 'Произошла ошибка при обновлении статуса');
+
+                modal.show();
             }
-            
-        } catch (error) {
-            console.error('Ошибка при отправке формы:', error);
-            showAlert('danger', 'Произошла ошибка при отправке формы');
         }
     });
+
+    const saveBtn = document.getElementById('savePlanningRequestStatusBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async function () {
+            const form = document.getElementById('changeRequestStatusForm');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('changePlanningRequestStatusModal'));
+            
+            try {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                // Определяем, одиночное это обновление или массовое
+                let endpoint = '/change-planning-request-status';
+                let bodyData = { ...data };
+
+                try {
+                    const requestIds = JSON.parse(data.planning_request_id);
+                    if (Array.isArray(requestIds)) {
+                        endpoint = '/change-planning-request-status-mass';
+                        bodyData = {
+                            request_ids: requestIds,
+                            planning_execution_date: data.planning_execution_date
+                        };
+                    }
+                } catch (e) {
+                    // Если не JSON или не массив, оставляем как есть (одиночное)
+                }
+
+                console.log('bodyData', bodyData);
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify(bodyData)
+                });
+
+                const result = await response.json();
+                console.log('Ответ от сервера:', result);
+                
+                if (result.success) {
+                    // Показываем уведомление об успехе
+                    showAlert('success', 'Статус заявки успешно обновлен');
+                    
+                    // Закрываем модальное окно
+                    if (modal) {
+                        modal.hide();
+                    }
+                    
+                    // Снимаем выделение с чекбоксов
+                    document.querySelectorAll('.request-checkbox:checked').forEach(cb => cb.checked = false);
+                    const selectAllPlanning = document.getElementById('selectAllRequestsPlanning');
+                    if (selectAllPlanning) selectAllPlanning.checked = false;
+
+                    // Обновляем видимость кнопок
+                    if (typeof window.updatePrintButtonVisibility === 'function') {
+                        window.updatePrintButtonVisibility();
+                    }
+
+                    // Обновляем таблицу с запланированными заявками
+                    await loadPlanningRequests();
+
+                    // Обновляем основной список заявок (если функция доступна)
+                    if (typeof window.applyFilters === 'function') {
+                        await window.applyFilters();
+                    }
+                } else {
+                    showAlert('danger', result.message || 'Произошла ошибка при обновлении статуса');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка при отправке формы:', error);
+                showAlert('danger', 'Произошла ошибка при отправке формы');
+            }
+        });
+    }
 }
 
 // Функция для загрузки типов заявок в селект (только для админов)

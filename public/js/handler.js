@@ -831,7 +831,7 @@ window.refreshRequestsTable = function() {
 };
 
 // Функция для применения фильтров
-async function applyFilters() {
+export async function applyFilters() {
     // Собираем все выбранные фильтры
     const activeFilters = {
         statuses: [...filterState.statuses],
@@ -4608,3 +4608,5 @@ export function initTooltips() {
         });
     });
 }
+
+window.applyFilters = applyFilters;

@@ -436,6 +436,10 @@ Route::post('/change-planning-request-status', [PlanningRequestController::class
     ->name('change-planning-request-status')
     ->middleware('auth');
 
+Route::post('/change-planning-request-status-mass', [PlanningRequestController::class, 'changePlanningRequestStatusMass'])
+    ->name('change-planning-request-status-mass')
+    ->middleware('auth');
+
 Route::post('/download-all-photos', [CommentPhotoController::class, 'downloadAllPhotos'])
     ->name('download-all-photos')
     ->middleware('auth');

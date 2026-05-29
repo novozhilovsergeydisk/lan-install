@@ -306,6 +306,73 @@ class PlanningRequestController extends Controller
         return DB::table('requests')->where('id', $requestId)->first();
     }
 
+    /**
+     * Изменить статус заявок (массово) на "В работу" (status_id = 1).
+     */
+    public function changePlanningRequestStatusMass(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'request_ids' => 'required|array',
+            'request_ids.*' => 'integer|exists:requests,id',
+            'planning_execution_date' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $requestIds = $request->input('request_ids');
+        $planningExecutionDate = $request->input('planning_execution_date');
+
+        DB::beginTransaction();
+
+        try {
+            $affected = DB::table('requests')
+                ->whereIn('id', $requestIds)
+                ->where('status_id', 6) // Только для заявок в планировании
+                ->update([
+                    'status_id' => 1,
+                    'execution_date' => $planningExecutionDate,
+                ]);
+
+            if ($affected > 0) {
+                DB::commit();
+                \Log::info('Mass status update successful', [
+                    'request_ids' => $requestIds,
+                    'execution_date' => $planningExecutionDate,
+                    'affected' => $affected
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Успешно переведено в работу заявок: $affected",
+                    'affected_count' => $affected
+                ]);
+            } else {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ни одна заявка не была переведена в работу. Возможно, они уже не в статусе планирования.',
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Mass status update error:', [
+                'message' => $e->getMessage(),
+                'request_ids' => $requestIds
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при массовом обновлении: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function changePlanningRequestStatus(Request $request)
     {
         // response для тестирования

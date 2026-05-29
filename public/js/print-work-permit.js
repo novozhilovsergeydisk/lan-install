@@ -7,6 +7,7 @@ function updatePrintButtonVisibility() {
     const btnAssign = document.getElementById('btn-mass-assign-team');
     const btnChangeSubtype = document.getElementById('btn-mass-change-subtype');
     const btnChangeSubtypePlanning = document.getElementById('btn-mass-change-subtype-planning');
+    const btnInWorkPlanning = document.getElementById('btn-mass-in-work-planning');
 
     if (btnPrint) {
         if (checkedCount > 0 || checkedCountPlanning > 0) {
@@ -33,6 +34,14 @@ function updatePrintButtonVisibility() {
             btnChangeSubtypePlanning.classList.remove('d-none');
         } else {
             btnChangeSubtypePlanning.classList.add('d-none');
+        }
+    }
+
+    if (btnInWorkPlanning) {
+        if (checkedCountPlanning > 0) {
+            btnInWorkPlanning.classList.remove('d-none');
+        } else {
+            btnInWorkPlanning.classList.add('d-none');
         }
     }
 }
