@@ -213,11 +213,7 @@ export async function loadPlanningRequests() {
                              <i class="bi bi-people"></i>
                          </button>
 
-                         <button type="button" class="btn btn-outline-primary request-in-work" data-request-id="${request.id}">
-                             <i class="bi bi-pencil-square"></i> В работу
-                         </button>
-
-                         <div class="mt-2 text-center">
+                         <div class="mt-1 text-center">
                              <input type="checkbox" class="form-check-input request-checkbox" value="${request.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
                          </div>
 
