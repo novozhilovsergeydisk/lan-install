@@ -25,11 +25,7 @@ function updatePrintButtonVisibility() {
     }
 
     if (btnChangeSubtype) {
-        if (checkedCount > 0) {
-            btnChangeSubtype.classList.remove('d-none');
-        } else {
-            btnChangeSubtype.classList.add('d-none');
-        }
+        btnChangeSubtype.classList.add('d-none');
     }
 
     if (btnChangeSubtypePlanning) {

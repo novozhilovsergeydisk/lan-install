@@ -87,11 +87,6 @@
                                 <i class="bi bi-people me-1"></i>Назначить бригаду
                             </button>
 
-                            <button type="button" class="btn btn-outline-info btn-sm mb-3 me-2 d-none"
-                                    id="btn-mass-change-subtype">
-                                <i class="bi bi-folder-symlink me-1"></i>Тип планирования
-                            </button>
-
                             <div id="status-buttons" class="d-flex flex-wrap gap-2  hide-me">
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->
                             </div>
