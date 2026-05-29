@@ -1,7 +1,7 @@
-Отчет о деплое:
-1. Файлы: app/Http/Controllers/PlanningRequestController.php, public/js/handler.js, public/js/planning-types.js, public/js/print-work-permit.js, resources/views/welcome-new.blade.php, resources/views/welcome.blade.php, routes/web.php.
+Отчет о деплое: Исправление уведомлений Telegram
+1. Файлы: app/Http/Controllers/HomeController.php, utils/C/notify-bot/telegram_notify.c.
 2. Изменения:
-   - Добавлен метод updateSubtypeMass для массового обновления типов планирования.
-   - Во фронтенд добавлены чекбоксы для выделения заявок и кнопки для массового изменения типа.
-   - Добавлен роут /api/planning-types/requests/mass-subtype.
-3. Проверка: Отсутствуют миграции Laravel, используются нативные SQL (DB::table)->update(). Изменения безопасны.
+   - В `HomeController.php`: заменена проверка `app()->environment('local')` на `PHP_OS_FAMILY === 'Darwin'`, так как на рабочем сервере переменная `APP_ENV` установлена в `local`, из-за чего скрипт пытался отправить уведомление локально в обход VPN и падал. Теперь локальная отправка срабатывает только на машинах Apple (у разработчика), а на сервере (Linux) — через VPN, как и положено.
+   - В `telegram_notify.c`: добавлен корректный возврат ошибки (`return 1;`) в случае сбоя `curl`. Раньше скрипт всегда возвращал `0`, из-за чего Laravel думал, что уведомление ушло успешно, и не записывал ошибку в лог.
+3. Проверка: Отсутствуют миграции. Изменения логики безопасны, так как восстанавливают старое, корректное поведение отправки на сервере.
+4. Дополнительные действия: после деплоя потребуется выполнить `./update-bot` для перекомпиляции C-кода на сервере.

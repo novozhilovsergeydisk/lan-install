@@ -155,8 +155,24 @@ int main(int argc, char *argv[]) {
 
         if(res != CURLE_OK) {
             fprintf(stderr, "Ошибка curl: %s\n", curl_easy_strerror(res));
+            free(url);
+            curl_free(encoded_text);
+            curl_easy_cleanup(curl);
+            curl_global_cleanup();
+            return 1;
         } else {
-            printf("Сообщение отправлено (%s).\n", bot_name);
+            long response_code;
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+            if (response_code >= 200 && response_code < 300) {
+                printf("Сообщение отправлено (%s).\n", bot_name);
+            } else {
+                fprintf(stderr, "Ошибка Telegram API: HTTP %ld\n", response_code);
+                free(url);
+                curl_free(encoded_text);
+                curl_easy_cleanup(curl);
+                curl_global_cleanup();
+                return 1;
+            }
         }
 
         free(url);

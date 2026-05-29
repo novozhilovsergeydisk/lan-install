@@ -2801,7 +2801,7 @@ class HomeController extends Controller
                                 2 => ['pipe', 'w']   // stderr (перехватываем)
                             ];
                             
-                            if (app()->environment('local')) {
+                            if (PHP_OS_FAMILY === 'Darwin') {
                                 // 1. Локальная отправка
                                 $process = proc_open($cmd, $descriptorspec, $pipes);
                                 if (is_resource($process)) {
