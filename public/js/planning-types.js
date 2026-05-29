@@ -151,15 +151,29 @@ export function initPlanningTypesHandlers() {
         });
     }
 
-    // Обработчик открытия модального окна смены типа для заявки
+    // Обработчик открытия модального окна смены типа для заявок (массово или одиночно)
     document.addEventListener('click', async function(e) {
         const btn = e.target.closest('.change-planning-subtype-btn');
-        if (btn) {
-            const requestId = btn.getAttribute('data-request-id');
-            const requestNumber = btn.getAttribute('data-request-number');
+        const massBtn = e.target.closest('#btn-mass-change-subtype');
+        const massBtnPlanning = e.target.closest('#btn-mass-change-subtype-planning');
+        
+        if (btn || massBtn || massBtnPlanning) {
+            let requestIds = [];
+            let requestNumberText = '';
+
+            if (massBtn || massBtnPlanning) {
+                const tableId = massBtn ? 'requestsTable' : 'requestsPlanningTable';
+                const selectedCheckboxes = document.querySelectorAll(`#${tableId} .request-checkbox:checked`);
+                requestIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+                if (requestIds.length === 0) return;
+                requestNumberText = `Выбрано заявок: ${requestIds.length}`;
+            } else {
+                requestIds = [btn.getAttribute('data-request-id')];
+                requestNumberText = btn.getAttribute('data-request-number');
+            }
             
-            document.getElementById('changeSubtypeRequestId').value = requestId;
-            document.getElementById('changeSubtypeRequestNumber').textContent = requestNumber;
+            document.getElementById('changeSubtypeRequestId').value = JSON.stringify(requestIds);
+            document.getElementById('changeSubtypeRequestNumber').textContent = requestNumberText;
             
             // Заполняем селект текущими типами
             const select = document.getElementById('newPlanningSubtypeSelect');
@@ -191,23 +205,35 @@ export function initPlanningTypesHandlers() {
     if (changeSubtypeForm) {
         changeSubtypeForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const requestId = document.getElementById('changeSubtypeRequestId').value;
+            const requestIdsRaw = document.getElementById('changeSubtypeRequestId').value;
             const subtypeId = document.getElementById('newPlanningSubtypeSelect').value;
             
-            if (!subtypeId) return;
+            if (!subtypeId || !requestIdsRaw) return;
+
+            let requestIds = [];
+            try {
+                requestIds = JSON.parse(requestIdsRaw);
+                if (!Array.isArray(requestIds)) requestIds = [requestIds];
+            } catch (err) {
+                requestIds = [requestIdsRaw];
+            }
 
             const btn = this.querySelector('button[type="submit"]');
             btn.disabled = true;
 
             try {
-                const response = await fetch(`/api/planning-types/requests/${requestId}/subtype`, {
+                // Всегда используем массовый эндпоинт для единообразия
+                const response = await fetch(`/api/planning-types/requests/mass-subtype`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
-                    body: JSON.stringify({ subtype_id: subtypeId })
+                    body: JSON.stringify({ 
+                        request_ids: requestIds,
+                        subtype_id: subtypeId 
+                    })
                 });
 
                 if (response.ok) {
@@ -217,6 +243,19 @@ export function initPlanningTypesHandlers() {
                     
                     // Обновляем селекты и счетчики
                     await updatePlanningSelects();
+                    
+                    // Снимаем выделение с чекбоксов
+                    document.querySelectorAll('.request-checkbox:checked').forEach(cb => cb.checked = false);
+                    
+                    // Снимаем главный чекбокс (если есть)
+                    ['selectAllRequests', 'selectAllRequestsPlanning'].forEach(id => {
+                        const sa = document.getElementById(id);
+                        if (sa) sa.checked = false;
+                    });
+
+                    if (typeof window.updatePrintButtonVisibility === 'function') {
+                        window.updatePrintButtonVisibility();
+                    }
                 } else {
                     const result = await response.json();
                     alert(result.message || 'Ошибка при смене типа');

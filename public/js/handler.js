@@ -217,14 +217,9 @@ export async function loadPlanningRequests() {
                              <i class="bi bi-pencil-square"></i> В работу
                          </button>
 
-                         ${window.App?.user?.isAdmin ? `
-                            <button type="button" class="btn btn-sm btn-outline-info change-planning-subtype-btn" 
-                                    data-request-id="${request.id}" 
-                                    data-request-number="${request.number}"
-                                    title="Изменить тип планирования">
-                                <i class="bi bi-folder-symlink"></i> Тип
-                            </button>
-                         ` : ''}
+                         <div class="mt-2 text-center">
+                             <input type="checkbox" class="form-check-input request-checkbox" value="${request.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                         </div>
 
                          ${window.App?.user?.isAdmin ? `
                          <button type="button"
@@ -1222,14 +1217,6 @@ async function applyFilters() {
                                          <button data-request-id="${request.id}" type="button" class="btn btn-sm btn-custom-brown p-1 close-request-btn">
                                              Закрыть заявку
                                          </button>
-                                         ${window.App?.user?.isAdmin && request.status_name === 'планирование' ? `
-                                            <button type="button" class="btn btn-sm btn-outline-info p-1 change-planning-subtype-btn" 
-                                                    data-request-id="${request.id}" 
-                                                    data-request-number="${request.number}"
-                                                    title="Изменить тип планирования">
-                                                <i class="bi bi-folder-symlink"></i>
-                                            </button>
-                                         ` : ''}
                                          ${window.App?.user?.isAdmin ? `
                                          <button type="button"
                                                  class="btn btn-sm btn-outline-purple edit-request-btn p-1"

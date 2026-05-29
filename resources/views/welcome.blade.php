@@ -392,6 +392,11 @@
                                 <i class="bi bi-people me-1"></i>Назначить бригаду
                             </button>
 
+                            <button type="button" class="btn btn-outline-info btn-sm mb-3 me-2 d-none"
+                                    id="btn-mass-change-subtype">
+                                <i class="bi bi-folder-symlink me-1"></i>Тип планирования
+                            </button>
+
                             <div id="status-buttons" class="d-flex flex-wrap gap-2  hide-me">
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->
                             </div>
@@ -1602,6 +1607,11 @@
         <button type="button" class="btn btn-success" id="upload-requests-button">
             <i class="bi bi-upload me-1"></i>Загрузить заявки
         </button>
+        @if(auth()->user()->isAdmin)
+        <button type="button" class="btn btn-outline-info ms-2 d-none" id="btn-mass-change-subtype-planning">
+            <i class="bi bi-folder-symlink me-1"></i>Тип планирования
+        </button>
+        @endif
     </div>
 
     <div id="planning-map-content" class="hide-me mb-3" style="height: 800px; width: 100%;">
@@ -1616,7 +1626,9 @@
                               <table id="requestsPlanningTable" class="table table-hover align-middle mb-0" style="">
                                   <thead class="bg-dark">
                                   <tr>
-                                      <th class="line-height-20 font-smaller"></th>
+                                      <th class="line-height-20 font-smaller">
+                                          <input type="checkbox" id="selectAllRequestsPlanning" class="form-check-input" style="width: 1.1rem; height: 1.1rem; cursor: pointer;">
+                                      </th>
                                       <th class="line-height-20 font-smaller">
                                           Адрес
                                           <span class="dropdown-toggle ms-1" id="planningSortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>
