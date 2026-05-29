@@ -1602,6 +1602,9 @@
         <button type="button" class="btn btn-success" id="upload-requests-button">
             <i class="bi bi-upload me-1"></i>Загрузить заявки
         </button>
+        <button type="button" class="btn btn-outline-primary ms-2 d-none" id="btn-mass-assign-team-planning">
+            <i class="bi bi-people me-1"></i>Назначить бригаду
+        </button>
         @if(auth()->user()->isAdmin)
         <button type="button" class="btn btn-outline-danger ms-2 d-none" id="btn-mass-delete-planning">
             <i class="bi bi-trash me-1"></i>Удалить

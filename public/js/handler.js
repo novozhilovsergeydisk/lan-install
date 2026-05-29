@@ -204,15 +204,6 @@ export async function loadPlanningRequests() {
                    </td>
                     <td class="col-actions text-nowrap">
                      <div class="col-actions__div d-flex flex-column gap-1">
-                         <button type="button"
-                                 class="btn btn-sm btn-outline-primary assign-team-btn p-1"
-                                 data-bs-toggle="tooltip"
-                                 data-bs-placement="left"
-                                 data-bs-title="Назначить бригаду"
-                                 data-request-id="${request.id}">
-                             <i class="bi bi-people"></i>
-                         </button>
-
                          <div class="mt-1 text-center">
                              <input type="checkbox" class="form-check-input request-checkbox" value="${request.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
                          </div>

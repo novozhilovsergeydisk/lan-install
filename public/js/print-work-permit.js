@@ -5,6 +5,7 @@ function updatePrintButtonVisibility() {
     
     const btnPrint = document.getElementById('btn-print-work-permit');
     const btnAssign = document.getElementById('btn-mass-assign-team');
+    const btnAssignPlanning = document.getElementById('btn-mass-assign-team-planning');
     const btnChangeSubtype = document.getElementById('btn-mass-change-subtype');
     const btnChangeSubtypePlanning = document.getElementById('btn-mass-change-subtype-planning');
     const btnInWorkPlanning = document.getElementById('btn-mass-in-work-planning');
@@ -19,10 +20,18 @@ function updatePrintButtonVisibility() {
     }
 
     if (btnAssign) {
-        if (checkedCount > 0 || checkedCountPlanning > 0) {
+        if (checkedCount > 0) {
             btnAssign.classList.remove('d-none');
         } else {
             btnAssign.classList.add('d-none');
+        }
+    }
+
+    if (btnAssignPlanning) {
+        if (checkedCountPlanning > 0) {
+            btnAssignPlanning.classList.remove('d-none');
+        } else {
+            btnAssignPlanning.classList.add('d-none');
         }
     }
 
@@ -143,6 +152,33 @@ document.addEventListener('click', function(event) {
                 window.loadTeamsToSelect();
             } else {
                  console.warn('loadTeamsToSelect is not defined globally. Modal might be empty.');
+            }
+        }
+    }
+
+    // Handle mass assign button click (Planning tab)
+    const btnAssignPlanningClick = event.target.closest('#btn-mass-assign-team-planning');
+    if (btnAssignPlanningClick) {
+        const selectedIds = Array.from(document.querySelectorAll('#requestsPlanningTable .request-checkbox:checked')).map(cb => cb.value);
+        if (selectedIds.length === 0) {
+            showAlert('Выберите заявки для назначения бригады', 'warning');
+            return;
+        }
+
+        const assignTeamModal = document.getElementById('assign-team-modal');
+        if (assignTeamModal) {
+            assignTeamModal.dataset.requestIds = JSON.stringify(selectedIds);
+            assignTeamModal.dataset.requestId = ''; 
+            
+            if (typeof window.showModal === 'function') {
+                window.showModal('assign-team-modal');
+            } else if (typeof bootstrap !== 'undefined') {
+                const modal = new bootstrap.Modal(assignTeamModal);
+                modal.show();
+            }
+
+            if (typeof window.loadTeamsToSelect === 'function') {
+                window.loadTeamsToSelect();
             }
         }
     }
