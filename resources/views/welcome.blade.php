@@ -1583,36 +1583,36 @@
                         <h4>Список запланированных заявок</h4>
 
     @if($user->isAdmin)
-    <div id="planning-content" class="mb-3 d-flex justify-content-end align-items-center">
-        <select class="form-select me-2 w-auto" id="planningSubtypeFilter">
+    <div id="planning-content" class="mb-3 d-flex flex-column flex-md-row justify-content-md-end align-items-md-center flex-wrap gap-2">
+        <select class="form-select w-auto" id="planningSubtypeFilter">
             <option value="">Все планирования</option>
             @foreach($request_subtypes as $subtype)
                 <option value="{{ $subtype->id }}" {{ $subtype->name === 'Стандартное планирование' ? 'selected' : '' }}>{{ $subtype->name }} ({{ $subtype->requests_count }})</option>
             @endforeach
         </select>
-        <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#planningTypesModal" title="Настройки типов планирования">
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#planningTypesModal" title="Настройки типов планирования">
             <i class="bi bi-gear"></i>
         </button>
-        <button type="button" class="btn btn-outline-secondary me-2" id="btn-open-planning-map">
+        <button type="button" class="btn btn-outline-secondary" id="btn-open-planning-map">
             <i class="bi bi-map me-1"></i>На карте
         </button>
-        <button type="button" class="btn btn-primary me-2" id="new-planning-request-button" data-bs-toggle="modal" data-bs-target="#newPlanningRequestModal">
+        <button type="button" class="btn btn-primary" id="new-planning-request-button" data-bs-toggle="modal" data-bs-target="#newPlanningRequestModal">
             <i class="bi bi-plus-circle me-1"></i>Новая заявка
         </button>
         <button type="button" class="btn btn-success" id="upload-requests-button">
             <i class="bi bi-upload me-1"></i>Загрузить заявки
         </button>
-        <button type="button" class="btn btn-outline-primary ms-2 d-none" id="btn-mass-assign-team-planning">
+        <button type="button" class="btn btn-outline-primary d-none" id="btn-mass-assign-team-planning">
             <i class="bi bi-people me-1"></i>Назначить бригаду
         </button>
         @if(auth()->user()->isAdmin)
-        <button type="button" class="btn btn-outline-danger ms-2 d-none" id="btn-mass-delete-planning">
+        <button type="button" class="btn btn-outline-danger d-none" id="btn-mass-delete-planning">
             <i class="bi bi-trash me-1"></i>Удалить
         </button>
-        <button type="button" class="btn btn-outline-primary ms-2 d-none" id="btn-mass-in-work-planning">
+        <button type="button" class="btn btn-outline-primary d-none" id="btn-mass-in-work-planning">
             <i class="bi bi-pencil-square me-1"></i>В работу
         </button>
-        <button type="button" class="btn btn-outline-info ms-2 d-none" id="btn-mass-change-subtype-planning">
+        <button type="button" class="btn btn-outline-info d-none" id="btn-mass-change-subtype-planning">
             <i class="bi bi-folder-symlink me-1"></i>Тип планирования
         </button>
         @endif
