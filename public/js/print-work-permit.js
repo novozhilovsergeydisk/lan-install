@@ -3,6 +3,18 @@ function updatePrintButtonVisibility() {
     const checkedCount = document.querySelectorAll('#requestsTable .request-checkbox:checked').length;
     const checkedCountPlanning = document.querySelectorAll('#requestsPlanningTable .request-checkbox:checked').length;
     
+    // Check if any selected request is closed (status 'выполнена' or 'отменена')
+    let hasClosedRequestSelected = false;
+    document.querySelectorAll('#requestsTable .request-checkbox:checked').forEach(cb => {
+        const tr = cb.closest('tr');
+        if (tr && tr.dataset.requestStatusName) {
+            const statusName = tr.dataset.requestStatusName.toLowerCase();
+            if (statusName === 'выполнена' || statusName === 'отменена') {
+                hasClosedRequestSelected = true;
+            }
+        }
+    });
+
     const btnPrint = document.getElementById('btn-print-work-permit');
     const btnAssign = document.getElementById('btn-mass-assign-team');
     const btnAssignPlanning = document.getElementById('btn-mass-assign-team-planning');
@@ -12,55 +24,32 @@ function updatePrintButtonVisibility() {
     const btnDeletePlanning = document.getElementById('btn-mass-delete-planning');
 
     if (btnPrint) {
-        if (checkedCount > 0 || checkedCountPlanning > 0) {
-            btnPrint.classList.remove('d-none');
-        } else {
-            btnPrint.classList.add('d-none');
-        }
+        btnPrint.disabled = (checkedCount === 0 && checkedCountPlanning === 0);
     }
 
     if (btnAssign) {
-        if (checkedCount > 0) {
-            btnAssign.classList.remove('d-none');
-        } else {
-            btnAssign.classList.add('d-none');
-        }
+        btnAssign.disabled = (checkedCount === 0 || hasClosedRequestSelected);
     }
 
     if (btnAssignPlanning) {
-        if (checkedCountPlanning > 0) {
-            btnAssignPlanning.classList.remove('d-none');
-        } else {
-            btnAssignPlanning.classList.add('d-none');
-        }
+        btnAssignPlanning.disabled = (checkedCountPlanning === 0);
     }
 
     if (btnChangeSubtype) {
-        btnChangeSubtype.classList.add('d-none');
+        // Keeping as is if it was hidden
+        // btnChangeSubtype.classList.add('d-none');
     }
 
     if (btnChangeSubtypePlanning) {
-        if (checkedCountPlanning > 0) {
-            btnChangeSubtypePlanning.classList.remove('d-none');
-        } else {
-            btnChangeSubtypePlanning.classList.add('d-none');
-        }
+        btnChangeSubtypePlanning.disabled = (checkedCountPlanning === 0);
     }
 
     if (btnInWorkPlanning) {
-        if (checkedCountPlanning > 0) {
-            btnInWorkPlanning.classList.remove('d-none');
-        } else {
-            btnInWorkPlanning.classList.add('d-none');
-        }
+        btnInWorkPlanning.disabled = (checkedCountPlanning === 0);
     }
 
     if (btnDeletePlanning) {
-        if (checkedCountPlanning > 0) {
-            btnDeletePlanning.classList.remove('d-none');
-        } else {
-            btnDeletePlanning.classList.add('d-none');
-        }
+        btnDeletePlanning.disabled = (checkedCountPlanning === 0);
     }
 }
 

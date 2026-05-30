@@ -382,13 +382,13 @@
                                 </label>
                             </div>
 
-                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2 d-none"
-                                    id="btn-print-work-permit">
+                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
+                                    id="btn-print-work-permit" disabled>
                                 <i class="bi bi-printer me-1"></i>Распечатать
                             </button>
                             
-                            <button type="button" class="btn btn-outline-primary btn-sm mb-3 me-2 d-none"
-                                    id="btn-mass-assign-team">
+                            <button type="button" class="btn btn-outline-primary btn-sm mb-3 me-2"
+                                    id="btn-mass-assign-team" disabled>
                                 <i class="bi bi-people me-1"></i>Назначить бригаду
                             </button>
 
@@ -464,7 +464,7 @@
                                         $rowNumber = $loop->iteration; 
                                         // Get the current loop iteration (1-based index)
                                     @endphp
-                                     <tr id="request-{{ $request->id }}" data-request-type-id="{{ $request->request_type_id }}" data-request-status="{{ $request->status_id }}" data-request-number="{{ $request->number }}" data-address="{{ ($request->city_name && $request->city_name !== 'Москва' ? $request->city_name . ', ' : '') . ' ул. ' . $request->street . ', ' . $request->houses }}" class="align-middle status-row welcome-blade"
+                                     <tr id="request-{{ $request->id }}" data-request-type-id="{{ $request->request_type_id }}" data-request-status="{{ $request->status_id }}" data-request-status-name="{{ $request->status_name }}" data-request-number="{{ $request->number }}" data-address="{{ ($request->city_name && $request->city_name !== 'Москва' ? $request->city_name . ', ' : '') . ' ул. ' . $request->street . ', ' . $request->houses }}" class="align-middle status-row welcome-blade"
                                          style="--status-color: {{ $request->status_color ?? '#e2e0e6' }}"
                                          data-request-id="{{ $request->id }}">
 
@@ -1602,17 +1602,17 @@
         <button type="button" class="btn btn-success" id="upload-requests-button">
             <i class="bi bi-upload me-1"></i>Загрузить заявки
         </button>
-        <button type="button" class="btn btn-outline-primary d-none" id="btn-mass-assign-team-planning">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="btn-mass-assign-team-planning" disabled>
             <i class="bi bi-people me-1"></i>Назначить бригаду
         </button>
         @if(auth()->user()->isAdmin)
-        <button type="button" class="btn btn-outline-danger d-none" id="btn-mass-delete-planning">
+        <button type="button" class="btn btn-outline-danger btn-sm" id="btn-mass-delete-planning" disabled>
             <i class="bi bi-trash me-1"></i>Удалить
         </button>
-        <button type="button" class="btn btn-outline-primary d-none" id="btn-mass-in-work-planning">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="btn-mass-in-work-planning" disabled>
             <i class="bi bi-pencil-square me-1"></i>В работу
         </button>
-        <button type="button" class="btn btn-outline-info d-none" id="btn-mass-change-subtype-planning">
+        <button type="button" class="btn btn-outline-info btn-sm" id="btn-mass-change-subtype-planning" disabled>
             <i class="bi bi-folder-symlink me-1"></i>Тип планирования
         </button>
         @endif
