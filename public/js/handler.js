@@ -124,8 +124,9 @@ export async function loadPlanningRequests() {
              row.style.color = '#000000'; // Устанавливаем черный цвет текста
                row.innerHTML = `
                    <td class="col-number">
-                       <div class="form-check">
-                           ${index + 1}
+                       <div class="d-flex flex-column align-items-center gap-1">
+                           <span>${index + 1}</span>
+                           <input type="checkbox" class="form-check-input request-checkbox m-0" value="${request.id}" style="width: 1.1rem; height: 1.1rem; cursor: pointer;">
                        </div>
                    </td>
                    <td class="col-address">
@@ -152,7 +153,7 @@ export async function loadPlanningRequests() {
                               <div class="mb-0">
                                   ${(() => { const p = makeEscapedPreview(commentsContent, 4); return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${comments[0].created_at} | ${comments[0].author_fio}<br>${p.html}${p.ellipsis}</p>`; })()}
                               </div>
-                              <div class="mt-1">
+                              <div class="mt-1 d-flex align-items-center gap-2">
                                   <button type="button"
                                           class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
                                           data-bs-toggle="modal"
@@ -165,9 +166,33 @@ export async function loadPlanningRequests() {
                                           ${comments.length}
                                       </span>
                                   </button>
+                                  ${window.App?.user?.isAdmin ? `
+                                     <button type="button"
+                                             class="btn btn-sm btn-outline-purple edit-request-btn p-1"
+                                             data-bs-toggle="tooltip"
+                                             data-bs-placement="top"
+                                             data-bs-title="Редактировать заявку"
+                                             data-request-id="${request.id}">
+                                         <i class="bi bi-pencil"></i>
+                                     </button>
+                                  ` : ''}
                               </div>
                           ` : ''}
-                       ` : '<div class="text-muted small">Нет комментариев</div>'}
+                       ` : `
+                        <div class="text-muted small">Нет комментариев</div>
+                        ${window.App?.user?.isAdmin ? `
+                            <div class="mt-1">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-purple edit-request-btn p-1"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        data-bs-title="Редактировать заявку"
+                                        data-request-id="${request.id}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                       `}
                    </td>
                     <td class="col-brigade" data-col-brigade-id="${request.brigade_id || ''}">
                        <div data-name="brigadeMembers" class="col-brigade__div">
@@ -202,24 +227,6 @@ export async function loadPlanningRequests() {
                            })()}
                        </div>
                    </td>
-                    <td class="col-actions text-nowrap">
-                     <div class="col-actions__div d-flex flex-column gap-1">
-                         <div class="mt-1 text-center">
-                             <input type="checkbox" class="form-check-input request-checkbox" value="${request.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
-                         </div>
-
-                         ${window.App?.user?.isAdmin ? `
-                         <button type="button"
-                                 class="btn btn-sm btn-outline-purple edit-request-btn p-1"
-                                 data-bs-toggle="tooltip"
-                                 data-bs-placement="left"
-                                 data-bs-title="Редактировать заявку"
-                                 data-request-id="${request.id}">
-                             <i class="bi bi-pencil"></i>
-                         </button>
-                         ` : ''}
-                         </div>
-                         </td>
                          `;
             
             tbody.appendChild(row);

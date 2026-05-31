@@ -1338,7 +1338,6 @@
                                       </th>
                                        <th class="line-height-20 font-smaller">Комментарии</th>
                                        <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
-                                       <th class="line-height-20 font-smaller">Действия</th>
                                   </tr>
                                   </thead>
                                 <tbody>
