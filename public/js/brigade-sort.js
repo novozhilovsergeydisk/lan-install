@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Debug: init (считаем актуальные строки на момент загрузки)
     const initTbody = table.tBodies[0];
-    console.log('[brigade-sort] init', {
+    // console.log('[brigade-sort] init', {
         rows: initTbody ? initTbody.querySelectorAll('tr[data-request-id]').length : 0
     });
 
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         const rows = Array.from(tbody.querySelectorAll('tr[data-request-id]'));
-        console.debug('[brigade-sort] click', { direction: sortAscending ? 'asc' : 'desc', rows: rows.length });
+        // console.debug('[brigade-sort] click', { direction: sortAscending ? 'asc' : 'desc', rows: rows.length });
         
         rows.sort((a, b) => {
             const aName = getBrigadeName(a.querySelector('td.col-brigade'));
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Re-append rows in new order
         rows.forEach(row => tbody.appendChild(row));
-        console.debug('[brigade-sort] sorted', { rows: rows.length });
+        // console.debug('[brigade-sort] sorted', { rows: rows.length });
         
         // Update sort icon
         if (sortIcon) {
@@ -61,6 +61,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Toggle sort direction for next click
         sortAscending = !sortAscending;
-        console.debug('[brigade-sort] next direction', { next: sortAscending ? 'asc' : 'desc' });
+        // console.debug('[brigade-sort] next direction', { next: sortAscending ? 'asc' : 'desc' });
     });
 });

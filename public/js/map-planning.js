@@ -14,7 +14,7 @@ function setupPlanningMapControls() {
         const newBtn = btnOpenMap.cloneNode(true);
         btnOpenMap.parentNode.replaceChild(newBtn, btnOpenMap);
         
-        console.log('Planning map button setup.');
+        // console.log('Planning map button setup.');
 
         newBtn.addEventListener('click', () => {
             const mapContent = document.getElementById('planning-map-content');
@@ -78,7 +78,7 @@ async function loadAndDrawPlanningRequests() {
     const map = window.planningYandexMap;
     map.geoObjects.removeAll();
 
-    console.log('Loading planning requests for map...');
+    // console.log('Loading planning requests for map...');
 
     try {
         const subtypeFilter = document.getElementById('planningSubtypeFilter');
@@ -101,7 +101,7 @@ async function loadAndDrawPlanningRequests() {
 
         // Структура ответа: { success: true, data: { planningRequests: [...] } }
         if (data.success && data.data && Array.isArray(data.data.planningRequests)) {
-            console.log('Loaded planning requests:', data.data.planningRequests.length);
+            // console.log('Loaded planning requests:', data.data.planningRequests.length);
             drawPlanningRequests(map, data.data.planningRequests);
         } else {
             console.warn('No planning requests found or invalid format', data);

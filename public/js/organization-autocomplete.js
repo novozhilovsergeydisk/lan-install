@@ -2,7 +2,7 @@
  * Обработчик автозаполнения для поля "Организация" в формах создания и редактирования заявки.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Organization autocomplete script initialized');
+    // console.log('Organization autocomplete script initialized');
     
     // Список ID инпутов, для которых нужно включить автозаполнение
     const inputIds = ['clientOrganization', 'editClientOrganization'];
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (organizations.length > 0) return Promise.resolve(organizations);
         if (loadPromise) return loadPromise;
         
-        console.log('Loading organizations list from server...');
+        // console.log('Loading organizations list from server...');
         loadPromise = fetch('/reports/organizations')
             .then(response => {
                 if (response.ok) {
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(data => {
                 organizations = data.map(item => item.organization).filter(Boolean);
-                console.log(`Successfully loaded ${organizations.length} organizations`);
+                // console.log(`Successfully loaded ${organizations.length} organizations`);
                 return organizations;
             })
             .catch(error => {
@@ -44,11 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        console.log(`Setting up autocomplete for input #${id}`);
+        // console.log(`Setting up autocomplete for input #${id}`);
 
         // Проверяем, не обернут ли уже
         if (orgInput.parentElement.classList.contains('autocomplete-container')) {
-            console.log(`#${id} is already wrapped`);
+            // console.log(`#${id} is already wrapped`);
             return;
         }
 
@@ -69,13 +69,13 @@ document.addEventListener('DOMContentLoaded', () => {
         orgInput.setAttribute('autocomplete', 'off');
 
         const showResults = (val) => {
-            console.log(`Searching for "${val}" in ${organizations.length} organizations`);
+            // console.log(`Searching for "${val}" in ${organizations.length} organizations`);
             const filtered = organizations.filter(org => 
                 org.toLowerCase().includes(val.toLowerCase())
             ).slice(0, 15);
 
             if (filtered.length === 0) {
-                console.log('No matches found');
+                // console.log('No matches found');
                 resultsContainer.classList.add('d-none');
                 return;
             }
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.className = 'autocomplete-item';
                 item.textContent = org;
                 item.addEventListener('click', () => {
-                    console.log(`Selected: ${org}`);
+                    // console.log(`Selected: ${org}`);
                     orgInput.value = org;
                     resultsContainer.classList.add('d-none');
                     activeIndex = -1;
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultsContainer.classList.remove('d-none');
             activeIndex = -1;
-            console.log(`Displayed ${filtered.length} suggestions`);
+            // console.log(`Displayed ${filtered.length} suggestions`);
         };
 
         orgInput.addEventListener('focus', () => {
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         orgInput.addEventListener('input', (e) => {
             const val = e.target.value;
-            console.log(`Input event on #${id}: "${val}"`);
+            // console.log(`Input event on #${id}: "${val}"`);
             
             if (val.length < 2) {
                 resultsContainer.classList.add('d-none');

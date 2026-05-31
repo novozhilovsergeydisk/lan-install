@@ -35,7 +35,7 @@ function setCustomSelectValue(selectId, value) {
     if (option) {
         // Устанавливаем текст в input
         input.value = option.textContent;
-        console.log(`Установлено значение в кастомный селект ${selectId}: ${value} - ${option.textContent}`);
+        // console.log(`Установлено значение в кастомный селект ${selectId}: ${value} - ${option.textContent}`);
     } else {
         console.warn(`Не найден option с value="${value}" в select ${selectId}`);
         input.value = '';
@@ -73,18 +73,18 @@ async function initEditRequestHandler() {
             const statuses = statusesData.statuses || [];
             const addresses = await addressesResponse.json().catch(() => []);
 
-            console.log('Получены данные с сервера:', JSON.stringify(responseData, null, 2));
-            console.log('Используемые данные:', data);
+            // console.log('Получены данные с сервера:', JSON.stringify(responseData, null, 2));
+            // console.log('Используемые данные:', data);
 
             const modalEl = document.getElementById('editRequestModal');
-            console.log('Найден элемент модального окна:', modalEl);
+            // console.log('Найден элемент модального окна:', modalEl);
             
             if (modalEl) {
                 const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
 
                 // Функция заполнения формы
                 const fillForm = function() {
-                    console.log('Начинаем заполнение формы');
+                    // console.log('Начинаем заполнение формы');
 
                     // 1. Заполняем простые поля
                     const editClientIdEl = document.getElementById('editClientId');
@@ -181,7 +181,7 @@ async function initEditRequestHandler() {
                             setTimeout(() => {
                                 if (typeof setCustomSelectValue === 'function') {
                                     setCustomSelectValue('editAddressesId', data.address_id || '');
-                                    console.log('Значение в кастомный селект адреса установлено');
+                                    // console.log('Значение в кастомный селект адреса установлено');
                                 }
                             }, 100);
                         }
@@ -247,7 +247,7 @@ async function initEditRequestHandler() {
                         }
                     }
 
-                    console.log('Заполнение формы завершено');
+                    // console.log('Заполнение формы завершено');
                 };
                 
                 // Скрываем все активные tooltips
@@ -276,7 +276,7 @@ async function initEditRequestHandler() {
 async function initEditRequestFormHandler() {
     const updateRequest = document.getElementById('updateRequest');
     document.getElementById('updateRequest').addEventListener('click', async function() {
-        console.log('editAddressesId:', document.getElementById('editAddressesId'));
+        // console.log('editAddressesId:', document.getElementById('editAddressesId'));
 
         const editExecutionDate = document.getElementById('editExecutionDate');
         const customSelectInput = document.getElementById('custom-select-input');
@@ -327,8 +327,8 @@ async function initEditRequestFormHandler() {
 
         const requestId = getValue('editRequestId');
 
-        console.log(requestId);
-        console.log('Fetching URL:', `/requests/${requestId}`);
+        // console.log(requestId);
+        // console.log('Fetching URL:', `/requests/${requestId}`);
 
         // Collect work parameters
         const workParameters = [];
@@ -362,7 +362,7 @@ async function initEditRequestFormHandler() {
             work_parameters: workParameters,
         };
 
-        console.log('Sending data:', payload);
+        // console.log('Sending data:', payload);
 
         try {
             // [HomeController::class, 'updateRequest']
@@ -379,11 +379,11 @@ async function initEditRequestFormHandler() {
 
             const data = await response.json();
 
-            console.log(data);
+            // console.log(data);
 
             if (data && data.success) {     
                 const modalEl = getElement('editRequestModal');
-                console.log(modalEl);
+                // console.log(modalEl);
                 if (modalEl) {
                     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
                     modal.hide();
@@ -447,7 +447,7 @@ export function initOpenAdditionalTaskRequestHandler() {
         const requestId = button.dataset.requestId;
 
         // Тестовый вывод в консоль
-        console.log('Кнопка "Дополнительное задание" нажата для заявки ID:', requestId);
+        // console.log('Кнопка "Дополнительное задание" нажата для заявки ID:', requestId);
     });
 }
 
@@ -528,7 +528,7 @@ function initAddCity() {
         }
 
         const response = await result.json();
-        console.log(response);
+        // console.log(response);
         showAlert('Город успешно добавлен', 'success');
         form.reset();
 
@@ -541,12 +541,12 @@ function initAddCity() {
 
 // Функция инициализации карты после загрузки API
 async function initYandexMap() {
-    console.log('Инициализация карты...');
+    // console.log('Инициализация карты...');
 
     try {
         // Если карта уже существует, очищаем её
         if (window.yandexMap) {
-            console.log('Уничтожаем существующую карту');
+            // console.log('Уничтожаем существующую карту');
             window.yandexMap.destroy();
             window.yandexMap = null;
         }
@@ -559,7 +559,7 @@ async function initYandexMap() {
         }
         
         mapContent.innerHTML = '<div id="map" style="width: 100%; height: 100%;"></div>';
-        console.log('Элемент карты пересоздан');
+        // console.log('Элемент карты пересоздан');
         
         // Создаем карту с центром на Москве
         window.yandexMap = new ymaps.Map('map', {
@@ -597,15 +597,15 @@ async function initYandexMap() {
         const formattedSelectedDate = formatDateToInput(selectedDate);
         const formattedCurrentDate = formatDateToInput(currentDate);
         
-        console.log('Выбранная дата:', selectedDate, '->', formattedSelectedDate);
-        console.log('Текущая дата:', currentDate, '->', formattedCurrentDate);
+        // console.log('Выбранная дата:', selectedDate, '->', formattedSelectedDate);
+        // console.log('Текущая дата:', currentDate, '->', formattedCurrentDate);
 
         try {
             if (requestsData && requestsData !== '[]') {  // Добавлена проверка на пустой массив
                 requests = JSON.parse(requestsData);
                 // console.log('✅ Заявки загружены из localStorage:', requests);
             } else if (formattedSelectedDate) {  // Делаем запрос только если есть выбранная дата
-                console.log('❌ Заявки нет в localStorage, делаем запрос');
+                // console.log('❌ Заявки нет в localStorage, делаем запрос');
                 const result = await fetch(`/brigades/date/${formattedSelectedDate}`, {
                     method: 'GET',
                     headers: {
@@ -620,13 +620,13 @@ async function initYandexMap() {
                 }
                 
                 const data = await result.json();
-                console.log('Данные бригад:', data);
+                // console.log('Данные бригад:', data);
                 
                 if (data.success && data.data) {
                     // Обработка успешного ответа
                     requests = data.data;
                 } else {
-                    console.log('Нет данных о бригадах для выбранной даты');
+                    // console.log('Нет данных о бригадах для выбранной даты');
                 }
             }
         } catch (e) {
@@ -634,15 +634,15 @@ async function initYandexMap() {
             requests = [];
         }
 
-        console.log('Всего заявок:', requests.length);
-        console.log('✅ Заявки загружены из localStorage:', requests);
+        // console.log('Всего заявок:', requests.length);
+        // console.log('✅ Заявки загружены из localStorage:', requests);
 
         let brigadeMembersData = [];
         try {
             const brigadeMembersJson = localStorage.getItem('brigadeMembersCurrentDayData');
             if (brigadeMembersJson) {
                 brigadeMembersData = JSON.parse(brigadeMembersJson);
-                console.log('Данные о членах бригад загружены:', brigadeMembersData);
+                // console.log('Данные о членах бригад загружены:', brigadeMembersData);
             } else {
                 console.warn('Данные о членах бригад отсутствуют в localStorage');
             }
@@ -654,7 +654,7 @@ async function initYandexMap() {
         // console.log('brigadeMembersCurrentDayData:', brigadeMembersData);    
 
         if (!Array.isArray(requests) || requests.length === 0) {
-            console.log('Нет данных о заявках для отображения на карте');
+            // console.log('Нет данных о заявках для отображения на карте');
             return;
         }
 
@@ -933,7 +933,7 @@ async function initYandexMap() {
             
             // Обработчик открытия балуна
             placemark.events.add('balloonopen', function() {
-                console.log('balloonopen');
+                // console.log('balloonopen');
 
                 if (isMobile) {
                     // Для мобильных устройств принудительно обновляем стили
@@ -1017,7 +1017,7 @@ async function initYandexMap() {
                 }
                 return;
             } else {
-                console.log(`Заявка ${request.id}: координаты отсутствуют или некорректны`, {
+                // console.log(`Заявка ${request.id}: координаты отсутствуют или некорректны`, {
                     latitude: request.latitude,
                     longitude: request.longitude,
                     hasCoords: !!(request.latitude && request.longitude),
@@ -1060,7 +1060,7 @@ async function initYandexMap() {
             }
             
             const address = uniqueParts.join(', ');
-            console.log(`Заявка ${request.id}: геокодируем адрес:`, address);
+            // console.log(`Заявка ${request.id}: геокодируем адрес:`, address);
             
             // Используем callback-подход вместо промисов
             geocoder(address, { 
@@ -1089,11 +1089,11 @@ async function initYandexMap() {
                     console.error('Ошибка при обработке геокодирования:', e);
                 } finally {
                     processedCount++;
-                    console.log(`Заявка ${request.id}: обработка завершена, обработано ${processedCount} из ${requests.length}`);
+                    // console.log(`Заявка ${request.id}: обработка завершена, обработано ${processedCount} из ${requests.length}`);
                     
                     // Если это последняя итерация, обновляем границы карты
                     if (processedCount === requests.length) {
-                        console.log(`Все заявки обработаны. Успешно добавлено меток: ${placemarks.length} из ${requests.length}`);
+                        // console.log(`Все заявки обработаны. Успешно добавлено меток: ${placemarks.length} из ${requests.length}`);
                         if (placemarks.length > 0) {
                             updateMapBounds();
                         } else {
@@ -1173,11 +1173,11 @@ function showMap() {
                 // Если глобальная карта уничтожена, сбрасываем локальные переменные
                 yandexMap = null;
                 isMapInitialized = false;
-                console.log('Карта уничтожена');
+                // console.log('Карта уничтожена');
             } else if (window.yandexMap && !yandexMap) {
                 yandexMap = window.yandexMap;
                 isMapInitialized = true;
-                console.log('Карта инициализирована');
+                // console.log('Карта инициализирована');
             }
             
             // Дожидаемся готовности API перед инициализацией
@@ -1211,7 +1211,7 @@ function showMap() {
         mapContent.style.padding = '0';
     }
 
-    console.log('END');
+    // console.log('END');
 }
 
 function initOpenMapBtn() {
@@ -1219,7 +1219,7 @@ function initOpenMapBtn() {
 
     if (btnOpenMap) {
         btnOpenMap.addEventListener('click', function() {
-            console.log('Кнопка открытия карты нажата');
+            // console.log('Кнопка открытия карты нажата');
 
             // const requestsData = localStorage.getItem('requestsData');
 
@@ -1229,14 +1229,14 @@ function initOpenMapBtn() {
 }
 // Обработчик для кнопки экспорта отчета в Excel
 function initExportReportBtn() {
-    console.log('Функция initExportReportBtn вызвана');
+    // console.log('Функция initExportReportBtn вызвана');
 
     // return;
     
     const exportBtn = document.getElementById('export-report-btn');
     
     exportBtn.addEventListener('click', function() {
-        console.log('Кнопка экспорта нажата');
+        // console.log('Кнопка экспорта нажата');
 
         // showAlert('Функционал экспорта отчета в Excel в разработке', 'warning');
 
@@ -1246,19 +1246,19 @@ function initExportReportBtn() {
             // Получаем данные из localStorage
             const reportData = JSON.parse(localStorage.getItem('reportData'));
 
-            console.log('reportData:', reportData);
+            // console.log('reportData:', reportData);
 
             const requests = reportData.requests;
 
-            console.log('requests:', requests);
+            // console.log('requests:', requests);
 
             const brigadeMembers = reportData.brigadeMembers;
 
-            console.log('brigadeMembers:', brigadeMembers);
+            // console.log('brigadeMembers:', brigadeMembers);
 
             const comments_by_request = reportData.comments_by_request;
 
-            console.log('comments_by_request:', comments_by_request);
+            // console.log('comments_by_request:', comments_by_request);
             
             if (!reportData || !reportData.requests || reportData.requests.length === 0) {
                 showAlert('Нет данных для экспорта', 'warning');
@@ -1459,7 +1459,7 @@ function initExportReportBtn() {
             // Скачиваем файл
             XLSX.writeFile(wb, fileName);
             
-            console.log('Экспорт в Excel выполнен успешно');
+            // console.log('Экспорт в Excel выполнен успешно');
         } catch (error) {
             console.error('Ошибка при экспорте в Excel:', error);
             showAlert('Произошла ошибка при экспорте в Excel', 'error');
@@ -1573,14 +1573,14 @@ async function initPhotoReportList(requestId) {
 
     // Обрабатываем ответ от сервера
     const responseData = await response.json();
-    console.log('Ответ от сервера:', responseData);
+    // console.log('Ответ от сервера:', responseData);
     
     // Проверяем структуру ответа и извлекаем данные
     const photos = Array.isArray(responseData) 
         ? responseData 
         : (responseData.data || []);
 
-    console.log('Фотографии:', photos);
+    // console.log('Фотографии:', photos);
 
     // Мок-данные картинок
     // const photos = [1, 2, 3, 4, 5, 6].map(i => ({
@@ -1833,7 +1833,7 @@ export function initShowPhotosButton() {
         const requestId = document.getElementById('commentRequestId')?.value || '';
         if (!container) return;
 
-        console.log(requestId);
+        // console.log(requestId);
 
         // Загрузка реальных фото
         let response;
@@ -1848,7 +1848,7 @@ export function initShowPhotosButton() {
         // API возвращает { success, message, data: [] }
         const photos = Array.isArray(response) ? response : (response?.data || []);
 
-        console.log(response);
+        // console.log(response);
 
         if (!photos.length) {
             container.innerHTML = '<div class="text-muted">Фото не найдены</div>';
@@ -1932,7 +1932,7 @@ export function initUploadRequestsHandler() {
     const uploadButton = document.getElementById('upload-requests-button');
     if (uploadButton) {
         uploadButton.addEventListener('click', async () => {
-            console.log("Кнопка 'Загрузить заявки' нажата");
+            // console.log("Кнопка 'Загрузить заявки' нажата");
             const modal = new bootstrap.Modal(document.getElementById('uploadRequestsModal'));
             
             // Load request types dynamically
@@ -1990,7 +1990,7 @@ export function initUploadRequestsHandler() {
             
             if (requestsFileElement && requestsFileElement.files.length > 0) {
                 const file = requestsFileElement.files[0];
-                console.log('Выбран файл для загрузки:', file.name);
+                // console.log('Выбран файл для загрузки:', file.name);
 
                 const formData = new FormData();
                 formData.append('requests_file', file);
@@ -2272,7 +2272,7 @@ function displayEmployeeInfo(employeeData) {
  * @param {Object} result - результат ответа сервера
  */
 function addRequestToTable(result) {
-    console.log('Начало функции addRequestToTable', result);
+    // console.log('Начало функции addRequestToTable', result);
 
     if (!result.data) {
         console.error('Отсутствует result.data');
@@ -2292,12 +2292,12 @@ function addRequestToTable(result) {
     const requestTypeName = result.data.request_type_name;
     const requestTypeColor = result.data.request_type_color;
 
-    console.log('Данные заявки:', requestData);
-    console.log('Данные клиента:', clientData);
-    console.log('Данные адреса:', addressData);
-    console.log('Данные комментария:', commentData);
-    console.log('Request type name:', requestTypeName);
-    console.log('Request type color:', requestTypeColor);
+    // console.log('Данные заявки:', requestData);
+    // console.log('Данные клиента:', clientData);
+    // console.log('Данные адреса:', addressData);
+    // console.log('Данные комментария:', commentData);
+    // console.log('Request type name:', requestTypeName);
+    // console.log('Request type color:', requestTypeColor);
 
     // Исправление обработки комментария
     // Проверяем разные варианты структуры данных комментария
@@ -2312,13 +2312,13 @@ function addRequestToTable(result) {
         extractedComment = result.data.comments[0].text || result.data.comments[0].comment || '';
     }
 
-    console.log('Извлеченный текст комментария:', extractedComment);
+    // console.log('Извлеченный текст комментария:', extractedComment);
 
     // Попробуем найти таблицу заявок с разными селекторами
     let requestsTable = document.querySelector('.table.table-hover.align-middle tbody');
 
     if (!requestsTable) {
-        console.log('Попытка найти таблицу с другим селектором');
+        // console.log('Попытка найти таблицу с другим селектором');
         requestsTable = document.querySelector('#requestsTab table tbody');
     }
 
@@ -2521,7 +2521,7 @@ function commentPhotoDownload() {
         const downloadFilesBtn = e.target.closest('.download-comment-files-btn');
         if (!downloadFilesBtn) return;
 
-        console.log('Кнопка скачивания файлов для zip архивирования нажата', downloadFilesBtn);
+        // console.log('Кнопка скачивания файлов для zip архивирования нажата', downloadFilesBtn);
         
         e.preventDefault();
 
@@ -2549,7 +2549,7 @@ function commentPhotoDownload() {
             
             const data = await response.json();
 
-            console.log('commentPhotoDownload, ответ от сервера', data);
+            // console.log('commentPhotoDownload, ответ от сервера', data);
             
             if (!data.data || data.data.length === 0) {
                 showAlert('Нет файлов для архивации и скачивания архива', 'warning');
@@ -2656,7 +2656,7 @@ function commentPhotoDownload() {
             
             const data = await response.json();
 
-            console.log('commentPhotoDownload, ответ от сервера', data);
+            // console.log('commentPhotoDownload, ответ от сервера', data);
             
             if (!data.data || data.data.length === 0) {
                 showAlert('Нет фото для архивации и скачивания архива', 'warning');
@@ -2754,7 +2754,7 @@ export function initAddressEditButton() {
         const editButton = event.target.closest('#editAddressBtn');
         
         if (editButton) {
-            console.log('Клик по кнопке редактирования адреса 1:', editButton);
+            // console.log('Клик по кнопке редактирования адреса 1:', editButton);
 
             event.preventDefault();
             event.stopPropagation();
@@ -2801,7 +2801,7 @@ export function initAddressEditButton() {
                             }
                         }
 
-                        console.log('Окно редактирования адреса №1:', address);
+                        // console.log('Окно редактирования адреса №1:', address);
                         
                         document.getElementById('district').value = address.district || '';
                         document.getElementById('street').value = address.street || '';
@@ -2941,7 +2941,7 @@ document.addEventListener('click', function(event) {
                 return response.json();
             })
             .then(data => {
-                console.log(data);
+                // console.log(data);
                 // Заполняем таблицу данными
                 if (data.requests) {
                     renderReportTable({
@@ -2966,7 +2966,7 @@ document.addEventListener('click', function(event) {
                         </tr>`;
                 }
             });
-        console.log('Клик other-requests-btn', addressId);
+        // console.log('Клик other-requests-btn', addressId);
         // window.open('/reports/address/' + addressId, '_blank');
     } else {
         console.error('Address ID not found');
@@ -2991,12 +2991,12 @@ window.initCommentValidation = initCommentValidation;
  */
 async function handleCommentEdit(commentElement, contentHtml, commentId, commentNumber, editButton, requestId) {
 
-    console.log('commentElement', commentElement);
-    console.log('contentHtml', contentHtml);
-    console.log('commentId', commentId);
-    console.log('commentNumber', commentNumber);
-    console.log('editButton', editButton);
-    console.log('requestId', requestId);
+    // console.log('commentElement', commentElement);
+    // console.log('contentHtml', contentHtml);
+    // console.log('commentId', commentId);
+    // console.log('commentNumber', commentNumber);
+    // console.log('editButton', editButton);
+    // console.log('requestId', requestId);
 
     // Получаем текущий HTML комментария
     let commentHtml = contentHtml.trim();
@@ -3006,7 +3006,7 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
         commentHtml = commentElement.innerHTML.trim();
     }
 
-    console.log('Original comment HTML:', commentHtml);
+    // console.log('Original comment HTML:', commentHtml);
 
     // Функция для нормализации HTML - убираем множественные <br> теги и лишние пробелы
     function normalizeHtml(html) {
@@ -3110,7 +3110,7 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
     saveButton.setAttribute('data-request-id', requestId);
     saveButton.textContent = 'Сохранить';
     // const requestId = this.getAttribute('data-request-id');
-    console.log('requestId', requestId);
+    // console.log('requestId', requestId);
     
     const cancelButton = document.createElement('button');
     cancelButton.type = 'button';
@@ -3609,7 +3609,7 @@ export function initRequestInWorkHandlers() {
             e.stopPropagation();
             e.preventDefault();
             const requestId = button.getAttribute('data-request-id');
-            console.log('Нажата кнопка "В работу" для заявки:', requestId);
+            // console.log('Нажата кнопка "В работу" для заявки:', requestId);
             
             // Устанавливаем ID заявки в скрытое поле
             const requestIdInput = document.getElementById('requestId');
@@ -3761,7 +3761,7 @@ export function initPlanningMassActionsHandlers() {
                     // Если не JSON или не массив, оставляем как есть (одиночное)
                 }
 
-                console.log('bodyData', bodyData);
+                // console.log('bodyData', bodyData);
 
                 const response = await fetch(endpoint, {
                     method: 'POST',
@@ -3773,7 +3773,7 @@ export function initPlanningMassActionsHandlers() {
                 });
 
                 const result = await response.json();
-                console.log('Ответ от сервера:', result);
+                // console.log('Ответ от сервера:', result);
                 
                 if (result.success) {
                     // Показываем уведомление об успехе
@@ -3941,7 +3941,7 @@ export function initPlanningRequestFormHandlers() {
         // console.log('Инициализация кастомного селекта для выбора адреса в форме');
         window.initCustomSelect("addressesPlanningRequest", "Выберите адрес из списка");
     } else {
-        console.log('Функция initCustomSelect не найдена для addressesPlanningRequest');
+        // console.log('Функция initCustomSelect не найдена для addressesPlanningRequest');
     }
     
     // Добавляем стили валидации
@@ -3957,7 +3957,7 @@ export function initPlanningRequestFormHandlers() {
             if (window.initPlanningWysiwygEditor) {
                 try {
                     window.initPlanningWysiwygEditor();
-                    console.log('WYSIWYG Planning редактор инициализирован');
+                    // console.log('WYSIWYG Planning редактор инициализирован');
                 } catch (error) {
                     console.error('Ошибка при инициализации WYSIWYG Planning редактора:', error);
                 }
@@ -4030,11 +4030,11 @@ export function initPlanningRequestFormHandlers() {
         const _token = formData.get('_token');
         
         // Детальное логирование данных формы
-        console.log('=== Form Data ===');
+        // console.log('=== Form Data ===');
         for (let pair of formData.entries()) {
-            console.log(pair[0] + ':', pair[1]);
+            // console.log(pair[0] + ':', pair[1]);
         }
-        console.log('=================');
+        // console.log('=================');
         
         // Сбрасываем предыдущие ошибки и валидацию
         document.querySelectorAll('.is-invalid, .is-valid').forEach(el => {
@@ -4122,7 +4122,7 @@ export function initPlanningRequestFormHandlers() {
                 _token: _token
             };
             
-            console.log('Отправляемые данные:', formDataObj);
+            // console.log('Отправляемые данные:', formDataObj);
 
             submitButton.disabled = true;
 
@@ -4140,11 +4140,11 @@ export function initPlanningRequestFormHandlers() {
 
             const result = await response.json();
 
-            console.log('Ответ сервера result:', result);
+            // console.log('Ответ сервера result:', result);
 
             if (result.success) {
                 showAlert('Заявка успешно создана', 'success');
-                console.log('Заявка успешно создана, ID:', result.id);
+                // console.log('Заявка успешно создана, ID:', result.id);
                 
                 // Закрываем модальное окно
                 const modal = bootstrap.Modal.getInstance(document.getElementById('newPlanningRequestModal'));
@@ -4191,13 +4191,13 @@ export function initDeleteAddressHandlers() {
                 const addressInfoBlock = document.getElementById('addressInfoBlock');
                 addressId = addressInfoBlock.getAttribute('data-delete-address-id');
     
-                console.log('Клик по кнопке удаления адреса deleteButtonBlock, addressId:', addressId);
+                // console.log('Клик по кнопке удаления адреса deleteButtonBlock, addressId:', addressId);
                 
             }
             
             addressId = deleteButton ? deleteButton.getAttribute('data-address-id') : addressId;
 
-            console.log('addressId:', addressId);
+            // console.log('addressId:', addressId);
             
             if (!confirm('Вы уверены, что хотите удалить этот адрес?')) {
                 return;
@@ -4223,7 +4223,7 @@ export function initDeleteAddressHandlers() {
 
                 if (result.success) {
                     showAlert('Адрес успешно удален', 'success');
-                    console.log('Адрес успешно удален, ID:', addressId);
+                    // console.log('Адрес успешно удален, ID:', addressId);
 
                     const addressInfo = document.getElementById('addressInfo');
                     addressInfo.innerHTML = '';
@@ -4279,7 +4279,7 @@ export function initAddressEditHandlers() {
             event.preventDefault();
             const addressId = editButton.getAttribute('data-address-id');
             
-            console.log('Нажата кнопка редактирования, ID адреса:', addressId);
+            // console.log('Нажата кнопка редактирования, ID адреса:', addressId);
             
             // Открыть модальное окно
             const modal = new bootstrap.Modal(document.getElementById('editAddressModal'));
@@ -4306,7 +4306,7 @@ export function initAddressEditHandlers() {
                             }
                         }
 
-                        console.log('Загружены данные адреса по кнопке редактирования из списка:', address);
+                        // console.log('Загружены данные адреса по кнопке редактирования из списка:', address);
 
                         document.getElementById('district').value = address.district || '';
                         document.getElementById('street').value = address.street || '';
@@ -4337,7 +4337,7 @@ export function initAddressEditHandlers() {
     // Обработчик для кнопки сохранения адреса (редактирование)
     document.addEventListener('click', async function(event) {
         if (event.target && event.target.id === 'saveEditAddressBtn') {
-            console.log('--- Нажата кнопка сохранения адреса ---');
+            // console.log('--- Нажата кнопка сохранения адреса ---');
             
             const form = document.getElementById('editAddressForm');
             if (!form) {
@@ -4362,12 +4362,12 @@ export function initAddressEditHandlers() {
             }
             
             // Выводим все данные формы для отладки
-            console.log('Данные формы перед отправкой:');
+            // console.log('Данные формы перед отправкой:');
             for (let [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
+                // console.log(`${key}: ${value}`);
             }
             
-            console.log('ID адреса из поля ввода:', addressId);
+            // console.log('ID адреса из поля ввода:', addressId);
             
             if (!addressId) {
                 console.error('ID адреса не найден');
@@ -4395,10 +4395,10 @@ export function initAddressEditHandlers() {
                     data[key] = value;
                 });
 
-                console.log('Отправляемые данные:', JSON.stringify(data, null, 2));
-                console.log('URL запроса:', `/api/addresses/${addressId}`);
+                // console.log('Отправляемые данные:', JSON.stringify(data, null, 2));
+                // console.log('URL запроса:', `/api/addresses/${addressId}`);
 
-                console.log('Отправка запроса на сервер...');
+                // console.log('Отправка запроса на сервер...');
                 const response = await fetch(`/api/addresses/${addressId}`, {
                     method: 'PUT',
                     headers: {
@@ -4410,12 +4410,12 @@ export function initAddressEditHandlers() {
                     body: JSON.stringify(data)
                 });
 
-                console.log('Получен ответ от сервера. Адреса:', response.status);
+                // console.log('Получен ответ от сервера. Адреса:', response.status);
                 
                 let responseData;
                 try {
                     responseData = await response.json();
-                    console.log('Данные ответа:', JSON.stringify(responseData, null, 2));
+                    // console.log('Данные ответа:', JSON.stringify(responseData, null, 2));
                 } catch (e) {
                     console.error('Ошибка при разборе JSON ответа:', e);
                     responseData = {};
@@ -4435,7 +4435,7 @@ export function initAddressEditHandlers() {
                     await loadAddressesPaginated();
                 }
 
-                console.log('Адрес успешно обновлен.');
+                // console.log('Адрес успешно обновлен.');
 
                 // Здесь нужно обновить блок с id=addressInfo
 
@@ -4487,7 +4487,7 @@ export function initAddPhotoReport() {
             if (requestId) {
                 this.setAttribute('data-request-id', requestId);
             }
-            console.log('Открытие фотоотчета для заявки:', requestId);
+            // console.log('Открытие фотоотчета для заявки:', requestId);
 
             if (!requestId) {
                 showAlert('Не удалось определить ID заявки для фотоотчета', 'danger');
@@ -4558,7 +4558,7 @@ export function saveEmployeeChangesSystem() {
 
             const result = await response.json();
 
-            console.log('result', result);
+            // console.log('result', result);
 
             if (result.success) {
                 showAlert('Учетная запись успешно обновлена', 'success');
@@ -4598,11 +4598,11 @@ export function initDeleteMember() {
         const memberId = `${brigadeId}`;
         
         try {
-            console.log(`Попытка удаления бригады: brigadeId=${brigadeId}`);
+            // console.log(`Попытка удаления бригады: brigadeId=${brigadeId}`);
             
             const result = await postData(`/brigade/delete/${memberId}`, {});
 
-            console.log(result);
+            // console.log(result);
 
             // return;
             
@@ -4622,7 +4622,7 @@ export function initDeleteMember() {
                         try {
                             const members = JSON.parse(brigadeMembersField.value);
                             brigadeMembersData.push(...members);
-                            console.log('Найдены участники в скрытом поле:', brigadeMembersData);
+                            // console.log('Найдены участники в скрытом поле:', brigadeMembersData);
                         } catch (e) {
                             console.error('Ошибка при разборе данных участников:', e);
                         }
@@ -4630,7 +4630,7 @@ export function initDeleteMember() {
                     
                     // 2. Если в скрытом поле не нашли, ищем в DOM
                     if (brigadeMembersData.length === 0) {
-                        console.log('Поиск участников в DOM карточки:', brigadeCard);
+                        // console.log('Поиск участников в DOM карточки:', brigadeCard);
                         
                         // Сначала ищем бригадира в блоке с data-info="leader-info"
                         const leaderInfo = brigadeCard.querySelector('[data-info="leader-info"]');
@@ -4646,7 +4646,7 @@ export function initDeleteMember() {
                                     is_leader: true,
                                     name: leaderName
                                 });
-                                console.log('Найден бригадир:', leaderId, leaderName);
+                                // console.log('Найден бригадир:', leaderId, leaderName);
                             } else {
                                 console.warn('Не удалось найти ID бригадира');
                             }
@@ -4654,7 +4654,7 @@ export function initDeleteMember() {
                         
                         // Ищем участников в таблице
                         const memberRows = brigadeCard.querySelectorAll('tr[data-member-id]');
-                        console.log('Найдено строк участников в таблице:', memberRows.length);
+                        // console.log('Найдено строк участников в таблице:', memberRows.length);
                         
                         // Добавляем участников из таблицы
                         memberRows.forEach(row => {
@@ -4675,7 +4675,7 @@ export function initDeleteMember() {
                         // Если не нашли в таблице, ищем в div-блоках
                         if (brigadeMembersData.length === 0) {
                             const memberDivs = brigadeCard.querySelectorAll('[data-employee-id]');
-                            console.log('Найдено div-участников:', memberDivs.length);
+                            // console.log('Найдено div-участников:', memberDivs.length);
                             
                             memberDivs.forEach(div => {
                                 const memberId = div.getAttribute('data-employee-id');
@@ -4705,7 +4705,7 @@ export function initDeleteMember() {
                                 return;
                             }
                             
-                            console.log(`Участник #${index + 1}:`, {
+                            // console.log(`Участник #${index + 1}:`, {
                                 memberId,
                                 isLeader: member.is_leader,
                                 name: member.name || 'Не указано'
@@ -4718,10 +4718,10 @@ export function initDeleteMember() {
                                 option.disabled = false;
                                 option.style.display = '';
                                 option.selected = false;
-                                console.log(`Опция для участника ${memberId} восстановлена`);
+                                // console.log(`Опция для участника ${memberId} восстановлена`);
                             } else {
                                 console.warn(`Не найдена опция для участника с ID: ${memberId}`);
-                                console.log('Доступные опции:', Array.from(employeesSelect?.options || []).map(opt => ({
+                                // console.log('Доступные опции:', Array.from(employeesSelect?.options || []).map(opt => ({
                                     value: opt.value,
                                     text: opt.textContent.trim(),
                                     disabled: opt.disabled,
@@ -4751,7 +4751,7 @@ export function initDeleteMember() {
             
             // Если это ошибка 404, обновляем страницу
             if (error.message && error.message.includes('404')) {
-                console.log('Обновляем страницу из-за ошибки 404');
+                // console.log('Обновляем страницу из-за ошибки 404');
                 setTimeout(() => window.location.reload(), 2000);
             }
         }
@@ -4791,26 +4791,26 @@ export function initDeleteEmployee() {
 }
 
 async function handleDeleteEmployee(event) {
-    console.log('handleDeleteEmployee');
+    // console.log('handleDeleteEmployee');
 
-    console.log(event);
+    // console.log(event);
 
     if (confirm('Вы уверены, что хотите удалить сотрудника?')) {
         // Получаем данные о сотруднике из атрибутов кнопки
         const employeeName = event.currentTarget.getAttribute('data-employee-name');
         const employeeId = event.currentTarget.getAttribute('data-employee-id');
 
-        console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
+        // console.log('Удаление сотрудника:', employeeName, 'ID:', employeeId);
 
         const data = {
             employee_id: employeeId,
         };
 
-        console.log('Отправка данных на сервер:', data);
+        // console.log('Отправка данных на сервер:', data);
 
         const result = await postData('/employee/delete', data);
 
-        console.log('Ответ от сервера:', result);
+        // console.log('Ответ от сервера:', result);
 
         if (result.success) {
             showAlert(`Сотрудник "${employeeName}" успешно удален`, 'success');
@@ -4834,13 +4834,13 @@ async function handleDeleteEmployee(event) {
 }
 
 async function handleRestoreEmployee(event) {
-    console.log('handleRestoreEmployee');
+    // console.log('handleRestoreEmployee');
 
     if (confirm('Вы уверены, что хотите восстановить сотрудника?')) {
         const employeeName = event.currentTarget.getAttribute('data-employee-name');
         const employeeId = event.currentTarget.getAttribute('data-employee-id');
 
-        console.log('Восстановление сотрудника:', employeeName, 'ID:', employeeId);
+        // console.log('Восстановление сотрудника:', employeeName, 'ID:', employeeId);
 
         const data = {
             employee_id: employeeId,
@@ -4848,7 +4848,7 @@ async function handleRestoreEmployee(event) {
 
         const result = await postData('/employee/restore', data);
 
-        console.log('Ответ от сервера:', result);
+        // console.log('Ответ от сервера:', result);
 
         if (result.success) {
             showAlert(`Сотрудник "${employeeName}" успешно восстановлен`, 'success');
@@ -4874,13 +4874,13 @@ async function handleRestoreEmployee(event) {
 }
 
 async function handleDeleteEmployeePermanently(event) {
-    console.log('handleDeleteEmployeePermanently');
+    // console.log('handleDeleteEmployeePermanently');
 
     if (confirm('Вы уверены, что хотите скрыть сотрудника? Сотрудник будет заблокирован и скрыт из списка.')) {
         const employeeName = event.currentTarget.getAttribute('data-employee-name');
         const employeeId = event.currentTarget.getAttribute('data-employee-id');
 
-        console.log('Полное удаление сотрудника:', employeeName, 'ID:', employeeId);
+        // console.log('Полное удаление сотрудника:', employeeName, 'ID:', employeeId);
 
         const data = {
             employee_id: employeeId,
@@ -4888,7 +4888,7 @@ async function handleDeleteEmployeePermanently(event) {
 
         const result = await postData('/employee/delete-permanently', data);
 
-        console.log('Ответ от сервера:', result);
+        // console.log('Ответ от сервера:', result);
 
         if (result.success) {
             showAlert(`Сотрудник "${employeeName}" заблокирован и скрыт`, 'success');
@@ -4972,7 +4972,7 @@ export function initEmployeeFilter() {
             const selectedEmployeeId = this.value;
             handleEmployeeFilterChange(selectedEmployeeId);
 
-            console.log('changeSelectedEmployeeId:', selectedEmployeeId);
+            // console.log('changeSelectedEmployeeId:', selectedEmployeeId);
 
         });
     }
@@ -5003,27 +5003,27 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
         
         // Получаем отфильтрованные данные из localStorage
         let requestsDataFilter = localStorage.getItem('requestsDataFilter');
-        console.log('🟢 requestsDataFilter (raw):', requestsDataFilter ? JSON.parse(requestsDataFilter) : []);
+        // console.log('🟢 requestsDataFilter (raw):', requestsDataFilter ? JSON.parse(requestsDataFilter) : []);
 
         // Если данных нет или это пустая строка/массив, сохраняем текущие данные
         if (!requestsDataFilter || requestsDataFilter === '[]' || JSON.parse(requestsDataFilter || '[]').length === 0) {
             localStorage.setItem('requestsDataFilter', requestsData);
-            console.log('🟢🟢🟢 Сохраняем начальные данные в requestsDataFilter');
+            // console.log('🟢🟢🟢 Сохраняем начальные данные в requestsDataFilter');
             requestsDataFilter = requestsData; // Используем текущие данные
         }
 
         // Парсим данные, используя пустой массив как fallback
         const requests = requestsDataFilter ? JSON.parse(requestsDataFilter) : [];
 
-        console.log('requests:', requests);
+        // console.log('requests:', requests);
 
         // Получаем фамилию и первую букву имени (например, "Абдуганиев Н.")
         const nameParts = employeeName.split(' ');
         const searchPattern = `${nameParts[0]} ${nameParts[1].charAt(0)}.`;
 
-        console.log('searchPattern:', searchPattern);
+        // console.log('searchPattern:', searchPattern);
         // console.log('rows:', rows);
-        console.log('employeeName:', employeeName);
+        // console.log('employeeName:', employeeName);
         
         // rows.forEach(row => {
         //     const brigadeCell = row.querySelector('.col-brigade__div');
@@ -5064,12 +5064,12 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
         if (mapContainer_) {
             mapContainer_.style.display = 'none';  // Force hide with inline style
             mapContainer_.classList.add('hide-me');
-            console.log('🟣 Map container hidden');
+            // console.log('🟣 Map container hidden');
         } else {
             console.warn('⚠️ Map container not found');
         }
         
-        console.log('🔴 Отфильтрованные заявки:', requestsNew, mapContainer_);
+        // console.log('🔴 Отфильтрованные заявки:', requestsNew, mapContainer_);
 
         localStorage.setItem('requestsData', JSON.stringify(requestsNew));
         
@@ -5088,27 +5088,27 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
     
     // Получаем отфильтрованные данные из localStorage
     let requestsDataFilter = localStorage.getItem('requestsDataFilter');
-    console.log('🟢 requestsDataFilter (raw):', requestsDataFilter ? JSON.parse(requestsDataFilter) : []);
+    // console.log('🟢 requestsDataFilter (raw):', requestsDataFilter ? JSON.parse(requestsDataFilter) : []);
 
     // Если данных нет или это пустая строка/массив, сохраняем текущие данные
     if (!requestsDataFilter || requestsDataFilter === '[]' || JSON.parse(requestsDataFilter || '[]').length === 0) {
         localStorage.setItem('requestsDataFilter', requestsData);
-        console.log('🟢🟢🟢 Сохраняем начальные данные в requestsDataFilter');
+        // console.log('🟢🟢🟢 Сохраняем начальные данные в requestsDataFilter');
         requestsDataFilter = requestsData; // Используем текущие данные
     }
 
     // Парсим данные, используя пустой массив как fallback
     const requests = requestsDataFilter ? JSON.parse(requestsDataFilter) : [];
 
-    console.log('requests:', requests);
+    // console.log('requests:', requests);
     
     // Получаем фамилию и первую букву имени (например, "Абдуганиев Н.")
     const nameParts = employeeName.split(' ');
     const searchPattern = `${nameParts[0]} ${nameParts[1].charAt(0)}.`;
 
-    console.log('searchPattern:', searchPattern);
+    // console.log('searchPattern:', searchPattern);
     // console.log('rows:', rows);
-    console.log('employeeName:', employeeName);
+    // console.log('employeeName:', employeeName);
     
     rows.forEach(row => {
         const brigadeCell = row.querySelector('.col-brigade__div');
@@ -5149,12 +5149,12 @@ async function handleEmployeeFilterChange(selectedEmployeeId) {
     if (mapContainer_) {
         mapContainer_.style.display = 'none';  // Force hide with inline style
         mapContainer_.classList.add('hide-me');
-        console.log('🟣 Map container hidden');
+        // console.log('🟣 Map container hidden');
     } else {
         console.warn('⚠️ Map container not found');
     }
     
-    console.log('🔴 Отфильтрованные заявки:', requestsNew, mapContainer_);
+    // console.log('🔴 Отфильтрованные заявки:', requestsNew, mapContainer_);
 
     localStorage.setItem('requestsData', JSON.stringify(requestsNew));
     
@@ -5186,7 +5186,7 @@ export function initEmployeeEditHandlers() {
             const employeeName = this.getAttribute('data-employee-name');
 
             // Вывод информации в консоль
-            console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId})`);
+            // console.log(`Редактирование сотрудника: ${employeeName} (ID: ${employeeId})`);
 
             // Обновление заголовка модального окна
             document.getElementById('editEmployeeModalLabel').textContent = `Редактирование сотрудника: ${employeeName}`;
@@ -5195,7 +5195,7 @@ export function initEmployeeEditHandlers() {
             // document.getElementById('userIdInputUpdate').value = employeeId;
             // Устанавливаем ID сотрудника в скрытое поле формы
             document.getElementById('employeeIdInputUpdate').value = employeeId;
-            console.log('Установлен ID пользователя и сотрудника в форме:', employeeId);
+            // console.log('Установлен ID пользователя и сотрудника в форме:', employeeId);
 
             // Загрузка данных сотрудника по ID
             try {
@@ -5213,7 +5213,7 @@ export function initEmployeeEditHandlers() {
 
                 const data = await response.json();
 
-                console.log('Полученные данные сотрудника:', data);
+                // console.log('Полученные данные сотрудника:', data);
 
                 if (data.success) {
                     // Заполняем форму данными сотрудника
@@ -5222,7 +5222,7 @@ export function initEmployeeEditHandlers() {
                     const car = data.data.car;
                     const role = data.data.role;
 
-                    console.log(role);
+                    // console.log(role);
 
                     // document.getElementById('loginInputUpdate').value = employee.login || '';
                     // document.getElementById('passwordInputUpdate').value = employee.password || '';
@@ -5284,10 +5284,10 @@ export function initEmployeeEditHandlers() {
                     option.value = role.role_id;
                     option.innerText = role.name;
 
-                    console.log(option);
-                    console.log(roleSelectUpdate);
+                    // console.log(option);
+                    // console.log(roleSelectUpdate);
 
-                    console.log('Данные сотрудника успешно загружены');
+                    // console.log('Данные сотрудника успешно загружены');
                 } else {
                     console.error('Ошибка при загрузке данных сотрудника:', data.message);
                     showAlert('Ошибка при загрузке данных сотрудника: ' + data.message, 'danger');
@@ -5323,13 +5323,13 @@ export function initSaveEmployeeChanges() {
     if (saveButton && form) {
         // Добавляем обработчик события отправки формы
         form.addEventListener('submit', function(event) {
-            console.log('Сохранение изменений сотрудника');
+            // console.log('Сохранение изменений сотрудника');
             handleSaveEmployeeChanges(event);
         });
         
         // Для совместимости оставляем и клик по кнопке
         saveButton.addEventListener('click', function(event) {
-            console.log('Клик по кнопке сохранения');
+            // console.log('Клик по кнопке сохранения');
             handleSaveEmployeeChanges(event);
         });
     } else {
@@ -5369,7 +5369,7 @@ export function initFormHandlers() {
             if (window.initWysiwygEditor) {
                 try {
                     window.initWysiwygEditor();
-                    console.log('WYSIWYG редактор инициализирован');
+                    // console.log('WYSIWYG редактор инициализирован');
                 } catch (error) {
                     console.error('Ошибка при инициализации WYSIWYG редактора:', error);
                 }
@@ -5397,12 +5397,12 @@ export function initFormHandlers() {
 
     // Явная инициализация модала newRequestModal для корректного закрытия
     const newRequestModalEl = document.getElementById('newRequestModal');
-    console.log('newRequestModalEl:', newRequestModalEl);
+    // console.log('newRequestModalEl:', newRequestModalEl);
     if (newRequestModalEl) {
         window.newRequestModalInstance = new bootstrap.Modal(newRequestModalEl);
-        console.log('newRequestModalInstance created:', window.newRequestModalInstance);
+        // console.log('newRequestModalInstance created:', window.newRequestModalInstance);
     } else {
-        console.log('newRequestModalEl not found');
+        // console.log('newRequestModalEl not found');
     }
 
     // Инициализация модала additionalTaskModal (если существует)
@@ -5490,11 +5490,11 @@ function initExecutionDateField() {
                 const [day, month, year] = window.selectedDateState.date.split('.');
                 const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
                 executionDateField.value = formattedDate;
-                console.log('Установлена выбранная дата из календаря:', formattedDate);
+                // console.log('Установлена выбранная дата из календаря:', formattedDate);
             } else {
                 // Иначе используем текущую дату
                 executionDateField.value = today;
-                console.log('Установлена текущая дата:', today);
+                // console.log('Установлена текущая дата:', today);
             }
         });
     }
@@ -5510,15 +5510,15 @@ async function submitRequestForm(event) {
         event.stopPropagation();
     }
     
-    console.log('Начало функции submitRequestForm');
+    // console.log('Начало функции submitRequestForm');
     
     const form = document.getElementById('newRequestForm');
     const submitBtn = document.getElementById('submitRequest');
     const commentField = document.getElementById('comment');
     const commentError = commentField ? commentField.nextElementSibling : null;
 
-    console.log('Форма:', form);
-    console.log('Кнопка отправки:', submitBtn);
+    // console.log('Форма:', form);
+    // console.log('Кнопка отправки:', submitBtn);
     
     if (!form) {
         console.error('Форма newRequestForm не найдена в DOM');
@@ -5653,8 +5653,8 @@ async function submitRequestForm(event) {
         return;
     }
 
-    console.log('Находим элемент addresses_id:', document.getElementById('addresses_id'));
-    console.log('Значение элемента addresses_id:', addressId);
+    // console.log('Находим элемент addresses_id:', document.getElementById('addresses_id'));
+    // console.log('Значение элемента addresses_id:', addressId);
 
     // Блокируем кнопку отправки и меняем её текст на индикатор загрузки
     submitBtn.disabled = true;
@@ -5683,7 +5683,7 @@ async function submitRequestForm(event) {
     const workParameters = [];
     const parameterRows = document.querySelectorAll('#workParametersContainer .work-parameter-row');
     
-    console.log('Найдены строки параметров:', parameterRows.length);
+    // console.log('Найдены строки параметров:', parameterRows.length);
 
     parameterRows.forEach(row => {
         const typeId = row.dataset.id;
@@ -5700,7 +5700,7 @@ async function submitRequestForm(event) {
         }
     });
     
-    console.log('Собранные параметры работы:', workParameters);
+    // console.log('Собранные параметры работы:', workParameters);
 
     // Формируем данные для отправки
     const requestData = {
@@ -5720,17 +5720,17 @@ async function submitRequestForm(event) {
     };
 
     // Логируем данные перед отправкой
-    console.log('Отправляемые данные:', requestData);
-    console.log('data.work_parameter_name:', data.work_parameter_name);
-    console.log('data.work_parameter_quantity:', data.work_parameter_quantity);
+    // console.log('Отправляемые данные:', requestData);
+    // console.log('data.work_parameter_name:', data.work_parameter_name);
+    // console.log('data.work_parameter_quantity:', data.work_parameter_quantity);
 
     // return;
 
     try {
         const result = await postData('/api/requests', requestData);
 
-        console.log('Ответ от сервера:', result);
-        console.log('Result success:', result.success);
+        // console.log('Ответ от сервера:', result);
+        // console.log('Result success:', result.success);
 
         if (result.success) {
             showAlert('Заявка успешно создана!', 'success');
@@ -5738,9 +5738,9 @@ async function submitRequestForm(event) {
             // Обновляем дату исполнения заявки (преобразование формата происходит в методе updateDate)
             executionDateState.updateDate(result.data.request.execution_date);
 
-            console.log('currentDateState.date:', currentDateState.date);
-            console.log('selectedDateState.date:', selectedDateState.date);
-            console.log('executionDateState.date:', executionDateState.date);
+            // console.log('currentDateState.date:', currentDateState.date);
+            // console.log('selectedDateState.date:', selectedDateState.date);
+            // console.log('executionDateState.date:', executionDateState.date);
 
 
 
@@ -5748,7 +5748,7 @@ async function submitRequestForm(event) {
             if (currentDateState.date === selectedDateState.date && executionDateState.date === selectedDateState.date) {
                 addRequestToTable(result);
             } else if (currentDateState.date !== selectedDateState.date && executionDateState.date === selectedDateState.date) {
-                console.log('Добавляем заявку в таблицу, если дата исполнения заявки совпадает с выбранной датой');
+                // console.log('Добавляем заявку в таблицу, если дата исполнения заявки совпадает с выбранной датой');
                 addRequestToTable(result);
             }
 
@@ -5760,12 +5760,12 @@ async function submitRequestForm(event) {
             }
 
             const modal = window.newRequestModalInstance;
-            console.log('Modal instance:', modal);
+            // console.log('Modal instance:', modal);
             if (modal) {
-                console.log('Hiding modal');
+                // console.log('Hiding modal');
                 modal.hide();
             } else {
-                console.log('Modal instance is null');
+                // console.log('Modal instance is null');
             }
 
             // Сохраняем текущую дату перед сбросом формы
@@ -5803,11 +5803,11 @@ async function submitRequestForm(event) {
                 // Проверяем, что сохраненная дата не раньше текущей
                 if (currentDate >= today) {
                     dateInput.value = currentDate;
-                    console.log('Восстановлена сохраненная дата:', currentDate);
+                    // console.log('Восстановлена сохраненная дата:', currentDate);
                 } else {
                     // Если дата раньше текущей, устанавливаем текущую дату
                     dateInput.value = today;
-                    console.log('Установлена текущая дата:', today, 'т.к. сохраненная дата была раньше:', currentDate);
+                    // console.log('Установлена текущая дата:', today, 'т.к. сохраненная дата была раньше:', currentDate);
                 }
 
                 // Обновляем атрибут min для предотвращения выбора прошедших дат
@@ -5921,9 +5921,9 @@ async function handleSaveEmployeeChanges(event) {
 
         const result = await postData('/employee/update', requestData);
 
-        console.log('Входные данные для обновления сотрудника:', requestData);
+        // console.log('Входные данные для обновления сотрудника:', requestData);
 
-        console.log('Ответ от сервера при обновлении сотрудника:', result);
+        // console.log('Ответ от сервера при обновлении сотрудника:', result);
 
         const role = result.data.role;
 
@@ -5934,11 +5934,11 @@ async function handleSaveEmployeeChanges(event) {
             // Обновляем только измененную строку в таблице
             const { employee, passport, car, position } = result.data;
             const row = document.querySelector(`tr[data-employee-id="${employee.id}"]`);
-            console.log('Найденная строка:', row);
-            console.log('Позиция:', position.position_name);
+            // console.log('Найденная строка:', row);
+            // console.log('Позиция:', position.position_name);
             
             if (row) {
-                console.log('Строка найдена, обновляем данные...');
+                // console.log('Строка найдена, обновляем данные...');
                 const cells = row.getElementsByTagName('td');
                 
                 // Обновляем ФИО и email (первая ячейка)
@@ -6276,7 +6276,7 @@ function initRequestCloseHandlers() {
             }
 
             try {
-                console.log('Нажата кнопка "Удалить" для заявки ID:', requestId);
+                // console.log('Нажата кнопка "Удалить" для заявки ID:', requestId);
                 const response = await fetch(`/requests/${requestId}/delete`, {
                     method: 'POST',
                     headers: {
@@ -6292,7 +6292,7 @@ function initRequestCloseHandlers() {
                 }
 
                 const data = await response.json();
-                console.log('Ответ сервера:', data);
+                // console.log('Ответ сервера:', data);
                 
                 if (data.success) {
                     // Удаляем строку с заявкой из таблицы
@@ -6379,7 +6379,7 @@ async function handleExcelUpload() {
     }
 
     // Выводим информацию о файле
-    console.log('Информация о загружаемом файле:', {
+    // console.log('Информация о загружаемом файле:', {
         'Имя файла': file.name,
         'Размер': `${(file.size / 1024).toFixed(2)} КБ`,
         'Тип': file.type || 'Не определен',
@@ -6410,15 +6410,15 @@ async function handleExcelUpload() {
 
         const data = await response.json();
 
-        console.log('Response status:', response.status, 'data:', data);
+        // console.log('Response status:', response.status, 'data:', data);
 
         if (!response.ok) {
             throw new Error(data.message || `Ошибка сервера: ${response.status}`);
         }
 
-        console.log('Успешный ответ сервера:', data);
-        console.log('Message:', data.message);
-        console.log('Loaded addresses:', data.data);
+        // console.log('Успешный ответ сервера:', data);
+        // console.log('Message:', data.message);
+        // console.log('Loaded addresses:', data.data);
 
         if (data.success) {
             showAlert(data.message || 'Файл успешно загружен и обработан', 'success');
@@ -6490,7 +6490,7 @@ function initShowPhotoButtons() {
 
 async function loadCommentFiles(commentId, showFilesBtn) {
     try {
-        console.log('Показать файлы для комментария ID:', commentId);
+        // console.log('Показать файлы для комментария ID:', commentId);
 
         // Находим модальное окно комментариев
         const commentsModal = document.getElementById('commentsModal');
@@ -6551,7 +6551,7 @@ async function loadCommentFiles(commentId, showFilesBtn) {
         }
 
         const result = await response.json() || [];;
-        console.log('Файлы комментария:', result);
+        // console.log('Файлы комментария:', result);
 
         // Очищаем контейнер
         filesContainer.innerHTML = '';
@@ -6559,7 +6559,7 @@ async function loadCommentFiles(commentId, showFilesBtn) {
         // Если есть файлы, добавляем их в контейнер
         if (result.data.length > 0) {
 
-            console.log('Файлы комментария в контейнере:', result.data);
+            // console.log('Файлы комментария в контейнере:', result.data);
 
             result.data.forEach(file => {
                 const fileElement = document.createElement('div');
@@ -6642,7 +6642,7 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
         
         const result = await response.json();
 
-        console.log('Ответ сервера:', result);
+        // console.log('Ответ сервера:', result);
 
         // return;
         
@@ -6652,7 +6652,7 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
 
         const photos = result.data || [];
 
-        console.log('Полученные фотографии:', photos);  
+        // console.log('Полученные фотографии:', photos);  
         
         // Очищаем контейнер перед добавлением фотографий
         photosContainer.innerHTML = '';
@@ -6948,7 +6948,7 @@ async function loadCommentPhotos(commentId, showPhotoBtn) {
             photosContainer.appendChild(photosGrid);
         }
 
-        console.log('photosContainer:', photosContainer);
+        // console.log('photosContainer:', photosContainer);
 
 return;
 
@@ -7385,7 +7385,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Обработчик для чекбоксов выбора заявок (массовые действия)
 document.addEventListener('change', function(event) {
     if (event.target.classList.contains('request-checkbox')) {
-        console.log('Чекбокс заявки нажат. ID:', event.target.value, 'Выбран:', event.target.checked);
+        // console.log('Чекбокс заявки нажат. ID:', event.target.value, 'Выбран:', event.target.checked);
     }
     if (event.target.id === 'selectAllRequests') {
         const isChecked = event.target.checked;
@@ -7393,7 +7393,7 @@ document.addEventListener('change', function(event) {
         checkboxes.forEach(cb => {
             cb.checked = isChecked;
         });
-        console.log('Выбрать все: установлено', isChecked, 'для', checkboxes.length, 'заявок');
+        // console.log('Выбрать все: установлено', isChecked, 'для', checkboxes.length, 'заявок');
     }
 });
 

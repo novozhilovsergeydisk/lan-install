@@ -30,7 +30,7 @@ function initWysiwygEditor() {
     return;
   }
   
-  console.log('WYSIWYG: редактор инициализирован', { editor, textarea, toolbar });
+  // console.log('WYSIWYG: редактор инициализирован', { editor, textarea, toolbar });
 
   // Инициализация: заполнить редактор содержимым textarea (если есть)
   editor.innerHTML = textarea.value || '';
@@ -285,7 +285,7 @@ function initWysiwygEditor() {
 
   // Вставить HTML в текущую позицию курсора (вставляем sanitized html)
   function insertHTMLAtCursor(html) {
-    console.log('WYSIWYG: вставка HTML', { before: editor.innerHTML, html });
+    // console.log('WYSIWYG: вставка HTML', { before: editor.innerHTML, html });
     
     // Удаляем HTML-комментарии перед вставкой
     const sanitizedHtml = html.replace(/&lt;!--[\s\S]*?--&gt;|<!--[\s\S]*?-->/g, '');
@@ -301,7 +301,7 @@ function initWysiwygEditor() {
       editor.innerHTML = editor.innerHTML.replace(/<br>$/i, '');
     }
     
-    console.log('WYSIWYG: после вставки', { after: editor.innerHTML });
+    // console.log('WYSIWYG: после вставки', { after: editor.innerHTML });
   }
 
    // Функция для форматирования текста с помощью Selection API
@@ -350,14 +350,14 @@ function initWysiwygEditor() {
 
     // --- Обработчики тулбара ---
    toolbar.addEventListener('click', function (e) {
-     console.log('WYSIWYG: клик по тулбару', e.target);
+     // console.log('WYSIWYG: клик по тулбару', e.target);
      const btn = e.target.closest('button[data-cmd]');
      if (!btn) {
-       console.log('WYSIWYG: клик не по кнопке с data-cmd');
+       // console.log('WYSIWYG: клик не по кнопке с data-cmd');
        return;
      }
      const cmd = btn.getAttribute('data-cmd');
-     console.log('WYSIWYG: выполнение команды', cmd);
+     // console.log('WYSIWYG: выполнение команды', cmd);
 
      if (cmd === 'createLink') {
        let url = prompt('Введите URL (например https://example.com):', 'https://');
@@ -375,10 +375,10 @@ function initWysiwygEditor() {
        formatText('em');
      } else {
        // другие команды, если есть
-       console.log('WYSIWYG: выполнение команды форматирования', cmd);
+       // console.log('WYSIWYG: выполнение команды форматирования', cmd);
        const beforeHTML = editor.innerHTML;
        document.execCommand(cmd, false, null);
-       console.log('WYSIWYG: результат форматирования', {
+       // console.log('WYSIWYG: результат форматирования', {
          command: cmd,
          before: beforeHTML,
          after: editor.innerHTML
@@ -391,21 +391,21 @@ function initWysiwygEditor() {
    });
 
   // Обновлять активные состояния кнопок при изменении выделения/курсор-перемещении
-  console.log('WYSIWYG: добавление обработчиков событий для редактора');
+  // console.log('WYSIWYG: добавление обработчиков событий для редактора');
   editor.addEventListener('keyup', function(e) {
-    console.log('WYSIWYG: keyup в редакторе');
+    // console.log('WYSIWYG: keyup в редакторе');
     updateToolbarState();
   });
   editor.addEventListener('mouseup', function(e) {
-    console.log('WYSIWYG: mouseup в редакторе');
+    // console.log('WYSIWYG: mouseup в редакторе');
     updateToolbarState();
   });
   editor.addEventListener('focus', function(e) {
-    console.log('WYSIWYG: редактор получил фокус');
+    // console.log('WYSIWYG: редактор получил фокус');
     updateToolbarState();
   });
   editor.addEventListener('blur', function(e) {
-    console.log('WYSIWYG: редактор потерял фокус');
+    // console.log('WYSIWYG: редактор потерял фокус');
   });
 
   // Обработчик для санитизации HTML при любом изменении содержимого
@@ -448,10 +448,10 @@ function initWysiwygEditor() {
   editor.addEventListener('paste', function (e) {
     e.preventDefault();
 
-    console.log('WYSIWYG: вставка');
-    console.log(e.clipboardData);
-    console.log(window.clipboardData);
-    console.log('-----------------------------------');
+    // console.log('WYSIWYG: вставка');
+    // console.log(e.clipboardData);
+    // console.log(window.clipboardData);
+    // console.log('-----------------------------------');
 
     const clipboard = (e.clipboardData || window.clipboardData);
     if (!clipboard) return;
@@ -633,7 +633,7 @@ function resetWysiwygEditor(my_wysiwyg) {
   // Полностью заменяем содержимое контейнера
   container.outerHTML = containerHTML;
   
-  console.log('WYSIWYG: редактор полностью пересоздан');
+  // console.log('WYSIWYG: редактор полностью пересоздан');
   
   // Возвращаем новый элемент редактора
   return document.getElementById('comment_editor');
@@ -652,7 +652,7 @@ function destroyWysiwygEditor() {
   // Полностью пересоздаем редактор
   const newEditor = resetWysiwygEditor(document.querySelector('.my-wysiwyg'));
   
-  console.log('WYSIWYG: редактор уничтожен и пересоздан');
+  // console.log('WYSIWYG: редактор уничтожен и пересоздан');
   
   // Возвращаем новый элемент редактора
   return newEditor;
@@ -697,7 +697,7 @@ function initAdditionalWysiwygEditor() {
     return;
   }
 
-  console.log('WYSIWYG Additional: редактор инициализирован', { editor, textarea, toolbar });
+  // console.log('WYSIWYG Additional: редактор инициализирован', { editor, textarea, toolbar });
 
   // Инициализация: заполнить редактор содержимым textarea (если есть)
   editor.innerHTML = textarea.value || '';
@@ -952,7 +952,7 @@ function initAdditionalWysiwygEditor() {
 
   // Вставить HTML в текущую позицию курсора (вставляем sanitized html)
   function insertHTMLAtCursor(html) {
-    console.log('WYSIWYG Additional: вставка HTML', { before: editor.innerHTML, html });
+    // console.log('WYSIWYG Additional: вставка HTML', { before: editor.innerHTML, html });
 
     // Удаляем HTML-комментарии перед вставкой
     const sanitizedHtml = html.replace(/&lt;!--[\s\S]*?--&gt;|<!--[\s\S]*?-->/g, '');
@@ -968,7 +968,7 @@ function initAdditionalWysiwygEditor() {
       editor.innerHTML = editor.innerHTML.replace(/<br>$/i, '');
     }
 
-    console.log('WYSIWYG Additional: после вставки', { after: editor.innerHTML });
+    // console.log('WYSIWYG Additional: после вставки', { after: editor.innerHTML });
     }
 
     // Функция для форматирования текста с помощью Selection API
@@ -995,14 +995,14 @@ function initAdditionalWysiwygEditor() {
 
     // --- Обработчики тулбара ---
     toolbar.addEventListener('click', function (e) {
-      console.log('WYSIWYG Additional: клик по тулбару', e.target);
+      // console.log('WYSIWYG Additional: клик по тулбару', e.target);
     const btn = e.target.closest('button[data-cmd]');
     if (!btn) {
-      console.log('WYSIWYG Additional: клик не по кнопке с data-cmd');
+      // console.log('WYSIWYG Additional: клик не по кнопке с data-cmd');
       return;
     }
     const cmd = btn.getAttribute('data-cmd');
-    console.log('WYSIWYG Additional: выполнение команды', cmd);
+    // console.log('WYSIWYG Additional: выполнение команды', cmd);
 
      if (cmd === 'createLink') {
        let url = prompt('Введите URL (например https://example.com):', 'https://');
@@ -1020,10 +1020,10 @@ function initAdditionalWysiwygEditor() {
        formatText('em');
      } else {
        // другие команды, если есть
-       console.log('WYSIWYG Additional: выполнение команды форматирования', cmd);
+       // console.log('WYSIWYG Additional: выполнение команды форматирования', cmd);
        const beforeHTML = editor.innerHTML;
        document.execCommand(cmd, false, null);
-       console.log('WYSIWYG Additional: результат форматирования', {
+       // console.log('WYSIWYG Additional: результат форматирования', {
          command: cmd,
          before: beforeHTML,
          after: editor.innerHTML
@@ -1036,21 +1036,21 @@ function initAdditionalWysiwygEditor() {
   });
 
   // Обновлять активные состояния кнопок при изменении выделения/курсор-перемещении
-  console.log('WYSIWYG Additional: добавление обработчиков событий для редактора');
+  // console.log('WYSIWYG Additional: добавление обработчиков событий для редактора');
   editor.addEventListener('keyup', function(e) {
-    console.log('WYSIWYG Additional: keyup в редакторе');
+    // console.log('WYSIWYG Additional: keyup в редакторе');
     updateToolbarState();
   });
   editor.addEventListener('mouseup', function(e) {
-    console.log('WYSIWYG Additional: mouseup в редакторе');
+    // console.log('WYSIWYG Additional: mouseup в редакторе');
     updateToolbarState();
   });
   editor.addEventListener('focus', function(e) {
-    console.log('WYSIWYG Additional: редактор получил фокус');
+    // console.log('WYSIWYG Additional: редактор получил фокус');
     updateToolbarState();
   });
   editor.addEventListener('blur', function(e) {
-    console.log('WYSIWYG Additional: редактор потерял фокус');
+    // console.log('WYSIWYG Additional: редактор потерял фокус');
   });
 
   // Обработчик для санитизации HTML при любом изменении содержимого
@@ -1093,10 +1093,10 @@ function initAdditionalWysiwygEditor() {
   editor.addEventListener('paste', function (e) {
     e.preventDefault();
 
-    console.log('WYSIWYG Additional: вставка');
-    console.log(e.clipboardData);
-    console.log(window.clipboardData);
-    console.log('-----------------------------------');
+    // console.log('WYSIWYG Additional: вставка');
+    // console.log(e.clipboardData);
+    // console.log(window.clipboardData);
+    // console.log('-----------------------------------');
 
     const clipboard = (e.clipboardData || window.clipboardData);
     if (!clipboard) return;
@@ -1262,7 +1262,7 @@ function initPlanningWysiwygEditor() {
     return;
   }
 
-  console.log('WYSIWYG Planning: редактор инициализирован', { editor, textarea, toolbar });
+  // console.log('WYSIWYG Planning: редактор инициализирован', { editor, textarea, toolbar });
 
   // Инициализация: заполнить редактор содержимым textarea (если есть)
   editor.innerHTML = textarea.value || '';

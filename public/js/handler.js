@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => linkifyRenderedComments());
 export async function loadPlanningRequests() {
     const container = document.getElementById('planning-container');
     if (!container) {
-        console.debug('Контейнер для таблицы запланированных заявок не найден (возможно, страница/роль без планирования)');
+        // console.debug('Контейнер для таблицы запланированных заявок не найден (возможно, страница/роль без планирования)');
         return;
     }
 
@@ -838,7 +838,7 @@ export async function applyFilters() {
         const [day, month, year] = filterState.date.split('.');
         const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 
-        console.log('formattedDate', formattedDate);
+        // console.log('formattedDate', formattedDate);
 
         const result = await fetch(`/brigades/date/${formattedDate}`, {
             method: 'GET',
@@ -908,7 +908,7 @@ export async function applyFilters() {
                         initMapWithRequests();
                     }
                 } else {
-                    console.log('Нет данных о заявках для сохранения');
+                    // console.log('Нет данных о заявках для сохранения');
                 }
                 
                 // Логи ответов отключены
@@ -1099,7 +1099,7 @@ export async function applyFilters() {
                              row.style.setProperty('--status-color', request.status_color || '#e2e0e6');
 
                              // Отладка атрибутов
-                             console.log('[handler] setting row attributes for request', request.id, {
+                             // console.log('[handler] setting row attributes for request', request.id, {
                                  status_name: request.status_name,
                                  address: request.address,
                                  number: request.number
@@ -1116,12 +1116,12 @@ export async function applyFilters() {
 
                              // console.log({ request });
 
-                             console.log('Request data for span:', {
+                             // console.log('Request data for span:', {
                                  id: request.id,
                                  request_type_color: request.request_type_color,
                                  request_type_name: request.request_type_name
                              });
-                             console.log('All keys:', Object.keys(request));
+                             // console.log('All keys:', Object.keys(request));
 
                              // console.log(request.is_admin);
                             
@@ -2809,7 +2809,7 @@ function handleTransferRequest(button) {
         try {
             // Выводим в консоль отправляемые данные для отладки
             /*
-            console.log('Отправка запроса на перенос заявки:', {
+            // console.log('Отправка запроса на перенос заявки:', {
                 request_id: requestId,
                 new_date: selectedDate,
                 reason: reason,

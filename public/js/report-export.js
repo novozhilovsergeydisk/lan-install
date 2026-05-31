@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 requestTypeId: requestTypeSelect ? requestTypeSelect.value : null
             };
 
-            console.log('📤 [Export Debug] Sending payload:', payload);
+            // console.log('📤 [Export Debug] Sending payload:', payload);
 
             // UI Loading state
             const originalText = exportBtn.innerHTML;
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Проверяем наличие заголовка с SQL (для отладки)
                 const debugSql = response.headers.get('X-Debug-SQL');
                 if (debugSql) {
-                    console.log('🛠 [SQL Debug]:', decodeURIComponent(debugSql));
+                    // console.log('🛠 [SQL Debug]:', decodeURIComponent(debugSql));
                 }
 
                 if (!response.ok) {

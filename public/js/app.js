@@ -166,15 +166,15 @@ $(document).ready(function() {
     // Sync datepicker with input field
     $('#datepicker').on('changeDate', function(e) {
         const selectedDate = e.format('dd.mm.yyyy');
-        console.log('Выбрана дата:', selectedDate);
-        console.log('Объект события:', e);
+        // console.log('Выбрана дата:', selectedDate);
+        // console.log('Объект события:', e);
         $('#dateInput').val(selectedDate);
         $('#selectedDate').text(selectedDate);
         
         // Очищаем данные карты при смене даты
         if (localStorage.getItem('requestsData')) {
             localStorage.removeItem('requestsData');
-            console.log('Очищены данные заявок (localStorage)');
+            // console.log('Очищены данные заявок (localStorage)');
         }
         
         // Очищаем карту, если она существует
@@ -182,7 +182,7 @@ $(document).ready(function() {
             try {
                 window.yandexMap.destroy();
                 window.yandexMap = null;
-                console.log('Карта Яндекс уничтожена');
+                // console.log('Карта Яндекс уничтожена');
             } catch (error) {
                 console.error('Ошибка при уничтожении карты:', error);
             }
@@ -202,17 +202,17 @@ $(document).ready(function() {
             mapContainer.style.padding = '0';
             
             // Отладочная информация
-            console.log('Состояние контейнера карты после скрытия:', {
+            // console.log('Состояние контейнера карты после скрытия:', {
                 classList: Array.from(mapContainer.classList),
                 display: window.getComputedStyle(mapContainer).display,
                 visibility: window.getComputedStyle(mapContainer).visibility,
                 height: window.getComputedStyle(mapContainer).height
             });
             
-            console.log('Контейнер карты очищен и скрыт');
+            // console.log('Контейнер карты очищен и скрыт');
         }
 
-        console.log('END changeDate ----------------');
+        // console.log('END changeDate ----------------');
     });
 
     // Initialize input field datepicker
@@ -227,14 +227,14 @@ $(document).ready(function() {
     // Функция для загрузки данных заявок по дате
     async function loadRequestsByDate(selectedDate) {
         try {
-            console.log('Обновление данных для даты:', selectedDate);
+            // console.log('Обновление данных для даты:', selectedDate);
             
             // Проверяем, есть ли данные в localStorage
             const storedData = localStorage.getItem('requestsData');
             if (storedData) {
                 try {
                     const requests = JSON.parse(storedData);
-                    console.log('Данные заявок загружены из localStorage:', requests.length, 'записей');
+                    // console.log('Данные заявок загружены из localStorage:', requests.length, 'записей');
                     
                     // Показываем контейнер карты, если он скрыт
                     const mapContainer = document.getElementById('map-content');
@@ -281,7 +281,7 @@ $(document).ready(function() {
                 
                 // Сохраняем в localStorage
                 localStorage.setItem('requestsData', JSON.stringify(requests));
-                console.log('Данные заявок обновлены из таблицы и сохранены в localStorage:', requests.length, 'записей');
+                // console.log('Данные заявок обновлены из таблицы и сохранены в localStorage:', requests.length, 'записей');
                 
                 // Если карта открыта, обновляем её
                 const mapContainer = document.getElementById('map-content');
@@ -295,7 +295,7 @@ $(document).ready(function() {
                 
                 return requests;
             } else {
-                console.log('Нет данных о заявках в таблице');
+                // console.log('Нет данных о заявках в таблице');
                 return [];
             }
         } catch (error) {

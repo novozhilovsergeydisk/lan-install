@@ -1,7 +1,7 @@
 const randomHash = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 sessionStorage.setItem('sessionId', randomHash);
 
-console.log('randomHash', randomHash);
+// console.log('randomHash', randomHash);
 
 import { showAlert, postData } from './utils.js';
 import { initReportHandlers } from './report-handler.js';
@@ -47,7 +47,7 @@ import {
 
 // Инициализация страницы при загрузке DOM
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM полностью загружен');
+    // console.log('DOM полностью загружен');
     // Определяем роль пользователя из Blade -> window.App
     const role = (window.App && window.App.role) ? window.App.role : 'guest';
     const canManageBrigades = role !== 'user' && role !== 'fitter'; // админ/монтажник и т.п.
@@ -277,9 +277,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     function updateRequest(requestData) {
-        console.log('Updating request with data:', requestData);
+        // console.log('Updating request with data:', requestData);
         const requestId = requestData.id; // ID заявки
-        console.log('Ищем строку с data-request-id:', requestId);
+        // console.log('Ищем строку с data-request-id:', requestId);
         
         // Ищем строку по атрибуту data-request-id (проверяем как кнопку, так и строку таблицы)
         let requestRow = document.querySelector(`button[data-request-id="${requestId}"]`);
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Если строка не найдена, возможно, она еще не загружена
         if (!requestRow) {
-            console.log('Строка заявки не найдена в DOM. ID:', requestId);
+            // console.log('Строка заявки не найдена в DOM. ID:', requestId);
             
             // Если это новая заявка, добавляем её в начало таблицы
             if (confirm('Заявка не найдена в текущем представлении. Хотите обновить страницу для отображения изменений?')) {
@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        console.log('Найдена строка заявки:', requestRow);
+        // console.log('Найдена строка заявки:', requestRow);
 
         // Пробуем разные возможные селекторы для ячейки с бригадой
         let brigadeCell = requestRow.querySelector('td[data-col="brigade"]') || 
@@ -318,15 +318,15 @@ document.addEventListener('DOMContentLoaded', function () {
                          requestRow.querySelector('td:nth-child(5)'); // 5-я колонка, если другие не сработают
         
         if (!brigadeCell) {
-            console.log('Ячейка бригады не найдена стандартными селекторами. Доступные ячейки:');
+            // console.log('Ячейка бригады не найдена стандартными селекторами. Доступные ячейки:');
             const allCells = requestRow.querySelectorAll('td');
             allCells.forEach((cell, index) => {
-                console.log(`Ячейка ${index}:`, cell.outerHTML);
+                // console.log(`Ячейка ${index}:`, cell.outerHTML);
             });
             return;
         }
         
-        console.log('Найдена ячейка бригады:', brigadeCell);
+        // console.log('Найдена ячейка бригады:', brigadeCell);
 
         try {
             // Функция для сокращения ФИО

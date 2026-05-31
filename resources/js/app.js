@@ -5,5 +5,5 @@ import JSZip from 'jszip';
 window.JSZip = JSZip;
 
 // Отладочный код
-console.log('JSZip загружен:', typeof JSZip);
-console.log('window.JSZip:', window.JSZip);
+// console.log('JSZip загружен:', typeof JSZip);
+// console.log('window.JSZip:', window.JSZip);

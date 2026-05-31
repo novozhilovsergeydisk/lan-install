@@ -28,11 +28,11 @@
         // ГЕОКОДИРОВАНИЕ АДРЕСА ПОСЛЕ ЗАГРУЗКИ БИБЛИОТЕКИ
         ymaps.geocode("Петрозаводск").then(
             function(res) {
-                console.log('Координаты объекта:', res.geoObjects.get(0).geometry.getCoordinates());
+                // console.log('Координаты объекта:', res.geoObjects.get(0).geometry.getCoordinates());
                 alert('Координаты объекта:' + res.geoObjects.get(0).geometry.getCoordinates().join(', '));
             },
             function(err) {
-                console.log('Ошибка геокодирования: ' + err.message);
+                // console.log('Ошибка геокодирования: ' + err.message);
             }
         );
     });
