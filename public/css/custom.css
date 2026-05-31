@@ -88,6 +88,24 @@
     width: 2%;
 }
 
+#requestsPlanningTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #212529 !important; /* bg-dark color */
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+}
+
+.mass-actions-group {
+    flex-wrap: nowrap;
+}
+
+.mass-actions-group .btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
 /* Стили столбцов для таблицы планирования */
 #requestsPlanningTable tr td:nth-child(1) {
     width: 4%;

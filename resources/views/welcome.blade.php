@@ -1602,20 +1602,23 @@
         <button type="button" class="btn btn-success" id="upload-requests-button">
             <i class="bi bi-upload me-1"></i>Загрузить заявки
         </button>
-        <button type="button" class="btn btn-outline-primary btn-sm" id="btn-mass-assign-team-planning" disabled>
-            <i class="bi bi-people me-1"></i>Назначить бригаду
-        </button>
-        @if(auth()->user()->isAdmin)
-        <button type="button" class="btn btn-outline-danger btn-sm" id="btn-mass-delete-planning" disabled>
-            <i class="bi bi-trash me-1"></i>Удалить
-        </button>
-        <button type="button" class="btn btn-outline-primary btn-sm" id="btn-mass-in-work-planning" disabled>
-            <i class="bi bi-pencil-square me-1"></i>В работу
-        </button>
-        <button type="button" class="btn btn-outline-info btn-sm" id="btn-mass-change-subtype-planning" disabled>
-            <i class="bi bi-folder-symlink me-1"></i>Тип планирования
-        </button>
-        @endif
+
+        <div class="mass-actions-group d-flex gap-1 align-items-center">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-mass-assign-team-planning" disabled>
+                <i class="bi bi-people me-1"></i>Назначить бригаду
+            </button>
+            @if(auth()->user()->isAdmin)
+            <button type="button" class="btn btn-outline-danger btn-sm" id="btn-mass-delete-planning" disabled>
+                <i class="bi bi-trash me-1"></i>Удалить
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-mass-in-work-planning" disabled>
+                <i class="bi bi-pencil-square me-1"></i>В работу
+            </button>
+            <button type="button" class="btn btn-outline-info btn-sm" id="btn-mass-change-subtype-planning" disabled>
+                <i class="bi bi-folder-symlink me-1"></i>Тип планирования
+            </button>
+            @endif
+        </div>
     </div>
 
     <div id="planning-map-content" class="hide-me mb-3" style="height: 800px; width: 100%;">

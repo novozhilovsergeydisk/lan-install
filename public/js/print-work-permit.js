@@ -72,8 +72,17 @@ document.addEventListener('change', function(event) {
             const isChecked = event.target.checked;
             document.querySelectorAll('#requestsTable .request-checkbox').forEach(cb => {
                 cb.checked = isChecked;
-                // No need to dispatch change recursively if we handle it here, but let's be safe
             });
+        }
+
+        // Sync individual checkboxes with "Select All" for Planning
+        if (event.target.classList.contains('request-checkbox') && event.target.closest('#requestsPlanningTable')) {
+            const total = document.querySelectorAll('#requestsPlanningTable .request-checkbox').length;
+            const checked = document.querySelectorAll('#requestsPlanningTable .request-checkbox:checked').length;
+            const selectAll = document.getElementById('selectAllRequestsPlanning');
+            if (selectAll) {
+                selectAll.checked = (total > 0 && total === checked);
+            }
         }
 
         setTimeout(updatePrintButtonVisibility, 0); 
