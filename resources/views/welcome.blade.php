@@ -1582,8 +1582,8 @@
                     <div id="planning" class="tab-pane fade" role="tabpanel">
                         <h4>Список запланированных заявок</h4>
 
-    @if($user->isAdmin)
-    <div id="planning-content" class="mb-3 d-flex flex-column flex-md-row justify-content-md-end align-items-md-center flex-wrap gap-2">
+    <div class="planning-sticky-toolbar">
+        <div id="planning-content" class="mb-3 d-flex flex-column flex-md-row justify-content-md-start align-items-md-center flex-wrap gap-2">
         <select class="form-select w-auto" id="planningSubtypeFilter">
             <option value="">Все планирования</option>
             @foreach($request_subtypes as $subtype)
@@ -1596,12 +1596,14 @@
         <button type="button" class="btn btn-outline-secondary" id="btn-open-planning-map">
             <i class="bi bi-map me-1"></i>На карте
         </button>
+        @if(auth()->user()->isAdmin)
         <button type="button" class="btn btn-primary" id="new-planning-request-button" data-bs-toggle="modal" data-bs-target="#newPlanningRequestModal">
             <i class="bi bi-plus-circle me-1"></i>Новая заявка
         </button>
         <button type="button" class="btn btn-success" id="upload-requests-button">
             <i class="bi bi-upload me-1"></i>Загрузить заявки
         </button>
+        @endif
 
         <div class="mass-actions-group d-flex gap-1 align-items-center">
             <button type="button" class="btn btn-outline-primary btn-sm" id="btn-mass-assign-team-planning" disabled>
@@ -1620,6 +1622,7 @@
             @endif
         </div>
     </div>
+</div>
 
     <div id="planning-map-content" class="hide-me mb-3" style="height: 800px; width: 100%;">
         <div id="planning-map" style="width: 100%; height: 100%;"></div>
@@ -1655,7 +1658,6 @@
                                 </tbody>
                             </table>
                         </div>
-                         @endif
                     </div>
 
                     @if($user->isAdmin)
@@ -5716,5 +5718,6 @@
         }
     });
 </script>
+    <script src="{{ asset('js/sticky-fix.js') }}?v={{ time() }}"></script>
 </body>
 </html>

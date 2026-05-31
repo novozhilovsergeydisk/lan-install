@@ -88,12 +88,76 @@
     width: 2%;
 }
 
+/* Базовые стили для панели планирования (фиксация будет через JS класс .is-sticky) */
+.planning-sticky-toolbar {
+    background-color: var(--bs-body-bg);
+    padding: 1rem 0;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+#planning-content {
+    background-color: var(--bs-body-bg);
+    padding: 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.planning-sticky-toolbar.is-sticky {
+    position: fixed !important;
+    top: 0 !important; /* Впритык к верхней кромке */
+    left: 12px !important; /* Стандартный отступ контента в приложении */
+    right: 12px !important;
+    width: calc(100% - 24px) !important;
+    z-index: 2000 !important; /* Выше всего, включая навбар */
+    padding: 0.5rem 0 !important;
+    margin: 0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    background-color: var(--bs-body-bg);
+    border-radius: 0 0 0.5rem 0.5rem !important;
+}
+
+.planning-sticky-toolbar.is-sticky #planning-content {
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+}
+
+@media (max-width: 767.98px) {
+    .planning-sticky-toolbar.is-sticky {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        border-radius: 0 !important;
+    }
+}
+
+/* Фон для темной темы */
+[data-bs-theme="dark"] .planning-sticky-toolbar,
+[data-bs-theme="dark"] #planning-content {
+    background-color: #2b3035 !important;
+}
+
 #requestsPlanningTable thead th {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: #212529 !important; /* bg-dark color */
-    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+    background-color: #212529 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#requestsPlanningTable thead th.is-sticky {
+    position: fixed !important;
+    top: 135px !important; /* Навбар + Тулбар */
+    z-index: 1050 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 767.98px) {
+    #planning-content {
+        padding: 0.75rem;
+    }
 }
 
 .mass-actions-group {

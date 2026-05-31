@@ -1276,7 +1276,8 @@
                         <h4>Список запланированных заявок</h4>
 
     @if($user->isAdmin)
-    <div id="planning-content" class="mb-3 d-flex flex-column flex-md-row justify-content-md-end align-items-md-center flex-wrap gap-2">
+    <div class="planning-sticky-toolbar">
+        <div id="planning-content" class="mb-3 d-flex flex-column flex-md-row justify-content-md-start align-items-md-center flex-wrap gap-2">
         <select class="form-select w-auto" id="planningSubtypeFilter">
             <option value="">Все планирования</option>
             @foreach($request_subtypes as $subtype)
@@ -1313,6 +1314,7 @@
             @endif
         </div>
     </div>
+</div>
 
     <div id="planning-map-content" class="hide-me mb-3" style="height: 800px; width: 100%;">
         <div id="planning-map" style="width: 100%; height: 100%;"></div>
