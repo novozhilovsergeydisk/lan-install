@@ -147,8 +147,7 @@
 }
 
 #requestsPlanningTable thead th.is-sticky {
-    position: fixed !important;
-    top: 135px !important; /* Навбар + Тулбар */
+    position: sticky !important;
     z-index: 1050 !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
