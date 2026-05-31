@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Функция для сортировки строк
     function sortTable(sortType) {
-        // console.log('[table-sort] sortTable called', { sortType });
+        console.log('[table-sort] sortTable called', { sortType });
 
         const table = document.getElementById('requestsTable');
         if (!table) {
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const rows = Array.from(tbody.querySelectorAll('tr[data-request-id]'));
-        // console.log('[table-sort] rows found', rows.length);
+        console.log('[table-sort] rows found', rows.length);
 
         // Устанавливаем текущий тип сортировки
         window.currentSortType = sortType;
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
         sortDirections[sortType] = !sortDirections[sortType];
         const sortAscending = sortDirections[sortType];
         window.currentSortAscending = sortAscending;
-        // console.log('[table-sort] sort direction', { sortType, sortAscending });
+        console.log('[table-sort] sort direction', { sortType, sortAscending });
 
         // Используем общую функцию сортировки
         sortTableWithDirection(sortType, sortAscending);
@@ -41,16 +41,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // Функция для применения текущей сортировки (для вызова извне)
     window.applyCurrentSort = function() {
         if (window.currentSortType) {
-            // console.log('[table-sort] applying current sort', { type: window.currentSortType, ascending: window.currentSortAscending });
+            console.log('[table-sort] applying current sort', { type: window.currentSortType, ascending: window.currentSortAscending });
             sortTableWithDirection(window.currentSortType, window.currentSortAscending);
         } else {
-            // console.log('[table-sort] no current sort type set');
+            console.log('[table-sort] no current sort type set');
         }
     };
 
     // Функция для сортировки с заданным направлением (без переключения)
     function sortTableWithDirection(sortType, sortAscending) {
-        // console.log('[table-sort] sortTableWithDirection called', { sortType, sortAscending });
+        console.log('[table-sort] sortTableWithDirection called', { sortType, sortAscending });
 
         const table = document.getElementById('requestsTable');
         if (!table) {
@@ -65,11 +65,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const rows = Array.from(tbody.querySelectorAll('tr[data-request-id]'));
-        // console.log('[table-sort] rows found', rows.length);
+        console.log('[table-sort] rows found', rows.length);
 
         // Отладка: проверим атрибуты первых нескольких строк
         if (rows.length > 0) {
-            // console.log('[table-sort] sample row attributes:', {
+            console.log('[table-sort] sample row attributes:', {
                 row1: {
                     id: rows[0].getAttribute('data-request-id'),
                     statusName: rows[0].dataset.statusName,
@@ -94,13 +94,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Сортировка по номеру заявки (из data-request-number)
                 aVal = a.getAttribute('data-request-number') || '';
                 bVal = b.getAttribute('data-request-number') || '';
-                // console.log('[table-sort] number values', { aVal, bVal });
+                console.log('[table-sort] number values', { aVal, bVal });
                 return sortAscending ? aVal.localeCompare(bVal, 'ru') : bVal.localeCompare(aVal, 'ru');
             } else if (sortType === 'address') {
                 // Сортировка по адресу (из data-address)
                 aVal = a.getAttribute('data-address') || '';
                 bVal = b.getAttribute('data-address') || '';
-                // console.log('[table-sort] address values', { aVal, bVal });
+                console.log('[table-sort] address values', { aVal, bVal });
                 return sortAscending ? aVal.localeCompare(bVal, 'ru') : bVal.localeCompare(aVal, 'ru');
             } else if (sortType === 'organization') {
                 // Сортировка по организации (из col-address__organization)
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Отладка значений статусов
                 if (aVal === '' || bVal === '') {
-                    // console.log('[table-sort] status sort debug:', {
+                    console.log('[table-sort] status sort debug:', {
                         aId: a.getAttribute('data-request-id'),
                         aStatusName: a.dataset.statusName,
                         aRequestStatus: a.dataset.requestStatus,
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Отладка индексов
                 if (aIndex === -1 || bIndex === -1) {
-                    // console.log('[table-sort] status sort index debug:', {
+                    console.log('[table-sort] status sort index debug:', {
                         aVal: aVal, aIndex: aIndex,
                         bVal: bVal, bIndex: bIndex,
                         statusOrder: statusOrder
@@ -154,10 +154,10 @@ document.addEventListener('DOMContentLoaded', function () {
             return 0;
         });
 
-        // console.log('[table-sort] rows sorted, re-appending');
+        console.log('[table-sort] rows sorted, re-appending');
         // Re-append rows in new order
         rows.forEach(row => tbody.appendChild(row));
-        // console.log('[table-sort] sorting completed');
+        console.log('[table-sort] sorting completed');
     }
 
     // Обработчик для основной таблицы
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             e.stopPropagation();
             const sortType = e.target.getAttribute('data-sort');
-            // console.log('[table-sort] dropdown item clicked', sortType);
+            console.log('[table-sort] dropdown item clicked', sortType);
             sortTable(sortType);
         }
     });

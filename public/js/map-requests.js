@@ -39,7 +39,7 @@ function setupMapControls() {
         const newBtn = btnOpenMap.cloneNode(true);
         btnOpenMap.parentNode.replaceChild(newBtn, btnOpenMap);
         
-        // console.log('Map button replaced to remove old handlers.');
+        console.log('Map button replaced to remove old handlers.');
 
         newBtn.addEventListener('click', () => {
             const mapContent = document.getElementById('map-content');
@@ -138,7 +138,7 @@ async function loadAndDrawRequests() {
         dateStr = new Date().toISOString().split('T')[0];
     }
 
-    // console.log('Loading requests for map. Date:', dateStr);
+    console.log('Loading requests for map. Date:', dateStr);
 
     const includePlanning = document.getElementById('cb-show-planning')?.checked || false;
 
@@ -150,7 +150,7 @@ async function loadAndDrawRequests() {
             try {
                 const requests = JSON.parse(localData);
                 if (Array.isArray(requests) && requests.length > 0) {
-                    // console.log('Loaded requests from localStorage for map:', requests.length);
+                    console.log('Loaded requests from localStorage for map:', requests.length);
                     drawRequests(map, requests);
                     return; // Успешно загрузили из кэша, запрос не нужен
                 }
@@ -171,7 +171,7 @@ async function loadAndDrawRequests() {
         const data = await response.json();
 
         if (data.success && Array.isArray(data.data)) {
-            // console.log('Loaded requests from API:', data.data.length);
+            console.log('Loaded requests from API:', data.data.length);
             drawRequests(map, data.data);
         }
     } catch (e) {

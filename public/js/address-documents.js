@@ -4,7 +4,7 @@ import { showAlert, postData, fetchData, getElement, getValue, validateRequiredF
 
 // Функция инициализации обработчиков документов адресов
 export function initAddressDocumentHandlers() {
-    // console.log('Инициализация обработчиков документов адресов');
+    console.log('Инициализация обработчиков документов адресов');
 
     // Обработчик загрузки документов при создании адреса
     initAddressDocumentUpload();
@@ -27,7 +27,7 @@ function initAddressDocumentUpload() {
     documentInput.addEventListener('change', function(e) {
         const files = e.target.files;
         if (files.length > 0) {
-            // console.log('Выбраны файлы для загрузки:', files.length);
+            console.log('Выбраны файлы для загрузки:', files.length);
             // Можно добавить валидацию файлов здесь
         }
     });
@@ -51,7 +51,7 @@ function initEditAddressDocumentUpload() {
         }
 
         if (files.length > 0) {
-            // console.log('Выбраны файлы для загрузки к адресу:', addressId, files.length);
+            console.log('Выбраны файлы для загрузки к адресу:', addressId, files.length);
             uploadAddressDocuments(addressId, files);
         }
     });
@@ -103,7 +103,7 @@ async function uploadAddressDocuments(addressId, files) {
 
 // Функция загрузки и отображения документов адреса
 async function loadAddressDocuments(addressId) {
-    // console.log('Loading documents for address:', addressId);
+    console.log('Loading documents for address:', addressId);
     try {
         const response = await fetch(`/api/address-documents/address/${addressId}`, {
             method: 'GET',
@@ -113,9 +113,9 @@ async function loadAddressDocuments(addressId) {
             }
         });
 
-        // console.log('Response status:', response.status);
+        console.log('Response status:', response.status);
         const data = await response.json();
-        // console.log('Response data:', data);
+        console.log('Response data:', data);
 
         if (data.success) {
             displayAddressDocuments(data.documents);
@@ -129,7 +129,7 @@ async function loadAddressDocuments(addressId) {
 
 // Функция отображения документов в модальном окне
 function displayAddressDocuments(documents) {
-    // console.log('Displaying documents:', documents);
+    console.log('Displaying documents:', documents);
     const container = document.getElementById('addressDocumentsList');
 
     if (!container) {
@@ -160,7 +160,7 @@ function displayAddressDocuments(documents) {
     `;}).join('');
 
     container.innerHTML = html;
-    // console.log('HTML set to container');
+    console.log('HTML set to container');
 }
 
 // Обработчик отображения документов при открытии модального окна редактирования

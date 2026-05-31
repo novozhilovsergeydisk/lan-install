@@ -643,7 +643,7 @@ export async function loadReport(changePage = 0) {
         url = '/reports/requests/by-employee-address-date';
     }
     
-    // console.log('Request URL:', url);
+    console.log('Request URL:', url);
 
     // Формируем данные для запроса
     const requestData = {
@@ -670,7 +670,7 @@ export async function loadReport(changePage = 0) {
         requestData.requestTypeId = requestTypeSelectValue;
     }
     
-    // console.log('Данные для запроса:', requestData);
+    console.log('Данные для запроса:', requestData);
 
     isLoading = true;
     updatePaginationControls(0, 0); // Disable controls while loading
@@ -692,7 +692,7 @@ export async function loadReport(changePage = 0) {
     const result = await postData(url, requestData);
     isLoading = false;
 
-    // console.log('Result:', result);
+    console.log('Result:', result);
     // console.log('Brigade Members:', result.brigadeMembersWithDetails);
 
     if (result.success) {
@@ -804,7 +804,7 @@ function shortenName(fullName) {
  * @param {Array} data - Array of request objects
  */
 export function renderReportTable(data) {
-    // console.log('Полученные данные в data:', data);
+    console.log('Полученные данные в data:', data);
     const exportBtn = document.getElementById('export-report-btn');
 
     // Нужно сохранить данные в localStorage
@@ -903,7 +903,7 @@ export function renderReportTable(data) {
         if (request.brigade_id) {
             // Find brigade members for this request
             const brigadeGroup = brigadeMembers.filter(m => m.brigade_id == request.brigade_id);
-            // console.log('Brigade group for request', request.id, ':', brigadeGroup);
+            console.log('Brigade group for request', request.id, ':', brigadeGroup);
 
             if (brigadeGroup.length > 0) {
                 const brigade = brigadeGroup[0];
@@ -1119,7 +1119,7 @@ function handleViewRequest(event) {
     
     // Здесь можно добавить логику для открытия модального окна с деталями заявки
     // Например, можно сделать запрос к API для получения полной информации о заявке
-    // console.log('Просмотр заявки с ID:', requestId);
+    console.log('Просмотр заявки с ID:', requestId);
     
     // Пример открытия модального окна (если оно есть на странице)
     const modal = new bootstrap.Modal(document.getElementById('requestDetailsModal'));
@@ -1163,7 +1163,7 @@ export async function initReportHandlers() {
         if (allPeriodCheckbox) {
             allPeriodCheckbox.addEventListener('change', () => {
                 if (allPeriodCheckbox.checked) {
-                  // console.log('All period checkbox is checked');
+                  console.log('All period checkbox is checked');
 
                   // Сбрасываем выбор адреса на "Все адреса"
                   if (addressSelect) {
@@ -1189,7 +1189,7 @@ export async function initReportHandlers() {
                     //   }
                   }
                 } else {
-                  // console.log('All period checkbox is not checked');
+                  console.log('All period checkbox is not checked');
                 }
             });
         }
@@ -1197,7 +1197,7 @@ export async function initReportHandlers() {
         if (employeeSelect) {
             employeeSelect.addEventListener('change', () => {
                 const selectedEmployeeId = employeeSelect.value;
-                // console.log('Selected employee ID:', selectedEmployeeId);
+                console.log('Selected employee ID:', selectedEmployeeId);
                 
                 // Сбрасываем выбор адреса на "Все адреса"
                 if (addressSelect) {
@@ -1221,7 +1221,7 @@ export async function initReportHandlers() {
         if (addressSelect) {
             addressSelect.addEventListener('change', () => {
                 const selectedAddressId = addressSelect.value;
-                // console.log('Selected address ID:', selectedAddressId);
+                console.log('Selected address ID:', selectedAddressId);
                 
                 // Сбрасываем выбор сотрудника на "Все сотрудники"
                 if (employeeSelect) {
@@ -1249,7 +1249,7 @@ export async function initReportHandlers() {
         if (organizationSelect) {
             organizationSelect.addEventListener('change', () => {
                 const selectedOrganization = organizationSelect.value;
-                // console.log('Selected organization:', selectedOrganization);
+                console.log('Selected organization:', selectedOrganization);
 
                 // Сбрасываем чекбокс "За весь период"
                 if (allPeriodCheckbox) {
@@ -1261,7 +1261,7 @@ export async function initReportHandlers() {
         if (requestTypeSelect) {
             requestTypeSelect.addEventListener('change', () => {
                 const selectedRequestTypeId = requestTypeSelect.value;
-                // console.log('Selected request type ID:', selectedRequestTypeId);
+                console.log('Selected request type ID:', selectedRequestTypeId);
 
                 // Сбрасываем чекбокс "За весь период"
                 if (allPeriodCheckbox) {

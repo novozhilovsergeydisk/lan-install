@@ -4,7 +4,7 @@
 
 // Функция-заглушка на случай ошибки импорта
 let showAlert = function(message, type = 'success') {
-    // console.log(`[Alert ${type}]: ${message}`);
+    console.log(`[Alert ${type}]: ${message}`);
     alert(`[${type.toUpperCase()}] ${message}`);
 };
 
@@ -16,7 +16,7 @@ import('./utils.js')
     })
     .catch(error => {
         console.error('Ошибка при загрузке utils.js:', error);
-        // console.log('Используется заглушка для showAlert');
+        console.log('Используется заглушка для showAlert');
     });
 
 /**
@@ -113,7 +113,7 @@ export function initAdditionalTaskModal() {
                     // 2. Заполняем данные формы
                     if (requestData && requestData.success && requestData.data) {
                         const request = requestData.data;
-                        // console.log('Объект request:', request);
+                        console.log('Объект request:', request);
                         
                         document.getElementById('additionalClientName').value = request.client_fio || '';
                         document.getElementById('additionalClientPhone').value = request.client_phone || '';
@@ -197,14 +197,14 @@ export function initAdditionalTaskModal() {
             }
 
             if (errors.length > 0) {
-                // console.log('Ошибки валидации:', errors);
+                console.log('Ошибки валидации:', errors);
                 showAlert('Пожалуйста, исправьте следующие ошибки:\n' + errors.join('\n'), 'warning');
                 return;
             }
 
             // Выводим входные данные формы в консоль
-            // console.log('Входные данные формы дополнительного задания:', data);
-            // console.log('Request ID:', data.request_id);
+            console.log('Входные данные формы дополнительного задания:', data);
+            console.log('Request ID:', data.request_id);
 
             // Блокируем кнопку перед отправкой
             submitBtn.disabled = true;
@@ -256,7 +256,7 @@ export function initAdditionalTaskModal() {
  * Инициализирует модальное окно для загрузки фотоотчета
  */
  export function initPhotoReportModal() {
-    // console.log('Инициализация модального окна для фотоотчетов');
+    console.log('Инициализация модального окна для фотоотчетов');
     const photoModal = document.getElementById('addPhotoModal');
     // console.log('Найдено модальное окно:', !!photoModal);
     if (!photoModal) {
@@ -271,7 +271,7 @@ export function initAdditionalTaskModal() {
     function syncInputFiles() {
         const fileInput = photoModal.querySelector('#photoUpload');
 
-        // console.log('Вызов syncInputFiles()', selectedFiles);
+        console.log('Вызов syncInputFiles()', selectedFiles);
 
         if (!fileInput) return;
         const dt = new DataTransfer();
@@ -389,7 +389,7 @@ export function initAdditionalTaskModal() {
         photoInput.addEventListener('change', function(e) {
             // Обновляем локальное состояние и синхронизируем input
             selectedFiles = Array.from(e.target.files || []);
-            // console.log('selectedFiles 2', selectedFiles);
+            console.log('selectedFiles 2', selectedFiles);
             syncInputFiles();
             
             // Показываем контейнер превью, если есть выбранные файлы
@@ -442,7 +442,7 @@ export function initAdditionalTaskModal() {
 
             // return;
 
-            // console.log('Событие submit формы обработано');
+            console.log('Событие submit формы обработано');
             
             const formData = new FormData(this);
             const requestId = formData.get('request_id');
@@ -457,16 +457,16 @@ export function initAdditionalTaskModal() {
             // Диагностика: что у нас сейчас выбрано и что уйдет на сервер
             try {
                 console.group('Фотоотчет: диагностика перед отправкой');
-                // console.log('request_id:', requestId);
+                console.log('request_id:', requestId);
                 if (fileInput) {
-                    // console.log('fileInput.files.length:', fileInput.files.length);
+                    console.log('fileInput.files.length:', fileInput.files.length);
                     Array.from(fileInput.files).forEach((f, i) => {
-                        // console.log(`fileInput.files[${i}] -> name: ${f.name}, size: ${f.size}, type: ${f.type}`);
+                        console.log(`fileInput.files[${i}] -> name: ${f.name}, size: ${f.size}, type: ${f.type}`);
                     });
                 }
                 if (previewContainer) {
                     const previews = previewContainer.querySelectorAll('.card-img-top');
-                    // console.log('previews count (в контейнере предпросмотра):', previews.length);
+                    console.log('previews count (в контейнере предпросмотра):', previews.length);
                 }
                 // Выводим содержимое FormData
                 const fdEntries = [];
@@ -477,9 +477,9 @@ export function initAdditionalTaskModal() {
                         fdEntries.push({ key, value });
                     }
                 }
-                // console.log('FormData entries:', fdEntries);
+                console.log('FormData entries:', fdEntries);
                 // Частое заблуждение: удаление превью не удаляет файл из input.files
-                // console.info('Note: удаление превью сейчас не влияет на input.files. Если здесь файлов больше, чем превью, причина в этом.');
+                console.info('Note: удаление превью сейчас не влияет на input.files. Если здесь файлов больше, чем превью, причина в этом.');
                 console.groupEnd();
             } catch (e) {
                 console.warn('Ошибка диагностического логирования:', e);
@@ -508,7 +508,7 @@ export function initAdditionalTaskModal() {
                 submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Отправка...';
             }
 
-            // console.log('Форма отправки фотоотчета formData (modals.js)', formData);
+            console.log('Форма отправки фотоотчета formData (modals.js)', formData);
 
             try {
                 // Отправка данных на сервер
@@ -535,9 +535,9 @@ export function initAdditionalTaskModal() {
                     window.updateRequestsTable();
                 }
 
-                // console.log('data фотоотчета = ', data);
+                console.log('data фотоотчета = ', data);
                 const photos = data.data.photos;
-                // console.log('photos = ', photos);
+                console.log('photos = ', photos);
 
                 const dataSession = sessionStorage.getItem('data');
                 const dataSessionJson = JSON.parse(dataSession);
@@ -550,12 +550,12 @@ export function initAdditionalTaskModal() {
                 if (dataSessionJson['sessionId'] === sessionStorage.getItem('sessionId') && sessionStorage.getItem('sessionId') !== null) {  
                     // console.log('|---------------------------------');
                     // console.log('|----- В [dataSession] записаны данные', dataSessionJson);
-                    // console.log('|---------------------------------');
-                    // console.log('|----- Записываем фотоотчет для комментария');
-                    // console.log('|----- commentId = ', dataSessionJson.commentId);
-                    // console.log('|----- files = ', fileInput.files);
-                    // console.log('|----- sessionId = ', dataSessionJson.sessionId);
-                    // console.log('|---------------------------------');
+                    console.log('|---------------------------------');
+                    console.log('|----- Записываем фотоотчет для комментария');
+                    console.log('|----- commentId = ', dataSessionJson.commentId);
+                    console.log('|----- files = ', fileInput.files);
+                    console.log('|----- sessionId = ', dataSessionJson.sessionId);
+                    console.log('|---------------------------------');
                     // Здесь будет запрос к таблице comments_photos для записи фотоотчета
                     
                     // Создаем FormData для отправки файлов
@@ -565,18 +565,18 @@ export function initAdditionalTaskModal() {
 
                     // Добавляем ID фотографий
                     if (photos && photos.length > 0) {
-                        // console.log('Добавляем ID фотографий в formData:');
+                        console.log('Добавляем ID фотографий в formData:');
                         const photoIds = photos.map(photo => photo.id);
                         formData.append('photo_ids', JSON.stringify(photoIds));
-                        // console.log('ID фотографий для отправки:', photoIds);
+                        console.log('ID фотографий для отправки:', photoIds);
                     } else {
                         console.warn('Нет фотографий для отправки');
                     }
 
                     // Выводим содержимое formData в читаемом виде
-                    // console.log('Содержимое formData:');
+                    console.log('Содержимое formData:');
                     for (let [key, value] of formData.entries()) {
-                        // console.log(key, value);
+                        console.log(key, value);
                     }
 
                     // return;
@@ -591,7 +591,7 @@ export function initAdditionalTaskModal() {
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // console.log('Ответ сервера:', data);
+                        console.log('Ответ сервера:', data);
                         
                         // if (data.success && data.data && data.data.photos) {
                         //     // Получаем массив ID загруженных фотографий
@@ -613,7 +613,7 @@ export function initAdditionalTaskModal() {
                     });
                 }
 
-                // console.log('data фотоотчета для комментария = ', data);
+                console.log('data фотоотчета для комментария = ', data);
                 
                 return data;
             } catch (error) {

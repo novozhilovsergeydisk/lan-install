@@ -49,7 +49,7 @@
             || (window.App.user.isUser && 'user')
             || 'guest';
 
-        // console.log('Current role:', window.App.role);
+        console.log('Current role:', window.App.role);
     </script>
     
     <!-- Bootstrap Load Check -->

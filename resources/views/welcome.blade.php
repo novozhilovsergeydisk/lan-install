@@ -156,7 +156,7 @@
             || 'guest';
 
         // console.log(window.App);
-        // console.log('Current role:', window.App.role);
+        console.log('Current role:', window.App.role);
     </script>
 
     <!-- Проверка загрузки Bootstrap -->
@@ -2047,7 +2047,7 @@
     const requestsData = @json($requests);
     const brigadeMembersCurrentDayData = @json($brigadeMembersCurrentDay);
 
-    // console.log('brigadeMembersCurrentDayData ###', brigadeMembersCurrentDayData);
+    console.log('brigadeMembersCurrentDayData ###', brigadeMembersCurrentDayData);
     
     // Вычисляем размер данных в байтах
     const requestsDataSize = new Blob([JSON.stringify(requestsData)]).size;
@@ -2064,24 +2064,24 @@
     }
     
     // Выводим информацию о размере данных
-    // console.log('=== Размеры данных для сохранения ===');
-    // console.log(`Данные заявок: ${requestsData.length} записей, размер: ${formatSize(requestsDataSize)}`);
-    // console.log(`Данные бригадиров: ${brigadeMembersCurrentDayData.length} записей, размер: ${formatSize(brigadeMembersCurrentDayDataSize)}`);
-    // console.log(`Общий размер: ${formatSize(totalSize)}`);
+    console.log('=== Размеры данных для сохранения ===');
+    console.log(`Данные заявок: ${requestsData.length} записей, размер: ${formatSize(requestsDataSize)}`);
+    console.log(`Данные бригадиров: ${brigadeMembersCurrentDayData.length} записей, размер: ${formatSize(brigadeMembersCurrentDayDataSize)}`);
+    console.log(`Общий размер: ${formatSize(totalSize)}`);
     
     // Проверяем лимит localStorage (обычно 5-10 МБ)
     const localStorageLimit = 5 * 1024 * 1024; // 5 МБ
     if (totalSize > localStorageLimit * 0.9) {
         console.warn(`⚠️ Внимание: общий размер данных (${formatSize(totalSize)}) близок к лимиту localStorage (${formatSize(localStorageLimit)})`);
     } else {
-        // console.log(`✅ Размер данных (${formatSize(totalSize)}) в пределах допустимого лимита`);
+        console.log(`✅ Размер данных (${formatSize(totalSize)}) в пределах допустимого лимита`);
     }
     
     // Сохраняем данные
     try {
         localStorage.setItem('requestsData', JSON.stringify(requestsData));
         localStorage.setItem('brigadeMembersCurrentDayData', JSON.stringify(brigadeMembersCurrentDayData));
-        // console.log('✅ Данные успешно сохранены в localStorage', JSON.parse(localStorage.getItem('requestsData')));
+        console.log('✅ Данные успешно сохранены в localStorage', JSON.parse(localStorage.getItem('requestsData')));
     } catch (e) {
         console.error('❌ Ошибка при сохранении данных в localStorage:', e);
     }
@@ -2091,7 +2091,7 @@
     if (savedBrigadesData) {
         try {
             const parsedData = JSON.parse(savedBrigadesData);
-            // console.log('Проверка сохраненных данных бригадиров:', {
+            console.log('Проверка сохраненных данных бригадиров:', {
                 count: parsedData.length,
                 firstItem: parsedData[0],
                 lastItem: parsedData[parsedData.length - 1]
@@ -2255,7 +2255,7 @@
                 const address = document.getElementById(`request-${requestId}`).getAttribute('data-address');
                 const number = document.getElementById(`request-${requestId}`).getAttribute('data-request-number');
 
-                // console.log({ requestId, address, number });
+                console.log({ requestId, address, number });
 
                 // Устанавливаем номер заявки в заголовок
                 const requestRow = button.closest('tr');
@@ -2274,7 +2274,7 @@
             const errorMessage = commentField.nextElementSibling; // Блок с сообщением об ошибке
             let isValid = true;
             
-            // console.log('Валидация формы. Текст комментария:', commentField.value);
+            console.log('Валидация формы. Текст комментария:', commentField.value);
             
             // Сбрасываем предыдущие состояния валидации
             commentField.classList.remove('is-invalid');
@@ -2284,7 +2284,7 @@
             
             // Проверяем поле комментария
             if (!commentField.value.trim()) {
-                // console.log('Ошибка валидации: поле комментария пустое');
+                console.log('Ошибка валидации: поле комментария пустое');
                 commentField.classList.add('is-invalid');
                 if (errorMessage) {
                     errorMessage.classList.remove('d-none');
@@ -2298,15 +2298,15 @@
         // Обработка отправки формы комментария
         const commentForm = document.getElementById('addCommentForm');
         if (commentForm) {
-            // console.log('Форма комментария найдена, добавляем обработчик submit');
+            console.log('Форма комментария найдена, добавляем обработчик submit');
             
             commentForm.addEventListener('submit', function (e) {
-                // console.log('Отправка формы комментария');
+                console.log('Отправка формы комментария');
                 e.preventDefault();
                 
                 // Валидируем форму
                 if (!validateCommentForm()) {
-                    // console.log('Валидация не пройдена');
+                    console.log('Валидация не пройдена');
                     // Прокручиваем к первой ошибке
                     const firstError = this.querySelector('.is-invalid');
                     if (firstError) {
@@ -2334,15 +2334,15 @@
                     return false;
                 }
                 
-                // console.log('Валидация пройдена, продолжаем отправку');
+                console.log('Валидация пройдена, продолжаем отправку');
 
             // Инициализируем FormData - файлы уже включены автоматически
             const formData = new FormData(this);
                 const requestId = formData.get('request_id');
 
-                // console.log('Отправляемые данные:');
+                console.log('Отправляемые данные:');
                 for (let [key, value] of formData.entries()) {
-                    // console.log(key, value);
+                    console.log(key, value);
                 }
 
                 // Получаем элементы формы
@@ -2362,7 +2362,7 @@
                 submitButton.disabled = true;
                 submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Отправка...';
                 
-                // console.log('----------- end ----------');
+                console.log('----------- end ----------');
                 
                 // Функция для разблокировки формы
                 const unlockForm = () => {
@@ -2465,7 +2465,7 @@
                             const data = JSON.parse(xhr.responseText);
                             if (data.success) {
                                 formSubmitted = true;
-                                // console.log('Ответ от сервера', data);
+                                console.log('Ответ от сервера', data);
 
                                 // Очищаем поле ввода комментария
                                 const commentTextarea = commentForm.querySelector('textarea[name="comment"]');
@@ -2487,8 +2487,8 @@
                                 sessionStorage.setItem('commentId', data.commentId);
                                 sessionStorage.setItem('data', JSON.stringify({commentId: data.commentId, sessionId: sessionStorage.getItem('sessionId')}));
                                 
-                                // console.log('Комментарий успешно добавлен', data.commentId);
-                                // console.log('------------ END ------------');
+                                console.log('Комментарий успешно добавлен', data.commentId);
+                                console.log('------------ END ------------');
 
                                 // Полностью очищаем форму
                                 commentForm.reset();
@@ -2620,7 +2620,7 @@
                         }
                         
                         html += '<div id="commentUpdateContainer" class="list-group list-group-flush">';
-                        // console.log('Количество комментариев:', comments.length);
+                        console.log('Количество комментариев:', comments.length);
 
                         comments.forEach((comment, index) => {
                             const date = new Date(comment.created_at);
@@ -3766,7 +3766,7 @@
             let visibleRowsCount = 0;
 
             const isUnassignedFilterChecked = unassignedBrigadesFilter && unassignedBrigadesFilter.classList.contains('active');
-            // console.log('applyFilters: isUnassignedFilterChecked =', isUnassignedFilterChecked);
+            console.log('applyFilters: isUnassignedFilterChecked =', isUnassignedFilterChecked);
             const selectedEmployeeValue = employeeFilter ? employeeFilter.value : '';
             const selectedOption = employeeFilter ? employeeFilter.options[employeeFilter.selectedIndex] : null;
             const selectedFio = selectedOption ? selectedOption.getAttribute('data-fio') : '';
@@ -3812,7 +3812,7 @@
             employeeFilter.addEventListener('change', function() {
                 if (this.value) {
                     // Сбрасываем кнопку "Неназначенные бригады"
-                    // console.log('Resetting unassigned filter due to employee selection');
+                    console.log('Resetting unassigned filter due to employee selection');
                     if (unassignedBrigadesFilter) {
                         unassignedBrigadesFilter.classList.remove('active');
                     }
@@ -3824,9 +3824,9 @@
         // Обработчик для кнопки "Неназначенные бригады"
         if (unassignedBrigadesFilter) {
             unassignedBrigadesFilter.addEventListener('click', function() {
-                // console.log('Unassigned filter clicked, toggling active class');
+                console.log('Unassigned filter clicked, toggling active class');
                 this.classList.toggle('active');
-                // console.log('After toggle, active class:', this.classList.contains('active'));
+                console.log('After toggle, active class:', this.classList.contains('active'));
                 if (this.classList.contains('active')) {
                     // Сбрасываем фильтр по сотруднику
                     if (employeeFilter) {
@@ -3934,7 +3934,7 @@
             try {
                 const select = document.getElementById('requestStatus');
                 if (!select) {
-                    // console.log('Request status select not found, skipping status loading');
+                    console.log('Request status select not found, skipping status loading');
                     return;
                 }
 
@@ -4530,7 +4530,7 @@
                         _token: document.querySelector('input[name="_token"]').value
                     };
 
-                // console.log(inputData);
+                console.log(inputData);
 
                 const response = await fetch(`/requests/${requestId}/close`, {
                     method: 'POST',
@@ -4543,7 +4543,7 @@
 
                 const result = await response.json();
 
-                // console.log(result);
+                console.log(result);
 
                 if (response.ok && result.success) {
                     showAlert('Заявка успешно закрыта', 'success');
@@ -4994,7 +4994,7 @@
 
     // Функция для загрузки и отображения списка адресов в выпадающем списке
     async function loadAddresses() {
-        // console.log('Загрузка адресов');
+        console.log('Загрузка адресов');
 
         try {
             const addressesList = document.getElementById('addressesList');
@@ -5075,7 +5075,7 @@
                     // console.log('Инициализация кастомного селекта после обновления списка адресов');
                     window.initCustomSelect("addressSelect", "Выберите адрес из списка");
                 } else {
-                    // console.log(`Попытка ${attempts + 1}: Функция initCustomSelect не найдена, повторная попытка через 500мс`);
+                    console.log(`Попытка ${attempts + 1}: Функция initCustomSelect не найдена, повторная попытка через 500мс`);
                     if (attempts < 5) { // Максимум 5 попыток
                         setTimeout(() => tryInitCustomSelect(attempts + 1), 500);
                     } else {
@@ -5095,7 +5095,7 @@
                     const selectedAddress = addresses.find(addr => addr.id == selectedAddressId);
                     if (!selectedAddress) return;
 
-                    // console.log({ selectedAddress });
+                    console.log({ selectedAddress });
 
                     /*
                     city: "Москва"
