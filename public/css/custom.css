@@ -97,7 +97,13 @@
 }
 
 .mass-actions-group {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+}
+
+@media (min-width: 992px) {
+    .mass-actions-group {
+        flex-wrap: nowrap;
+    }
 }
 
 .mass-actions-group .btn-sm {
