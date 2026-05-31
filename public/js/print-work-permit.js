@@ -8,8 +8,9 @@ function updatePrintButtonVisibility() {
     document.querySelectorAll('#requestsTable .request-checkbox:checked').forEach(cb => {
         const tr = cb.closest('tr');
         if (tr && tr.dataset.requestStatusName) {
-            const statusName = tr.dataset.requestStatusName.toLowerCase();
-            if (statusName === 'выполнена' || statusName === 'отменена') {
+            const statusName = tr.dataset.requestStatusName.toLowerCase().trim();
+            // Проверяем все варианты: выполнен, выполнена, отменен, отменена
+            if (statusName.includes('выполнен') || statusName.includes('отменен')) {
                 hasClosedRequestSelected = true;
             }
         }

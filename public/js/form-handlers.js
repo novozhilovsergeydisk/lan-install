@@ -2348,6 +2348,7 @@ function addRequestToTable(result) {
     newRow.id = `request-${requestData.id}`;
     newRow.dataset.requestTypeId = requestData.type_id || '';
     newRow.dataset.requestNumber = requestData.number || '';
+    newRow.dataset.requestStatusName = requestData.status_name || '';
     newRow.dataset.address = fullAddress;
     newRow.className = 'align-middle status-row new-row';
     newRow.style.setProperty('--status-color', requestData.status_color || '#e2e0e6');

@@ -116,7 +116,7 @@ export async function loadPlanningRequests() {
                          row.setAttribute('data-request-type-id', request.request_type_id || '');
                          row.dataset.requestNumber = request.number || '';
                          row.dataset.requestStatus = request.status_id || 'status';
-                         row.dataset.statusName = request.status_name || '';             row.dataset.address = fullAddress;
+                         row.dataset.requestStatusName = request.status_name || '';             row.dataset.address = fullAddress;
              row.className = 'align-middle status-row welcome-blade';
              row.style.setProperty('--status-color', request.color || '#e2e0e6');
              row.style.setProperty('--bs-table-bg', request.color, 'important');
@@ -1100,7 +1100,7 @@ export async function applyFilters() {
 
                              row.setAttribute('data-request-id', request.id);
                              row.setAttribute('data-request-type-id', request.request_type_id || '');
-                             row.dataset.statusName = request.status_name || '';
+                             row.dataset.requestStatusName = request.status_name || '';
 
                             // console.log(request);
 
