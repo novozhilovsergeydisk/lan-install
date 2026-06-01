@@ -1657,14 +1657,14 @@ class HomeController extends Controller
 
             // Формируем условие для статусов и дат
             // Стандартное условие: выбранная дата и не (планирование или удалена)
-            $whereClause = "DATE(r.execution_date) = ? AND r.status_id NOT IN (6,7)";
+            $whereClause = "DATE(r.execution_date) = ? AND r.status_id NOT IN (5,6,7)";
             $bindings = [$requestDate];
 
             // Если нужно включить планирование
             if ($includePlanning) {
-                // (Дата = Х И не удалена/планирование) ИЛИ (статус = планирование И не удалена)
-                // Статус 6 - планирование, 7 - удалена
-                $whereClause = "(DATE(r.execution_date) = ? AND r.status_id NOT IN (6,7)) OR (r.status_id = 6)";
+                // (Дата = Х И не удалена/планирование/отменена) ИЛИ (статус = планирование И не удалена)
+                // Статус 6 - планирование, 7 - удалена, 5 - отменена
+                $whereClause = "(DATE(r.execution_date) = ? AND r.status_id NOT IN (5,6,7)) OR (r.status_id = 6)";
             }
 
             // Получаем заявки с основной информацией

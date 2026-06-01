@@ -142,24 +142,6 @@ async function loadAndDrawRequests() {
 
     const includePlanning = document.getElementById('cb-show-planning')?.checked || false;
 
-    // Оптимизация: если "Планирование" выключено, пробуем сначала взять данные из localStorage,
-    // чтобы не делать лишний запрос и гарантировать работу карты для текущего вида
-    if (!includePlanning) {
-        const localData = localStorage.getItem('requestsData');
-        if (localData) {
-            try {
-                const requests = JSON.parse(localData);
-                if (Array.isArray(requests) && requests.length > 0) {
-                    console.log('Loaded requests from localStorage for map:', requests.length);
-                    drawRequests(map, requests);
-                    return; // Успешно загрузили из кэша, запрос не нужен
-                }
-            } catch (e) {
-                console.error('Error parsing requestsData from localStorage', e);
-            }
-        }
-    }
-
     try {
         const url = `/api/requests/date/${dateStr}?include_planning=${includePlanning ? '1' : '0'}`;
         const response = await fetch(url);
@@ -176,14 +158,6 @@ async function loadAndDrawRequests() {
         }
     } catch (e) {
         console.error('Error loading requests:', e);
-        // Fallback: если API упал, но есть данные в localStorage, покажем их (даже если planning был включен, лучше показать хоть что-то)
-        const localData = localStorage.getItem('requestsData');
-        if (localData) {
-            try {
-                const requests = JSON.parse(localData);
-                drawRequests(map, requests);
-            } catch (localErr) {}
-        }
     }
 }
 
