@@ -165,40 +165,58 @@ function drawRequests(map, requests) {
     if (!requests || requests.length === 0) return;
 
     const bounds = [];
-    const usedCoordinates = new Set(); // Для отслеживания занятых координат
 
+    // Группируем заявки по исходным координатам
+    const coordGroups = new Map(); // key: "lat,lon" -> array of requests
+    
     requests.forEach(request => {
         // Защита: пропускаем заявки без координат, чтобы не зайти в бесконечный цикл while ниже
         if (request.latitude === null || request.longitude === null ||
             request.latitude === undefined || request.longitude === undefined ||
             isNaN(parseFloat(request.latitude)) || isNaN(parseFloat(request.longitude))) {
             console.warn('Пропущена заявка без координат:', request.number || request.id);
-            return; // следующая итерация forEach
+            return;
         }
-
-        // Проверяем и смещаем координаты при совпадении
-        let lat = parseFloat(request.latitude);
-        let lon = parseFloat(request.longitude);
-        let coordKey = `${lat.toFixed(6)},${lon.toFixed(6)}`;
-
-        while (usedCoordinates.has(coordKey)) {
-            // Добавляем небольшое случайное смещение (примерно 5-10 метров)
-            // 0.0001 градуса ~ 11 метров
-            const offsetLat = (Math.random() - 0.5) * 0.0002;
-            const offsetLon = (Math.random() - 0.5) * 0.0002;
-            lat += offsetLat;
-            lon += offsetLon;
-            coordKey = `${lat.toFixed(6)},${lon.toFixed(6)}`;
-        }
-
-        usedCoordinates.add(coordKey);
         
-        // Обновляем координаты в объекте request (локально для отрисовки)
-        const requestWithOffset = { ...request, latitude: lat, longitude: lon };
-
-        const placemark = addPlacemark(map, requestWithOffset);
-        if (placemark) {
-            bounds.push(placemark.geometry.getCoordinates());
+        const lat = parseFloat(request.latitude);
+        const lon = parseFloat(request.longitude);
+        const key = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+        
+        if (!coordGroups.has(key)) {
+            coordGroups.set(key, []);
+        }
+        coordGroups.get(key).push({ request, lat, lon });
+    });
+    
+    // Раскладываем заявки в каждой группе
+    const RADIUS = 0.001; // ~110 метров
+    
+    coordGroups.forEach(group => {
+        if (group.length === 1) {
+            // Одна заявка — без сдвига
+            const { request, lat, lon } = group[0];
+            const requestWithOffset = { ...request, latitude: lat, longitude: lon };
+            const placemark = addPlacemark(map, requestWithOffset);
+            if (placemark) {
+                bounds.push(placemark.geometry.getCoordinates());
+            }
+        } else {
+            // Несколько заявок — раскладываем по кругу
+            const angleStep = (2 * Math.PI) / group.length;
+            group.forEach((item, index) => {
+                const angle = angleStep * index;
+                const offsetLat = RADIUS * Math.cos(angle);
+                const offsetLon = RADIUS * Math.sin(angle);
+                const requestWithOffset = {
+                    ...item.request,
+                    latitude: item.lat + offsetLat,
+                    longitude: item.lon + offsetLon,
+                };
+                const placemark = addPlacemark(map, requestWithOffset);
+                if (placemark) {
+                    bounds.push(placemark.geometry.getCoordinates());
+                }
+            });
         }
     });
     
