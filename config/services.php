@@ -52,4 +52,9 @@ return [
         'base_url' => env('WMS_BASE_URL', 'https://stock.lan-install.online'),
     ],
 
+    'dadata' => [
+        'api_key' => env('DADATA_API_KEY', ''),
+        'secret_key' => env('DADATA_SECRET_KEY', ''),
+    ],
+
 ];
