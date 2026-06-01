@@ -30,6 +30,17 @@ function setupPlanningMapControls() {
             }
         });
     }
+
+    const subtypeFilter = document.getElementById('planningSubtypeFilter');
+    if (subtypeFilter) {
+        subtypeFilter.addEventListener('change', () => {
+            const mapContent = document.getElementById('planning-map-content');
+            if (mapContent && !mapContent.classList.contains('hide-me') 
+                && window.getComputedStyle(mapContent).display !== 'none') {
+                loadAndDrawPlanningRequests();
+            }
+        });
+    }
 }
 
 function openPlanningMap() {
