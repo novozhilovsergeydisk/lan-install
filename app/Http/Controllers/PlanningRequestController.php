@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\GeocodingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -240,12 +241,26 @@ class PlanningRequestController extends Controller
             return $address->id;
         }
 
-        return DB::table('addresses')->insertGetId([
+        // Формируем полный адрес для геокодирования
+        $fullAddress = trim($cityName . ', ' . $street);
+        
+        // Получаем координаты через DaData
+        $geocoder = app(GeocodingService::class);
+        $coords = $geocoder->geocode($fullAddress);
+        
+        $addressData = [
             'city_id' => $cityId,
             'street' => $street,
             'district' => '', // Not provided in the new spec
             'houses' => '',   // Not provided in the new spec
-        ]);
+        ];
+        
+        if ($coords) {
+            $addressData['latitude'] = $coords['latitude'];
+            $addressData['longitude'] = $coords['longitude'];
+        }
+        
+        return DB::table('addresses')->insertGetId($addressData);
     }
 
     private function findOrCreateClient($rowData)
