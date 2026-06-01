@@ -194,6 +194,14 @@ function drawRequests(map, requests) {
     const usedCoordinates = new Set(); // Для отслеживания занятых координат
 
     requests.forEach(request => {
+        // Защита: пропускаем заявки без координат, чтобы не зайти в бесконечный цикл while ниже
+        if (request.latitude === null || request.longitude === null ||
+            request.latitude === undefined || request.longitude === undefined ||
+            isNaN(parseFloat(request.latitude)) || isNaN(parseFloat(request.longitude))) {
+            console.warn('Пропущена заявка без координат:', request.number || request.id);
+            return; // следующая итерация forEach
+        }
+
         // Проверяем и смещаем координаты при совпадении
         let lat = parseFloat(request.latitude);
         let lon = parseFloat(request.longitude);
