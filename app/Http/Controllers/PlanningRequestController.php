@@ -131,12 +131,12 @@ class PlanningRequestController extends Controller
                     $rowData[$normalizedHeader] = $row[$index] ?? null;
                 }
 
-                // 1. Parse Address
+                // 1. Parse Address (правильный разбор "город X, улица Y, дом N, корпус M")
                 $addressString = $rowData['адрес организации'] ?? '';
-                $addressParts = explode(',', $addressString, 2);
-                $cityString = trim($addressParts[0] ?? '');
-                $streetString = trim($addressParts[1] ?? '');
-                $cityName = trim(preg_replace('/^(г\.|город|г\s)\s*/iu', '', $cityString));
+                $parsedAddress = $this->parseAddressString($addressString);
+                $cityName     = $parsedAddress['city_name'];
+                $streetString = $parsedAddress['street'];   // например, "улица Павловская"
+                $housesString = $parsedAddress['houses'];   // например, "8А, корпус 1"
 
                 // 2. Parse Contact
                 $contactString = $rowData['контакт'] ?? '';
@@ -154,12 +154,13 @@ class PlanningRequestController extends Controller
                 $comment = $rowData['комментарии к монтажу'] ?? '';
 
                 $parsedRowData = [
-                    'city_name' => $cityName,
-                    'street' => $streetString,
-                    'fio' => $fio,
-                    'phone' => $phone,
+                    'city_name'    => $cityName,
+                    'street'       => $streetString,
+                    'houses'       => $housesString,
+                    'fio'          => $fio,
+                    'phone'        => $phone,
                     'organization' => $organization,
-                    'comment' => $comment,
+                    'comment'      => $comment,
                 ];
 
                 $addressId = $this->findOrCreateAddress($parsedRowData);
@@ -217,50 +218,176 @@ class PlanningRequestController extends Controller
         }
     }
 
-    private function findOrCreateAddress($rowData)
+    /**
+     * Найти существующий адрес или создать новый.
+     *
+     * Ключевое отличие от старой версии: поиск делается по
+     * НОРМАЛИЗОВАННОМУ ключу (без типа улицы и без хвоста "дом N…"),
+     * чтобы "улица Павловская" + houses="8А, корпус 1" находил
+     * существующий "Павловская" с houses="8А, корпус 1".
+     */
+    private function findOrCreateAddress(array $rowData): int
     {
         $cityName = trim($rowData['city_name'] ?? '');
-        $street = trim($rowData['street'] ?? '');
+        $street   = trim($rowData['street']    ?? '');
+        $houses   = trim($rowData['houses']    ?? '');
 
-        if (empty($cityName) || empty($street)) {
+        if ($cityName === '' || $street === '') {
             throw new \Exception('Недостаточно данных для адреса в одной из строк. Обязательные поля: город, улица.');
         }
 
-        $city = DB::table('cities')->where('name', 'ilike', $cityName)->first();
+        $city = DB::table('cities')->whereRaw('lower(name) = lower(?)', [$cityName])->first();
         if (! $city) {
             throw new \Exception("Город '{$cityName}' не найден в базе данных.");
         }
         $cityId = $city->id;
 
-        $address = DB::table('addresses')
-            ->where('city_id', $cityId)
-            ->where('street', $street)
-            ->first();
+        $streetKey = $this->normalizeStreetKey($street);
+        $houseKey  = $this->normalizeHouseKey($houses);
 
-        if ($address) {
-            return $address->id;
+        // Регэксп для удаления типа улицы внутри SQL. Должен ТОЧНО
+        // совпадать со списком в normalizeStreetKey().
+        $rxType = '\m(улица|ул\.|переулок|пер\.|проспект|пр-кт|пр\.|шоссе|ш\.|бульвар|б-р|проезд|пр-д|набережная|наб\.|тупик|линия|аллея)\M';
+
+        // Ищем по нормализованному ключу. Это main fix против дублей.
+        $existing = DB::selectOne(
+            "
+            SELECT id
+            FROM addresses
+            WHERE city_id = ?
+              AND btrim(regexp_replace(
+                    regexp_replace(
+                      regexp_replace(lower(street), ?, '', 'g'),
+                      '[\s,\.]*(дом|д\.)\s*[0-9].*$', '', 'i'),
+                    '[\s,\.]+', ' ', 'g')
+                  ) = ?
+              AND btrim(regexp_replace(lower(coalesce(houses,'')), '[\s,\.]+', ' ', 'g')) = ?
+            ORDER BY id
+            LIMIT 1
+            ",
+            [$cityId, $rxType, $streetKey, $houseKey]
+        );
+
+        if ($existing) {
+            return $existing->id;
         }
 
-        // Формируем полный адрес для геокодирования
-        $fullAddress = trim($cityName . ', ' . $street);
-        
-        // Получаем координаты через DaData
-        $geocoder = app(GeocodingService::class);
-        $coords = $geocoder->geocode($fullAddress);
-        
+        // Не нашли — создаём новый. Сохраняем street как есть (с типом
+        // улицы, для красивого отображения), houses в отдельном поле.
+        $fullAddress = trim($cityName.', '.$street.($houses !== '' ? ', дом '.$houses : ''));
+
+        $coords = null;
+        try {
+            $coords = app(GeocodingService::class)->geocode($fullAddress);
+        } catch (\Throwable $e) {
+            Log::warning('Geocoding failed for "'.$fullAddress.'": '.$e->getMessage());
+        }
+
         $addressData = [
-            'city_id' => $cityId,
-            'street' => $street,
-            'district' => '', // Not provided in the new spec
-            'houses' => '',   // Not provided in the new spec
+            'city_id'  => $cityId,
+            'street'   => $street,
+            'district' => '',
+            'houses'   => $houses,
         ];
-        
+
         if ($coords) {
-            $addressData['latitude'] = $coords['latitude'];
+            $addressData['latitude']  = $coords['latitude'];
             $addressData['longitude'] = $coords['longitude'];
         }
-        
-        return DB::table('addresses')->insertGetId($addressData);
+
+        $exactRow = DB::table('addresses')
+            ->where('city_id', $cityId)
+            ->where('street', $street)
+            ->where('district', '')
+            ->where('houses', $houses)
+            ->first();
+        if ($exactRow) {
+            return $exactRow->id;
+        }
+
+        // На случай если кто-то всё-таки проскочил параллельно — ловим
+        // unique violation от uq_addresses_city_street_district_houses
+        // и возвращаем уже существующий id вместо падения транзакции.
+        try {
+            return DB::table('addresses')->insertGetId($addressData);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23505') {
+                $row = DB::table('addresses')
+                    ->where('city_id', $cityId)
+                    ->where('street', $street)
+                    ->where('district', '')
+                    ->where('houses', $houses)
+                    ->first();
+                if ($row) {
+                    return $row->id;
+                }
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Разбирает строку вида "город Москва, улица Павловская, дом 8А, корпус 1"
+     * на ['city_name', 'street', 'houses'].
+     *
+     * - 'street'  — название улицы с типом ("улица Павловская"). Сохраняется
+     *               в БД как есть, для отображения.
+     * - 'houses'  — всё после "дом N" ("8А, корпус 1"). Может быть пустым,
+     *               если в строке нет слова "дом" (например, адрес в
+     *               Зеленограде по корпусам без улицы).
+     */
+    private function parseAddressString(string $raw): array
+    {
+        $parts   = explode(',', $raw, 2);
+        $cityRaw = trim($parts[0] ?? '');
+        $rest    = trim($parts[1] ?? '');
+
+        $cityName = trim(preg_replace('/^(г\.|город|г\s)\s*/iu', '', $cityRaw));
+
+        $street = $rest;
+        $houses = '';
+
+        if (preg_match('/^(.*?)[\s,\.]*(?:дом|д\.)\s*([0-9].*)$/iu', $rest, $m)) {
+            $street = trim($m[1], " ,.");
+            $houses = trim($m[2], " ,.");
+        }
+
+        return [
+            'city_name' => $cityName,
+            'street'    => $street,
+            'houses'    => $houses,
+        ];
+    }
+
+    /**
+     * Нормализованный ключ улицы для поиска дублей.
+     * Должен СИНХРОНИЗИРОВАННО совпадать с SQL-выражением в findOrCreateAddress
+     * и в scripts/fix_addresses_dedupe.sql.
+     */
+    private function normalizeStreetKey(string $street): string
+    {
+        $s = mb_strtolower($street, 'UTF-8');
+        // 1) убрать хвост "дом N, ..." (на случай, если он остался в street)
+        $s = preg_replace('/[\s,\.]*(?:дом|д\.)\s*[0-9].*$/iu', '', $s);
+        // 2) убрать тип улицы где угодно по границе слова
+        $s = preg_replace(
+            '/\b(улица|ул\.|переулок|пер\.|проспект|пр-кт|пр\.|шоссе|ш\.|бульвар|б-р|проезд|пр-д|набережная|наб\.|тупик|линия|аллея)\b/iu',
+            '',
+            $s
+        );
+        // 3) сжать пробелы/запятые/точки
+        $s = preg_replace('/[\s,\.]+/u', ' ', $s);
+        return trim($s);
+    }
+
+    /**
+     * Нормализованный ключ для houses ("8А, корпус 1" -> "8а корпус 1").
+     */
+    private function normalizeHouseKey(string $houses): string
+    {
+        $s = mb_strtolower($houses, 'UTF-8');
+        $s = preg_replace('/[\s,\.]+/u', ' ', $s);
+        return trim($s);
     }
 
     private function findOrCreateClient($rowData)
