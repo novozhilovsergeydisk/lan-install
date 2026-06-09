@@ -1928,22 +1928,300 @@ function getStatusColor(statusId) {
     return statusColors[statusId] || '#9E9E9E'; // По умолчанию серый
 }
 
+// ===== Загрузка заявок: предпросмотр → запись → итог =====
+
+// Была ли успешная запись в текущем открытии модалки (чтобы обновить список при закрытии).
+let uploadCompleted = false;
+
+function uploadEscapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// Плейсхолдер для select типа заявки (тип обязателен — value пустой и disabled).
+function uploadTypePlaceholderOption() {
+    return '<option value="" selected disabled>— Выберите тип заявки —</option>';
+}
+
+// Один раз создаёт контейнеры предосмотра/итога и кнопки "Назад"/"Подтвердить"/"Готово".
+function ensureUploadPreviewUi(modalEl) {
+    const body = modalEl.querySelector('.modal-body');
+    const footer = modalEl.querySelector('.modal-footer');
+    if (!body || !footer) return;
+
+    if (!modalEl.querySelector('#uploadRequestsPreview')) {
+        const preview = document.createElement('div');
+        preview.id = 'uploadRequestsPreview';
+        preview.style.display = 'none';
+        body.appendChild(preview);
+    }
+
+    if (!modalEl.querySelector('#uploadRequestsResult')) {
+        const result = document.createElement('div');
+        result.id = 'uploadRequestsResult';
+        result.style.display = 'none';
+        body.appendChild(result);
+    }
+
+    const submitBtn = footer.querySelector('#uploadRequestsSubmit');
+
+    if (!footer.querySelector('#uploadRequestsConfirm')) {
+        const confirmBtn = document.createElement('button');
+        confirmBtn.type = 'button';
+        confirmBtn.className = 'btn btn-success';
+        confirmBtn.id = 'uploadRequestsConfirm';
+        confirmBtn.style.display = 'none';
+        confirmBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Подтвердить и загрузить';
+        if (submitBtn && submitBtn.parentNode) {
+            submitBtn.parentNode.insertBefore(confirmBtn, submitBtn.nextSibling);
+        } else {
+            footer.appendChild(confirmBtn);
+        }
+    }
+
+    if (!footer.querySelector('#uploadRequestsBack')) {
+        const backBtn = document.createElement('button');
+        backBtn.type = 'button';
+        backBtn.className = 'btn btn-outline-secondary';
+        backBtn.id = 'uploadRequestsBack';
+        backBtn.style.display = 'none';
+        backBtn.innerHTML = '<i class="bi bi-arrow-left me-1"></i>Назад';
+        const confirmBtn = footer.querySelector('#uploadRequestsConfirm');
+        footer.insertBefore(backBtn, confirmBtn);
+    }
+
+    if (!footer.querySelector('#uploadRequestsDone')) {
+        const doneBtn = document.createElement('button');
+        doneBtn.type = 'button';
+        doneBtn.className = 'btn btn-primary';
+        doneBtn.id = 'uploadRequestsDone';
+        doneBtn.style.display = 'none';
+        doneBtn.innerHTML = '<i class="bi bi-check2 me-1"></i>Готово';
+        footer.appendChild(doneBtn);
+    }
+}
+
+// Переключение шагов: form | preview | result.
+function showUploadStep(modalEl, step) {
+    const form = modalEl.querySelector('#uploadRequestsForm');
+    const preview = modalEl.querySelector('#uploadRequestsPreview');
+    const result = modalEl.querySelector('#uploadRequestsResult');
+    const submitBtn = modalEl.querySelector('#uploadRequestsSubmit');
+    const confirmBtn = modalEl.querySelector('#uploadRequestsConfirm');
+    const backBtn = modalEl.querySelector('#uploadRequestsBack');
+    const doneBtn = modalEl.querySelector('#uploadRequestsDone');
+    const downloadBtn = modalEl.querySelector('#downloadTemplateBtn');
+    const cancelBtn = modalEl.querySelector('.modal-footer [data-bs-dismiss="modal"]');
+
+    const isForm = step === 'form';
+    const isPreview = step === 'preview';
+    const isResult = step === 'result';
+
+    if (form) form.style.display = isForm ? '' : 'none';
+    if (preview) preview.style.display = isPreview ? '' : 'none';
+    if (result) result.style.display = isResult ? '' : 'none';
+
+    if (submitBtn) submitBtn.style.display = isForm ? '' : 'none';
+    if (downloadBtn) downloadBtn.style.display = isForm ? '' : 'none';
+    if (backBtn) backBtn.style.display = isPreview ? '' : 'none';
+    if (confirmBtn) confirmBtn.style.display = isPreview ? '' : 'none';
+    if (doneBtn) doneBtn.style.display = isResult ? '' : 'none';
+    // На шаге итога прячем "Отмена" — остаётся только "Готово".
+    if (cancelBtn) cancelBtn.style.display = isResult ? 'none' : '';
+}
+
+// Полный сброс модалки к шагу формы (при открытии и при закрытии).
+function resetUploadModal(modalEl) {
+    const form = modalEl.querySelector('#uploadRequestsForm');
+    if (form && typeof form.reset === 'function') form.reset();
+
+    const fileInput = modalEl.querySelector('#requestsFile');
+    if (fileInput) fileInput.value = '';
+
+    const preview = modalEl.querySelector('#uploadRequestsPreview');
+    if (preview) preview.innerHTML = '';
+    const result = modalEl.querySelector('#uploadRequestsResult');
+    if (result) result.innerHTML = '';
+
+    const confirmBtn = modalEl.querySelector('#uploadRequestsConfirm');
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.title = ''; }
+
+    showUploadStep(modalEl, 'form');
+}
+
+// Рендер таблицы предосмотра из ответа /planning-requests/preview-excel.
+function renderUploadPreview(container, data) {
+    if (!container) return;
+    const s = data.summary || {};
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+
+    let html = '';
+
+    if (data.request_type_name) {
+        html += '<div class="small text-muted mb-2">Тип заявки: <strong>' + uploadEscapeHtml(data.request_type_name) + '</strong></div>';
+    }
+
+    html += '<div class="mb-2 small">';
+    html += '<span class="me-3">Всего строк: <strong>' + (s.total || 0) + '</strong></span>';
+    html += '<span class="me-3 text-success">Новых адресов: <strong>' + (s.new_addresses || 0) + '</strong></span>';
+    html += '<span class="me-3 text-primary">Существующих: <strong>' + (s.existing_addresses || 0) + '</strong></span>';
+    if (s.duplicates_in_file) {
+        html += '<span class="me-3 text-warning">Дублей в файле: <strong>' + s.duplicates_in_file + '</strong></span>';
+    }
+    if (s.error_rows) {
+        html += '<span class="me-3 text-danger">Ошибок: <strong>' + s.error_rows + '</strong></span>';
+    }
+    html += '</div>';
+
+    if (!data.can_import) {
+        html += '<div class="alert alert-danger py-2 small mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Есть строки с ошибками (выделены красным). Исправьте Excel-файл и загрузите заново — запись заблокирована.</div>';
+    } else {
+        html += '<div class="alert alert-info py-2 small mb-2"><i class="bi bi-info-circle me-1"></i>Проверьте данные. Новые адреса будут созданы, существующие — переиспользованы (дубли не создаются).</div>';
+    }
+
+    html += '<div style="max-height: 50vh; overflow:auto;">';
+    html += '<table class="table table-sm table-bordered align-middle small mb-0">';
+    html += '<thead class="table-light"><tr>'
+        + '<th>№</th><th>Организация</th><th>Город</th><th>Улица</th><th>Дом/корпус</th>'
+        + '<th>Контакт</th><th>Адрес в базе</th><th>Параметры</th><th>Проблемы</th>'
+        + '</tr></thead><tbody>';
+
+    rows.forEach(function (r) {
+        const hasError = r.errors && r.errors.length > 0;
+        let rowClass = '';
+        if (hasError) rowClass = 'table-danger';
+        else if (r.address_status === 'existing') rowClass = 'table-primary';
+        else if (r.address_status === 'new') rowClass = 'table-success';
+        else if (r.address_status === 'duplicate_in_file') rowClass = 'table-warning';
+
+        let addressCell;
+        if (r.address_status === 'existing' && r.existing_address) {
+            const ea = r.existing_address;
+            addressCell = '<span class="badge bg-primary">существующий #' + uploadEscapeHtml(ea.id) + '</span>'
+                + '<div class="text-muted">' + uploadEscapeHtml(ea.street || '') + (ea.houses ? ', ' + uploadEscapeHtml(ea.houses) : '') + '</div>';
+        } else if (r.address_status === 'new') {
+            addressCell = '<span class="badge bg-success">новый</span>';
+        } else if (r.address_status === 'duplicate_in_file') {
+            addressCell = '<span class="badge bg-warning text-dark">дубль в файле</span><div class="text-muted">будет один адрес</div>';
+        } else {
+            addressCell = '<span class="text-muted">—</span>';
+        }
+
+        let paramsCell;
+        if (Array.isArray(r.work_parameters) && r.work_parameters.length) {
+            paramsCell = r.work_parameters.map(function (p) {
+                return uploadEscapeHtml(p.name) + ' × ' + uploadEscapeHtml(p.quantity);
+            }).join('<br>');
+        } else {
+            paramsCell = '<span class="text-muted">—</span>';
+        }
+
+        const contact = [uploadEscapeHtml(r.fio || ''), uploadEscapeHtml(r.phone || '')].filter(Boolean).join('<br>') || '<span class="text-muted">—</span>';
+        const problems = hasError ? r.errors.map(uploadEscapeHtml).join('<br>') : '';
+
+        html += '<tr class="' + rowClass + '">'
+            + '<td>' + uploadEscapeHtml(r.row_number) + '</td>'
+            + '<td>' + uploadEscapeHtml(r.organization || '') + '</td>'
+            + '<td>' + uploadEscapeHtml(r.city || '') + '</td>'
+            + '<td>' + uploadEscapeHtml(r.street || '') + '</td>'
+            + '<td>' + uploadEscapeHtml(r.houses || '') + '</td>'
+            + '<td>' + contact + '</td>'
+            + '<td>' + addressCell + '</td>'
+            + '<td>' + paramsCell + '</td>'
+            + '<td class="text-danger">' + problems + '</td>'
+            + '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// Рендер итога после успешной записи.
+function renderUploadResult(container, data) {
+    if (!container) return;
+    const s = data.summary || {};
+    let html = '';
+    html += '<div class="alert alert-success"><i class="bi bi-check2-circle me-1"></i>' + uploadEscapeHtml(data.message || 'Загрузка завершена.') + '</div>';
+    html += '<ul class="list-group mb-0">';
+    html += '<li class="list-group-item d-flex justify-content-between align-items-center"><span>Создано заявок</span><strong>' + (s.requests_created || 0) + '</strong></li>';
+    html += '<li class="list-group-item d-flex justify-content-between align-items-center"><span>Новых адресов добавлено</span><strong class="text-success">' + (s.addresses_created || 0) + '</strong></li>';
+    html += '<li class="list-group-item d-flex justify-content-between align-items-center"><span>Адресов переиспользовано (уже были в базе)</span><strong class="text-primary">' + (s.addresses_reused || 0) + '</strong></li>';
+    html += '<li class="list-group-item d-flex justify-content-between align-items-center"><span>Повторов адреса внутри файла</span><strong class="text-warning">' + (s.duplicates_in_file || 0) + '</strong></li>';
+    if (s.request_type_name) {
+        html += '<li class="list-group-item d-flex justify-content-between align-items-center"><span>Тип заявки</span><strong>' + uploadEscapeHtml(s.request_type_name) + '</strong></li>';
+    }
+    html += '</ul>';
+    container.innerHTML = html;
+}
+
+// Фактическая запись заявок: вызывает рабочий эндпоинт. При успехе показывает шаг "итог".
+async function doUploadRequests(modalEl, file, requestTypeId, triggerButton) {
+    const formData = new FormData();
+    formData.append('requests_file', file);
+    formData.append('request_type_id', requestTypeId);
+
+    const originalHtml = triggerButton.innerHTML;
+    triggerButton.disabled = true;
+    triggerButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
+
+    try {
+        const response = await fetch('/planning-requests/upload-excel', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            uploadCompleted = true;
+            const resultContainer = modalEl.querySelector('#uploadRequestsResult');
+            renderUploadResult(resultContainer, data);
+            showUploadStep(modalEl, 'result');
+        } else {
+            showAlert(data.message || 'Произошла ошибка при загрузке файла.', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке файла:', error);
+        showAlert('Произошла ошибка сети.', 'danger');
+    } finally {
+        triggerButton.disabled = false;
+        triggerButton.innerHTML = originalHtml;
+    }
+}
+
 export function initUploadRequestsHandler() {
+    const modalEl = document.getElementById('uploadRequestsModal');
+    if (!modalEl) return;
+
+    ensureUploadPreviewUi(modalEl);
+
     const uploadButton = document.getElementById('upload-requests-button');
     if (uploadButton) {
         uploadButton.addEventListener('click', async () => {
             console.log("Кнопка 'Загрузить заявки' нажата");
-            const modal = new bootstrap.Modal(document.getElementById('uploadRequestsModal'));
-            
-            // Load request types dynamically
+            const modal = new bootstrap.Modal(modalEl);
+
+            // Сброс к шагу формы при каждом открытии
+            resetUploadModal(modalEl);
+
+            // Load request types dynamically (тип обязателен → плейсхолдер без значения)
             const requestTypeSelect = document.getElementById('uploadRequestType');
             if (requestTypeSelect) {
                 try {
-                    requestTypeSelect.innerHTML = '<option value="" selected>Загрузка...</option>';
+                    requestTypeSelect.innerHTML = '<option value="" selected disabled>Загрузка...</option>';
                     const response = await fetch('/api/request-types?is_deleted=false');
                     if (response.ok) {
                         const types = await response.json();
-                        requestTypeSelect.innerHTML = '<option value="" selected>Не выбран (по умолчанию)</option>';
+                        requestTypeSelect.innerHTML = uploadTypePlaceholderOption();
                         types.forEach(type => {
                             const option = document.createElement('option');
                             option.value = type.id;
@@ -1951,21 +2229,21 @@ export function initUploadRequestsHandler() {
                             requestTypeSelect.appendChild(option);
                         });
                     } else {
-                         requestTypeSelect.innerHTML = '<option value="" selected>Ошибка загрузки типов</option>';
+                         requestTypeSelect.innerHTML = '<option value="" selected disabled>Ошибка загрузки типов</option>';
                     }
                 } catch (error) {
                     console.error('Ошибка при загрузке типов заявок:', error);
-                    requestTypeSelect.innerHTML = '<option value="" selected>Ошибка загрузки</option>';
+                    requestTypeSelect.innerHTML = '<option value="" selected disabled>Ошибка загрузки</option>';
                 }
             }
-            
+
             // Handle template download
             const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
             if (downloadTemplateBtn) {
                 // Remove existing listener to avoid multiple triggers if opened multiple times
                 const newDownloadTemplateBtn = downloadTemplateBtn.cloneNode(true);
                 downloadTemplateBtn.parentNode.replaceChild(newDownloadTemplateBtn, downloadTemplateBtn);
-                
+
                 newDownloadTemplateBtn.addEventListener('click', () => {
                     const selectedTypeId = requestTypeSelect ? requestTypeSelect.value : '';
                     let url = '/planning-requests/download-template';
@@ -1980,66 +2258,125 @@ export function initUploadRequestsHandler() {
         });
     }
 
+    // При закрытии модалки (Отмена, крестик, "Готово"): обновить список (если была запись) и сбросить состояние
+    modalEl.addEventListener('hidden.bs.modal', () => {
+        if (uploadCompleted) {
+            uploadCompleted = false;
+            if (typeof loadPlanningRequests === 'function') {
+                loadPlanningRequests();
+            } else {
+                location.reload();
+            }
+        }
+        resetUploadModal(modalEl);
+    });
+
+    // При выборе другого файла возвращаемся к шагу формы (предыдущий предосмотр устаревает)
+    const requestsFileInput = document.getElementById('requestsFile');
+    if (requestsFileInput) {
+        requestsFileInput.addEventListener('change', () => showUploadStep(modalEl, 'form'));
+    }
+
+    // Шаг 1: кнопка открывает предосмотр перед фактической записью
     const uploadSubmitButton = document.getElementById('uploadRequestsSubmit');
     if (uploadSubmitButton) {
+        uploadSubmitButton.innerHTML = '<i class="bi bi-eye me-1"></i>Предпросмотр';
         uploadSubmitButton.addEventListener('click', async () => {
-            // showAlert('Функция загрузки заявок из Excel в разработке', 'warning');
-            // return;
             const requestsFileElement = document.getElementById('requestsFile');
             const requestTypeSelect = document.getElementById('uploadRequestType');
-            
-            if (requestsFileElement && requestsFileElement.files.length > 0) {
-                const file = requestsFileElement.files[0];
-                console.log('Выбран файл для загрузки:', file.name);
 
-                const formData = new FormData();
-                formData.append('requests_file', file);
-                
-                if (requestTypeSelect && requestTypeSelect.value) {
-                    formData.append('request_type_id', requestTypeSelect.value);
-                }
-
-                // Add loading indicator
-                uploadSubmitButton.disabled = true;
-                uploadSubmitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
-
-                try {
-                    const response = await fetch('/planning-requests/upload-excel', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Accept': 'application/json',
-                        }
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok && data.success) {
-                        showAlert('Файл успешно загружен и обработан.', 'success');
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('uploadRequestsModal'));
-                        modal.hide();
-                        // Optionally, reload the page or update the requests list
-                        if (typeof loadPlanningRequests === "function") {
-                            loadPlanningRequests();
-                        } else {
-                            location.reload();
-                        }
-                    } else {
-                        showAlert(data.message || 'Произошла ошибка при загрузке файла.', 'danger');
-                    }
-                } catch (error) {
-                    console.error('Ошибка при загрузке файла:', error);
-                    showAlert('Произошла ошибка сети.', 'danger');
-                } finally {
-                    // Restore button state
-                    uploadSubmitButton.disabled = false;
-                    uploadSubmitButton.innerHTML = 'Загрузить';
-                }
-
-            } else {
-                showAlert('Файл не выбран.', 'warning');
+            const requestTypeId = (requestTypeSelect && requestTypeSelect.value) ? requestTypeSelect.value : '';
+            if (!requestTypeId) {
+                showAlert('Выберите тип заявки.', 'warning');
+                return;
             }
+            if (!requestsFileElement || requestsFileElement.files.length === 0) {
+                showAlert('Файл не выбран.', 'warning');
+                return;
+            }
+
+            const file = requestsFileElement.files[0];
+            console.log('Выбран файл для предосмотра:', file.name);
+
+            const formData = new FormData();
+            formData.append('requests_file', file);
+            formData.append('request_type_id', requestTypeId);
+
+            const originalHtml = uploadSubmitButton.innerHTML;
+            uploadSubmitButton.disabled = true;
+            uploadSubmitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Анализ...';
+
+            try {
+                const response = await fetch('/planning-requests/preview-excel', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const previewContainer = modalEl.querySelector('#uploadRequestsPreview');
+                    renderUploadPreview(previewContainer, data);
+                    showUploadStep(modalEl, 'preview');
+
+                    const confirmBtn = modalEl.querySelector('#uploadRequestsConfirm');
+                    if (confirmBtn) {
+                        confirmBtn.disabled = !data.can_import;
+                        confirmBtn.title = data.can_import ? '' : 'Исправьте ошибки в файле, чтобы продолжить';
+                    }
+                } else {
+                    showAlert(data.message || 'Не удалось сформировать предосмотр.', 'danger');
+                }
+            } catch (error) {
+                console.error('Ошибка при формировании предосмотра:', error);
+                showAlert('Произошла ошибка сети.', 'danger');
+            } finally {
+                uploadSubmitButton.disabled = false;
+                uploadSubmitButton.innerHTML = originalHtml;
+            }
+        });
+    }
+
+    // "Назад" — вернуться к форме
+    const backBtn = modalEl.querySelector('#uploadRequestsBack');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => showUploadStep(modalEl, 'form'));
+    }
+
+    // "Подтвердить и загрузить" — фактическая запись
+    const confirmBtn = modalEl.querySelector('#uploadRequestsConfirm');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async () => {
+            if (confirmBtn.disabled) return;
+
+            const requestsFileElement = document.getElementById('requestsFile');
+            const requestTypeSelect = document.getElementById('uploadRequestType');
+
+            const requestTypeId = (requestTypeSelect && requestTypeSelect.value) ? requestTypeSelect.value : '';
+            if (!requestTypeId) {
+                showAlert('Выберите тип заявки.', 'warning');
+                return;
+            }
+            if (!requestsFileElement || requestsFileElement.files.length === 0) {
+                showAlert('Файл не выбран.', 'warning');
+                return;
+            }
+
+            const file = requestsFileElement.files[0];
+            await doUploadRequests(modalEl, file, requestTypeId, confirmBtn);
+        });
+    }
+
+    // "Готово" на шаге итога — закрываем модалку (обновление списка произойдёт в hidden.bs.modal)
+    const doneBtn = modalEl.querySelector('#uploadRequestsDone');
+    if (doneBtn) {
+        doneBtn.addEventListener('click', () => {
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.hide();
         });
     }
 }

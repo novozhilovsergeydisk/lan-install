@@ -3,213 +3,235 @@
 namespace App\Http\Controllers;
 
 use App\Services\GeocodingService;
+use App\Services\PlanningRequest\AddressMatcher;
+use App\Services\PlanningRequest\ExcelRequestParser;
+use App\Services\PlanningRequest\ImportValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class PlanningRequestController extends Controller
 {
-    public function uploadRequestsExcel(Request $request)
+    public function uploadRequestsExcel(Request $request, ExcelRequestParser $parser, AddressMatcher $matcher)
     {
         try {
             $validated = $request->validate([
                 'requests_file' => 'required|file|mimes:xlsx,xls|max:10240',
-                'request_type_id' => 'nullable|integer|exists:request_types,id',
-            ]);
+                'request_type_id' => 'required|integer|exists:request_types,id',
+            ], $this->importValidationMessages());
 
-            $requestTypeId = $validated['request_type_id'] ?? null;
-            $workParameterTypes = [];
-            
-            if ($requestTypeId) {
-                $workParameterTypes = DB::table('work_parameter_types')
-                    ->where('request_type_id', $requestTypeId)
-                    ->where('is_deleted', false)
-                    ->get()
-                    ->keyBy('name')
-                    ->toArray();
-            }
+            $requestTypeId = (int) $validated['request_type_id'];
+            $requestTypeName = DB::table('request_types')->where('id', $requestTypeId)->value('name');
 
             $file = $request->file('requests_file');
-            $reader = IOFactory::createReaderForFile($file->getRealPath());
-            $reader->setReadDataOnly(true);
-            $spreadsheet = $reader->load($file->getRealPath());
-            $worksheet = $spreadsheet->getActiveSheet();
-            $data = $worksheet->toArray();
+            $parsed = $parser->parse($file->getRealPath(), $requestTypeId);
 
-            $data = array_filter($data, function ($row) {
-                return ! empty(array_filter($row, fn ($value) => $value !== null && $value !== ''));
-            });
-
-            if (empty($data)) {
-                return response()->json(['success' => false, 'message' => 'Файл не содержит данных'], 400);
-            }
-
-            // Извлекаем заголовки из первой строки
-            $headers = array_shift($data);
-
-            $expectedHeaders = [
-                'гбоу',
-                'адрес организации',
-                'контакт',
-                'комментарии к монтажу',
-            ];
-
-            $normalizedHeaders = array_map(function ($h) {
-                return trim(mb_strtolower($h));
-            }, $headers ?? []);
-
-            if (count(array_intersect($expectedHeaders, $normalizedHeaders)) !== count($expectedHeaders)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Неверные заголовки в первой строке файла. Обязательные колонки: '.implode(', ', $expectedHeaders),
-                    'headers_found' => $headers ?? [],
-                ], 400);
-            }
-
-            // Проверка наличия всех колонок параметров работ для выбранного типа заявки
-            if (!empty($workParameterTypes)) {
-                $missingParameters = [];
-                foreach ($workParameterTypes as $parameterName => $parameterInfo) {
-                    $found = false;
-                    foreach ($headers as $header) {
-                        if (trim(mb_strtolower($header)) === trim(mb_strtolower($parameterName))) {
-                            $found = true;
-                            break;
-                        }
-                    }
-                    if (!$found) {
-                        $missingParameters[] = $parameterName;
-                    }
-                }
-
-                if (!empty($missingParameters)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'В файле отсутствуют обязательные колонки параметров работ для выбранного типа заявки: ' . implode(', ', $missingParameters),
-                    ], 400);
-                }
-            } else {
-                // Если тип заявки не выбран, проверяем, что нет лишних колонок
-                // (разрешаем только обязательные базовые колонки)
-                $extraColumns = [];
-                foreach ($headers as $header) {
-                    $normalizedCurrentHeader = trim(mb_strtolower($header));
-                    if (!in_array($normalizedCurrentHeader, $expectedHeaders) && !empty($normalizedCurrentHeader)) {
-                        $extraColumns[] = $header;
-                    }
-                }
-                
-                if (!empty($extraColumns)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'В файле найдены лишние колонки: ' . implode(', ', $extraColumns) . '. Выберите соответствующий тип заявки или удалите лишние колонки из файла.',
-                    ], 400);
-                }
-            }
+            // Граница id адресов до загрузки — чтобы отличить созданные от переиспользованных.
+            $maxAddressIdBefore = (int) (DB::table('addresses')->max('id') ?? 0);
 
             DB::beginTransaction();
             $createdRequests = [];
+            $usedAddressIds = [];
 
-            $headerMap = array_flip($normalizedHeaders);
-            
-            // Находим колонки, которые соответствуют параметрам работ (с учетом регистра оригинальных заголовков, чтобы сравнивать)
-            $parameterColumns = [];
-            if (!empty($workParameterTypes)) {
-                foreach ($headers as $index => $originalHeader) {
-                    $trimmedHeader = trim($originalHeader);
-                    if (isset($workParameterTypes[$trimmedHeader])) {
-                        $parameterColumns[$index] = $workParameterTypes[$trimmedHeader]->id;
-                    }
-                }
-            }
+            foreach ($parsed->rows as $parsedRow) {
+                $addressId = $this->findOrCreateAddress($parsedRow, $matcher);
+                $usedAddressIds[] = $addressId;
+                $clientId = $this->findOrCreateClient($parsedRow);
 
-            foreach ($data as $rowIndex => $row) {
-                $rowData = [];
-                foreach ($headerMap as $normalizedHeader => $index) {
-                    $rowData[$normalizedHeader] = $row[$index] ?? null;
-                }
-
-                // 1. Parse Address (правильный разбор "город X, улица Y, дом N, корпус M")
-                $addressString = $rowData['адрес организации'] ?? '';
-                $parsedAddress = $this->parseAddressString($addressString);
-                $cityName     = $parsedAddress['city_name'];
-                $streetString = $parsedAddress['street'];   // например, "улица Павловская"
-                $housesString = $parsedAddress['houses'];   // например, "8А, корпус 1"
-
-                // 2. Parse Contact
-                $contactString = $rowData['контакт'] ?? '';
-                $phone = '';
-                $fio = $contactString;
-                if (preg_match('/((?:\+7|8)[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2})/', $contactString, $matches)) {
-                    $phone = $matches[0];
-                    $fio = trim(str_replace($phone, '', $fio));
-                }
-
-                // 3. Get Organization
-                $organization = $rowData['гбоу'] ?? '';
-
-                // 4. Get Comment
-                $comment = $rowData['комментарии к монтажу'] ?? '';
-
-                $parsedRowData = [
-                    'city_name'    => $cityName,
-                    'street'       => $streetString,
-                    'houses'       => $housesString,
-                    'fio'          => $fio,
-                    'phone'        => $phone,
-                    'organization' => $organization,
-                    'comment'      => $comment,
-                ];
-
-                $addressId = $this->findOrCreateAddress($parsedRowData);
-                $clientId = $this->findOrCreateClient($parsedRowData);
-
-                $requestData = [
+                $newRequest = $this->createPlanningRequest([
                     'client_id' => $clientId,
                     'address_id' => $addressId,
-                    'comment' => $parsedRowData['comment'],
+                    'comment' => $parsedRow['comment'],
                     'request_type_id' => $requestTypeId,
-                ];
+                ]);
 
-                $newRequest = $this->createPlanningRequest($requestData);
-                
-                // Добавляем параметры работ
-                if (!empty($parameterColumns)) {
-                    foreach ($parameterColumns as $columnIndex => $parameterTypeId) {
-                        $value = $row[$columnIndex] ?? null;
-                        // Проверяем, что значение является числом и больше 0
-                        if (is_numeric($value) && $value > 0) {
-                            DB::table('work_parameters')->insert([
-                                'request_id' => is_array($newRequest) ? $newRequest['id'] : $newRequest->id,
-                                'parameter_type_id' => $parameterTypeId,
-                                'quantity' => (int) $value,
-                                'is_planning' => true,
-                                'is_done' => false,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                        }
-                    }
+                foreach ($parsedRow['workParameters'] as $workParameter) {
+                    DB::table('work_parameters')->insert([
+                        'request_id' => is_array($newRequest) ? $newRequest['id'] : $newRequest->id,
+                        'parameter_type_id' => $workParameter['parameter_type_id'],
+                        'quantity' => $workParameter['quantity'],
+                        'is_planning' => true,
+                        'is_done' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
-                
+
                 $createdRequests[] = $newRequest;
             }
 
             DB::commit();
 
+            $distinctAddressIds = array_unique($usedAddressIds);
+            $addressesCreated = count(array_filter($distinctAddressIds, fn ($id) => $id > $maxAddressIdBefore));
+            $addressesReused = count($distinctAddressIds) - $addressesCreated;
+            $requestsCreated = count($createdRequests);
+            // Строки, чей адрес уже использован другой строкой этого же файла
+            // (заявок больше, чем уникальных адресов). Сходится: заявки = адреса + повторы.
+            $duplicatesInFile = $requestsCreated - count($distinctAddressIds);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Заявки успешно загружены: '.count($createdRequests).' шт.',
+                'message' => 'Заявки успешно загружены: '.$requestsCreated.' шт.',
+                'summary' => [
+                    'requests_created' => $requestsCreated,
+                    'addresses_created' => $addressesCreated,
+                    'addresses_reused' => $addressesReused,
+                    'duplicates_in_file' => $duplicatesInFile,
+                    'request_type_id' => $requestTypeId,
+                    'request_type_name' => $requestTypeName,
+                ],
                 'data' => $createdRequests,
             ]);
-
+        } catch (ImportValidationException $e) {
+            return response()->json(array_merge([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->payload()), 400);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first(),
+            ], 422);
         } catch (\Exception $e) {
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
             Log::error('Ошибка при загрузке заявок из Excel: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обработке файла: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Предосмотр загрузки заявок: read-only анализ файла без записи в БД.
+     *
+     * Прогоняет тот же парсер и то же сопоставление адресов, что и реальная
+     * загрузка, и показывает построчно, что будет записано: какие адреса
+     * новые, какие совпадут с существующими (с их id), какие строки содержат
+     * ошибки (город не найден и т. п.). Геокодирование здесь НЕ выполняется —
+     * оно произойдёт только при фактической записи новых адресов.
+     */
+    public function previewRequestsExcel(Request $request, ExcelRequestParser $parser, AddressMatcher $matcher)
+    {
+        try {
+            $validated = $request->validate([
+                'requests_file' => 'required|file|mimes:xlsx,xls|max:10240',
+                'request_type_id' => 'required|integer|exists:request_types,id',
+            ], $this->importValidationMessages());
+
+            $requestTypeId = (int) $validated['request_type_id'];
+            $requestTypeName = DB::table('request_types')->where('id', $requestTypeId)->value('name');
+
+            $file = $request->file('requests_file');
+            $parsed = $parser->parse($file->getRealPath(), $requestTypeId);
+
+            if (empty($parsed->rows)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'В файле нет строк с данными для загрузки.',
+                ], 400);
+            }
+
+            $rows = [];
+            $batchNewAddresses = []; // ключ адреса => номер строки, впервые его создавшей
+            $summary = [
+                'total' => 0,
+                'new_addresses' => 0,
+                'existing_addresses' => 0,
+                'duplicates_in_file' => 0,
+                'error_rows' => 0,
+            ];
+
+            foreach ($parsed->rows as $parsedRow) {
+                $summary['total']++;
+
+                $cityName = trim($parsedRow['city_name']);
+                $street = trim($parsedRow['street']);
+                $houses = trim($parsedRow['houses']);
+
+                $errors = [];
+                if ($cityName === '') {
+                    $errors[] = 'Не указан город';
+                }
+                if ($street === '') {
+                    $errors[] = 'Не указана улица';
+                }
+
+                $city = null;
+                if ($cityName !== '') {
+                    $city = $matcher->findCity($cityName);
+                    if (! $city) {
+                        $errors[] = "Город «{$cityName}» не найден в базе";
+                    }
+                }
+
+                $addressStatus = null;   // existing | new | duplicate_in_file
+                $existingAddress = null;
+
+                if (empty($errors) && $city) {
+                    $existingId = $matcher->findExistingAddressId($city->id, $street, $houses);
+                    if ($existingId) {
+                        $addressStatus = 'existing';
+                        $existingAddress = $matcher->getAddressForDisplay($existingId);
+                        $summary['existing_addresses']++;
+                    } else {
+                        $key = $matcher->batchKey($city->id, $street, $houses);
+                        if (isset($batchNewAddresses[$key])) {
+                            $addressStatus = 'duplicate_in_file';
+                            $summary['duplicates_in_file']++;
+                        } else {
+                            $batchNewAddresses[$key] = $parsedRow['rowNumber'];
+                            $addressStatus = 'new';
+                            $summary['new_addresses']++;
+                        }
+                    }
+                }
+
+                if (! empty($errors)) {
+                    $summary['error_rows']++;
+                }
+
+                $rows[] = [
+                    'row_number' => $parsedRow['rowNumber'],
+                    'organization' => $parsedRow['organization'],
+                    'city' => $cityName,
+                    'street' => $street,
+                    'houses' => $houses,
+                    'fio' => $parsedRow['fio'],
+                    'phone' => $parsedRow['phone'],
+                    'comment' => $parsedRow['comment'],
+                    'work_parameters' => $parsedRow['workParameters'],
+                    'address_status' => $addressStatus,
+                    'existing_address' => $existingAddress,
+                    'errors' => $errors,
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'can_import' => $summary['error_rows'] === 0,
+                'request_type_id' => $requestTypeId,
+                'request_type_name' => $requestTypeName,
+                'summary' => $summary,
+                'rows' => $rows,
+            ]);
+        } catch (ImportValidationException $e) {
+            return response()->json(array_merge([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->payload()), 400);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Ошибка предосмотра загрузки заявок: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
             return response()->json([
                 'success' => false,
@@ -226,7 +248,24 @@ class PlanningRequestController extends Controller
      * чтобы "улица Павловская" + houses="8А, корпус 1" находил
      * существующий "Павловская" с houses="8А, корпус 1".
      */
-    private function findOrCreateAddress(array $rowData): int
+    /**
+     * Единые русские сообщения валидации файла импорта.
+     * Используются и предосмотром, и записью, чтобы тексты не расходились.
+     */
+    private function importValidationMessages(): array
+    {
+        return [
+            'requests_file.required' => 'Файл не выбран.',
+            'requests_file.file' => 'Загрузите корректный файл.',
+            'requests_file.mimes' => 'Допустимы только файлы Excel (.xlsx, .xls).',
+            'requests_file.max' => 'Файл слишком большой (максимум 10 МБ).',
+            'request_type_id.required' => 'Выберите тип заявки.',
+            'request_type_id.integer' => 'Некорректный тип заявки.',
+            'request_type_id.exists' => 'Выбранный тип заявки не найден.',
+        ];
+    }
+
+    private function findOrCreateAddress(array $rowData, AddressMatcher $matcher): int
     {
         $cityName = trim($rowData['city_name'] ?? '');
         $street   = trim($rowData['street']    ?? '');
@@ -236,40 +275,17 @@ class PlanningRequestController extends Controller
             throw new \Exception('Недостаточно данных для адреса в одной из строк. Обязательные поля: город, улица.');
         }
 
-        $city = DB::table('cities')->whereRaw("lower(translate(name, 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя')) = lower(translate(?, 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'))", [$cityName])->first();
+        $city = $matcher->findCity($cityName);
         if (! $city) {
             throw new \Exception("Город '{$cityName}' не найден в базе данных.");
         }
         $cityId = $city->id;
 
-        $streetKey = $this->normalizeStreetKey($street);
-        $houseKey  = $this->normalizeHouseKey($houses);
-
-        // Регэксп для удаления типа улицы внутри SQL. Должен ТОЧНО
-        // совпадать со списком в normalizeStreetKey().
-        $rxType = '\m(улица|ул\.|переулок|пер\.|проспект|пр-кт|пр\.|шоссе|ш\.|бульвар|б-р|проезд|пр-д|набережная|наб\.|тупик|линия|аллея)\M';
-
-        // Ищем по нормализованному ключу. Это main fix против дублей.
-        $existing = DB::selectOne(
-            "
-            SELECT id
-            FROM addresses
-            WHERE city_id = ?
-              AND btrim(regexp_replace(
-                    regexp_replace(
-                      regexp_replace(lower(translate(street, 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя')), ?, '', 'g'),
-                      '[\s,\.]*(дом|д\.)\s*[0-9].*$', '', 'i'),
-                    '[\s,\.]+', ' ', 'g')
-                  ) = ?
-              AND btrim(regexp_replace(lower(translate(coalesce(houses,''), 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя')), '[\s,\.]+', ' ', 'g')) = ?
-            ORDER BY id
-            LIMIT 1
-            ",
-            [$cityId, $rxType, $streetKey, $houseKey]
-        );
-
-        if ($existing) {
-            return $existing->id;
+        // Read-only поиск дубля по нормализованному ключу — тот же, что в
+        // предосмотре (AddressMatcher). Это main fix против дублей.
+        $existingId = $matcher->findExistingAddressId($cityId, $street, $houses);
+        if ($existingId) {
+            return $existingId;
         }
 
         // Не нашли — создаём новый. Сохраняем street как есть (с типом
@@ -324,98 +340,6 @@ class PlanningRequestController extends Controller
             }
             throw $e;
         }
-    }
-
-    /**
-     * Разбирает строку вида "город Москва, улица Павловская, дом 8А, корпус 1"
-     * на ['city_name', 'street', 'houses'].
-     *
-     * - 'street'  — название улицы с типом ("улица Павловская"). Сохраняется
-     *               в БД как есть, для отображения.
-     * - 'houses'  — всё после "дом N" ("8А, корпус 1"). Может быть пустым,
-     *               если в строке нет слова "дом" (например, адрес в
-     *               Зеленограде по корпусам без улицы).
-     */
-    private function parseAddressString(string $raw): array
-    {
-        $parts   = explode(',', $raw, 2);
-        $cityRaw = trim($parts[0] ?? '');
-        $rest    = trim($parts[1] ?? '');
-
-        $cityName = trim(preg_replace('/^(г\.|город|г\s)\s*/iu', '', $cityRaw));
-
-        $street = $rest;
-        $houses = '';
-
-        // Шаг 1. Пытаемся разделить по запятой, после которой (возможно, через пробелы/ключевые слова) идет число.
-        // Ищет первую запятую, после которой идет числовой блок.
-        // При этом, если непосредственно после запятой идет слово "дом" или "д." (и затем число),
-        // мы его отбрасываем, оставляя число в houses.
-        // Если же там идет "корпус", "к.", "строение" и т.д., мы сохраняем его в houses.
-        if (preg_match('/^(.*?),\s*(?:(?:дом|д\.)\s*)?([0-9].*)$/iu', $rest, $m)) {
-            $street = trim($m[1], " ,.");
-            $houses = trim($m[2], " ,.");
-        }
-        // Шаг 2. Если запятой перед числом нет, но в строке есть явное ключевое слово дома/корпуса/строения
-        // Например: "улица Ленина дом 10" или "Зеленоград корпус 1630"
-        elseif (preg_match('/^(.*?)\s+(?:дом|д\.|д|корпус|корп|корп\.|к\.|к|строение|стр|стр\.)\s*([0-9].*)$/iu', $rest, $m)) {
-            $street = trim($m[1], " ,.");
-            
-            // Если ключевое слово - "дом" или "д.", мы его не сохраняем в houses (чтобы было "10" вместо "дом 10").
-            if (preg_match('/^(.*?)\s+(?:дом|д\.|д)\s+([0-9].*)$/iu', $rest, $subM)) {
-                $houses = trim($subM[2], " ,.");
-            } else {
-                // Для корпусов/строений сохраняем префикс в houses (например, "корпус 1630")
-                if (preg_match('/^(.*?)\s+((?:корпус|корп|корп\.|к\.|к|строение|стр|стр\.)\s+[0-9].*)$/iu', $rest, $subM)) {
-                    $houses = trim($subM[2], " ,.");
-                } else {
-                    $houses = trim($m[2], " ,.");
-                }
-            }
-        }
-        // Шаг 3. Если запятой нет и ключевых слов нет, но на конце строки есть пробел и число
-        // Например: "улица Ленина 10", "Зеленоград 1630"
-        elseif (preg_match('/^(.*?)\s+([0-9]+[а-яА-Яa-zA-Z]*)$/iu', $rest, $m)) {
-            $street = trim($m[1], " ,.");
-            $houses = trim($m[2], " ,.");
-        }
-
-        return [
-            'city_name' => $cityName,
-            'street'    => $street,
-            'houses'    => $houses,
-        ];
-    }
-
-    /**
-     * Нормализованный ключ улицы для поиска дублей.
-     * Должен СИНХРОНИЗИРОВАННО совпадать с SQL-выражением в findOrCreateAddress
-     * и в scripts/fix_addresses_dedupe.sql.
-     */
-    private function normalizeStreetKey(string $street): string
-    {
-        $s = mb_strtolower($street, 'UTF-8');
-        // 1) убрать хвост "дом N, ..." (на случай, если он остался в street)
-        $s = preg_replace('/[\s,\.]*(?:дом|д\.)\s*[0-9].*$/iu', '', $s);
-        // 2) убрать тип улицы где угодно по границе слова
-        $s = preg_replace(
-            '/\b(улица|ул\.|переулок|пер\.|проспект|пр-кт|пр\.|шоссе|ш\.|бульвар|б-р|проезд|пр-д|набережная|наб\.|тупик|линия|аллея)\b/iu',
-            '',
-            $s
-        );
-        // 3) сжать пробелы/запятые/точки
-        $s = preg_replace('/[\s,\.]+/u', ' ', $s);
-        return trim($s);
-    }
-
-    /**
-     * Нормализованный ключ для houses ("8А, корпус 1" -> "8а корпус 1").
-     */
-    private function normalizeHouseKey(string $houses): string
-    {
-        $s = mb_strtolower($houses, 'UTF-8');
-        $s = preg_replace('/[\s,\.]+/u', ' ', $s);
-        return trim($s);
     }
 
     private function findOrCreateClient($rowData)

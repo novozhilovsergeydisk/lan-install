@@ -2501,14 +2501,14 @@
                 <form id="uploadRequestsForm">
                     <div class="mb-3">
                         <label for="uploadRequestType" class="form-label">Тип заявки</label>
-                        <select class="form-select" id="uploadRequestType" name="request_type_id">
-                            <option value="" selected>Не выбран (по умолчанию)</option>
+                        <select class="form-select" id="uploadRequestType" name="request_type_id" required>
+                            <option value="" selected disabled>— Выберите тип заявки —</option>
                         </select>
-                        <div class="form-text">Если выбрать тип заявки, можно добавлять колонки с параметрами работ.</div>
+                        <div class="form-text">Тип заявки обязателен. В зависимости от выбранного типа можно добавлять колонки с параметрами работ.</div>
                     </div>
                     <div class="mb-3">
                         <label for="requestsFile" class="form-label">Выберите файл с заявками</label>
-                        <input type="file" class="form-control" id="requestsFile" name="requests_file" accept=".xlsx, .xls, .csv">
+                        <input type="file" class="form-control" id="requestsFile" name="requests_file" accept=".xlsx, .xls">
                     </div>
                     <div class="mb-3">
                         <a href="#helpFormatNew" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="helpFormatNew" class="text-decoration-none text-info">

@@ -421,6 +421,10 @@ Route::post('/planning-requests', [PlanningRequestController::class, 'store'])
     ->name('planning-requests.store')
     ->middleware('auth');
 
+Route::post('/planning-requests/preview-excel', [PlanningRequestController::class, 'previewRequestsExcel'])
+    ->name('planning-requests.preview-excel')
+    ->middleware('auth');
+
 Route::post('/planning-requests/upload-excel', [PlanningRequestController::class, 'uploadRequestsExcel'])
     ->name('planning-requests.upload-excel')
     ->middleware('auth');
