@@ -1167,7 +1167,14 @@ export async function applyFilters() {
 
                             row.innerHTML = `
                             <!-- Номер заявки -->
-                            <td class=" col-number">${rowNumber}</td>
+                            <td class=" col-number">
+                                <div class="d-flex flex-column align-items-center gap-1">
+                                    <span class="row-number">${rowNumber}</span>
+                                    ${request.isAdmin ? `
+                                    <input type="checkbox" class="form-check-input request-checkbox m-0" value="${request.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                                    ` : ''}
+                                </div>
+                            </td>
 
                             <!-- Клиент -->
                              <td class="col-address">
@@ -1279,10 +1286,6 @@ export async function applyFilters() {
                                         <i class="bi bi-plus-circle"></i> 
                                     </button>
                                 ` : ''}
-                                
-                                <div class="mt-2 text-center">
-                                    <input type="checkbox" class="form-check-input request-checkbox" value="${request.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
-                                </div>
                             </td>
                             ` : ''}
                         `;
@@ -3067,7 +3070,12 @@ function handleCancelRequest(button) {
 
                     rows.forEach((row, index) => {
                     const numCell = row.querySelector('td.col-number') || row.querySelector('td:first-child');
-                    if (numCell) numCell.textContent = index + 1;
+                    if (numCell) {
+                        // Номер пишем в span.row-number, чтобы не затереть чекбокс в этой же ячейке
+                        const numSpan = numCell.querySelector('.row-number');
+                        if (numSpan) numSpan.textContent = index + 1;
+                        else numCell.textContent = index + 1;
+                    }
                     });
 
                     // Если строк не осталось — показать строку-заглушку (если используется)

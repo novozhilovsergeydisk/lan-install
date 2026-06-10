@@ -469,7 +469,14 @@
                                          data-request-id="{{ $request->id }}">
 
                                         <!-- Номер заявки -->
-                                        <td class="col-number">{{ $rowNumber }}</td>
+                                        <td class="col-number">
+                                            <div class="d-flex flex-column align-items-center gap-1">
+                                                <span class="row-number">{{ $rowNumber }}</span>
+                                                @if($user->isAdmin)
+                                                <input type="checkbox" class="form-check-input request-checkbox m-0" value="{{ $request->id }}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                                                @endif
+                                            </div>
+                                        </td>
 
                                         <!-- Клиент -->
                                         <td class="col-address">
@@ -648,12 +655,9 @@
                                                             data-bs-toggle="tooltip"
                                                             data-bs-placement="left"
                                                             data-bs-title="Дополнительное задание">
-                                                        <i class="bi bi-plus-circle"></i> 
+                                                        <i class="bi bi-plus-circle"></i>
                                                     </button>
                                                 @endif
-                                                <div class="mt-2 text-center">
-                                                    <input type="checkbox" class="form-check-input request-checkbox" value="{{ $request->id }}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
-                                                </div>
                                             </div>
                                             @endif
                                         </td>

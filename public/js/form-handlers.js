@@ -2696,7 +2696,14 @@ function addRequestToTable(result) {
     // Формируем содержимое строки
     newRow.innerHTML = `
         <!-- Номер заявки -->
-        <td class="col-number">1</td>
+        <td class="col-number">
+            <div class="d-flex flex-column align-items-center gap-1">
+                <span class="row-number">1</span>
+                ${requestData.isAdmin ? `
+                <input type="checkbox" class="form-check-input request-checkbox m-0" value="${requestData.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                ` : ''}
+            </div>
+        </td>
         <!-- Клиент -->
         <td class="col-address">
             <div class="text-dark col-address__organization">${clientOrganization}</div>
@@ -2780,9 +2787,6 @@ function addRequestToTable(result) {
                         data-request-id="${requestData.id}">
                     <i class="bi bi-x-circle"></i>
                 </button>
-                <div class="mt-2 text-center">
-                    <input type="checkbox" class="form-check-input request-checkbox" value="${requestData.id}" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
-                </div>
             </div>
         </td>
         ` : ''}
@@ -2827,7 +2831,13 @@ function updateRowNumbers() {
     rows.forEach((row, index) => {
         const numberCell = row.querySelector('td:first-child');
         if (numberCell) {
-            numberCell.textContent = index + 1;
+            // Номер пишем в span.row-number, чтобы не затереть чекбокс в этой же ячейке
+            const numberSpan = numberCell.querySelector('.row-number');
+            if (numberSpan) {
+                numberSpan.textContent = index + 1;
+            } else {
+                numberCell.textContent = index + 1;
+            }
         }
     });
 }

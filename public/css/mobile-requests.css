@@ -254,12 +254,13 @@
         width: 12rem !important;
     }
 
+    /* Колонка с номером больше не скрывается: в ней теперь чекбокс
+       массового выбора заявок, он должен быть доступен и на мобильных */
     #requestsTable .col-number {
-        display: none;
-    }
-
-    #requestsTable thead th:first-child {
-        display: none;
+        width: 2rem;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+        text-align: center;
     }
 
     .view-comments-btn i {
