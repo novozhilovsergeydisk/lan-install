@@ -382,15 +382,27 @@
                                 </label>
                             </div>
 
-                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3 me-2"
-                                    id="btn-print-work-permit" disabled>
-                                <i class="bi bi-printer me-1"></i>Распечатать
-                            </button>
-                            
-                            <button type="button" class="btn btn-outline-primary btn-sm mb-3 me-2"
-                                    id="btn-mass-assign-team" disabled>
-                                <i class="bi bi-people me-1"></i>Назначить бригаду
-                            </button>
+                            <div class="mass-actions-group d-flex gap-1 align-items-center mb-3 me-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        id="btn-print-work-permit" disabled>
+                                    <i class="bi bi-printer me-1"></i>Распечатать
+                                </button>
+
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        id="btn-mass-assign-team" disabled>
+                                    <i class="bi bi-people me-1"></i>Назначить бригаду
+                                </button>
+
+                                <button type="button" class="btn btn-outline-success btn-sm"
+                                        id="btn-mass-transfer" disabled>
+                                    <i class="bi bi-arrow-left-right me-1"></i>Перенести
+                                </button>
+
+                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                        id="btn-mass-cancel" disabled>
+                                    <i class="bi bi-x-circle me-1"></i>Отменить
+                                </button>
+                            </div>
 
                             <div id="status-buttons" class="d-flex flex-wrap gap-2  hide-me">
                                 <!-- Кнопки статусов будут добавлены через JavaScript -->
@@ -606,35 +618,6 @@
                                         <td class="col-actions text-nowrap">
                                             @if($user->isAdmin)
                                             <div class="col-actions__div d-flex flex-column gap-1">
-                                                @if($request->status_name !== 'выполнена' && $request->status_name !== 'отменена')
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-outline-primary assign-team-btn p-1"
-                                                            data-bs-toggle="tooltip"
-                                                            data-bs-placement="left"
-                                                            data-bs-title="Назначить бригаду"
-                                                            data-request-id="{{ $request->id }}">
-                                                        <i class="bi bi-people"></i>
-                                                    </button>
-
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-outline-green transfer-request-btn p-1"
-                                                            data-bs-toggle="tooltip"
-                                                            data-bs-placement="left"
-                                                            data-bs-title="Перенести заявку"
-                                                            data-request-id="{{ $request->id }}">
-                                                        <i class="bi bi-arrow-left-right"></i>
-                                                    </button>
-                                                    
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-outline-danger cancel-request-btn p-1"
-                                                            data-bs-toggle="tooltip"
-                                                            data-bs-placement="left"
-                                                            data-bs-title="Отменить заявку"
-                                                            data-request-id="{{ $request->id }}">
-                                                        <i class="bi bi-x-circle"></i>
-                                                    </button>
-                                                @endif
-
                                                 @php
                                                     $isToday = $request->execution_date && now()->isSameDay(\Carbon\Carbon::parse($request->execution_date));
                                                     $showButton = $request->status_name == 'выполнена' && $isToday && ($user->isAdmin ?? false);

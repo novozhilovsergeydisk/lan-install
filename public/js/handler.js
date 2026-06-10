@@ -1239,34 +1239,6 @@ export async function applyFilters() {
                             <!-- Action Buttons Group -->
                             <td class="col-actions text-nowrap">
                                 <div class="col-actions__div d-flex flex-column gap-1">
-                                ${request.status_name !== 'выполнена' && request.status_name !== 'отменена' ? `
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-primary assign-team-btn p-1" 
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-placement="left" 
-                                            data-bs-title="Назначить бригаду"
-                                            data-request-id="${request.id}">
-                                        <i class="bi bi-people"></i>
-                                    </button>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-success transfer-request-btn p-1" 
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-placement="left" 
-                                            data-bs-title="Перенести заявку"
-                                            style="--bs-btn-color: #198754; --bs-btn-border-color: #198754; --bs-btn-hover-bg: rgba(25, 135, 84, 0.1); --bs-btn-hover-border-color: #198754;" 
-                                            data-request-id="${request.id}">
-                                        <i class="bi bi-arrow-left-right"></i>
-                                    </button>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-danger cancel-request-btn p-1" 
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-placement="left" 
-                                            data-bs-title="Отменить заявку"
-                                            data-request-id="${request.id}">
-                                        <i class="bi bi-x-circle"></i>
-                                    </button>
-                                ` : ''}
-
                                 ${canOpenRequest ? `
                                     <button data-request-id="${request.id}" type="button"
                                             class="btn btn-sm btn-custom-green p-1 open-request-btn"
@@ -2719,10 +2691,19 @@ async function handleAssignTeam(button) {
     await loadTeamsToSelect();
 }
 
-// Обработчик кнопки 'Перенести заявку'
+// Обработчик кнопки 'Перенести заявку' (одиночный вызов из строки таблицы)
 function handleTransferRequest(button) {
-    const requestId = button.dataset.requestId;
-    // console.log('Перенос заявки:', requestId);
+    openTransferModal([button.dataset.requestId]);
+}
+
+// Модальное окно переноса одной или нескольких заявок.
+// Дата/причина общие; запрос идёт на существующий одиночный эндпоинт
+// по каждой заявке, итог показывается сводкой.
+function openTransferModal(requestIds) {
+    const isMass = requestIds.length > 1;
+    const title = isMass
+        ? `Перенос заявок: ${requestIds.length} шт.`
+        : `Перенос заявки #${requestIds[0]}`;
 
     // Создаем модальное окно для выбора даты переноса
     const modalHtml = `
@@ -2730,12 +2711,12 @@ function handleTransferRequest(button) {
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="transferRequestModalLabel">Перенос заявки #${requestId}</h5>
+                        <h5 class="modal-title" id="transferRequestModalLabel">${title}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="transferDate" class="form-label">Выберите новую дату для заявки:</label>
+                            <label for="transferDate" class="form-label">Выберите новую дату для заяв${isMass ? 'ок' : 'ки'}:</label>
                             <input type="date" class="form-control" id="transferDate" required>
                         </div>
                         <div class="mb-3">
@@ -2744,7 +2725,7 @@ function handleTransferRequest(button) {
                         </div>
                         <div class="mb-3">
                             <input type="checkbox" id="transferToPlanning" name="transferToPlanning" class="form-check-input">
-                            <label for="transferToPlanning" class="form-check-label">Перенести заявку в планирование</label>
+                            <label for="transferToPlanning" class="form-check-label">Перенести заяв${isMass ? 'ки' : 'ку'} в планирование</label>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -2794,7 +2775,8 @@ function handleTransferRequest(button) {
     });
 
     // Обработчик подтверждения переноса
-    modalElement.querySelector('#confirmTransfer').addEventListener('click', async () => {
+    const confirmBtn = modalElement.querySelector('#confirmTransfer');
+    confirmBtn.addEventListener('click', async () => {
         const selectedDate = dateInput.value;
         const reason = document.getElementById('transferReason').value.trim();
         const transferToPlanning = document.getElementById('transferToPlanning').checked;
@@ -2809,146 +2791,62 @@ function handleTransferRequest(button) {
             return;
         }
 
-        try {
-            // Выводим в консоль отправляемые данные для отладки
-            /*
-            console.log('Отправка запроса на перенос заявки:', {
-                request_id: requestId,
-                new_date: selectedDate,
-                reason: reason,
-                transfer_to_planning: transferToPlanning
-            });
-            */
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Перенос...';
 
-            const response = await fetch('/api/requests/transfer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    request_id: requestId,
-                    new_date: selectedDate,
-                    reason: reason,
-                    transfer_to_planning: transferToPlanning
-                })
-            });
+        let okCount = 0;
+        const errors = [];
 
-            const result = await response.json();
+        for (const requestId of requestIds) {
+            try {
+                const response = await fetch('/api/requests/transfer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        request_id: requestId,
+                        new_date: selectedDate,
+                        reason: reason,
+                        transfer_to_planning: transferToPlanning
+                    })
+                });
 
-            // Выводим ответ сервера в консоль
-            // console.log('Ответ сервера при переносе заявки:', result);
+                const result = await response.json().catch(() => ({}));
 
-            // console.log(result);
-
-            if (!result.isPlanning) {
-                // Проверяем дату выполнения из ответа сервера
-                if (result.execution_date) {
-                    const serverDate = new Date(result.execution_date);
-                    const currentDate = new Date();
-
-                    // Сбрасываем время для корректного сравнения только дат
-                    serverDate.setHours(0, 0, 0, 0);
-                    currentDate.setHours(0, 0, 0, 0);
-
-                    // console.log('Дата выполнения от сервера:', serverDate);
-                    // console.log('Текущая дата:', currentDate);
-
-                    if (serverDate < currentDate) {
-                        showAlert('Внимание: Дата выполнения заявки уже прошла!', 'error');
-                    } else if (serverDate.getTime() === currentDate.getTime()) {
-                        showAlert('Заявка запланирована на сегодня', 'info');
-                    } else {
-                        // скрыть заявку, если она запланирована на будущее
-                        showAlert('Заявка запланирована на будущее', 'info');
-                        const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
-                        if (row) {
-                            row.style.display = 'none';
-                        }
-                    }
+                if (!response.ok) {
+                    throw new Error(result.message || `Ошибка HTTP ${response.status}`);
                 }
+
+                okCount++;
+            } catch (error) {
+                errors.push(`#${requestId}: ${error.message}`);
             }
+        }
 
-            if (response.ok) {
-                const isPlanning = result.isPlanning;
-                const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+        // Закрываем модальное окно (удалится по hidden.bs.modal)
+        modal.hide();
 
-                if (isPlanning) {
-                    // row.style.setProperty('--status-color', '#BBDEFB');
-                    // Полностью удаляем строку из DOM
-                    row.remove();
-                    showAlert('Заявка перенесена в раздел запланированных заявок', 'info');
-                    loadPlanningRequests();
-                } else {
-                    // loadRequests();
+        if (errors.length === 0) {
+            showAlert(
+                isMass
+                    ? `Заявки перенесены: ${okCount} шт.`
+                    : (transferToPlanning ? 'Заявка перенесена в раздел запланированных заявок' : 'Заявка успешно перенесена'),
+                'success'
+            );
+        } else {
+            showAlert(`Перенесено: ${okCount} из ${requestIds.length}. Ошибки: ${errors.join('; ')}`, 'warning');
+        }
 
-                    showAlert('Заявка успешно перенесена', 'success');
-                    // Обновляем цвет строки без перезагрузки
-                    
-                    if (row) {
-                        row.style.setProperty('--status-color', '#BBDEFB');
-                        // Обновляем текст статуса, если он отображается
-                        const statusCell = row.querySelector('.status-badge');
-                        if (statusCell) {
-                            statusCell.textContent = 'перенесена';
-                        }
+        // Если заявки ушли в планирование — обновляем и его список
+        if (transferToPlanning && okCount > 0 && typeof loadPlanningRequests === 'function') {
+            loadPlanningRequests();
+        }
 
-                        // const executionDateFormated = DateFormated(result.execution_date);
-
-                        const execDate = new Date(result.execution_date);
-                        const [selDay, selMonth, selYear] = selectedDateState.date.split('.');
-                        const selDate = new Date(selYear, selMonth - 1, selDay);
-
-                        // console.log('Дата выполнения:', execDate);
-                        // console.log('Выбранная дата:', selDate);
-
-                        if (execDate < selDate) {
-                            row.remove();
-                            showAlert('Заявка скрыта!', 'info');
-                        }
-
-                        // Обновляем блок комментариев в модальном окне
-                        const commentsContainer = row.querySelector('.comment-preview').parentElement;
-                        if (commentsContainer) {
-                            const existingButton = commentsContainer.querySelector('.view-comments-btn');
-                            const commentsCount = result.comments_count || 1; // Используем переданное количество или 1 по умолчанию
-
-                            if (!existingButton) {
-                                // Создаем новую кнопку, если её нет
-                                const buttonHtml = `
-                                    <div class="mt-1">
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-secondary view-comments-btn p-1"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#commentsModal"
-                                                data-request-id="${requestId}"
-                                                style="position: relative; z-index: 1;">
-                                            <i class="bi bi-chat-left-text me-1"></i>Все комментарии
-                                            <span class="badge bg-primary rounded-pill ms-1">${commentsCount}</span>
-                                        </button>
-                                    </div>`;
-                                commentsContainer.insertAdjacentHTML('beforeend', buttonHtml);
-
-                                // Инициализируем tooltip для новой кнопки
-                                const tooltipTriggerList = [].slice.call(commentsContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                                tooltipTriggerList.map(function (tooltipTriggerEl) {
-                                    return new bootstrap.Tooltip(tooltipTriggerEl);
-                                });
-                            }
-                        }
-                    }
-                }
-                
-                // Закрываем модальное окно
-                modal.hide();
-                // Удаляем модальное окно из DOM
-                modalElement.remove();
-            } else {
-                throw new Error(result.message || 'Ошибка при переносе заявки');
-            }
-        } catch (error) {
-            // console.error('Ошибка при переносе заявки:', error);
-            showAlert(error.message || 'Произошла ошибка при переносе заявки', 'error');
+        // Перерисовываем таблицу заявок с актуальными данными
+        if (typeof window.refreshRequestsTable === 'function') {
+            window.refreshRequestsTable();
         }
     });
 
@@ -2961,10 +2859,19 @@ function handleTransferRequest(button) {
     modal.show();
 }
 
-// Обработчик кнопки 'Отменить заявку'
+// Обработчик кнопки 'Отменить заявку' (одиночный вызов из строки таблицы)
 function handleCancelRequest(button) {
-    const requestId = button.dataset.requestId;
-    // console.log('Отмена заявки:', requestId);
+    openCancelModal([button.dataset.requestId]);
+}
+
+// Модальное окно отмены одной или нескольких заявок.
+// Причина общая; запрос идёт на существующий одиночный эндпоинт
+// по каждой заявке, итог показывается сводкой.
+function openCancelModal(requestIds) {
+    const isMass = requestIds.length > 1;
+    const question = isMass
+        ? `Вы уверены, что хотите отменить выбранные заявки (${requestIds.length} шт.)?`
+        : `Вы уверены, что хотите отменить заявку #${requestIds[0]}?`;
 
     // Создаем модальное окно для подтверждения отмены
     const modalHtml = `
@@ -2976,7 +2883,7 @@ function handleCancelRequest(button) {
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Вы уверены, что хотите отменить заявку #${requestId}?</p>
+                        <p>${question}</p>
                         <div class="mb-3">
                             <label for="cancelReason" class="form-label">Причина отмены:</label>
                             <textarea class="form-control" id="cancelReason" rows="3" required></textarea>
@@ -2998,7 +2905,8 @@ function handleCancelRequest(button) {
     const modal = new bootstrap.Modal(modalElement);
 
     // Обработчик подтверждения отмены
-    modalElement.querySelector('#confirmCancel').addEventListener('click', async () => {
+    const confirmBtn = modalElement.querySelector('#confirmCancel');
+    confirmBtn.addEventListener('click', async () => {
         const reason = document.getElementById('cancelReason').value.trim();
 
         if (!reason) {
@@ -3006,125 +2914,52 @@ function handleCancelRequest(button) {
             return;
         }
 
-        try {
-            // console.log('Отправка запроса на отмену заявки:', { requestId, reason });
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Отмена...';
 
-            // Отправка запроса на отмену заявки
-            const response = await fetch('/requests/cancel', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    request_id: requestId,
-                    reason: reason
-                })
-            });
+        let okCount = 0;
+        const errors = [];
 
-            const result = await response.json();
+        for (const requestId of requestIds) {
+            try {
+                const response = await fetch('/requests/cancel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        request_id: requestId,
+                        reason: reason
+                    })
+                });
 
-            if (response.ok) {
-                showAlert('Заявка успешно отменена', 'success');
-                // console.log('Заявка отменена:', result);
+                const result = await response.json().catch(() => ({}));
 
-                // Обновляем интерфейс
-                const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
-                if (row) {
-                    // Обновляем статус
-                    row.style.setProperty('--status-color', result.status_color);
-                    const statusCell = row.querySelector('.status-badge');
-                    if (statusCell) {
-                        statusCell.textContent = 'отменена';
-                    }
-
-                    // Обновляем кнопки
-                    const buttonsContainer = row.querySelector('.btn-group');
-                    if (buttonsContainer) {
-                        buttonsContainer.innerHTML = `
-
-                        `;
-                    }
+                if (!response.ok) {
+                    throw new Error(result.message || `Ошибка HTTP ${response.status}`);
                 }
 
-                // Находим строку заявки
-                const requestRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
-
-                // console.log('Заявка отменена:', requestRow);
-
-                if (requestRow) {
-                    // Скрыть саму строку
-
-                    // console.log('Заявка отменена', requestRow.dataset.requestId);
-
-                    // requestRow.style.display = 'none';
-
-                    // удаляем строку из DOM
-                    requestRow.remove();
-
-                    // Перенумерация только оставшихся видимых строк
-                    const rows = Array.from(document.querySelectorAll('tr[data-request-id]'))
-                    .filter(r => r.offsetParent !== null);
-
-                    rows.forEach((row, index) => {
-                    const numCell = row.querySelector('td.col-number') || row.querySelector('td:first-child');
-                    if (numCell) {
-                        // Номер пишем в span.row-number, чтобы не затереть чекбокс в этой же ячейке
-                        const numSpan = numCell.querySelector('.row-number');
-                        if (numSpan) numSpan.textContent = index + 1;
-                        else numCell.textContent = index + 1;
-                    }
-                    });
-
-                    // Если строк не осталось — показать строку-заглушку (если используется)
-                    const tbody = document.querySelector('#requestsTable tbody');
-                    const noRow = document.getElementById('no-requests-row');
-                    if (tbody && noRow) {
-                    if (rows.length === 0) noRow.classList.remove('d-none');
-                    }
-
-                    // // Скрываем кнопки в первом блоке (Назначить бригаду, Перенести, Отменить)
-                    // const firstActionBlock = requestRow.querySelector('td.text-nowrap .d-flex.flex-column.gap-1');
-                    // if (firstActionBlock) {
-                    //     const buttonsToHide = firstActionBlock.querySelectorAll('button');
-                    //     buttonsToHide.forEach(button => {
-                    //         button.style.display = 'none';
-                    //     });
-
-                    //     // Добавляем текст "Заявка отменена"
-                    //     const statusText = document.createElement('div');
-                    //     statusText.className = 'text-muted small';
-                    //     statusText.textContent = 'Заявка отменена';
-                    //     firstActionBlock.appendChild(statusText);
-                    // }
-
-                    // // Скрываем кнопки во втором блоке, кроме кнопки Фотоотчет
-                    // const secondActionBlock = requestRow.querySelectorAll('td.text-nowrap .d-flex.flex-column.gap-1')[1];
-                    // if (secondActionBlock) {
-                    //     const buttonsToHide = secondActionBlock.querySelectorAll('button:not(.add-photo-btn)');
-                    //     buttonsToHide.forEach(button => {
-                    //         button.style.display = 'none';
-                    //     });
-                    // }
-                }
-
-                // Обновляем счетчик заявок, если он есть
-                // updateRequestsCount();
-
-            } else {
-                throw new Error(result.message || 'Ошибка при отмене заявки');
+                okCount++;
+            } catch (error) {
+                errors.push(`#${requestId}: ${error.message}`);
             }
+        }
 
-        } catch (error) {
-            // console.error('Ошибка при отмене заявки:', error);
-            showAlert(error.message || 'Произошла ошибка при отмене заявки', 'error');
-        } finally {
-            // Закрываем модальное окно
-            modal.hide();
-            // Удаляем модальное окно из DOM
-            modalElement.remove();
+        // Закрываем модальное окно (удалится по hidden.bs.modal)
+        modal.hide();
+
+        if (errors.length === 0) {
+            showAlert(isMass ? `Заявки отменены: ${okCount} шт.` : 'Заявка успешно отменена', 'success');
+        } else {
+            showAlert(`Отменено: ${okCount} из ${requestIds.length}. Ошибки: ${errors.join('; ')}`, 'warning');
+        }
+
+        // Перерисовываем таблицу заявок с актуальными данными
+        if (typeof window.refreshRequestsTable === 'function') {
+            window.refreshRequestsTable();
         }
     });
 
@@ -3155,6 +2990,26 @@ export function initRequestButtons() {
         else if (e.target.closest('.cancel-request-btn')) {
             e.preventDefault();
             handleCancelRequest(e.target.closest('.cancel-request-btn'));
+        }
+        // Групповой перенос выбранных заявок (кнопка над таблицей)
+        else if (e.target.closest('#btn-mass-transfer')) {
+            e.preventDefault();
+            const ids = Array.from(document.querySelectorAll('#requestsTable .request-checkbox:checked')).map(cb => cb.value);
+            if (ids.length === 0) {
+                showAlert('Выберите заявки для переноса', 'warning');
+                return;
+            }
+            openTransferModal(ids);
+        }
+        // Групповая отмена выбранных заявок (кнопка над таблицей)
+        else if (e.target.closest('#btn-mass-cancel')) {
+            e.preventDefault();
+            const ids = Array.from(document.querySelectorAll('#requestsTable .request-checkbox:checked')).map(cb => cb.value);
+            if (ids.length === 0) {
+                showAlert('Выберите заявки для отмены', 'warning');
+                return;
+            }
+            openCancelModal(ids);
         }
     });
 }

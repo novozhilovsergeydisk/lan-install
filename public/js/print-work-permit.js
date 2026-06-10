@@ -18,6 +18,8 @@ function updatePrintButtonVisibility() {
 
     const btnPrint = document.getElementById('btn-print-work-permit');
     const btnAssign = document.getElementById('btn-mass-assign-team');
+    const btnTransfer = document.getElementById('btn-mass-transfer');
+    const btnCancel = document.getElementById('btn-mass-cancel');
     const btnAssignPlanning = document.getElementById('btn-mass-assign-team-planning');
     const btnChangeSubtype = document.getElementById('btn-mass-change-subtype');
     const btnChangeSubtypePlanning = document.getElementById('btn-mass-change-subtype-planning');
@@ -30,6 +32,15 @@ function updatePrintButtonVisibility() {
 
     if (btnAssign) {
         btnAssign.disabled = (checkedCount === 0 || hasClosedRequestSelected);
+    }
+
+    // Перенос и отмена недоступны для закрытых заявок — как и назначение бригады
+    if (btnTransfer) {
+        btnTransfer.disabled = (checkedCount === 0 || hasClosedRequestSelected);
+    }
+
+    if (btnCancel) {
+        btnCancel.disabled = (checkedCount === 0 || hasClosedRequestSelected);
     }
 
     if (btnAssignPlanning) {
