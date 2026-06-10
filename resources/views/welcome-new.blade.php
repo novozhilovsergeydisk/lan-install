@@ -159,9 +159,6 @@
                                       <th class="line-height-20 font-smaller">Комментарии</th>
 
                                       <th id="brigadeHeader" class="line-height-20 font-smaller">Бригада <span id="brigadeSortIcon"></span></th>
-                                     @if($user->isAdmin)
-                                     <th class="line-height-20 font-smaller" colspan="2">Действия</th>
-                                     @endif
                                  </tr>
                                  </thead>
                                 <tbody>
@@ -268,6 +265,30 @@
                                                    </button>
                                                     @endif
                                                 @endif
+
+                                                @php
+                                                    $isToday = $request->execution_date && now()->isSameDay(\Carbon\Carbon::parse($request->execution_date));
+                                                    $showButton = $request->status_name == 'выполнена' && $isToday && ($user->isAdmin ?? false);
+                                                @endphp
+                                                @if($showButton)
+                                                    <button data-request-id="{{ $request->id }}" type="button"
+                                                            class="btn btn-sm btn-custom-green p-1 open-request-btn"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="top"
+                                                            data-bs-title="Открыть заявку">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                @endif
+
+                                                @if($request->status_name == 'выполнена' && $showButton)
+                                                    <button data-request-id="{{ $request->id }}" type="button"
+                                                            class="btn btn-sm btn-custom-green-dark p-1 open-additional-task-request-btn"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="top"
+                                                            data-bs-title="Дополнительное задание">
+                                                        <i class="bi bi-plus-circle"></i>
+                                                    </button>
+                                                @endif
                                             </div>
                                          </td>
 
@@ -308,41 +329,11 @@
                                             </div>
                                         </td>
 
-                                        <!-- Action Buttons Group -->
-                                        <td class="col-actions text-nowrap">
-                                            @if($user->isAdmin)
-                                            <div class="col-actions__div d-flex flex-column gap-1">
-                                                @php
-                                                    $isToday = $request->execution_date && now()->isSameDay(\Carbon\Carbon::parse($request->execution_date));
-                                                    $showButton = $request->status_name == 'выполнена' && $isToday && ($user->isAdmin ?? false);
-                                                @endphp
-                                                @if($showButton)
-                                                    <button data-request-id="{{ $request->id }}" type="button"
-                                                            class="btn btn-sm btn-custom-green p-1 open-request-btn"
-                                                            data-bs-toggle="tooltip"
-                                                            data-bs-placement="left"
-                                                            data-bs-title="Открыть заявку">
-                                                        <i class="bi bi-eye"></i>
-                                                    </button>
-                                                @endif
-
-                                                @if($request->status_name == 'выполнена' && $showButton)
-                                                    <button data-request-id="{{ $request->id }}" type="button"
-                                                            class="btn btn-sm btn-custom-green-dark p-1 open-additional-task-request-btn"
-                                                            data-bs-toggle="tooltip"
-                                                            data-bs-placement="left"
-                                                            data-bs-title="Дополнительное задание">
-                                                        <i class="bi bi-plus-circle"></i>
-                                                    </button>
-                                                @endif
-                                            </div>
-                                            @endif
-                                        </td>
                                     </tr>
                                 @endforeach
                                 </tbody>
                                 <tr id="no-requests-row" class="d-none">
-                                    <td colspan="9" class="text-center py-4">
+                                    <td colspan="4" class="text-center py-4">
                                         <div class="alert alert-info m-0">
                                             <i class="bi bi-info-circle me-2"></i>Нет заявок для отображения.
                                         </div>

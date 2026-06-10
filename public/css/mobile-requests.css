@@ -96,10 +96,6 @@
     max-width: 15rem; */
 }
 
-#requestsTable .col-actions {
-    /* width: 8rem; */
-}
-
 #requestsTable .col-photo {
     /* width: 6rem; */
 }
@@ -303,24 +299,8 @@
         width: 6rem;
     }
 
-    .col-actions {
-        width: 4rem;
-    }
-
-    .col-actions__div {
-        /* width: 4rem; */
-    }
-
-    .col-actions__div button {
-        font-size: 8px;
-    }
-
     .tab-content {
         padding: 0.1rem !important;
-    }
-
-    .col-actions__span {
-        display: none;
     }
 
     /* Скрыть подвал на мобильных устройствах */

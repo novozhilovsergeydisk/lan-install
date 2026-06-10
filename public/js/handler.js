@@ -1225,6 +1225,24 @@ export async function applyFilters() {
                                          </button>
                                          ` : ''}
                                      ` : ''}
+                                     ${request.isAdmin && canOpenRequest ? `
+                                         <button data-request-id="${request.id}" type="button"
+                                                 class="btn btn-sm btn-custom-green p-1 open-request-btn"
+                                                 data-bs-toggle="tooltip"
+                                                 data-bs-placement="top"
+                                                 data-bs-title="Открыть заявку">
+                                             <i class="bi bi-eye"></i>
+                                         </button>
+                                     ` : ''}
+                                     ${request.isAdmin && isAdmin && statusName == 'выполнена' ? `
+                                         <button data-request-id="${request.id}" type="button"
+                                                 class="btn btn-sm btn-custom-green-dark p-1 open-additional-task-request-btn"
+                                                 data-bs-toggle="tooltip"
+                                                 data-bs-placement="top"
+                                                 data-bs-title="Дополнительное задание">
+                                             <i class="bi bi-plus-circle"></i>
+                                         </button>
+                                     ` : ''}
                                  </div>
                              </td>
 
@@ -1235,31 +1253,6 @@ export async function applyFilters() {
                                 </div>
                             </td>
 
-                            ${request.isAdmin ? `
-                            <!-- Action Buttons Group -->
-                            <td class="col-actions text-nowrap">
-                                <div class="col-actions__div d-flex flex-column gap-1">
-                                ${canOpenRequest ? `
-                                    <button data-request-id="${request.id}" type="button"
-                                            class="btn btn-sm btn-custom-green p-1 open-request-btn"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-placement="left"
-                                            data-bs-title="Открыть заявку">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                ` : ''}
-
-                                ${isAdmin && statusName == 'выполнена' ? `
-                                    <button data-request-id="${request.id}" type="button"
-                                            class="btn btn-sm btn-custom-green-dark p-1 open-additional-task-request-btn"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-placement="left"
-                                            data-bs-title="Дополнительное задание">
-                                        <i class="bi bi-plus-circle"></i> 
-                                    </button>
-                                ` : ''}
-                            </td>
-                            ` : ''}
                         `;
 
                             tbody.appendChild(row);

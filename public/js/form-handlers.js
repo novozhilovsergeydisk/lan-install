@@ -2758,12 +2758,6 @@ function addRequestToTable(result) {
             </div>
         </td>
 
-        ${requestData.isAdmin ? `
-        <!-- Action Buttons Group -->
-        <td class="col-actions text-nowrap">
-            <div class="col-actions__div d-flex flex-column gap-1"></div>
-        </td>
-        ` : ''}
     `;
 
     // Добавляем строку в начало таблицы
