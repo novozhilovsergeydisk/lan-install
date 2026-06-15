@@ -2065,6 +2065,9 @@ function renderUploadPreview(container, data) {
     if (data.request_type_name) {
         html += '<div class="small text-muted mb-2">Тип заявки: <strong>' + uploadEscapeHtml(data.request_type_name) + '</strong></div>';
     }
+    if (data.subtype_name) {
+        html += '<div class="small text-muted mb-2">Тип планирования: <strong>' + uploadEscapeHtml(data.subtype_name) + '</strong></div>';
+    }
 
     html += '<div class="mb-2 small">';
     html += '<span class="me-3">Всего строк: <strong>' + (s.total || 0) + '</strong></span>';
@@ -2155,15 +2158,26 @@ function renderUploadResult(container, data) {
     if (s.request_type_name) {
         html += '<li class="list-group-item d-flex justify-content-between align-items-center"><span>Тип заявки</span><strong>' + uploadEscapeHtml(s.request_type_name) + '</strong></li>';
     }
+    if (s.subtype_name) {
+        html += '<li class="list-group-item d-flex justify-content-between align-items-center"><span>Тип планирования</span><strong>' + uploadEscapeHtml(s.subtype_name) + '</strong></li>';
+    }
     html += '</ul>';
     container.innerHTML = html;
 }
 
+// Текущий выбранный тип планирования (подтип) из фильтра вкладки «Планирование».
+// Загруженные заявки попадают именно в него, поэтому он обязателен.
+function getSelectedPlanningSubtypeId() {
+    const subtypeFilter = document.getElementById('planningSubtypeFilter');
+    return subtypeFilter && subtypeFilter.value ? subtypeFilter.value : '';
+}
+
 // Фактическая запись заявок: вызывает рабочий эндпоинт. При успехе показывает шаг "итог".
-async function doUploadRequests(modalEl, file, requestTypeId, triggerButton) {
+async function doUploadRequests(modalEl, file, requestTypeId, subtypeId, triggerButton) {
     const formData = new FormData();
     formData.append('requests_file', file);
     formData.append('request_type_id', requestTypeId);
+    formData.append('subtype_id', subtypeId);
 
     const originalHtml = triggerButton.innerHTML;
     triggerButton.disabled = true;
@@ -2186,6 +2200,11 @@ async function doUploadRequests(modalEl, file, requestTypeId, triggerButton) {
             const resultContainer = modalEl.querySelector('#uploadRequestsResult');
             renderUploadResult(resultContainer, data);
             showUploadStep(modalEl, 'result');
+
+            // Обновляем счётчики в селектах типов планирования (число заявок в скобках)
+            if (typeof updatePlanningSelects === 'function') {
+                await updatePlanningSelects();
+            }
         } else {
             showAlert(data.message || 'Произошла ошибка при загрузке файла.', 'danger');
         }
@@ -2290,6 +2309,11 @@ export function initUploadRequestsHandler() {
                 showAlert('Выберите тип заявки.', 'warning');
                 return;
             }
+            const subtypeId = getSelectedPlanningSubtypeId();
+            if (!subtypeId) {
+                showAlert('Выберите конкретный тип планирования (не «Все планирования») перед загрузкой — заявки попадут именно в него.', 'warning');
+                return;
+            }
             if (!requestsFileElement || requestsFileElement.files.length === 0) {
                 showAlert('Файл не выбран.', 'warning');
                 return;
@@ -2301,6 +2325,7 @@ export function initUploadRequestsHandler() {
             const formData = new FormData();
             formData.append('requests_file', file);
             formData.append('request_type_id', requestTypeId);
+            formData.append('subtype_id', subtypeId);
 
             const originalHtml = uploadSubmitButton.innerHTML;
             uploadSubmitButton.disabled = true;
@@ -2361,13 +2386,18 @@ export function initUploadRequestsHandler() {
                 showAlert('Выберите тип заявки.', 'warning');
                 return;
             }
+            const subtypeId = getSelectedPlanningSubtypeId();
+            if (!subtypeId) {
+                showAlert('Выберите конкретный тип планирования (не «Все планирования») перед загрузкой — заявки попадут именно в него.', 'warning');
+                return;
+            }
             if (!requestsFileElement || requestsFileElement.files.length === 0) {
                 showAlert('Файл не выбран.', 'warning');
                 return;
             }
 
             const file = requestsFileElement.files[0];
-            await doUploadRequests(modalEl, file, requestTypeId, confirmBtn);
+            await doUploadRequests(modalEl, file, requestTypeId, subtypeId, confirmBtn);
         });
     }
 

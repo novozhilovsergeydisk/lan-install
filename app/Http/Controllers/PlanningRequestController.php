@@ -19,10 +19,13 @@ class PlanningRequestController extends Controller
             $validated = $request->validate([
                 'requests_file' => 'required|file|mimes:xlsx,xls|max:10240',
                 'request_type_id' => 'required|integer|exists:request_types,id',
+                'subtype_id' => 'required|integer|exists:request_subtypes,id,is_deleted,false',
             ], $this->importValidationMessages());
 
             $requestTypeId = (int) $validated['request_type_id'];
+            $subtypeId = (int) $validated['subtype_id'];
             $requestTypeName = DB::table('request_types')->where('id', $requestTypeId)->value('name');
+            $subtypeName = DB::table('request_subtypes')->where('id', $subtypeId)->value('name');
 
             $file = $request->file('requests_file');
             $parsed = $parser->parse($file->getRealPath(), $requestTypeId);
@@ -44,6 +47,7 @@ class PlanningRequestController extends Controller
                     'address_id' => $addressId,
                     'comment' => $parsedRow['comment'],
                     'request_type_id' => $requestTypeId,
+                    'subtype_id' => $subtypeId,
                 ]);
 
                 foreach ($parsedRow['workParameters'] as $workParameter) {
@@ -81,6 +85,8 @@ class PlanningRequestController extends Controller
                     'duplicates_in_file' => $duplicatesInFile,
                     'request_type_id' => $requestTypeId,
                     'request_type_name' => $requestTypeName,
+                    'subtype_id' => $subtypeId,
+                    'subtype_name' => $subtypeName,
                 ],
                 'data' => $createdRequests,
             ]);
@@ -122,10 +128,13 @@ class PlanningRequestController extends Controller
             $validated = $request->validate([
                 'requests_file' => 'required|file|mimes:xlsx,xls|max:10240',
                 'request_type_id' => 'required|integer|exists:request_types,id',
+                'subtype_id' => 'required|integer|exists:request_subtypes,id,is_deleted,false',
             ], $this->importValidationMessages());
 
             $requestTypeId = (int) $validated['request_type_id'];
+            $subtypeId = (int) $validated['subtype_id'];
             $requestTypeName = DB::table('request_types')->where('id', $requestTypeId)->value('name');
+            $subtypeName = DB::table('request_subtypes')->where('id', $subtypeId)->value('name');
 
             $file = $request->file('requests_file');
             $parsed = $parser->parse($file->getRealPath(), $requestTypeId);
@@ -217,6 +226,8 @@ class PlanningRequestController extends Controller
                 'can_import' => $summary['error_rows'] === 0,
                 'request_type_id' => $requestTypeId,
                 'request_type_name' => $requestTypeName,
+                'subtype_id' => $subtypeId,
+                'subtype_name' => $subtypeName,
                 'summary' => $summary,
                 'rows' => $rows,
             ]);
@@ -262,6 +273,9 @@ class PlanningRequestController extends Controller
             'request_type_id.required' => 'Выберите тип заявки.',
             'request_type_id.integer' => 'Некорректный тип заявки.',
             'request_type_id.exists' => 'Выбранный тип заявки не найден.',
+            'subtype_id.required' => 'Выберите тип планирования.',
+            'subtype_id.integer' => 'Некорректный тип планирования.',
+            'subtype_id.exists' => 'Выбранный тип планирования не найден.',
         ];
     }
 
@@ -371,7 +385,7 @@ class PlanningRequestController extends Controller
             'client_id' => $data['client_id'],
             'request_type_id' => $data['request_type_id'] ?? 1, // default 1 if not provided
             'status_id' => 6, // 'планирование'
-            'subtype_id' => 1, // 'Стандартное планирование' по умолчанию
+            'subtype_id' => $data['subtype_id'] ?? 1, // выбранный тип планирования (фолбэк — 'Стандартное планирование')
             'operator_id' => $employeeId,
             'number' => $requestNumber,
             'request_date' => now()->toDateString(),
