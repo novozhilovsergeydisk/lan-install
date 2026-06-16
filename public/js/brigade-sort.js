@@ -14,13 +14,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let sortAscending = true;
 
-    // Function to extract brigade name from cell
+    // Ключ сортировки — БРИГАДИР (выделен <strong>), а не название бригады:
+    // поле name у большинства бригад — заглушка «Бригада», по нему сортировать
+    // бессмысленно. Бригадир (Минеев, Гусев, Трошин…) — то, чем бригада реально
+    // опознаётся. Если бригадира нет (бригада не назначена) — пустой ключ.
     function getBrigadeName(cell) {
         if (!cell) return '';
         const div = cell.querySelector('.col-brigade__div');
         if (!div) return '';
-        const nameEl = div.querySelector('div > i');
-        return nameEl ? nameEl.textContent.trim() : '';
+        const leaderEl = div.querySelector('strong');
+        return leaderEl ? leaderEl.textContent.trim() : '';
     }
 
     brigadeHeader.style.cursor = 'pointer';
