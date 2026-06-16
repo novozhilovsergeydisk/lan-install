@@ -15,7 +15,8 @@ class AddressParserTest extends TestCase
     public function test_parse_address_string()
     {
         // Логика разбора адреса вынесена в ExcelRequestParser (см. рефакторинг
-        // импорта заявок), поэтому тестируем её там.
+        // импорта заявок), поэтому тестируем её там. Ведущий тип улицы парсер
+        // срезает (улица/ул./… → голое название) — это часть контракта.
         $parser = new ExcelRequestParser();
         $method = new \ReflectionMethod(ExcelRequestParser::class, 'parseAddressString');
         $method->setAccessible(true);
@@ -23,17 +24,17 @@ class AddressParserTest extends TestCase
         $testCases = [
             'город Москва, ул. Ленина, д. 1' => [
                 'city_name' => 'Москва',
-                'street' => 'ул. Ленина',
+                'street' => 'Ленина',
                 'houses' => '1',
             ],
             'город Москва, ул. Ленина, 8А' => [
                 'city_name' => 'Москва',
-                'street' => 'ул. Ленина',
+                'street' => 'Ленина',
                 'houses' => '8А',
             ],
             'город Москва, ул. Ленина, 8А, к. 2' => [
                 'city_name' => 'Москва',
-                'street' => 'ул. Ленина',
+                'street' => 'Ленина',
                 'houses' => '8А, к. 2',
             ],
             'город Москва, Зеленоград, корпус 1630' => [
@@ -46,6 +47,7 @@ class AddressParserTest extends TestCase
                 'street' => 'Зеленоград',
                 'houses' => '1630',
             ],
+            // Тип улицы в конце названия не срезается — остаётся как есть.
             'город Москва, Скорняжный переулок, 3, строение 2' => [
                 'city_name' => 'Москва',
                 'street' => 'Скорняжный переулок',
@@ -53,17 +55,17 @@ class AddressParserTest extends TestCase
             ],
             'город Москва, улица 1905 года, д. 7' => [
                 'city_name' => 'Москва',
-                'street' => 'улица 1905 года',
+                'street' => '1905 года',
                 'houses' => '7',
             ],
             'город Москва, улица 1905 года, 7' => [
                 'city_name' => 'Москва',
-                'street' => 'улица 1905 года',
+                'street' => '1905 года',
                 'houses' => '7',
             ],
             'город Москва, улица Ленина 10' => [
                 'city_name' => 'Москва',
-                'street' => 'улица Ленина',
+                'street' => 'Ленина',
                 'houses' => '10',
             ],
             'город Москва, Зеленоград 1630' => [
@@ -98,6 +100,34 @@ class AddressParserTest extends TestCase
             $addressId = $method->invoke($controller, $rowData, $matcher);
             $this->assertIsInt($addressId);
             $this->assertGreaterThan(0, $addressId);
+        }
+    }
+
+    public function test_strip_leading_street_type()
+    {
+        $cases = [
+            // Срезаем только «улица»/«ул.».
+            'улица Люблинская' => 'Люблинская',
+            'ул. Ленина' => 'Ленина',
+            'улица 1905 года' => '1905 года',
+            '  ул. Тверская  ' => 'Тверская',
+            // Прочие типы НЕ трогаем (иначе «проспект Мира» → «ул. Мира»).
+            'проспект Мира' => 'проспект Мира',
+            'пр-кт Вернадского' => 'пр-кт Вернадского',
+            'шоссе Энтузиастов' => 'шоссе Энтузиастов',
+            'бульвар Яна Райниса' => 'бульвар Яна Райниса',
+            // Тип в конце названия не трогаем.
+            'Скорняжный переулок' => 'Скорняжный переулок',
+            // Голое название без типа — без изменений.
+            'Люблинская' => 'Люблинская',
+        ];
+
+        foreach ($cases as $input => $expected) {
+            $this->assertSame(
+                $expected,
+                AddressMatcher::stripLeadingStreetType($input),
+                "Неверный срез типа улицы для: {$input}"
+            );
         }
     }
 

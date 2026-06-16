@@ -186,7 +186,7 @@ class GeoController extends Controller
         $validated = $request->validate([
             'street' => 'required|string|max:255',
             'houses' => 'required|string|max:255',
-            'district' => 'required|string|max:255',
+            'district' => 'nullable|string|max:255',
             'city_id' => 'required|exists:cities,id',
             'responsible_person' => 'nullable|string|max:100',
             'comments' => 'nullable|string',
@@ -203,6 +203,10 @@ class GeoController extends Controller
                 'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/',
             ],
         ], [
+            'street.required' => 'Укажите улицу.',
+            'houses.required' => 'Укажите дом.',
+            'city_id.required' => 'Выберите город.',
+            'city_id.exists' => 'Выбранный город не найден.',
             'latitudeEdit.regex' => 'Некорректный формат широты. Допустимый формат: от -90 до 90, до 7 знаков после точки',
             'longitudeEdit.regex' => 'Некорректный формат долготы. Допустимый формат: от -180 до 180, до 7 знаков после точки',
             'latitudeEdit.between' => 'Широта должна быть в диапазоне от -90 до 90 градусов',
@@ -223,7 +227,7 @@ class GeoController extends Controller
                 'id' => $id,
                 'street' => $validated['street'],
                 'houses' => $validated['houses'],
-                'district' => $validated['district'],
+                'district' => $validated['district'] ?? '',
                 'city_id' => $validated['city_id'],
                 'responsible_person' => $validated['responsible_person'] ?? null,
                 'comments' => $validated['comments'] ?? null,
@@ -286,7 +290,7 @@ class GeoController extends Controller
             $validated = $request->validate([
                 'street' => 'required|string|max:255',
                 'houses' => 'required|string|max:255',
-                'district' => 'required|string|max:255',
+                'district' => 'nullable|string|max:255',
                 'city_id' => 'required|exists:cities,id',
                 'responsible_person' => 'nullable|string|max:255',
                 'comments' => 'nullable|string',
@@ -303,6 +307,10 @@ class GeoController extends Controller
                     'regex:/^-?(180(\.0{1,7})?|(1[0-7][0-9]|[0-9]?[0-9])(\.\d{1,7})?)$/',
                 ],
             ], [
+                'street.required' => 'Укажите улицу.',
+                'houses.required' => 'Укажите дом.',
+                'city_id.required' => 'Выберите город.',
+                'city_id.exists' => 'Выбранный город не найден.',
                 'latitude.regex' => 'Некорректный формат широты. Допустимый формат: от -90 до 90, до 7 знаков после точки',
                 'longitude.regex' => 'Некорректный формат долготы. Допустимый формат: от -180 до 180, до 7 знаков после точки',
                 'latitude.between' => 'Широта должна быть в диапазоне от -90 до 90 градусов',
@@ -324,7 +332,7 @@ class GeoController extends Controller
             $addressData = [
                 'street' => $request->street,
                 'houses' => $request->houses,
-                'district' => $request->district,
+                'district' => $request->district ?? '',
                 'city_id' => $request->city_id,
                 'responsible_person' => $request->responsible_person,
                 'comments' => $request->comments,

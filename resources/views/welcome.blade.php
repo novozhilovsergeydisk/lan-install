@@ -5028,7 +5028,13 @@
             
             // Добавляем опции в выпадающий список
             addresses.forEach(address => {
-                const addressText = `${address.city}, ${address.district}, ул. ${address.street}, д. ${address.houses}`;
+                // Пустой район пропускаем, чтобы не было «Москва, , ул. …»
+                const parts = [address.city];
+                if (address.district && String(address.district).trim()) {
+                    parts.push(address.district);
+                }
+                parts.push(`ул. ${address.street}, д. ${address.houses}`);
+                const addressText = parts.join(', ');
                 html += `<option value="${address.id}">${addressText}</option>`;
             });
             

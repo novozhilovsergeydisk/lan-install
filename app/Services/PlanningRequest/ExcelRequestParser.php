@@ -246,6 +246,10 @@ class ExcelRequestParser
             $houses = trim($m[2], " ,.");
         }
 
+        // Срезаем ведущий тип улицы («улица Люблинская» → «Люблинская»),
+        // чтобы в БД и в интерфейсе не было дублирующего «ул. улица …».
+        $street = AddressMatcher::stripLeadingStreetType($street);
+
         return [
             'city_name' => $cityName,
             'street' => $street,
