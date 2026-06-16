@@ -44,14 +44,17 @@ class EmployeesFilterController extends Controller
                         AND rs.name NOT IN ('отменена', 'планирование')
                         AND r.brigade_id IS NOT NULL
                 )
-                SELECT e.id, e.fio, b.id AS brigade_id, b.name AS brigade_name, FALSE AS is_leader
+                -- Только id+fio: иначе brigade_id/is_leader делают строки
+                -- разными и UNION не схлопывает сотрудника, состоящего в
+                -- нескольких сегодняшних бригадах (отсюда были дубли в фильтре).
+                SELECT e.id, e.fio
                 FROM brigades b
                 JOIN today_brigades tb ON tb.brigade_id = b.id
                 JOIN brigade_members bm ON bm.brigade_id = b.id
                 JOIN employees e ON e.id = bm.employee_id
                 WHERE b.is_deleted = FALSE AND e.is_deleted = FALSE
                 UNION
-                SELECT el.id AS id, el.fio, b.id AS brigade_id, b.name AS brigade_name, TRUE AS is_leader
+                SELECT el.id, el.fio
                 FROM brigades b
                 JOIN today_brigades tb ON tb.brigade_id = b.id
                 JOIN employees el ON el.id = b.leader_id
