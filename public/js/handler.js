@@ -741,10 +741,11 @@ function displayBrigadeInfo(data) {
                     </tbody>
                     ${window.App?.user?.isAdmin ? `
                     <div>
-                        <button class="btn btn-sm btn-outline-danger delete-member-btn mt-2" 
+                        <button class="btn btn-sm ${brigade.is_linked_to_request ? 'btn-outline-danger' : 'btn-danger'} delete-member-btn mt-2" 
                                 data-brigade-id="${brigadeId}" 
-                                data-employee-id="${leaderInfoObj.id}">
-                            Удалить
+                                data-employee-id="${leaderInfoObj.id}"
+                                data-linked-to-request="${brigade.is_linked_to_request}">
+                            ${brigade.is_linked_to_request ? 'Скрыть' : 'Удалить'}
                         </button>
                     </div>
                     ` : ''}
@@ -755,10 +756,11 @@ function displayBrigadeInfo(data) {
                     <div class="alert alert-info">Бригадир сам является участником бригады</div>
                     ${window.App?.user?.isAdmin ? `
                     <div>
-                        <button class="btn btn-sm btn-outline-danger delete-member-btn mt-2" 
+                        <button class="btn btn-sm ${brigade.is_linked_to_request ? 'btn-outline-danger' : 'btn-danger'} delete-member-btn mt-2" 
                                 data-brigade-id="${brigadeId}" 
-                                data-employee-id="${leaderInfoObj.id}">
-                            Удалить
+                                data-employee-id="${leaderInfoObj.id}"
+                                data-linked-to-request="${brigade.is_linked_to_request}">
+                            ${brigade.is_linked_to_request ? 'Скрыть' : 'Удалить'}
                         </button>
                     </div>
                     ` : ''}

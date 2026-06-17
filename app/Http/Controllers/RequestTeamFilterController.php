@@ -85,7 +85,8 @@ class RequestTeamFilterController extends Controller
                 JOIN employees e ON bm.employee_id = e.id
                 WHERE bm.brigade_id = b.id
             ) AS members,
-            (SELECT COUNT(*) FROM brigade_members WHERE brigade_id = b.id) AS member_count
+            (SELECT COUNT(*) FROM brigade_members WHERE brigade_id = b.id) AS member_count,
+            (SELECT EXISTS(SELECT 1 FROM requests WHERE brigade_id = b.id)::int) AS is_linked_to_request
             FROM 
                 brigades b
             JOIN 
@@ -94,6 +95,7 @@ class RequestTeamFilterController extends Controller
                 positions p ON leader.position_id = p.id
             WHERE
                 b.formation_date = '{$today}'
+                AND b.is_deleted = false
             ORDER BY 
                 b.name;";
 

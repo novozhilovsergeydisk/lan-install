@@ -417,6 +417,10 @@ Route::post('/brigade/delete/{id}', [BrigadeController::class, 'deleteBrigade'])
     ->name('brigade.delete')
     ->middleware('auth');
 
+Route::post('/brigade/hide/{id}', [BrigadeController::class, 'hideBrigade'])
+    ->name('brigade.hide')
+    ->middleware('auth');
+
 Route::post('/planning-requests', [PlanningRequestController::class, 'store'])
     ->name('planning-requests.store')
     ->middleware('auth');

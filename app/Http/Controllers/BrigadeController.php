@@ -351,6 +351,52 @@ class BrigadeController extends Controller
     }
 
     /**
+     * Скрыть бригаду на текущий день (для привязанных к заявкам)
+     */
+    public function hideBrigade($brigadeId)
+    {
+        try {
+            // Проверяем существование бригады в базе данных
+            $brigade = DB::table('brigades')
+                ->where('id', $brigadeId)
+                ->first();
+
+            if (! $brigade) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Бригада не найдена',
+                ], 404);
+            }
+
+            // Если бригада уже скрыта, возвращаем успешный статус с соответствующим сообщением
+            if ($brigade->is_deleted) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Бригада уже скрыта',
+                ]);
+            }
+
+            // Скрываем бригаду
+            DB::table('brigades')
+                ->where('id', $brigadeId)
+                ->update(['is_deleted' => true]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Бригада скрыта',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in BrigadeController@hideBrigade: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Произошла ошибка при скрытии бригады',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
      * Get brigade data via API
      */
     public function getBrigadeData($id)

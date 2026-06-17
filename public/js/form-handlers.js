@@ -4919,187 +4919,221 @@ export function saveEmployeeChangesSystem() {
     });
 }
 
-// Удаление участника бригады
+// Скрытие/удаление бригады
+// Функция для отображения кастомного диалога подтверждения через Bootstrap Modal
+function showCustomConfirm(message) {
+    return new Promise((resolve) => {
+        const modalId = 'dynamic-confirm-modal';
+        let modalEl = document.getElementById(modalId);
+        if (!modalEl) {
+            modalEl = document.createElement('div');
+            modalEl.id = modalId;
+            modalEl.className = 'modal fade';
+            modalEl.setAttribute('tabindex', '-1');
+            modalEl.setAttribute('aria-hidden', 'true');
+            modalEl.style.zIndex = '1070';
+            modalEl.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Подтверждение действия</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="dynamic-confirm-message" class="mb-0"></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="dynamic-confirm-cancel" data-bs-dismiss="modal">Отмена</button>
+                            <button type="button" class="btn btn-danger" id="dynamic-confirm-ok">Подтвердить</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalEl);
+        }
+
+        document.getElementById('dynamic-confirm-message').textContent = message;
+        
+        const bsModal = new bootstrap.Modal(modalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+
+        const okBtn = document.getElementById('dynamic-confirm-ok');
+        const cancelBtn = document.getElementById('dynamic-confirm-cancel');
+        const closeBtn = modalEl.querySelector('.btn-close');
+
+        const handleOk = () => {
+            bsModal.hide();
+            cleanup();
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        const cleanup = () => {
+            okBtn.removeEventListener('click', handleOk);
+            cancelBtn.removeEventListener('click', handleCancel);
+            closeBtn.removeEventListener('click', handleCancel);
+        };
+
+        okBtn.addEventListener('click', handleOk);
+        cancelBtn.addEventListener('click', handleCancel);
+        closeBtn.addEventListener('click', handleCancel);
+
+        bsModal.show();
+    });
+}
+
 export function initDeleteMember() {
-    // Используем делегирование событий для работы с динамически добавляемыми кнопками
     document.addEventListener('click', async function(event) {
-        const deleteBtn = event.target.closest('.delete-member-btn');
-        if (!deleteBtn) return;
-        
+        const btn = event.target.closest('.delete-member-btn');
+        if (!btn) return;
+
         event.preventDefault();
-        
-        const brigadeId = deleteBtn.getAttribute('data-brigade-id');
-        const employeeId = deleteBtn.getAttribute('data-employee-id');
-        
-        if (!brigadeId || !employeeId) {
-            console.error('Не указаны ID бригады или сотрудника');
-            showAlert('Ошибка: не указаны необходимые данные для удаления', 'danger');
+
+        const brigadeId = btn.getAttribute('data-brigade-id');
+        const linkedToRequest = btn.getAttribute('data-linked-to-request') === '1';
+
+        if (!brigadeId) {
+            console.error('Не указан ID бригады');
+            showAlert('Ошибка: не указаны необходимые данные', 'danger');
             return;
         }
 
-        if (!confirm('Вы уверены, что хотите удалить участника бригады?')) return;
-        
-        // Формируем ID в формате brigadeId
-        const memberId = `${brigadeId}`;
-        
-        try {
-            console.log(`Попытка удаления бригады: brigadeId=${brigadeId}`);
-            
-            const result = await postData(`/brigade/delete/${memberId}`, {});
+        // Защита от двойного клика: блокируем кнопку на время подтверждения и запроса
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...`;
 
-            console.log(result);
+        const actionLabel = linkedToRequest ? 'скрыть' : 'удалить';
+        const confirmed = await showCustomConfirm(`Вы уверены, что хотите ${actionLabel} бригаду?`);
+        if (!confirmed) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            return;
+        }
 
-            // return;
-            
-            if (result && result.success) {
-                showAlert(result.message || 'Бригада успешно удалена', 'success');
-                
-                // Находим карточку удаленной бригады
-                const brigadeCard = document.querySelector(`div[data-card-brigade-id="${brigadeId}"]`);
-                if (brigadeCard) {
-                    const employeesSelect = document.getElementById('employeesSelect');
-                    
-                    // 1. Получаем ID всех участников бригады из скрытого поля
-                    const brigadeMembersData = [];
-                    const brigadeMembersField = document.getElementById('brigade_members_data');
-                    
-                    if (brigadeMembersField && brigadeMembersField.value) {
-                        try {
-                            const members = JSON.parse(brigadeMembersField.value);
-                            brigadeMembersData.push(...members);
-                            console.log('Найдены участники в скрытом поле:', brigadeMembersData);
-                        } catch (e) {
-                            console.error('Ошибка при разборе данных участников:', e);
-                        }
-                    }
-                    
-                    // 2. Если в скрытом поле не нашли, ищем в DOM
-                    if (brigadeMembersData.length === 0) {
-                        console.log('Поиск участников в DOM карточки:', brigadeCard);
-                        
-                        // Сначала ищем бригадира в блоке с data-info="leader-info"
-                        const leaderInfo = brigadeCard.querySelector('[data-info="leader-info"]');
-                        if (leaderInfo) {
-                            const leaderName = leaderInfo.textContent.trim();
-                            // Пытаемся найти ID бригадира в кнопке удаления
-                            const deleteBtn = brigadeCard.querySelector('.delete-member-btn');
-                            const leaderId = deleteBtn ? deleteBtn.getAttribute('data-employee-id') : null;
-                            
-                            if (leaderId) {
-                                brigadeMembersData.push({
-                                    employee_id: leaderId,
-                                    is_leader: true,
-                                    name: leaderName
-                                });
-                                console.log('Найден бригадир:', leaderId, leaderName);
-                            } else {
-                                console.warn('Не удалось найти ID бригадира');
-                            }
-                        }
-                        
-                        // Ищем участников в таблице
-                        const memberRows = brigadeCard.querySelectorAll('tr[data-member-id]');
-                        console.log('Найдено строк участников в таблице:', memberRows.length);
-                        
-                        // Добавляем участников из таблицы
-                        memberRows.forEach(row => {
-                            const memberId = row.getAttribute('data-member-id');
-                            if (memberId) {
-                                // Проверяем, не дублируется ли участник (если это не бригадир)
-                                const isDuplicate = brigadeMembersData.some(m => m.employee_id === memberId);
-                                if (!isDuplicate) {
-                                    brigadeMembersData.push({
-                                        employee_id: memberId,
-                                        is_leader: row.classList.contains('leader-row') || false,
-                                        name: row.textContent.trim()
-                                    });
-                                }
-                            }
-                        });
-                        
-                        // Если не нашли в таблице, ищем в div-блоках
-                        if (brigadeMembersData.length === 0) {
-                            const memberDivs = brigadeCard.querySelectorAll('[data-employee-id]');
-                            console.log('Найдено div-участников:', memberDivs.length);
-                            
-                            memberDivs.forEach(div => {
-                                const memberId = div.getAttribute('data-employee-id');
-                                if (memberId && !div.classList.contains('delete-member-btn')) {
-                                    // Проверяем, не дублируется ли участник (если это не бригадир)
-                                    const isDuplicate = brigadeMembersData.some(m => m.employee_id === memberId);
-                                    if (!isDuplicate) {
-                                        brigadeMembersData.push({
-                                            employee_id: memberId,
-                                            is_leader: div.classList.contains('brigade-leader') || false,
-                                            name: div.textContent.trim()
-                                        });
-                                    }
-                                }
-                            });
-                        }
-                    }
-                    
-                    // console.log('Всего найдено участников бригады:', brigadeMembersData.length, brigadeMembersData);
-                    
-                    // 3. Восстанавливаем всех участников в выпадающем списке
-                    brigadeMembersData.forEach((member, index) => {
-                        try {
-                            const memberId = member.employee_id || member.id;
-                            if (!memberId) {
-                                console.warn('У участника не найден ID:', member);
-                                return;
-                            }
-                            
-                            console.log(`Участник #${index + 1}:`, {
-                                memberId,
-                                isLeader: member.is_leader,
-                                name: member.name || 'Не указано'
-                            });
-                            
-                            const option = employeesSelect?.querySelector(`option[value="${memberId}"]`);
-                            // console.log('Найдена опция в select:', !!option, option);
-                            
-                            if (option) {
-                                option.disabled = false;
-                                option.style.display = '';
-                                option.selected = false;
-                                console.log(`Опция для участника ${memberId} восстановлена`);
-                            } else {
-                                console.warn(`Не найдена опция для участника с ID: ${memberId}`);
-                                console.log('Доступные опции:', Array.from(employeesSelect?.options || []).map(opt => ({
-                                    value: opt.value,
-                                    text: opt.textContent.trim(),
-                                    disabled: opt.disabled,
-                                    display: opt.style.display
-                                })));
-                            }
-                        } catch (error) {
-                            console.error('Ошибка при обработке участника:', error, member);
-                        }
-                    });
-                    
-                    // Скрываем карточку удаленной бригады
-                    brigadeCard.style.display = 'none';
+        if (!linkedToRequest) {
+            try {
+                console.log(`Удаление бригады: brigadeId=${brigadeId}`);
+
+                const result = await postData(`/brigade/delete/${brigadeId}`, {});
+
+                if (result && result.success) {
+                    showAlert(result.message || 'Бригада успешно удалена', 'success');
+                } else {
+                    const errorMessage = result && result.message
+                        ? result.message
+                        : 'Произошла неизвестная ошибка при удалении бригады';
+                    showAlert(errorMessage, 'warning');
+                    console.error('Ошибка при удалении бригады:', errorMessage);
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    return;
                 }
-            } else {
-                // Показываем сообщение об ошибке с сервера
-                const errorMessage = result && result.message 
-                    ? result.message 
-                    : 'Произошла неизвестная ошибка при удалении бригады';
+            } catch (error) {
+                console.error('Ошибка при удалении бригады:', error);
+                const errorMessage = error.message || 'Произошла ошибка при удалении бригады';
                 showAlert(errorMessage, 'warning');
-                console.error('Ошибка при удалении бригады:', errorMessage);
-               }
-        } catch (error) {
-            console.error('Ошибка при удалении бригады:', error);
-            const errorMessage = error.message || 'Произошла ошибка при удалении бригады';
-            showAlert(errorMessage, 'warning');
-            
-            // Если это ошибка 404, обновляем страницу
-            if (error.message && error.message.includes('404')) {
-                console.log('Обновляем страницу из-за ошибки 404');
-                setTimeout(() => window.location.reload(), 2000);
+
+                if (error.message && error.message.includes('404')) {
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                return;
+            }
+        } else {
+            try {
+                const result = await postData(`/brigade/hide/${brigadeId}`, {});
+                if (result && result.success) {
+                    showAlert('Бригада скрыта', 'success');
+                } else {
+                    const errorMessage = result && result.message
+                        ? result.message
+                        : 'Произошла ошибка при скрытии бригады';
+                    showAlert(errorMessage, 'warning');
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    return;
+                }
+            } catch (error) {
+                console.error('Ошибка при скрытии бригады:', error);
+                showAlert('Произошла ошибка при скрытии бригады', 'warning');
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                return;
             }
         }
+
+        // Находим карточку и восстанавливаем участников в выпадающем списке
+        const brigadeCard = document.querySelector(`div[data-card-brigade-id="${brigadeId}"]`);
+        if (!brigadeCard) return;
+
+        const employeesSelect = document.getElementById('employeesSelect');
+        const brigadeMembersData = [];
+
+        // Извлекаем участников ТОЛЬКО из DOM удаляемой карточки, так как brigade_members_data формы создания новой бригады к ней не относится
+        const leaderInfo = brigadeCard.querySelector('[data-info="leader-info"]');
+        if (leaderInfo) {
+            const leaderName = leaderInfo.textContent.trim();
+            const delBtn = brigadeCard.querySelector('.delete-member-btn');
+            const leaderId = delBtn ? delBtn.getAttribute('data-employee-id') : null;
+
+            if (leaderId) {
+                brigadeMembersData.push({
+                    employee_id: leaderId,
+                    is_leader: true,
+                    name: leaderName
+                });
+            }
+        }
+
+        const memberRows = brigadeCard.querySelectorAll('tr[data-member-id]');
+        memberRows.forEach(row => {
+            const memberId = row.getAttribute('data-member-id');
+            if (memberId && !brigadeMembersData.some(m => m.employee_id === memberId)) {
+                brigadeMembersData.push({
+                    employee_id: memberId,
+                    is_leader: row.classList.contains('leader-row') || false,
+                    name: row.textContent.trim()
+                });
+            }
+        });
+
+        const memberDivs = brigadeCard.querySelectorAll('[data-employee-id]');
+        memberDivs.forEach(div => {
+            const memberId = div.getAttribute('data-employee-id');
+            if (memberId && !div.classList.contains('delete-member-btn') && !brigadeMembersData.some(m => m.employee_id === memberId)) {
+                brigadeMembersData.push({
+                    employee_id: memberId,
+                    is_leader: div.classList.contains('brigade-leader') || false,
+                    name: div.textContent.trim()
+                });
+            }
+        });
+
+        brigadeMembersData.forEach(member => {
+            try {
+                const memberId = member.employee_id || member.id;
+                if (!memberId) return;
+
+                const option = employeesSelect?.querySelector(`option[value="${memberId}"]`);
+                if (option) {
+                    option.disabled = false;
+                    option.style.display = '';
+                    option.selected = false;
+                }
+            } catch (error) {
+                console.error('Ошибка при обработке участника:', error, member);
+            }
+        });
+
+        brigadeCard.style.display = 'none';
     });
 }
 
