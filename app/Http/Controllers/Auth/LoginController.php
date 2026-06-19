@@ -62,8 +62,9 @@ class LoginController extends Controller
                 // Получаем текущего пользователя
                 $user = Auth::user();
 
-                $migrations = DB::select('SELECT * FROM migrations');
-                $clients = DB::connection('pgsql_fursa')->select('SELECT * FROM clients');
+                // Убраны лишние диагностические запросы к migrations и pgsql_fursa.clients:
+                // их результат нигде не использовался, а обращение к pgsql_fursa ломало вход,
+                // если в той БД нет таблицы clients (см. инцидент 2026-06-19).
                 // dump($migrations);
                 // dd($clients);
                 // $migrations = DB::table('migrations')->get();

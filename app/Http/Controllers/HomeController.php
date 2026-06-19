@@ -1050,7 +1050,7 @@ class HomeController extends Controller
                  LIMIT 1
              ) AS role_data ON true
              WHERE r.execution_date::date = CURRENT_DATE
-             AND (b.is_deleted = false OR b.id IS NULL)
+             /* НЕ фильтруем заявки по b.is_deleted: скрытие бригады не должно прятать её заявки из списка (см. инцидент 2026-06-19) */
              AND rs.name != 'отменена'
              AND rs.name != 'планирование'
              ORDER BY r.id DESC";
@@ -1096,7 +1096,7 @@ class HomeController extends Controller
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
                     WHERE r.execution_date::date = CURRENT_DATE
-                    AND (b.is_deleted = false OR b.id IS NULL)
+                    /* НЕ фильтруем заявки по b.is_deleted: скрытие бригады не должно прятать её заявки из списка (см. инцидент 2026-06-19) */
                     AND rs.name != 'отменена'
                     AND rs.name != 'планирование'
                     AND (
@@ -1717,7 +1717,7 @@ class HomeController extends Controller
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
                      WHERE $whereClause
-                     AND (b.is_deleted = false OR b.id IS NULL)
+                     /* НЕ фильтруем заявки по b.is_deleted: скрытие бригады не должно прятать её заявки из списка (см. инцидент 2026-06-19) */
                     AND (
                         EXISTS (
                             SELECT 1
@@ -1777,7 +1777,7 @@ class HomeController extends Controller
                     LEFT JOIN request_addresses ra ON r.id = ra.request_id
                     LEFT JOIN addresses addr ON ra.address_id = addr.id
                     LEFT JOIN cities ct ON addr.city_id = ct.id
-                    WHERE $whereClause AND (b.is_deleted = false OR b.id IS NULL)
+                    WHERE $whereClause /* НЕ фильтруем заявки по b.is_deleted: скрытие бригады не должно прятать её заявки из списка (см. инцидент 2026-06-19) */
                     ORDER BY r.id DESC
                 ";
             }
