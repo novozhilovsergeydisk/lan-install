@@ -44,6 +44,15 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
         $organization = $this->filters['organization'] ?? null;
         $requestTypeId = $this->filters['requestTypeId'] ?? null;
 
+        // request_equipment может отсутствовать (до миграции на сервере / после переката БД) — тогда не ломаем отчёт.
+        $hasEquip = \Illuminate\Support\Facades\Schema::hasTable('request_equipment');
+        $equipToolsSql = $hasEquip
+            ? "(SELECT STRING_AGG(DISTINCT re.label, ', ' ORDER BY re.label) FROM request_equipment re WHERE re.request_id = r.id AND re.kind = 'tool')"
+            : 'NULL';
+        $equipVehiclesSql = $hasEquip
+            ? "(SELECT STRING_AGG(DISTINCT re.label, ', ' ORDER BY re.label) FROM request_equipment re WHERE re.request_id = r.id AND re.kind = 'vehicle')"
+            : 'NULL';
+
         $query = DB::table('requests as r')
             ->selectRaw("r.id,
                 r.number,
@@ -61,12 +70,14 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                 ) as full_address,
                 b.name as brigade_name,
                 e_leader.fio as leader_name,
-                ( 
-                    SELECT com.comment 
-                    FROM request_comments rc 
-                    JOIN comments com ON rc.comment_id = com.id 
-                    WHERE rc.request_id = r.id 
-                    ORDER BY com.created_at ASC 
+                {$equipToolsSql} as equipment_tools,
+                {$equipVehiclesSql} as equipment_vehicles,
+                (
+                    SELECT com.comment
+                    FROM request_comments rc
+                    JOIN comments com ON rc.comment_id = com.id
+                    WHERE rc.request_id = r.id
+                    ORDER BY com.created_at ASC
                     LIMIT 1
                 ) as first_comment,
                 ( 
@@ -238,10 +249,25 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
             }
         }
 
+        // Колонка «Бригада»: имя бригады (+ бригадир) и снимок оборудования со склада (инструмент H-* / авто).
+        $brigadeCell = $row->brigade_name
+            ? ($row->brigade_name . ($row->leader_name ? ' (' . $row->leader_name . ')' : ''))
+            : 'Не назначена';
+        $equipParts = [];
+        if (!empty($row->equipment_tools)) {
+            $equipParts[] = 'Инструмент: ' . $row->equipment_tools;
+        }
+        if (!empty($row->equipment_vehicles)) {
+            $equipParts[] = 'Авто: ' . $row->equipment_vehicles;
+        }
+        if (!empty($equipParts)) {
+            $brigadeCell .= "\n" . implode("\n", $equipParts);
+        }
+
         $rowArray = [
             $dateAndNumber,
             $row->full_address,
-            $row->brigade_name ? ($row->brigade_name . ($row->leader_name ? ' (' . $row->leader_name . ')' : '')) : 'Не назначена',
+            $brigadeCell,
             $commentOutput,
             $wmsMaterials,
             $worksOutput,

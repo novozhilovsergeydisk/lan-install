@@ -19,6 +19,8 @@ db_lan_install.dump
 .env
 .env.backup
 .env.production
+.env.bak*
+.env.bak_*
 .phpactor.json
 .phpunit.result.cache
 /.fleet

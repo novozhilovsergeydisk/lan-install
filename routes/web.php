@@ -92,6 +92,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/wms/warehouse-search', [\App\Http\Controllers\WmsIntegrationController::class, 'searchWarehouseStock']);
     Route::get('/api/wms/mapping/{requestId}', [\App\Http\Controllers\WmsIntegrationController::class, 'getMappingByRequest']);
     Route::get('/api/wms/brigade-stock/{requestId}', [\App\Http\Controllers\WmsIntegrationController::class, 'getBrigadeStock']);
+    Route::get('/api/requests/{id}/equipment', [\App\Http\Controllers\WmsIntegrationController::class, 'getRequestEquipment']);
     Route::get('/api/wms/user-stock', [\App\Http\Controllers\WmsIntegrationController::class, 'getUserStock']);
 });
 

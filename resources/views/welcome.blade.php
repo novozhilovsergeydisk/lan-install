@@ -629,6 +629,19 @@
                                                     data-brigade-id="{{ $request->brigade_id }}">
                                                         подробнее...
                                                     </a>
+                                                    @php
+                                                        $eq = $request->equipment ?? ['tools' => [], 'vehicles' => []];
+                                                    @endphp
+                                                    @if(!empty($eq['tools']) || !empty($eq['vehicles']))
+                                                        <div style="margin-top:6px; font-size:0.8rem; line-height:1.3;">
+                                                            @if(!empty($eq['tools']))
+                                                                <div><span style="color:#6b7280;">Инструмент:</span> <strong>{{ implode(', ', $eq['tools']) }}</strong></div>
+                                                            @endif
+                                                            @if(!empty($eq['vehicles']))
+                                                                <div><span style="color:#6b7280;">Авто:</span> <strong>{{ implode(', ', $eq['vehicles']) }}</strong></div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
                                                 @else
                                                     Не назначена
                                                 @endif
@@ -4194,6 +4207,9 @@
 
                      <hr>
 
+                     <!-- Оборудование бригады со склада (комплекты инструмента H-* + машины); если склад-авто нет — поле «личное авто». -->
+                     <div id="requestEquipmentInfo" class="mb-3"></div>
+
                      <div class="mb-3">
                          <div class="form-check form-switch">
                              <input class="form-check-input" type="checkbox" id="wmsDeductCheckbox" name="wms_deduct">
@@ -4320,6 +4336,29 @@
                 // Устанавливаем ID заявки в скрытое поле и заголовок
                 document.getElementById('requestIdToClose').value = requestId;
                 document.getElementById('modalRequestId').textContent = '#' + requestId;
+
+                // Оборудование бригады со склада: наборы инструмента (H-*) + машины. Если склад-авто нет — поле «личное авто».
+                (function (reqId) {
+                    const box = document.getElementById('requestEquipmentInfo');
+                    if (!box) return;
+                    box.innerHTML = '<div class="text-muted small">Загрузка оборудования…</div>';
+                    fetch(`/api/requests/${reqId}/equipment`, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(res => {
+                            const d = (res && res.data) || { tools: [], vehicles: [] };
+                            let html = '';
+                            if (d.tools && d.tools.length) {
+                                html += `<div class="mb-2"><span class="fw-bold">Наборы инструмента (склад):</span> ${d.tools.join(', ')}</div>`;
+                            }
+                            if (d.vehicles && d.vehicles.length) {
+                                html += `<div class="mb-2"><span class="fw-bold">Авто (склад):</span> ${d.vehicles.join(', ')}</div>`;
+                            } else {
+                                html += `<div class="mb-2"><label for="personalCarInput" class="form-label mb-1 fw-bold">Личное авто <span class="text-muted small fw-normal">(если на личном; необязательно)</span></label><input type="text" id="personalCarInput" class="form-control form-control-sm" placeholder="Госномер / марка"></div>`;
+                            }
+                            box.innerHTML = html || '<div class="text-muted small">Оборудование со склада не числится.</div>';
+                        })
+                        .catch(() => { box.innerHTML = '<div class="text-muted small">Не удалось загрузить оборудование.</div>'; });
+                })(requestId);
 
                 // Загружаем параметры работ
                 const container = document.getElementById('closeWorkParametersContainer');
@@ -4497,10 +4536,12 @@
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...';
 
+                const personalCarInput = document.getElementById('personalCarInput');
                 const inputData = {
                         comment: comment,
                         work_parameters: workParameters,
                         uncompleted_works: document.getElementById('uncompletedWorks').checked,
+                        personal_car: personalCarInput ? personalCarInput.value.trim() : '',
                         wms_deduct: wmsDeduct,
                         wms_source: wmsSource,
                         wms_warehouse_id: wmsWarehouseId,

@@ -1120,6 +1120,29 @@ class HomeController extends Controller
 
             $requests = DB::select($sql);
 
+            // Снимок оборудования (инструмент H-* + машины) по заявкам — для колонки «Бригада» (серверный рендер).
+            // Таблицы может не быть (до миграции на сервере / после переката локальной БД) — тогда просто без оборудования.
+            $reqIds = array_filter(array_column($requests, 'id'));
+            $equipmentByRequest = [];
+            if (! empty($reqIds) && \Schema::hasTable('request_equipment')) {
+                $equipRows = DB::select('
+                    SELECT request_id, kind, label
+                    FROM request_equipment
+                    WHERE request_id IN ('.implode(',', $reqIds).')
+                    ORDER BY kind, label
+                ');
+                foreach ($equipRows as $er) {
+                    $equipmentByRequest[$er->request_id][$er->kind][$er->label] = $er->label;
+                }
+            }
+            foreach ($requests as $r) {
+                $eq = $equipmentByRequest[$r->id] ?? [];
+                $r->equipment = [
+                    'tools' => array_values($eq['tool'] ?? []),
+                    'vehicles' => array_values($eq['vehicle'] ?? []),
+                ];
+            }
+
             $flags = [
                 'new' => 'new',
                 'in_work' => 'in_work',
@@ -1990,11 +2013,32 @@ class HomeController extends Controller
 
             $brigadeMembersCurrentDay = DB::select($sql);
 
+            // Снимок оборудования (инструмент H-* + машины) по заявкам — для колонки «Бригада» и отчётов.
+            // Таблицы может не быть (до миграции на сервере / после переката локальной БД) — тогда просто без оборудования.
+            $equipmentByRequest = [];
+            if (! empty($requestIds) && \Schema::hasTable('request_equipment')) {
+                $equipRows = DB::select('
+                    SELECT request_id, kind, label
+                    FROM request_equipment
+                    WHERE request_id IN ('.implode(',', $requestIds).')
+                    ORDER BY kind, label
+                ');
+                foreach ($equipRows as $er) {
+                    // Дедуп по подписи: один и тот же комплект/машину показываем один раз.
+                    $equipmentByRequest[$er->request_id][$er->kind][$er->label] = $er->label;
+                }
+            }
+
             // Добавляем членов бригады, информацию о бригадире и комментарии к каждой заявке
-            $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest, $brigadeMembersCurrentDay, $user) {
+            $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest, $brigadeMembersCurrentDay, $user, $equipmentByRequest) {
                 $brigadeId = $request->brigade_id;
                 $request->brigade_members = $brigadeMembers[$brigadeId] ?? [];
                 $request->brigade_leader_name = $brigadeLeaders[$brigadeId] ?? null;
+                $equip = $equipmentByRequest[$request->id] ?? [];
+                $request->equipment = [
+                    'tools' => array_values($equip['tool'] ?? []),       // ['H-0','H-7']
+                    'vehicles' => array_values($equip['vehicle'] ?? []), // ['Р724ХВ77 Ford Transit']
+                ];
                 $request->comments = $commentsByRequest[$request->id] ?? [];
                 $request->comments_count = count($request->comments);
                 $request->isAdmin = $user->isAdmin ?? false;
@@ -2680,6 +2724,16 @@ class HomeController extends Controller
 
                 // Фиксируем изменения
                 DB::commit();
+
+                // Снимок оборудования (инструмент H-* + машины со склада) + личное авто из формы.
+                // Вне транзакции и best-effort: недоступность склада не влияет на закрытие заявки.
+                try {
+                    $personalCar = trim((string) $request->input('personal_car', ''));
+                    app(\App\Services\Wms\WmsEquipmentService::class)
+                        ->captureSnapshotForRequest((int) $id, $personalCar !== '' ? $personalCar : null);
+                } catch (\Throwable $e) {
+                    \Log::warning('WMS equipment snapshot failed', ['request_id' => $id, 'error' => $e->getMessage()]);
+                }
 
                 // Отправка уведомления в Telegram
                 if ($requestDataForNotify && in_array($requestDataForNotify->type_name, ['Демонтаж МЭШ', 'Монтаж панелей', 'Осмотр МЭШ'])) {

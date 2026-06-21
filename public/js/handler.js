@@ -1066,6 +1066,20 @@ export async function applyFilters() {
                                 </a>`;
                             }
 
+                            // Оборудование, взятое бригадой со склада (снимок на момент закрытия): инструмент H-* и авто.
+                            const equipment = request.equipment || { tools: [], vehicles: [] };
+                            if ((equipment.tools && equipment.tools.length) || (equipment.vehicles && equipment.vehicles.length)) {
+                                let equipmentHtml = '<div style="margin-top:6px; font-size:0.8rem; line-height:1.3;">';
+                                if (equipment.tools && equipment.tools.length) {
+                                    equipmentHtml += `<div><span style="color:#6b7280;">Инструмент:</span> <strong>${equipment.tools.join(', ')}</strong></div>`;
+                                }
+                                if (equipment.vehicles && equipment.vehicles.length) {
+                                    equipmentHtml += `<div><span style="color:#6b7280;">Авто:</span> <strong>${equipment.vehicles.join(', ')}</strong></div>`;
+                                }
+                                equipmentHtml += '</div>';
+                                brigadeMembers += equipmentHtml;
+                            }
+
                             const isAdmin = window.App.role == 'admin' ?? false;
                             const statusName = request.status_name;
                             const executionDate = request.execution_date;

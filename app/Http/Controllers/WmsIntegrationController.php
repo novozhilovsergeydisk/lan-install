@@ -177,4 +177,20 @@ class WmsIntegrationController extends Controller
             return response()->json(['success' => false, 'message' => 'Ошибка соединения со складом'], 500);
         }
     }
+
+    /**
+     * Live-оборудование бригады заявки (комплекты инструмента H-* и машины со склада) — для формы закрытия.
+     */
+    public function getRequestEquipment($id)
+    {
+        try {
+            $data = app(\App\Services\Wms\WmsEquipmentService::class)->getEquipmentForRequest((int) $id);
+
+            return response()->json(['success' => true, 'data' => $data]);
+        } catch (\Throwable $e) {
+            Log::error('WMS: Exception fetching request equipment', ['error' => $e->getMessage(), 'requestId' => $id]);
+
+            return response()->json(['success' => false, 'message' => 'Ошибка получения оборудования'], 500);
+        }
+    }
 }
