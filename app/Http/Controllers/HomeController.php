@@ -3003,18 +3003,34 @@ class HomeController extends Controller
                     // Формируем расширенный комментарий с информацией о работах
                     $commentText = $request->input('comment', 'Создана новая заявка на недоделанные работы');
 
-                    if (! empty($workParameters) && is_array($workParameters)) {
-                        $worksInfoPart = '';
-                        // Добавляем <br><br> только если $commentText уже что-то содержит
-                        if (! empty($commentText)) {
-                            $worksInfoPart .= '<br><br>';
+                    // В комментарий новой (перенесённой) заявки пишем ОСТАТОК (план − выполнено),
+                    // а не выполненное — так же, как считаются work_parameters новой заявки выше.
+                    if (! empty($plannedWorkParameters) && count($plannedWorkParameters) > 0) {
+                        $remainingInfoPart = '';
+                        foreach ($plannedWorkParameters as $planned) {
+                            $completedQuantity = 0;
+                            if (! empty($workParameters) && is_array($workParameters)) {
+                                foreach ($workParameters as $completed) {
+                                    if ($completed['parameter_type_id'] == $planned->parameter_type_id) {
+                                        $completedQuantity = $completed['quantity'];
+                                        break;
+                                    }
+                                }
+                            }
+
+                            $remainingQuantity = $planned->quantity - $completedQuantity;
+                            if ($remainingQuantity > 0) {
+                                $typeName = $types[$planned->parameter_type_id] ?? 'Неизвестная работа';
+                                $remainingInfoPart .= "<br>- {$typeName}: {$remainingQuantity}";
+                            }
                         }
-                        $worksInfoPart .= 'Запланированные работы:';
-                        foreach ($workParameters as $param) {
-                            $typeName = $types[$param['parameter_type_id']] ?? 'Неизвестная работа';
-                            $worksInfoPart .= "<br>- {$typeName}: {$param['quantity']}";
+
+                        if ($remainingInfoPart !== '') {
+                            if (! empty($commentText)) {
+                                $commentText .= '<br><br>';
+                            }
+                            $commentText .= 'Запланированные работы:'.$remainingInfoPart;
                         }
-                        $commentText .= $worksInfoPart;
                     }
 
                     // Создаем комментарий
