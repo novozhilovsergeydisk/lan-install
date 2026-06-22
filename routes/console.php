@@ -13,3 +13,9 @@ Schedule::exec('find ' . storage_path('app/temp') . ' -type f -mtime +30 -delete
     ->monthly()
     ->appendOutputTo(storage_path('logs/cleanup.log'));
 
+// Живое обновление оборудования (склад) у открытых сегодняшних заявок — раз в час.
+Schedule::command('wms:refresh-equipment')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/wms-equipment.log'));
+

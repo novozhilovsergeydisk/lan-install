@@ -8,44 +8,22 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Оборудование, взятое бригадой со склада (только отображение).
+ * Оборудование, взятое бригадой со склада (только отображение рядом с бригадой).
  *
- * - getEquipmentForRequest() — live-данные для формы закрытия (комплекты H-* и машины).
- * - captureSnapshotForRequest() — снимок в request_equipment на момент закрытия
- *   (+ опционально личное авто, введённое вручную в форме).
+ * Снимок (request_equipment) обновляется:
+ *  - плановой командой wms:refresh-equipment для ОТКРЫТЫХ сегодняшних заявок (live);
+ *  - при закрытии заявки (заморозка последнего значения).
  *
- * Никаких действий со складом — только чтение по API (stock-flow). Best-effort:
- * недоступность склада не должна мешать закрытию заявки.
+ * Только чтение склада по API (stock-flow). Best-effort: недоступность склада
+ * не должна мешать закрытию заявки.
  */
 class WmsEquipmentService
 {
     /**
-     * Live-оборудование бригады заявки: уникальные комплекты инструмента и машины со склада.
-     * Возвращает ['tools' => ['H-1','H-7'], 'vehicles' => ['Р724ХВ77 Ford Transit']].
+     * Снимок: комплекты инструмента (инв. H-*) и машины со склада, которые числятся
+     * за участниками бригады заявки. Перезаписывает request_equipment для заявки.
      */
-    public function getEquipmentForRequest(int $requestId): array
-    {
-        $tools = [];
-        $vehicles = [];
-        foreach ($this->fetchWarehouseRows($requestId) as $row) {
-            if ($row['kind'] === 'tool') {
-                $tools[$row['label']] = $row['label'];
-            } elseif ($row['kind'] === 'vehicle') {
-                $vehicles[$row['label']] = $row['label'];
-            }
-        }
-
-        return [
-            'tools' => array_values($tools),
-            'vehicles' => array_values($vehicles),
-        ];
-    }
-
-    /**
-     * Снимок оборудования на момент закрытия заявки.
-     * $personalCar — личное авто, введённое вручную (если со склада машину никто не брал).
-     */
-    public function captureSnapshotForRequest(int $requestId, ?string $personalCar = null): void
+    public function captureSnapshotForRequest(int $requestId): void
     {
         try {
             if (! Schema::hasTable('request_equipment')) {
@@ -66,22 +44,8 @@ class WmsEquipmentService
                 ];
             }
 
-            // Личное авто (введено вручную в форме закрытия).
-            $personalCar = $personalCar !== null ? trim($personalCar) : '';
-            if ($personalCar !== '') {
-                $rows[] = [
-                    'request_id' => $requestId,
-                    'kind' => 'vehicle',
-                    'label' => $personalCar,
-                    'holder_emp_id' => null,
-                    'holder_fio' => null,
-                    'wms_ref' => null,
-                    'source' => 'personal',
-                    'created_at' => now(),
-                ];
-            }
-
-            // Обновляем снимок: чистим старый и пишем свежий (на случай переоткрытия/перезакрытия заявки).
+            // Перезаписываем снимок: чистим старый, пишем свежий
+            // (live-обновление для открытых заявок и заморозка при закрытии).
             DB::table('request_equipment')->where('request_id', $requestId)->delete();
             if (! empty($rows)) {
                 DB::table('request_equipment')->insert($rows);

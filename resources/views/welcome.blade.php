@@ -4207,8 +4207,11 @@
 
                      <hr>
 
-                     <!-- Оборудование бригады со склада (комплекты инструмента H-* + машины); если склад-авто нет — поле «личное авто». -->
-                     <div id="requestEquipmentInfo" class="mb-3"></div>
+                     <!-- Водитель / своя машина: выбор по участникам бригады (пишется в конец комментария при закрытии). -->
+                     <div class="mb-3 border rounded p-2">
+                         <div class="fw-bold mb-2">Водитель / своя машина</div>
+                         <div id="driverOwnCarContainer" class="small">Загрузка состава бригады…</div>
+                     </div>
 
                      <div class="mb-3">
                          <div class="form-check form-switch">
@@ -4337,27 +4340,28 @@
                 document.getElementById('requestIdToClose').value = requestId;
                 document.getElementById('modalRequestId').textContent = '#' + requestId;
 
-                // Оборудование бригады со склада: наборы инструмента (H-*) + машины. Если склад-авто нет — поле «личное авто».
+                // Состав бригады для выбора «водитель / на своей машине». Пишется в конец комментария при закрытии.
                 (function (reqId) {
-                    const box = document.getElementById('requestEquipmentInfo');
+                    const box = document.getElementById('driverOwnCarContainer');
                     if (!box) return;
-                    box.innerHTML = '<div class="text-muted small">Загрузка оборудования…</div>';
-                    fetch(`/api/requests/${reqId}/equipment`, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                    box.innerHTML = '<span class="text-muted">Загрузка состава бригады…</span>';
+                    fetch(`/api/requests/${reqId}/brigade-members`, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
                         .then(r => r.json())
                         .then(res => {
-                            const d = (res && res.data) || { tools: [], vehicles: [] };
-                            let html = '';
-                            if (d.tools && d.tools.length) {
-                                html += `<div class="mb-2"><span class="fw-bold">Наборы инструмента (склад):</span> ${d.tools.join(', ')}</div>`;
-                            }
-                            if (d.vehicles && d.vehicles.length) {
-                                html += `<div class="mb-2"><span class="fw-bold">Авто (склад):</span> ${d.vehicles.join(', ')}</div>`;
-                            } else {
-                                html += `<div class="mb-2"><label for="personalCarInput" class="form-label mb-1 fw-bold">Личное авто <span class="text-muted small fw-normal">(если на личном; необязательно)</span></label><input type="text" id="personalCarInput" class="form-control form-control-sm" placeholder="Госномер / марка"></div>`;
-                            }
-                            box.innerHTML = html || '<div class="text-muted small">Оборудование со склада не числится.</div>';
+                            const members = (res && res.data) || [];
+                            if (!members.length) { box.innerHTML = '<span class="text-muted">Бригада не назначена.</span>'; return; }
+                            let html = '<table class="table table-sm align-middle mb-1 dark-theme-table"><thead><tr><th>Сотрудник</th><th class="text-center" width="80">Водитель</th><th class="text-center" width="120">На своей машине</th></tr></thead><tbody>';
+                            members.forEach(m => {
+                                html += `<tr>
+                                    <td>${m.fio}</td>
+                                    <td class="text-center"><input class="form-check-input" type="radio" name="close_driver" value="${m.id}"></td>
+                                    <td class="text-center"><input class="form-check-input close-owncar-check" type="checkbox" value="${m.id}"></td>
+                                </tr>`;
+                            });
+                            html += '</tbody></table><div class="small mt-1" style="opacity:.7;">Один водитель; «на своей машине» — можно нескольким; никто — не отмечаем.</div>';
+                            box.innerHTML = html;
                         })
-                        .catch(() => { box.innerHTML = '<div class="text-muted small">Не удалось загрузить оборудование.</div>'; });
+                        .catch(() => { box.innerHTML = '<span class="text-danger">Не удалось загрузить состав бригады.</span>'; });
                 })(requestId);
 
                 // Загружаем параметры работ
@@ -4536,12 +4540,14 @@
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...';
 
-                const personalCarInput = document.getElementById('personalCarInput');
+                const driverRadio = document.querySelector('input[name="close_driver"]:checked');
+                const ownCarChecks = Array.from(document.querySelectorAll('.close-owncar-check:checked')).map(c => c.value);
                 const inputData = {
                         comment: comment,
                         work_parameters: workParameters,
                         uncompleted_works: document.getElementById('uncompletedWorks').checked,
-                        personal_car: personalCarInput ? personalCarInput.value.trim() : '',
+                        driver_employee_id: driverRadio ? driverRadio.value : null,
+                        own_car_employee_ids: ownCarChecks,
                         wms_deduct: wmsDeduct,
                         wms_source: wmsSource,
                         wms_warehouse_id: wmsWarehouseId,

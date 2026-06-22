@@ -179,18 +179,25 @@ class WmsIntegrationController extends Controller
     }
 
     /**
-     * Live-оборудование бригады заявки (комплекты инструмента H-* и машины со склада) — для формы закрытия.
+     * Участники бригады заявки (id + ФИО) — для выбора «водитель / на своей машине» в форме закрытия.
      */
-    public function getRequestEquipment($id)
+    public function getRequestBrigadeMembers($id)
     {
         try {
-            $data = app(\App\Services\Wms\WmsEquipmentService::class)->getEquipmentForRequest((int) $id);
+            $members = DB::select('
+                SELECT e.id, e.fio
+                FROM requests r
+                JOIN brigades b ON b.id = r.brigade_id
+                JOIN employees e ON (e.id = b.leader_id OR e.id IN (SELECT employee_id FROM brigade_members WHERE brigade_id = b.id))
+                WHERE r.id = ? AND e.is_deleted = false
+                ORDER BY e.fio
+            ', [(int) $id]);
 
-            return response()->json(['success' => true, 'data' => $data]);
+            return response()->json(['success' => true, 'data' => $members]);
         } catch (\Throwable $e) {
-            Log::error('WMS: Exception fetching request equipment', ['error' => $e->getMessage(), 'requestId' => $id]);
+            Log::error('WMS: Exception fetching brigade members', ['error' => $e->getMessage(), 'requestId' => $id]);
 
-            return response()->json(['success' => false, 'message' => 'Ошибка получения оборудования'], 500);
+            return response()->json(['success' => false, 'message' => 'Ошибка получения состава бригады'], 500);
         }
     }
 }

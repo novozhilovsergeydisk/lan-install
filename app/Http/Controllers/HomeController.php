@@ -2013,10 +2013,10 @@ class HomeController extends Controller
 
             $brigadeMembersCurrentDay = DB::select($sql);
 
-            // Снимок оборудования (инструмент H-* + машины) по заявкам — для колонки «Бригада» и отчётов.
-            // Таблицы может не быть (до миграции на сервере / после переката локальной БД) — тогда просто без оборудования.
+            // Оборудование (инструмент H-* + машины) показываем ТОЛЬКО для сегодняшней даты —
+            // на завтра/другие дни оно не актуально. Таблицы может не быть (до миграции / после переката БД).
             $equipmentByRequest = [];
-            if (! empty($requestIds) && \Schema::hasTable('request_equipment')) {
+            if ($requestDate === now()->toDateString() && ! empty($requestIds) && \Schema::hasTable('request_equipment')) {
                 $equipRows = DB::select('
                     SELECT request_id, kind, label
                     FROM request_equipment
@@ -2722,15 +2722,40 @@ class HomeController extends Controller
                     }
                 }
 
+                // Водитель / своя машина (выбор в форме закрытия) — дописываем в САМЫЙ КОНЕЦ комментария.
+                $driverEmpId = $request->input('driver_employee_id');
+                $ownCarEmpIds = $request->input('own_car_employee_ids', []);
+                if (! is_array($ownCarEmpIds)) {
+                    $ownCarEmpIds = array_filter([$ownCarEmpIds]);
+                }
+                $driverOwnCarPart = '';
+                if ($driverEmpId) {
+                    $driverFio = DB::table('employees')->where('id', $driverEmpId)->value('fio');
+                    if ($driverFio) {
+                        $driverOwnCarPart .= '<br><br>Водитель: ' . $driverFio;
+                    }
+                }
+                if (! empty($ownCarEmpIds)) {
+                    $ownCarFios = DB::table('employees')->whereIn('id', $ownCarEmpIds)->pluck('fio')->toArray();
+                    if (! empty($ownCarFios)) {
+                        $driverOwnCarPart .= ($driverOwnCarPart === '' ? '<br><br>' : '<br>') . 'Своя машина: ' . implode(', ', $ownCarFios);
+                    }
+                }
+                if ($driverOwnCarPart !== '') {
+                    DB::table('comments')
+                        ->where('id', $commentId)
+                        ->update([
+                            'comment' => DB::raw("comment || '" . addslashes($driverOwnCarPart) . "'")
+                        ]);
+                }
+
                 // Фиксируем изменения
                 DB::commit();
 
-                // Снимок оборудования (инструмент H-* + машины со склада) + личное авто из формы.
+                // Снимок оборудования (комплект H-* + машина со склада) — заморозка на момент закрытия.
                 // Вне транзакции и best-effort: недоступность склада не влияет на закрытие заявки.
                 try {
-                    $personalCar = trim((string) $request->input('personal_car', ''));
-                    app(\App\Services\Wms\WmsEquipmentService::class)
-                        ->captureSnapshotForRequest((int) $id, $personalCar !== '' ? $personalCar : null);
+                    app(\App\Services\Wms\WmsEquipmentService::class)->captureSnapshotForRequest((int) $id);
                 } catch (\Throwable $e) {
                     \Log::warning('WMS equipment snapshot failed', ['request_id' => $id, 'error' => $e->getMessage()]);
                 }
