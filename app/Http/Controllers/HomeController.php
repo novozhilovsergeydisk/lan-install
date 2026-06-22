@@ -1120,6 +1120,10 @@ class HomeController extends Controller
 
             $requests = DB::select($sql);
 
+            // Живое обновление инвентаря перед отдачей главной (всегда сегодня): троттл 30 сек + пинг склада
+            // внутри, главную не вешает. Инвентарь свеж сразу после выдачи, а не раз в час.
+            app(\App\Services\Wms\WmsEquipmentService::class)->refreshTodayBestEffort();
+
             // Снимок оборудования (инструмент H-* + машины) по заявкам — для колонки «Бригада» (серверный рендер).
             // Таблицы может не быть (до миграции на сервере / после переката локальной БД) — тогда просто без оборудования.
             $reqIds = array_filter(array_column($requests, 'id'));
@@ -2012,6 +2016,12 @@ class HomeController extends Controller
                 ORDER BY brigade_id DESC";
 
             $brigadeMembersCurrentDay = DB::select($sql);
+
+            // Живое обновление инвентаря: за сегодня перед отдачей подтягиваем актуальные данные со склада
+            // (троттл 30 сек + пинг внутри — главную не вешает). Так инвентарь свеж сразу после выдачи, а не раз в час.
+            if ($requestDate === now()->toDateString()) {
+                app(\App\Services\Wms\WmsEquipmentService::class)->refreshTodayBestEffort();
+            }
 
             // Оборудование (инструмент H-* + машины) показываем ТОЛЬКО для сегодняшней даты —
             // на завтра/другие дни оно не актуально. Таблицы может не быть (до миграции / после переката БД).

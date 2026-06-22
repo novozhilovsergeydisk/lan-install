@@ -92,6 +92,9 @@ class RequestEquipmentDisplayTest extends TestCase
             ['request_id' => $req->id, 'kind' => 'vehicle', 'label' => 'TEST777 ТестАвто', 'source' => 'warehouse', 'created_at' => now()],
         ]);
 
+        // Глушим живой рефреш (троттл), чтобы он не перетёр засеянное оборудование.
+        cache()->put('wms_equipment_refreshed_at', now(), 3600);
+
         $today = now()->toDateString();
         $response = $this->getJson("/api/requests/date/{$today}");
         $response->assertStatus(200);
@@ -116,6 +119,9 @@ class RequestEquipmentDisplayTest extends TestCase
         DB::table('request_equipment')->insert([
             ['request_id' => $req->id, 'kind' => 'tool', 'label' => 'H-TEST', 'source' => 'warehouse', 'created_at' => now()],
         ]);
+
+        // Глушим живой рефреш (троттл), чтобы он не перетёр засеянное оборудование.
+        cache()->put('wms_equipment_refreshed_at', now(), 3600);
 
         $response = $this->get('/');
         $response->assertStatus(200);
@@ -303,5 +309,51 @@ class RequestEquipmentDisplayTest extends TestCase
         $this->assertNotNull($row, 'Заявка должна быть в выдаче');
         $this->assertEmpty($row['equipment']['tools'], 'На не-сегодняшний день инструмент не показываем');
         $this->assertEmpty($row['equipment']['vehicles'], 'На не-сегодняшний день авто не показываем');
+    }
+
+    /** Живой рефреш «по требованию» обновляет request_equipment открытых сегодняшних заявок из склада. */
+    public function test_refresh_today_best_effort_updates_open_requests(): void
+    {
+        $req = DB::selectOne("
+            SELECT r.id
+            FROM requests r
+            JOIN brigades b ON b.id = r.brigade_id
+            JOIN employees e ON (e.id = b.leader_id OR e.id IN (SELECT employee_id FROM brigade_members WHERE brigade_id = b.id))
+            JOIN users u ON u.id = e.user_id
+            WHERE r.execution_date::date = CURRENT_DATE AND r.status_id NOT IN (4,5,6,7)
+              AND e.is_deleted = false AND u.email IS NOT NULL
+            ORDER BY r.id DESC LIMIT 1
+        ");
+        if (! $req) {
+            $this->markTestSkipped('Нет открытой сегодняшней заявки с бригадой и email');
+        }
+
+        cache()->forget('wms_equipment_refreshed_at');
+        Http::fake([
+            '*/api/external/warehouses*' => Http::response(['success' => true, 'data' => []], 200),
+            '*/api/external/user-equipment*' => Http::response([
+                'success' => true,
+                'data' => ['tools' => [['inventoryNumber' => 'H-RT']], 'vehicles' => []],
+            ], 200),
+            '*' => Http::response(['success' => true, 'data' => []], 200),
+        ]);
+        DB::table('request_equipment')->where('request_id', $req->id)->delete();
+
+        app(\App\Services\Wms\WmsEquipmentService::class)->refreshTodayBestEffort();
+
+        $this->assertDatabaseHas('request_equipment', [
+            'request_id' => $req->id, 'kind' => 'tool', 'label' => 'H-RT', 'source' => 'warehouse',
+        ]);
+    }
+
+    /** В пределах окна троттла живой рефреш на склад не ходит. */
+    public function test_refresh_today_best_effort_is_throttled(): void
+    {
+        cache()->put('wms_equipment_refreshed_at', now(), 3600);
+        Http::fake(['*' => Http::response(['success' => true, 'data' => []], 200)]);
+
+        app(\App\Services\Wms\WmsEquipmentService::class)->refreshTodayBestEffort();
+
+        Http::assertNothingSent();
     }
 }

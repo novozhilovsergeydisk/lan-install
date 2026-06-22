@@ -2,6 +2,7 @@
 
 namespace App\Services\Wms;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -52,6 +53,61 @@ class WmsEquipmentService
             }
         } catch (\Throwable $e) {
             Log::error('WMS equipment: снимок не сделан', ['request_id' => $requestId, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Живое обновление оборудования открытых сегодняшних заявок «по требованию» — вызывается
+     * при отрисовке дневного вида (index / getRequestsByDate за сегодня), чтобы инвентарь был
+     * свежим сразу после выдачи на складе, а не раз в час.
+     *
+     * Безопасно для главной страницы:
+     *  - троттл 30 сек на весь сервер (Cache) — частые F5 склад не долбят;
+     *  - быстрый пинг склада (2 сек) — если недоступен, выходим, страницу не вешаем.
+     */
+    public function refreshTodayBestEffort(): void
+    {
+        try {
+            if (! Schema::hasTable('request_equipment')) {
+                return;
+            }
+
+            // Троттл: если обновляли < 30 сек назад — ничего не делаем.
+            $last = Cache::get('wms_equipment_refreshed_at');
+            if ($last && now()->diffInSeconds($last) < 30) {
+                return;
+            }
+
+            $apiKey = config('services.wms.api_key');
+            $baseUrl = config('services.wms.base_url');
+            if (! $apiKey || ! $baseUrl) {
+                return;
+            }
+
+            // Метку ставим СРАЗУ — чтобы параллельные запросы не делали ту же работу.
+            Cache::put('wms_equipment_refreshed_at', now(), 3600);
+
+            // Быстрая проверка доступности склада: недоступен — выходим (метка уже стоит, ретрай через 30 сек).
+            try {
+                $ping = Http::withHeaders(['X-API-Key' => $apiKey])->timeout(2)->get("{$baseUrl}/api/external/warehouses");
+                if (! $ping->successful()) {
+                    return;
+                }
+            } catch (\Throwable $e) {
+                return;
+            }
+
+            $ids = DB::table('requests')
+                ->whereRaw('DATE(execution_date) = CURRENT_DATE')
+                ->whereNotIn('status_id', [4, 5, 6, 7])
+                ->whereNotNull('brigade_id')
+                ->pluck('id');
+
+            foreach ($ids as $id) {
+                $this->captureSnapshotForRequest((int) $id);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('WMS equipment: refreshTodayBestEffort failed', ['error' => $e->getMessage()]);
         }
     }
 
