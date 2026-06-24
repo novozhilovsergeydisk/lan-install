@@ -56,26 +56,18 @@ class ControllerRequestModification extends Controller
      */
     public function updateRequestBrigade(Request $request)
     {
-        // \Log::info('Получен запрос на обновление бригады заявки', $request->all());
-
         try {
             $validated = $request->validate([
                 'brigade_id' => 'required|integer|exists:brigades,id',
                 'request_id' => 'required|integer|exists:requests,id',
             ]);
 
-            // \Log::info('Валидация пройдена', $validated);
-
             $sql = 'UPDATE requests SET brigade_id = ? WHERE id = ?';
             $updated = DB::update($sql, [$request->brigade_id, $request->request_id]);
 
-            // \Log::info('Результат обновления заявки', [
-            //     'request_id' => $request->request_id,
-            //     'brigade_id' => $request->brigade_id,
-            //     'updated' => $updated
-            // ]);
-
             if ($updated) {
+                $this->addBrigadeAssignmentComment($request->request_id, $request->brigade_id, $request->user()->id);
+
                 $sql = "SELECT
                     b.id AS brigade_id,
                     b.name AS brigade_name,
@@ -165,13 +157,17 @@ class ControllerRequestModification extends Controller
             // Создаем строку с плейсхолдерами ?, ?, ? для IN (...)
             $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
             $sql = "UPDATE requests SET brigade_id = ? WHERE id IN ($placeholders)";
-            
+
             // Собираем параметры: сначала brigade_id, затем все request_ids
             $params = array_merge([$brigadeId], $requestIds);
-            
+
             $updated = DB::update($sql, $params);
 
             if ($updated > 0) {
+                foreach ($requestIds as $requestId) {
+                    $this->addBrigadeAssignmentComment($requestId, $brigadeId, $request->user()->id);
+                }
+
                 // Получаем информацию о бригаде для ответа (как в одиночном методе)
                 $sql = "SELECT
                     b.id AS brigade_id,
@@ -205,7 +201,7 @@ class ControllerRequestModification extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Бригада успешно назначена на ' . $updated . ' заявки(ок)',
+                    'message' => 'Бригада успешно назначена на '.$updated.' заявки(ок)',
                     'data' => [
                         'request_ids' => $requestIds,
                         'brigade_id' => $brigadeId,
@@ -231,5 +227,56 @@ class ControllerRequestModification extends Controller
             ], 500);
         }
     }
-}
 
+    /**
+     * Создать автокомментарий при назначении/переназначении бригады на заявку.
+     * Формат: "Назначена бригада: Иванов И. (бригадир), Петров П. Назначил: Сидоров С."
+     */
+    private function addBrigadeAssignmentComment(int $requestId, int $brigadeId, int $userId): void
+    {
+        try {
+            $brigade = DB::selectOne('
+                SELECT bl.fio AS leader_fio,
+                       string_agg(
+                           CASE WHEN bm.employee_id IS NOT NULL AND bm.employee_id != b.leader_id
+                               THEN bm_e.fio END,
+                           ', ' ORDER BY bm_e.fio
+                       ) AS members_fio
+                FROM brigades b
+                JOIN employees bl ON bl.id = b.leader_id
+                LEFT JOIN brigade_members bm ON bm.brigade_id = b.id
+                LEFT JOIN employees bm_e ON bm_e.id = bm.employee_id
+                WHERE b.id = ? AND b.is_deleted = false AND bl.is_deleted = false
+                GROUP BY b.id, bl.fio
+            ', [$brigadeId]);
+
+            $userFio = DB::selectOne('SELECT e.fio FROM employees e WHERE e.user_id = ?', [$userId])->fio ?? null;
+            $userName = $userFio ?? 'Пользователь';
+
+            $parts = [$brigade->leader_fio.' (бригадир)'];
+            if ($brigade->members_fio) {
+                $parts[] = $brigade->members_fio;
+            }
+            $brigadeList = implode(', ', $parts);
+
+            $comment = "Назначена бригада: {$brigadeList}. Назначил: {$userName}";
+
+            $commentId = DB::table('comments')->insertGetId([
+                'comment' => $comment,
+                'created_at' => now(),
+            ]);
+
+            DB::table('request_comments')->insert([
+                'request_id' => $requestId,
+                'comment_id' => $commentId,
+                'user_id' => $userId,
+                'created_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            \Log::warning('Автокомментарий назначения бригады не создан', [
+                'request_id' => $requestId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+}
