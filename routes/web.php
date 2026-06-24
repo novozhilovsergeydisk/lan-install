@@ -121,7 +121,7 @@ Route::post('/api/requests/photo-comment', [HomeController::class, 'uploadPhotoC
 Route::get('/api/photo-report/{requestId}', [HomeController::class, 'getPhotoReport'])->name('photo-report.show')->middleware('auth');
 
 // Фотоотчет: POST (получение фото по id комментария)
-Route::post('/api/comments/{commentId}/photos', [CommentPhotoController::class, 'index'])->name('api.comments.photos')->middleware('auth');
+Route::post('/api/comments/{commentId}/photos', [CommentPhotoController::class, 'index'])->name('api.comments.photos.store')->middleware('auth');
 
 // Скачивание фотоотчета архивом (с авторизацией)
 Route::get('/photo-reports/{requestId}/download', [PhotoReportController::class, 'downloadRequestPhotos'])->name('photo-report.download')->middleware('auth');
@@ -300,7 +300,7 @@ Route::prefix('reports')->middleware('auth')->group(function () {
 // API Routes for request management
 Route::prefix('api')->middleware('auth')->group(function () {
     // Get comment photos
-    Route::get('/comments/{commentId}/photos', [\App\Http\Controllers\CommentPhotoController::class, 'index'])->name('api.comments.photos');
+    Route::get('/comments/{commentId}/photos', [\App\Http\Controllers\CommentPhotoController::class, 'index'])->name('api.comments.photos.index');
 
     // Test log route
     Route::get('/test-log', function () {
