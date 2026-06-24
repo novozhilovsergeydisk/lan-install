@@ -114,14 +114,7 @@ class RequestEquipmentDisplayTest extends TestCase
             $this->markTestSkipped('Нет сегодняшней заявки с бригадой');
         }
 
-        Http::fake(['*' => Http::response(['success' => true, 'data' => []], 200)]);
-
-        DB::table('request_equipment')->insert([
-            ['request_id' => $req->id, 'kind' => 'tool', 'label' => 'H-TEST', 'source' => 'warehouse', 'created_at' => now()],
-        ]);
-
-        // Глушим живой рефреш (троттл), чтобы он не перетёр засеянное оборудование.
-        cache()->put('wms_equipment_refreshed_at', now(), 3600);
+        Http::fake(['*' => Http::response(['success' => true, 'data' => ['tools' => [['inventoryNumber' => 'H-TEST']], 'vehicles' => []]], 200)]);
 
         $response = $this->get('/');
         $response->assertStatus(200);
@@ -149,6 +142,8 @@ class RequestEquipmentDisplayTest extends TestCase
             '*' => Http::response(['success' => true, 'data' => []], 200),
         ]);
 
+        DB::table('request_equipment')->where('request_id', $req->id)->delete();
+
         $response = $this->post("/requests/{$req->id}/close", [
             'comment' => 'Тест: снимок оборудования',
             'work_parameters' => [],
@@ -162,6 +157,42 @@ class RequestEquipmentDisplayTest extends TestCase
         ]);
         $this->assertDatabaseHas('request_equipment', [
             'request_id' => $req->id, 'kind' => 'vehicle', 'label' => 'X000XX ФейкАвто', 'source' => 'warehouse',
+        ]);
+    }
+
+    /** При закрытии НЕ затираем уже показанный снимок, даже если склад в этот момент вернул пусто. */
+    public function test_close_keeps_existing_snapshot_when_warehouse_empty(): void
+    {
+        $this->authenticateAdmin();
+        $req = $this->openRequestWithBrigade();
+        if (! $req) {
+            $this->markTestSkipped('Нет открытой заявки с бригадой');
+        }
+
+        // Снимок, который уже показывался днём (наполнен живым обновлением).
+        DB::table('request_equipment')->where('request_id', $req->id)->delete();
+        DB::table('request_equipment')->insert([
+            ['request_id' => $req->id, 'kind' => 'tool', 'label' => 'H-LIVE', 'source' => 'warehouse', 'created_at' => now()],
+            ['request_id' => $req->id, 'kind' => 'vehicle', 'label' => 'B222BB ЖивоеАвто', 'source' => 'warehouse', 'created_at' => now()],
+        ]);
+
+        // На момент закрытия склад возвращает ПУСТО (инвентарь сдан / склад недоступен).
+        Http::fake(['*' => Http::response(['success' => true, 'data' => ['tools' => [], 'vehicles' => []]], 200)]);
+
+        $response = $this->post("/requests/{$req->id}/close", [
+            'comment' => 'Закрытие со сданным инвентарём',
+            'work_parameters' => [],
+            'uncompleted_works' => false,
+            '_token' => csrf_token(),
+        ]);
+        $response->assertStatus(200);
+
+        // Снимок должен сохраниться (не затереться).
+        $this->assertDatabaseHas('request_equipment', [
+            'request_id' => $req->id, 'kind' => 'tool', 'label' => 'H-LIVE',
+        ]);
+        $this->assertDatabaseHas('request_equipment', [
+            'request_id' => $req->id, 'kind' => 'vehicle', 'label' => 'B222BB ЖивоеАвто',
         ]);
     }
 
@@ -282,20 +313,20 @@ class RequestEquipmentDisplayTest extends TestCase
         $this->assertStringNotContainsString('Своя машина:', $comment);
     }
 
-    /** На НЕ сегодняшний день оборудование в дневном списке не показывается (неактуально). */
-    public function test_equipment_hidden_for_non_today_date(): void
+    /** На прошлый/будущий день у ОТКРЫТОЙ заявки оборудование не показываем (живое, неактуально). */
+    public function test_equipment_hidden_for_open_request_on_past_date(): void
     {
         $this->authenticateAdmin();
         $req = DB::selectOne("
             SELECT id, DATE(execution_date) AS d
             FROM requests
             WHERE execution_date::date <> CURRENT_DATE
-              AND status_id NOT IN (5,6,7)
+              AND status_id NOT IN (4,5,6,7)
               AND brigade_id IS NOT NULL
             ORDER BY id DESC LIMIT 1
         ");
         if (! $req) {
-            $this->markTestSkipped('Нет заявки на не-сегодняшнюю дату с бригадой');
+            $this->markTestSkipped('Нет открытой заявки на не-сегодняшнюю дату с бригадой');
         }
 
         DB::table('request_equipment')->insert([
@@ -307,8 +338,39 @@ class RequestEquipmentDisplayTest extends TestCase
 
         $row = collect($response->json('data'))->firstWhere('id', $req->id);
         $this->assertNotNull($row, 'Заявка должна быть в выдаче');
-        $this->assertEmpty($row['equipment']['tools'], 'На не-сегодняшний день инструмент не показываем');
-        $this->assertEmpty($row['equipment']['vehicles'], 'На не-сегодняшний день авто не показываем');
+        $this->assertEmpty($row['equipment']['tools'], 'У открытой заявки на прошлый день инструмент не показываем');
+        $this->assertEmpty($row['equipment']['vehicles'], 'У открытой заявки на прошлый день авто не показываем');
+    }
+
+    /** На прошлый день у ЗАКРЫТОЙ заявки замороженный снимок оборудования виден всегда (просьба заказчика). */
+    public function test_equipment_shown_for_closed_request_on_past_date(): void
+    {
+        $this->authenticateAdmin();
+        $req = DB::selectOne("
+            SELECT id, DATE(execution_date) AS d
+            FROM requests
+            WHERE execution_date::date <> CURRENT_DATE
+              AND status_id = 4
+              AND brigade_id IS NOT NULL
+            ORDER BY id DESC LIMIT 1
+        ");
+        if (! $req) {
+            $this->markTestSkipped('Нет закрытой заявки на не-сегодняшнюю дату с бригадой');
+        }
+
+        DB::table('request_equipment')->where('request_id', $req->id)->delete();
+        DB::table('request_equipment')->insert([
+            ['request_id' => $req->id, 'kind' => 'tool', 'label' => 'H-FROZEN', 'source' => 'warehouse', 'created_at' => now()],
+            ['request_id' => $req->id, 'kind' => 'vehicle', 'label' => 'A111AA ЗамёрзАвто', 'source' => 'warehouse', 'created_at' => now()],
+        ]);
+
+        $response = $this->getJson("/api/requests/date/{$req->d}");
+        $response->assertStatus(200);
+
+        $row = collect($response->json('data'))->firstWhere('id', $req->id);
+        $this->assertNotNull($row, 'Заявка должна быть в выдаче');
+        $this->assertContains('H-FROZEN', $row['equipment']['tools'], 'У закрытой заявки снимок инструмента виден на любой день');
+        $this->assertContains('A111AA ЗамёрзАвто', $row['equipment']['vehicles'], 'У закрытой заявки снимок авто виден на любой день');
     }
 
     /** Живой рефреш «по требованию» обновляет request_equipment открытых сегодняшних заявок из склада. */
@@ -346,7 +408,7 @@ class RequestEquipmentDisplayTest extends TestCase
         ]);
     }
 
-    /** В пределах окна троттла живой рефреш на склад не ходит. */
+    /** В пределах 5-секундного окна троттла склад не опрашивается повторно. */
     public function test_refresh_today_best_effort_is_throttled(): void
     {
         cache()->put('wms_equipment_refreshed_at', now(), 3600);
@@ -356,4 +418,5 @@ class RequestEquipmentDisplayTest extends TestCase
 
         Http::assertNothingSent();
     }
+
 }

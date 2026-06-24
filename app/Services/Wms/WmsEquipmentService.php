@@ -45,12 +45,15 @@ class WmsEquipmentService
                 ];
             }
 
-            // Перезаписываем снимок: чистим старый, пишем свежий
-            // (live-обновление для открытых заявок и заморозка при закрытии).
-            DB::table('request_equipment')->where('request_id', $requestId)->delete();
-            if (! empty($rows)) {
-                DB::table('request_equipment')->insert($rows);
+            if (empty($rows)) {
+                // Склад вернул пусто — НЕ стираем существующий снимок («липкий»).
+                // Иначе live-обновление между «сдали инвентарь» и «закрыли заявку» затрёт
+                // данные, и при закрытии будет нечего замораживать.
+                return;
             }
+
+            DB::table('request_equipment')->where('request_id', $requestId)->delete();
+            DB::table('request_equipment')->insert($rows);
         } catch (\Throwable $e) {
             Log::error('WMS equipment: снимок не сделан', ['request_id' => $requestId, 'error' => $e->getMessage()]);
         }
@@ -62,7 +65,7 @@ class WmsEquipmentService
      * свежим сразу после выдачи на складе, а не раз в час.
      *
      * Безопасно для главной страницы:
-     *  - троттл 30 сек на весь сервер (Cache) — частые F5 склад не долбят;
+     *  - троттл 5 сек на весь сервер (Cache) — частые F5 не удваивают нагрузку на склад;
      *  - быстрый пинг склада (2 сек) — если недоступен, выходим, страницу не вешаем.
      */
     public function refreshTodayBestEffort(): void
@@ -72,9 +75,8 @@ class WmsEquipmentService
                 return;
             }
 
-            // Троттл: если обновляли < 30 сек назад — ничего не делаем.
             $last = Cache::get('wms_equipment_refreshed_at');
-            if ($last && now()->diffInSeconds($last) < 30) {
+            if ($last && now()->diffInSeconds($last) < 5) {
                 return;
             }
 
@@ -84,10 +86,6 @@ class WmsEquipmentService
                 return;
             }
 
-            // Метку ставим СРАЗУ — чтобы параллельные запросы не делали ту же работу.
-            Cache::put('wms_equipment_refreshed_at', now(), 3600);
-
-            // Быстрая проверка доступности склада: недоступен — выходим (метка уже стоит, ретрай через 30 сек).
             try {
                 $ping = Http::withHeaders(['X-API-Key' => $apiKey])->timeout(2)->get("{$baseUrl}/api/external/warehouses");
                 if (! $ping->successful()) {
@@ -106,6 +104,8 @@ class WmsEquipmentService
             foreach ($ids as $id) {
                 $this->captureSnapshotForRequest((int) $id);
             }
+
+            Cache::put('wms_equipment_refreshed_at', now(), 3600);
         } catch (\Throwable $e) {
             Log::warning('WMS equipment: refreshTodayBestEffort failed', ['error' => $e->getMessage()]);
         }

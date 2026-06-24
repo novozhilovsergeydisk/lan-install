@@ -2023,10 +2023,11 @@ class HomeController extends Controller
                 app(\App\Services\Wms\WmsEquipmentService::class)->refreshTodayBestEffort();
             }
 
-            // Оборудование (инструмент H-* + машины) показываем ТОЛЬКО для сегодняшней даты —
-            // на завтра/другие дни оно не актуально. Таблицы может не быть (до миграции / после переката БД).
+            // Оборудование грузим всегда (таблица request_equipment), а показ решаем по заявке ниже:
+            // за сегодня — у всех; на прошлые/будущие дни — только у ЗАКРЫТЫХ (снимок заморожен при закрытии и остаётся навсегда).
+            // Таблицы может не быть (до миграции / после переката БД) — тогда просто без оборудования.
             $equipmentByRequest = [];
-            if ($requestDate === now()->toDateString() && ! empty($requestIds) && \Schema::hasTable('request_equipment')) {
+            if (! empty($requestIds) && \Schema::hasTable('request_equipment')) {
                 $equipRows = DB::select('
                     SELECT request_id, kind, label
                     FROM request_equipment
@@ -2039,12 +2040,17 @@ class HomeController extends Controller
                 }
             }
 
+            // Сегодня показываем оборудование у всех заявок; на другие дни — только у закрытых (status_id=4, «выполнена»).
+            $isTodayView = ($requestDate === now()->toDateString());
+
             // Добавляем членов бригады, информацию о бригадире и комментарии к каждой заявке
-            $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest, $brigadeMembersCurrentDay, $user, $equipmentByRequest) {
+            $result = array_map(function ($request) use ($brigadeMembers, $brigadeLeaders, $commentsByRequest, $brigadeMembersCurrentDay, $user, $equipmentByRequest, $isTodayView) {
                 $brigadeId = $request->brigade_id;
                 $request->brigade_members = $brigadeMembers[$brigadeId] ?? [];
                 $request->brigade_leader_name = $brigadeLeaders[$brigadeId] ?? null;
-                $equip = $equipmentByRequest[$request->id] ?? [];
+                // Сегодня — показываем всем; на другие дни — только закрытым (status_id=4): снимок заморожен навсегда.
+                $showEquip = $isTodayView || ((int) ($request->status_id ?? 0) === 4);
+                $equip = $showEquip ? ($equipmentByRequest[$request->id] ?? []) : [];
                 $request->equipment = [
                     'tools' => array_values($equip['tool'] ?? []),       // ['H-0','H-7']
                     'vehicles' => array_values($equip['vehicle'] ?? []), // ['Р724ХВ77 Ford Transit']
@@ -2762,12 +2768,19 @@ class HomeController extends Controller
                 // Фиксируем изменения
                 DB::commit();
 
-                // Снимок оборудования (комплект H-* + машина со склада) — заморозка на момент закрытия.
-                // Вне транзакции и best-effort: недоступность склада не влияет на закрытие заявки.
+                // Заморозка оборудования при закрытии. ВАЖНО: повторно склад НЕ опрашиваем — иначе если бригада
+                // к моменту закрытия сдала инвентарь/машину на склад (или склад на миг недоступен), опрос вернёт
+                // пусто и затрёт то, что показывалось днём. Замораживаем ПОСЛЕДНИЙ показанный снимок — его уже
+                // наполнило живое обновление, пока заявка была открыта (закрытые заявки оно больше не трогает).
+                // Опрашиваем склад только если снимка ещё нет (заявку закрыли до первого живого обновления).
                 try {
-                    app(\App\Services\Wms\WmsEquipmentService::class)->captureSnapshotForRequest((int) $id);
+                    $hasEquipSnapshot = \Schema::hasTable('request_equipment')
+                        && DB::table('request_equipment')->where('request_id', $id)->exists();
+                    if (! $hasEquipSnapshot) {
+                        app(\App\Services\Wms\WmsEquipmentService::class)->captureSnapshotForRequest((int) $id);
+                    }
                 } catch (\Throwable $e) {
-                    \Log::warning('WMS equipment snapshot failed', ['request_id' => $id, 'error' => $e->getMessage()]);
+                    \Log::warning('WMS equipment snapshot (close) failed', ['request_id' => $id, 'error' => $e->getMessage()]);
                 }
 
                 // Отправка уведомления в Telegram
