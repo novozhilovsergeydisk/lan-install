@@ -235,27 +235,26 @@ class ControllerRequestModification extends Controller
     private function addBrigadeAssignmentComment(int $requestId, int $brigadeId, int $userId): void
     {
         try {
-            $brigade = DB::selectOne('
-                SELECT bl.fio AS leader_fio,
-                       string_agg(
-                           CASE WHEN bm.employee_id IS NOT NULL AND bm.employee_id != b.leader_id
-                               THEN bm_e.fio END,
-                           ', ' ORDER BY bm_e.fio
-                       ) AS members_fio
-                FROM brigades b
+            $leader = DB::selectOne('
+                SELECT bl.fio FROM brigades b
                 JOIN employees bl ON bl.id = b.leader_id
-                LEFT JOIN brigade_members bm ON bm.brigade_id = b.id
-                LEFT JOIN employees bm_e ON bm_e.id = bm.employee_id
                 WHERE b.id = ? AND b.is_deleted = false AND bl.is_deleted = false
-                GROUP BY b.id, bl.fio
+            ', [$brigadeId]);
+
+            $members = DB::select('
+                SELECT bm_e.fio FROM brigade_members bm
+                JOIN employees bm_e ON bm_e.id = bm.employee_id
+                JOIN brigades b ON b.id = bm.brigade_id
+                WHERE bm.brigade_id = ? AND bm_e.is_deleted = false AND bm.employee_id != b.leader_id
+                ORDER BY bm_e.fio
             ', [$brigadeId]);
 
             $userFio = DB::selectOne('SELECT e.fio FROM employees e WHERE e.user_id = ?', [$userId])->fio ?? null;
             $userName = $userFio ?? 'Пользователь';
 
-            $parts = [$brigade->leader_fio.' (бригадир)'];
-            if ($brigade->members_fio) {
-                $parts[] = $brigade->members_fio;
+            $parts = [$leader->fio.' (бригадир)'];
+            foreach ($members as $m) {
+                $parts[] = $m->fio;
             }
             $brigadeList = implode(', ', $parts);
 
