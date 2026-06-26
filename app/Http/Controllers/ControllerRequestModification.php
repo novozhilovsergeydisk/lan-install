@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Brigade\BrigadeChangeCommentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -54,7 +55,7 @@ class ControllerRequestModification extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updateRequestBrigade(Request $request)
+    public function updateRequestBrigade(Request $request, BrigadeChangeCommentService $commenter)
     {
         try {
             $validated = $request->validate([
@@ -62,11 +63,17 @@ class ControllerRequestModification extends Controller
                 'request_id' => 'required|integer|exists:requests,id',
             ]);
 
+            // Запоминаем СТАРУЮ бригаду ДО смены — её состав пойдёт в автокомментарий.
+            $oldBrigadeId = DB::table('requests')->where('id', $validated['request_id'])->value('brigade_id');
+
             $sql = 'UPDATE requests SET brigade_id = ? WHERE id = ?';
             $updated = DB::update($sql, [$request->brigade_id, $request->request_id]);
 
             if ($updated) {
-                $this->addBrigadeAssignmentComment($request->request_id, $request->brigade_id, $request->user()->id);
+                // Автокомментарий только при реальной СМЕНЕ (была старая бригада и она отличается от новой).
+                if ($oldBrigadeId !== null && (int) $oldBrigadeId !== (int) $validated['brigade_id']) {
+                    $commenter->logChange((int) $validated['request_id'], (int) $oldBrigadeId, $request->user()->id);
+                }
 
                 $sql = "SELECT
                     b.id AS brigade_id,
@@ -142,7 +149,7 @@ class ControllerRequestModification extends Controller
      *
      * @return IlluminateHttpJsonResponse
      */
-    public function updateRequestBrigadeMass(Request $request)
+    public function updateRequestBrigadeMass(Request $request, BrigadeChangeCommentService $commenter)
     {
         try {
             $validated = $request->validate([
@@ -153,6 +160,9 @@ class ControllerRequestModification extends Controller
 
             $requestIds = $validated['request_ids'];
             $brigadeId = $validated['brigade_id'];
+
+            // Запоминаем СТАРУЮ бригаду КАЖДОЙ заявки ДО смены (у каждой могла быть своя) — для автокомментария.
+            $oldBrigades = DB::table('requests')->whereIn('id', $requestIds)->pluck('brigade_id', 'id');
 
             // Создаем строку с плейсхолдерами ?, ?, ? для IN (...)
             $placeholders = implode(',', array_fill(0, count($requestIds), '?'));
@@ -165,7 +175,11 @@ class ControllerRequestModification extends Controller
 
             if ($updated > 0) {
                 foreach ($requestIds as $requestId) {
-                    $this->addBrigadeAssignmentComment($requestId, $brigadeId, $request->user()->id);
+                    // Автокомментарий только при реальной смене (была старая бригада и она отличается от новой).
+                    $old = $oldBrigades[$requestId] ?? null;
+                    if ($old !== null && (int) $old !== (int) $brigadeId) {
+                        $commenter->logChange((int) $requestId, (int) $old, $request->user()->id);
+                    }
                 }
 
                 // Получаем информацию о бригаде для ответа (как в одиночном методе)
@@ -215,8 +229,8 @@ class ControllerRequestModification extends Controller
                 'message' => 'Не удалось обновить заявки. Возможно они уже обновлены или не существуют.',
             ], 400);
 
-        } catch (Exception $e) {
-            Log::error('Ошибка при массовом обновлении заявок', [
+        } catch (\Exception $e) {
+            \Log::error('Ошибка при массовом обновлении заявок', [
                 'message' => $e->getMessage(),
                 'request' => $request->all(),
             ]);
@@ -228,54 +242,4 @@ class ControllerRequestModification extends Controller
         }
     }
 
-    /**
-     * Создать автокомментарий при назначении/переназначении бригады на заявку.
-     * Формат: "Назначена бригада: Иванов И. (бригадир), Петров П. Назначил: Сидоров С."
-     */
-    private function addBrigadeAssignmentComment(int $requestId, int $brigadeId, int $userId): void
-    {
-        try {
-            $leader = DB::selectOne('
-                SELECT bl.fio FROM brigades b
-                JOIN employees bl ON bl.id = b.leader_id
-                WHERE b.id = ? AND b.is_deleted = false AND bl.is_deleted = false
-            ', [$brigadeId]);
-
-            $members = DB::select('
-                SELECT bm_e.fio FROM brigade_members bm
-                JOIN employees bm_e ON bm_e.id = bm.employee_id
-                JOIN brigades b ON b.id = bm.brigade_id
-                WHERE bm.brigade_id = ? AND bm_e.is_deleted = false AND bm.employee_id != b.leader_id
-                ORDER BY bm_e.fio
-            ', [$brigadeId]);
-
-            $userFio = DB::selectOne('SELECT e.fio FROM employees e WHERE e.user_id = ?', [$userId])->fio ?? null;
-            $userName = $userFio ?? 'Пользователь';
-
-            $parts = [$leader->fio.' (бригадир)'];
-            foreach ($members as $m) {
-                $parts[] = $m->fio;
-            }
-            $brigadeList = implode(', ', $parts);
-
-            $comment = "Назначена бригада: {$brigadeList}. Назначил: {$userName}";
-
-            $commentId = DB::table('comments')->insertGetId([
-                'comment' => $comment,
-                'created_at' => now(),
-            ]);
-
-            DB::table('request_comments')->insert([
-                'request_id' => $requestId,
-                'comment_id' => $commentId,
-                'user_id' => $userId,
-                'created_at' => now(),
-            ]);
-        } catch (\Throwable $e) {
-            \Log::warning('Автокомментарий назначения бригады не создан', [
-                'request_id' => $requestId,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
 }
