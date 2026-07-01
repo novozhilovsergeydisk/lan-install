@@ -2993,6 +2993,48 @@ class HomeController extends Controller
                                         \Log::info('Отправлено уведомление через SSH vpn-server для заявки #' . $id . '. Ответ: ' . trim($stdout));
                                     } else {
                                         \Log::error('Ошибка отправки уведомления через SSH vpn-server для заявки #' . $id . '. Код: ' . $exitCode . '. Ошибка: ' . trim($stderr) . '. Вывод: ' . trim($stdout));
+
+                                        // Резервный маршрут (добавлен из-за аварии в NL ЦОД, 2026-07-01): если основной
+                                        // VPN-сервер недоступен — пробуем через запасной SSH-хост (vpn-server-us) и curl
+                                        // напрямую к Bot API (без бинарника — на резервном сервере его нет и не нужен).
+                                        // Токен/чат: явные (Монтаж панелей) — если пусто, берём бот по умолчанию
+                                        // (Демонтаж МЭШ / Осмотр МЭШ), который раньше брался бинарником из telegram.conf
+                                        // на самом NL-сервере — теперь продублирован в .env (services.telegram.default).
+                                        // Основной (NL) путь выше эту переменную не использует — его поведение не менялось.
+                                        $fallbackToken = ! empty($botToken) ? $botToken : config('services.telegram.default.token');
+                                        $fallbackChatId = ! empty($chatId) ? $chatId : config('services.telegram.default.chat_id');
+
+                                        if (! empty($fallbackToken) && ! empty($fallbackChatId)) {
+                                            $sshCmdUs = 'ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no vpn-server-us '
+                                                . escapeshellarg(
+                                                    'curl -s -m 15 -X POST '
+                                                    . escapeshellarg('https://api.telegram.org/bot' . $fallbackToken . '/sendMessage')
+                                                    . ' -d chat_id=' . escapeshellarg($fallbackChatId)
+                                                    . ' -d parse_mode=HTML'
+                                                    . ' --data-urlencode text@-'
+                                                );
+
+                                            $processUs = proc_open($sshCmdUs, $descriptorspec, $pipesUs);
+                                            if (is_resource($processUs)) {
+                                                fwrite($pipesUs[0], $notifyMessage);
+                                                fclose($pipesUs[0]);
+
+                                                $stdoutUs = stream_get_contents($pipesUs[1]);
+                                                $stderrUs = stream_get_contents($pipesUs[2]);
+                                                fclose($pipesUs[1]);
+                                                fclose($pipesUs[2]);
+
+                                                $exitCodeUs = proc_close($processUs);
+
+                                                if ($exitCodeUs === 0 && str_contains($stdoutUs, '"ok":true')) {
+                                                    \Log::info('Отправлено уведомление через РЕЗЕРВНЫЙ vpn-server-us для заявки #' . $id . '. Ответ: ' . trim($stdoutUs));
+                                                } else {
+                                                    \Log::error('Ошибка отправки через РЕЗЕРВНЫЙ vpn-server-us для заявки #' . $id . '. Код: ' . $exitCodeUs . '. Ошибка: ' . trim($stderrUs) . '. Вывод: ' . trim($stdoutUs));
+                                                }
+                                            } else {
+                                                \Log::error('Не удалось запустить резервный процесс отправки через vpn-server-us: ' . $sshCmdUs);
+                                            }
+                                        }
                                     }
                                 } else {
                                     \Log::error('Не удалось запустить удаленный процесс отправки уведомления через SSH: ' . $sshCmd);

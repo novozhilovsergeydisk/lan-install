@@ -45,6 +45,14 @@ return [
             'chat_id' => env('TELEGRAM_MOUNTING_PANELS_CHAT_ID'),
             'username' => env('TELEGRAM_MOUNTING_PANELS_BOT_USERNAME'),
         ],
+        // Бот по умолчанию для "Демонтаж МЭШ" / "Осмотр МЭШ" — раньше брался из utils/C/notify-bot/telegram.conf
+        // на самом VPN-сервере (не в .env). Явно продублирован в .env, чтобы резервный маршрут (curl,
+        // без бинарника) тоже мог его использовать при недоступности основного VPN.
+        'default' => [
+            'token' => env('TELEGRAM_DEFAULT_BOT_TOKEN'),
+            'chat_id' => env('TELEGRAM_DEFAULT_CHAT_ID'),
+            'username' => env('TELEGRAM_DEFAULT_BOT_USERNAME'),
+        ],
     ],
 
     'wms' => [
