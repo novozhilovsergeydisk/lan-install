@@ -7,39 +7,47 @@ use Illuminate\Support\Facades\Log;
 
 class GeocodingService
 {
-    private const API_URL = 'https://cleaner.dadata.ru/api/v1/clean/address';
+    private const API_URL = 'https://geocode-maps.yandex.ru/1.x/';
+
+    // Соответствие точности Yandex (precision) условному качеству DaData (qc_geo),
+    // чтобы сохранить прежний порог отсечения (принимаем 0-2, отклоняем 3+).
+    private const PRECISION_TO_QC_GEO = [
+        'exact' => 0,   // точные координаты дома
+        'number' => 0,  // номер дома найден
+        'near' => 1,    // ближайший дом
+        'range' => 1,   // диапазон домов
+        'street' => 2,  // только улица
+        'other' => 5,   // слишком неточно
+    ];
 
     private string $apiKey;
-    private string $secretKey;
 
     public function __construct()
     {
-        $this->apiKey = config('services.dadata.api_key', '');
-        $this->secretKey = config('services.dadata.secret_key', '');
+        $this->apiKey = config('services.yandex.geocoder_api_key', '');
     }
 
     /**
-     * Геокодирует адрес через DaData.
+     * Геокодирует адрес через Yandex Geocoder HTTP API.
      *
      * @param  string  $address  Полный адрес (например: "Москва, улица Хавская, дом 5")
      * @return array|null ['latitude' => float, 'longitude' => float, 'qc_geo' => int] или null
      */
     public function geocode(string $address): ?array
     {
-        if (empty($this->apiKey) || empty($this->secretKey)) {
-            Log::error('GeocodingService: API keys not configured');
+        if (empty($this->apiKey)) {
+            Log::error('GeocodingService: Yandex API key not configured');
             return null;
         }
 
         try {
-            $response = Http::timeout(10)
-                ->withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                    'Authorization' => 'Token ' . $this->apiKey,
-                    'X-Secret' => $this->secretKey,
-                ])
-                ->post(self::API_URL, [$address]);
+            $response = Http::timeout(10)->get(self::API_URL, [
+                'apikey' => $this->apiKey,
+                'geocode' => $address,
+                'format' => 'json',
+                'lang' => 'ru_RU',
+                'results' => 1,
+            ]);
 
             if (!$response->successful()) {
                 Log::warning('GeocodingService: API error', [
@@ -50,32 +58,38 @@ class GeocodingService
                 return null;
             }
 
-            $data = $response->json();
+            $members = $response->json('response.GeoObjectCollection.featureMember', []);
 
-            if (empty($data) || !isset($data[0])) {
+            if (empty($members)) {
                 return null;
             }
 
-            $result = $data[0];
+            $geoObject = $members[0]['GeoObject'] ?? null;
+            $pos = $geoObject['Point']['pos'] ?? null;
+            $precision = $geoObject['metaDataProperty']['GeocoderMetaData']['precision'] ?? null;
 
-            if (!isset($result['geo_lat'], $result['geo_lon'], $result['qc_geo'])) {
+            if (!$pos || !$precision) {
                 return null;
             }
 
-            // qc_geo: 0 — точные координаты дома, 1 — ближайший дом, 2 — улица.
-            // Принимаем 0, 1 и 2. Отклоняем 3 (нас.пункт), 4 (город), 5 (не определены).
-            if ((int) $result['qc_geo'] > 2) {
+            // Yandex отдаёт "долгота широта" (в таком порядке!) через пробел.
+            [$longitude, $latitude] = array_map('floatval', explode(' ', $pos));
+
+            $qcGeo = self::PRECISION_TO_QC_GEO[$precision] ?? 5;
+
+            // Принимаем exact/number/near/range/street (qc_geo 0-2). Отклоняем остальное.
+            if ($qcGeo > 2) {
                 Log::info('GeocodingService: low quality result, skipping', [
                     'address' => $address,
-                    'qc_geo' => $result['qc_geo'],
+                    'precision' => $precision,
                 ]);
                 return null;
             }
 
             return [
-                'latitude' => (float) $result['geo_lat'],
-                'longitude' => (float) $result['geo_lon'],
-                'qc_geo' => (int) $result['qc_geo'],
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'qc_geo' => $qcGeo,
             ];
         } catch (\Throwable $e) {
             Log::error('GeocodingService: exception', [

@@ -37,6 +37,9 @@ return [
 
     'yandex' => [
         'maps_key' => env('YANDEX_MAPS_API_KEY'),
+        // Отдельный серверный ключ HTTP Geocoder API (НЕ тот же, что maps_key для JS-карты
+        // в браузере) — оформляется отдельно в кабинете Яндекса, до 1000 запросов/сутки бесплатно.
+        'geocoder_api_key' => env('YANDEX_GEOCODER_API_KEY'),
     ],
 
     'telegram' => [

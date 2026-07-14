@@ -19,3 +19,11 @@ Schedule::command('wms:refresh-equipment')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/wms-equipment.log'));
 
+// Догеокодирование адресов без координат (например, добавленных вручную без указания
+// широты/долготы) — раз в час. --limit подстраховывает от долгого прогона, если
+// вдруг накопится большой залежавшийся хвост.
+Schedule::command('addresses:geocode-missing --limit=100')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/geocode-missing.log'));
+
