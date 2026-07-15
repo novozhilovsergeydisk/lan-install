@@ -2133,11 +2133,12 @@ class HomeController extends Controller
     {
         try {
             $comments = DB::select("
-                SELECT 
+                SELECT
                     c.id,
                     c.comment,
                     c.created_at,
                     rc.user_id,
+                    rc.is_closing,
                     COALESCE(u.name, 'Система') AS author_name,
                     COALESCE(e.fio, '') AS employee_full_name,
                     c.created_at AS formatted_date,
@@ -2493,11 +2494,12 @@ class HomeController extends Controller
                     'comment' => $commentText,
                     'created_at' => now(),
                 ]);
-                // Связываем комментарий с заявкой
+                // Связываем комментарий с заявкой (is_closing = true — комментарий закрытия)
                 DB::table('request_comments')->insert([
                     'request_id' => $id,
                     'comment_id' => $commentId,
                     'user_id' => $request->user()->id,
+                    'is_closing' => true,
                     'created_at' => now(),
                 ]);
 

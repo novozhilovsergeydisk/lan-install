@@ -80,12 +80,20 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                     ORDER BY com.created_at ASC
                     LIMIT 1
                 ) as first_comment,
-                ( 
-                    SELECT com.comment 
-                    FROM request_comments rc 
-                    JOIN comments com ON rc.comment_id = com.id 
-                    WHERE rc.request_id = r.id 
-                    ORDER BY com.created_at DESC 
+                (
+                    SELECT com.comment
+                    FROM request_comments rc
+                    JOIN comments com ON rc.comment_id = com.id
+                    WHERE rc.request_id = r.id
+                      AND rc.is_closing = true
+                    LIMIT 1
+                ) as closing_comment,
+                (
+                    SELECT com.comment
+                    FROM request_comments rc
+                    JOIN comments com ON rc.comment_id = com.id
+                    WHERE rc.request_id = r.id
+                    ORDER BY rc.is_closing DESC, com.created_at DESC
                     LIMIT 1
                 ) as last_comment,
                 ( 
@@ -232,13 +240,17 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                          "\n" . $row->number;
 
         $firstComment = strip_tags($row->first_comment);
+        $closingComment = strip_tags($row->closing_comment ?? '');
         $lastComment = strip_tags($row->last_comment);
-        
+
+        // Приоритет: комментарий закрытия > последний по времени
+        $priorityComment = !empty($closingComment) ? $closingComment : $lastComment;
+
         $commentOutput = $firstComment;
-        if (!empty($firstComment) && !empty($lastComment) && $firstComment !== $lastComment) {
-            $commentOutput .= "\n\nПоследний комментарий:\n" . $lastComment;
-        } elseif (empty($firstComment) && !empty($lastComment)) {
-            $commentOutput = "Последний комментарий:\n" . $lastComment;
+        if (!empty($firstComment) && !empty($priorityComment) && $firstComment !== $priorityComment) {
+            $commentOutput .= "\n\nПоследний комментарий:\n" . $priorityComment;
+        } elseif (empty($firstComment) && !empty($priorityComment)) {
+            $commentOutput = "Последний комментарий:\n" . $priorityComment;
         }
 
         // Извлекаем списанные материалы из комментария

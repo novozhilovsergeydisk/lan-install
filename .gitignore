@@ -50,3 +50,5 @@ COMMENTS_PHOTOS_MAP.md
 FORMS_MAP.md
 storage/duplicates_report.*
 storage/logs/delete-unused-duplicates-*.log
+.mimocode/
+.aider*

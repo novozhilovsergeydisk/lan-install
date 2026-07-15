@@ -2583,6 +2583,10 @@
                             return;
                         }
 
+                        // Разделяем комментарии: закрывающий и остальные
+                        const closingComment = comments.find(c => c.is_closing);
+                        const otherComments = comments.filter(c => !c.is_closing);
+
                         function stringToColor(str) {
                             let hash = 0;
                             for (let i = 0; i < str.length; i++) {
@@ -2609,11 +2613,39 @@
                                 </div>
                             `;
                         }
-                        
+
+                        // Блок закрывающего комментария (сверху, выделенный)
+                        if (closingComment) {
+                            const date = new Date(closingComment.created_at);
+                            const formattedDate = date.toLocaleString('ru-RU', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            html += `
+                                <div class="mb-3">
+                                    <div class="list-group-item bg-success bg-opacity-10 border-success">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="me-3">
+                                                <div class="mb-1">
+                                                    <span class="badge bg-success me-1"><i class="bi bi-check-circle-fill"></i> Комментарий закрытия</span>
+                                                </div>
+                                                <p class="mb-1">${closingComment.comment}</p>
+                                                <small class="text-muted">${formattedDate}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
                         html += '<div id="commentUpdateContainer" class="list-group list-group-flush">';
                         console.log('Количество комментариев:', comments.length);
+                        console.log('Закрывающий комментарий:', closingComment ? 'есть' : 'нет');
 
-                        comments.forEach((comment, index) => {
+                        otherComments.forEach((comment, index) => {
                             const date = new Date(comment.created_at);
                             const formattedDate = date.toLocaleString('ru-RU', {
                                 day: '2-digit',
@@ -2708,7 +2740,7 @@
                                                     }
 
                                                     let editButton = '';
-                                                    if (index === comments.length - 1) {
+                                                    if (index === otherComments.length - 1) {
                                                         // For the last comment, keep the special button
                                                         editButton = `<button class="btn btn-sm btn-outline-primary edit-comment-btn">
                                                                     Редактировать

@@ -53,8 +53,37 @@ async function loadComments(requestId) {
             `;
         }
 
+        // Разделяем комментарии: закрывающий и остальные
+        const closingComment = comments.find(c => c.is_closing);
+        const otherComments = comments.filter(c => !c.is_closing);
+
+        // Блок закрывающего комментария (сверху, выделенный)
+        if (closingComment) {
+            const date = new Date(closingComment.created_at);
+            const formattedDate = date.toLocaleString('ru-RU', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            html += `
+                <div class="mb-3">
+                    <div class="list-group-item bg-success bg-opacity-10 border-success">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="me-3">
+                                <div class="mb-1">
+                                    <span class="badge bg-success me-1"><i class="bi bi-check-circle-fill"></i> Комментарий закрытия</span>
+                                </div>
+                                <p class="mb-1">${closingComment.comment}</p>
+                                <small class="text-muted">${formattedDate}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Обычная лента комментариев (под закрывающим)
         html += '<div class="list-group list-group-flush">';
-        comments.forEach(comment => {
+        otherComments.forEach(comment => {
             const date = new Date(comment.created_at);
             const formattedDate = date.toLocaleString('ru-RU', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
