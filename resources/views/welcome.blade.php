@@ -519,20 +519,21 @@
                                                 @endphp
                                                 <div class="comment-preview small text-dark" data-bs-toggle="tooltip" @if($request->request_type_color) style="border: 5px solid {{ $request->request_type_color }}; border-top: 0px;" @endif>
                                                     <p class="comment-preview-title">Печатный комментарий:</p>
-                                                    <div data-comment-request-id="{{ $request->id }}" class="comment-preview-text">{!! $commentText !!}</div>
+                                                    <div data-comment-request-id="{{ $request->id }}" data-comment-id="{{ $firstComment->id }}" class="comment-preview-text">{!! $commentText !!}</div>
                                                 </div>
                                                 <div class="mb-0">  
                                                     @php
                                                         $countComments = count($comments_by_request[$request->id]);
-                                                        $lastComment = $comments_by_request[$request->id][$countComments - 1]->comment;
-                                                        $lastCommentDate = \Carbon\Carbon::parse($comments_by_request[$request->id][$countComments - 1]->created_at)->format('d.m.Y H:i');
+                                                        $lastCommentObj = $comments_by_request[$request->id][$countComments - 1];
+                                                        $lastComment = $lastCommentObj->comment;
+                                                        $lastCommentDate = \Carbon\Carbon::parse($lastCommentObj->created_at)->format('d.m.Y H:i');
                                                     @endphp
 
                                                     @if($countComments > 1)
                                                         @php
                                                             $preview = \App\Helpers\StringHelper::makeEscapedPreview($lastComment, 4);
                                                         @endphp
-                                                        <p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[{{ $lastCommentDate }}] {!! $preview['html'] !!}{{ $preview['ellipsis'] }}</p>
+                                                        <p data-comment-id="{{ $lastCommentObj->id }}" data-request-id="{{ $request->id }}" class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">[{{ $lastCommentDate }}] {!! $preview['html'] !!}{{ $preview['ellipsis'] }}</p>
                                                     @endif
                                                 </div>
                                             @endif
@@ -2912,6 +2913,53 @@
     //         bsAlert.close();
     //     }, 5000);
     // }
+
+    // Inline edit: клик по блоку с комментарием в таблице → WYSIWYG
+    document.addEventListener('click', async function(e) {
+        const el = e.target.closest('.comment-preview-text, .last-comment');
+        if (!el) return;
+        if (e.target.closest('button, a, input, textarea, .wysiwyg-editor, .wysiwyg-toolbar')) return;
+
+        const commentId = el.getAttribute('data-comment-id');
+        let requestId = el.getAttribute('data-request-id');
+        if (!requestId) {
+            requestId = el.getAttribute('data-comment-request-id');
+        }
+
+        if (!requestId) return;
+
+        const contentHtml = el.innerHTML.trim();
+        if (!contentHtml) return;
+
+        // Если commentId нет — пробуем получить через API
+        if (!commentId) {
+            try {
+                const resp = await fetch(`/api/requests/${requestId}/comments`);
+                const data = await resp.json();
+                const first = (data.comments || []).find(c => c.is_closing !== true) || (data.comments || [])[0];
+                commentId = first ? first.id : null;
+            } catch (err) {
+                console.error('[WYSIWYG] failed to fetch commentId:', err);
+            }
+            if (!commentId) return;
+        }
+
+        const fakeBtn = document.createElement('button');
+        fakeBtn.style.display = 'none';
+        document.body.appendChild(fakeBtn);
+
+        if (typeof window.handleCommentEdit === 'function') {
+            window.handleCommentEdit(el, contentHtml, commentId, 0, fakeBtn, requestId);
+        } else {
+            try {
+                handleCommentEdit(el, contentHtml, commentId, 0, fakeBtn, requestId);
+            } catch (err) {
+                console.error('[WYSIWYG] handleCommentEdit error:', err);
+            }
+        }
+
+        fakeBtn.remove();
+    });
 </script>
 <!-- Bootstrap Datepicker JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>

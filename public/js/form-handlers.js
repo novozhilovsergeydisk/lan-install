@@ -2752,7 +2752,7 @@ function addRequestToTable(result) {
             ${extractedComment ? `
                 <div class="comment-preview small text-dark" data-bs-toggle="tooltip" ${requestTypeColor ? `style="border: 5px solid ${requestTypeColor}; border-top: 0px;"` : ''}>
                     <p class="comment-preview-title">Печатный комментарий:</p>
-                    <div data-comment-request-id="${requestData.id}" class="comment-preview-text">${extractedComment}</div>
+                    <div data-comment-request-id="${requestData.id}" data-comment-id="${commentData.id || ''}" class="comment-preview-text">${extractedComment}</div>
                 </div>
             ` : ''}
             <div class="mt-1 d-flex flex-wrap gap-1">
@@ -3567,9 +3567,9 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
                 // console.log('newText to set:', newText);
                 
                 // Обновляем содержимое существующего элемента комментария
-                const { element: savedComment, parent } = window.currentEditedComment || {};
+                const { element: savedComment } = window.currentEditedComment || {};
                 
-                if (savedComment && parent) {
+                if (savedComment && editContainer && editContainer.parentNode) {
                     savedComment.innerHTML = newText;
                     savedComment.style.display = 'block';
                     savedComment.style.wordBreak = 'normal';
@@ -3577,9 +3577,7 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
                     savedComment.style.whiteSpace = 'pre-wrap';
                     
                     // Заменяем редактор обратно на обновленный комментарий
-                    if (editContainer && editContainer.parentNode) {
-                        parent.replaceChild(savedComment, editContainer);
-                    }
+                    editContainer.parentNode.replaceChild(savedComment, editContainer);
                     
                     // Очищаем сохраненную ссылку
                     delete window.currentEditedComment;
@@ -3622,8 +3620,12 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
         commentElement.style.display = '';
         editButton.style.display = 'inline-block';
 
-        // Удаляем контейнер редактирования
-        editContainer.remove();
+        // Заменяем редактор обратно на оригинальный комментарий
+        if (editContainer && editContainer.parentNode) {
+            editContainer.parentNode.replaceChild(commentElement, editContainer);
+        } else {
+            editContainer.remove();
+        }
     });
 
     // Фокус на редактор

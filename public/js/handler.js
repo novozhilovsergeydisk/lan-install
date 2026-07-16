@@ -147,7 +147,7 @@ export async function loadPlanningRequests() {
                       ${commentsContent.length > 0 ? `
                           <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                               <p class="comment-preview-title">Печатный комментарий:</p>
-                              <div data-comment-request-id="${request.id}" class="comment-preview-text">${commentsContent}</div>
+                               <div data-comment-request-id="${request.id}" data-comment-id="${comments[0]?.id || ''}" class="comment-preview-text">${commentsContent}</div>
                           </div>
                           ${commentsCount >= 1 ? `
                               <div class="mb-0">
@@ -1143,22 +1143,22 @@ export async function applyFilters() {
                             
                             // Подготовим HTML блока комментариев без IIFE
                             let commentsSectionHtml = '--';
-                            if (request.comments) {
-                                let firstCommentText = '';
-                                
-                                if (Array.isArray(request.comments) && request.comments.length > 0) {
-                                    // console.log(typeof request.comments);
-                                    const firstComment = request.comments[request.comments.length - 1];
-                                    firstCommentText = firstComment.text || firstComment.comment || firstComment.content || JSON.stringify(firstComment);
-                                }
+                             if (request.comments) {
+                                 let firstCommentText = '';
+                                 let firstCommentObj = null;
 
-                                if (firstCommentText) {
-                                    const displayCommentText = linkifyPreservingAnchors(firstCommentText);
-                                    const mainBlock = `
-                          <div class="comment-preview small text-dark" data-bs-toggle="tooltip" ${request.request_type_color ? `style="border: 5px solid ${request.request_type_color}; border-top: 0px;"` : ''}>
-                                            <p class="comment-preview-title">Печатный комментарий:</p>
-                                            <div data-comment-request-id="${request.id}" class="comment-preview-text">${displayCommentText}</div>
-                                        </div>`;
+                                 if (Array.isArray(request.comments) && request.comments.length > 0) {
+                                     firstCommentObj = request.comments[request.comments.length - 1];
+                                     firstCommentText = firstCommentObj.text || firstCommentObj.comment || firstCommentObj.content || JSON.stringify(firstCommentObj);
+                                 }
+
+                                 if (firstCommentText) {
+                                     const displayCommentText = linkifyPreservingAnchors(firstCommentText);
+                                     const mainBlock = `
+                           <div class="comment-preview small text-dark" data-bs-toggle="tooltip" ${request.request_type_color ? `style="border: 5px solid ${request.request_type_color}; border-top: 0px;"` : ''}>
+                                             <p class="comment-preview-title">Печатный комментарий:</p>
+                                             <div data-comment-request-id="${request.id}" data-comment-id="${firstCommentObj?.id || ''}" class="comment-preview-text">${displayCommentText}</div>
+                                         </div>`;
 
                                     let lastCommentHtml = '';
                                     if (Array.isArray(request.comments) && request.comments.length > 1) {

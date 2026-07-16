@@ -963,9 +963,17 @@ class HomeController extends Controller
                 c.id as comment_id,
                 c.comment,
                 c.created_at,
-                'Система' as author_name
+                COALESCE(rc.user_id, 0) as user_id,
+                CASE
+                    WHEN e.fio IS NOT NULL THEN e.fio
+                    WHEN u.name IS NOT NULL THEN u.name
+                    WHEN u.email IS NOT NULL THEN u.email
+                    ELSE 'Система'
+                END as author_name
             FROM request_comments rc
             JOIN comments c ON rc.comment_id = c.id
+            LEFT JOIN users u ON rc.user_id = u.id
+            LEFT JOIN employees e ON u.id = e.user_id
             ORDER BY rc.request_id, c.created_at
         ");
 
@@ -978,6 +986,7 @@ class HomeController extends Controller
                             'id' => $comment->comment_id,
                             'comment' => $comment->comment,
                             'created_at' => $comment->created_at,
+                            'user_id' => $comment->user_id,
                             'author_name' => $comment->author_name,
                         ];
                     })->toArray();
