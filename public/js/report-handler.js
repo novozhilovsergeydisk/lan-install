@@ -1028,10 +1028,17 @@ export function renderReportTable(data) {
         // console.log('statusName', statusName);
         // console.log('========================');
 
+        const planningBadgeHtml = statusName === 'планирование'
+            ? `<div class="p-1" style="background-color: #fff3cd; color: #664d03; font-size: 0.75rem; border-left: 1px solid #dee2e6; border-right: 1px solid #dee2e6;">
+                    <i class="bi bi-hourglass-split"></i> В планировании${request.subtype_name ? ': ' + request.subtype_name : ''}
+                </div>`
+            : '';
+
         const headerHtml = `
             <div class="p-1 rounded-top" ${typeColor ? `style="background-color: ${typeColor}; color: ${contrastColor}; font-size: 0.8rem;"` : 'style="background-color: #f8f9fa; color: #000; font-size: 0.8rem; border: 1px solid #dee2e6; border-bottom: 0;"'}>
                 ${executionDate} | ${request.number || ''} ${typeName ? `<span class="ms-1">[${typeName}]</span>` : ''}
             </div>
+            ${planningBadgeHtml}
         `;
         
         if (comments_by_request[request.id] && comments_by_request[request.id].length > 0) {

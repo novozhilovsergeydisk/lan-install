@@ -57,6 +57,8 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
             ->selectRaw("r.id,
                 r.number,
                 r.execution_date,
+                rs.name as status_name,
+                rst.name as subtype_name,
                 ( 
                     SELECT STRING_AGG( 
                         (CASE WHEN ct2.name IS NOT NULL AND ct2.name != 'Москва' THEN ct2.name || ', ' ELSE '' END) || 
@@ -153,7 +155,9 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
             ")
             ->leftJoin('clients as c', 'r.client_id', '=', 'c.id')
             ->leftJoin('brigades as b', 'r.brigade_id', '=', 'b.id')
-            ->leftJoin('employees as e_leader', 'b.leader_id', '=', 'e_leader.id');
+            ->leftJoin('employees as e_leader', 'b.leader_id', '=', 'e_leader.id')
+            ->leftJoin('request_statuses as rs', 'r.status_id', '=', 'rs.id')
+            ->leftJoin('request_subtypes as rst', 'r.subtype_id', '=', 'rst.id');
 
         // Фильтры
         if (!$allPeriod && $startDate && $endDate) {
@@ -233,8 +237,11 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
                 : '';
         }
 
-        $dateAndNumber = ($row->execution_date ? \Carbon\Carbon::parse($row->execution_date)->format('d.m.Y') : 'Не указана') . 
+        $dateAndNumber = ($row->execution_date ? \Carbon\Carbon::parse($row->execution_date)->format('d.m.Y') : 'Не указана') .
                          "\n" . $row->number;
+        if ($row->status_name === 'планирование') {
+            $dateAndNumber .= "\n⏳ В планировании" . (!empty($row->subtype_name) ? ': ' . $row->subtype_name : '');
+        }
 
         $firstComment = strip_tags($row->first_comment);
         $closingComment = strip_tags($row->closing_comment ?? '');
