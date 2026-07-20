@@ -114,10 +114,6 @@ class ReportController extends Controller
                 ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
                 ->leftJoin('brigade_members AS bm', 'b.id', '=', 'bm.brigade_id')
                 ->leftJoin('employees AS em', 'bm.employee_id', '=', 'em.id')
-                ->where(function ($query) {
-                    $query->where('b.is_deleted', false)
-                        ->orWhereNull('b.id');
-                })
                 ->where('addr.id', $addressId)
                 ->where(function ($query) use ($employeeId) {
                     $query->whereExists(function ($q) use ($employeeId) {
@@ -291,10 +287,6 @@ class ReportController extends Controller
                 ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
                 ->leftJoin('brigade_members AS bm', 'b.id', '=', 'bm.brigade_id')
                 ->leftJoin('employees AS em', 'bm.employee_id', '=', 'em.id')
-                ->where(function ($query) {
-                    $query->where('b.is_deleted', false)
-                        ->orWhereNull('b.id');
-                })
                 ->where('addr.id', $addressId)
                 ->whereBetween('r.execution_date', [$startDate, $endDate])
                 ->where(function ($query) use ($employeeId) {
@@ -361,8 +353,7 @@ class ReportController extends Controller
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
             LEFT JOIN cities ct ON addr.city_id = ct.id
-            WHERE (b.is_deleted = false OR b.id IS NULL)
-            AND addr.id = ?';
+            WHERE addr.id = ?';
 
             // Calculate total
             $total = DB::select('SELECT COUNT(*) as total '.$sqlBase, [$addressId])[0]->total;
@@ -596,8 +587,7 @@ class ReportController extends Controller
             LEFT JOIN request_addresses ra ON r.id = ra.request_id
             LEFT JOIN addresses addr ON ra.address_id = addr.id
             LEFT JOIN cities ct ON addr.city_id = ct.id
-            WHERE r.execution_date::date BETWEEN ? AND ? 
-            AND (b.is_deleted = false OR b.id IS NULL)
+            WHERE r.execution_date::date BETWEEN ? AND ?
             AND addr.id = ?
             ORDER BY r.execution_date DESC, r.id DESC
         ';
@@ -672,10 +662,6 @@ class ReportController extends Controller
                 ->leftJoin('request_addresses AS ra', 'r.id', '=', 'ra.request_id')
                 ->leftJoin('addresses AS addr', 'ra.address_id', '=', 'addr.id')
                 ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
-                ->where(function ($query) {
-                    $query->where('b.is_deleted', false)
-                        ->orWhereNull('b.id');
-                })
                 ->where('addr.id', $addressId)
                 ->orderBy('r.execution_date', 'DESC')
                 ->orderBy('r.id', 'DESC')
@@ -697,7 +683,6 @@ class ReportController extends Controller
                     LEFT JOIN employees e ON bm.employee_id = e.id
                     LEFT JOIN employees el ON b.leader_id = el.id
                     WHERE bm.brigade_id IN ('.$brigadeIds->implode(',').')
-                    AND (b.is_deleted = false OR b.id IS NULL)
                 ');
             }
 
@@ -815,10 +800,6 @@ class ReportController extends Controller
                 ->leftJoin('request_addresses AS ra', 'r.id', '=', 'ra.request_id')
                 ->leftJoin('addresses AS addr', 'ra.address_id', '=', 'addr.id')
                 ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
-                ->where(function ($query) {
-                    $query->where('b.is_deleted', false)
-                        ->orWhereNull('b.id');
-                })
                 ->where('addr.id', $addressId)
                 ->orderBy('r.execution_date', 'DESC')
                 ->orderBy('r.id', 'DESC')
@@ -832,7 +813,6 @@ class ReportController extends Controller
                     ->join('brigades as b', 'bm.brigade_id', '=', 'b.id')
                     ->leftJoin('employees as e', 'bm.employee_id', '=', 'e.id')
                     ->whereIn('bm.brigade_id', $brigadeIds)
-                    ->where('b.is_deleted', false)
                     ->select(
                         'bm.brigade_id',
                         'e.fio as employee_name',
@@ -1046,10 +1026,6 @@ class ReportController extends Controller
                 ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
                 ->leftJoin('brigade_members AS bm', 'b.id', '=', 'bm.brigade_id')
                 ->leftJoin('employees AS em', 'bm.employee_id', '=', 'em.id')
-                ->where(function ($query) {
-                    $query->where('b.is_deleted', false)
-                        ->orWhereNull('b.id');
-                })
                 ->where(function ($query) use ($employeeId) {
                     $query->whereExists(function ($q) use ($employeeId) {
                         $q->select(DB::raw(1))
@@ -1516,8 +1492,7 @@ class ReportController extends Controller
                 LEFT JOIN request_addresses ra ON r.id = ra.request_id
                 LEFT JOIN addresses addr ON ra.address_id = addr.id
                 LEFT JOIN cities ct ON addr.city_id = ct.id
-                WHERE r.execution_date::date BETWEEN ? AND ?
-                AND (b.is_deleted = false OR b.id IS NULL)';
+                WHERE r.execution_date::date BETWEEN ? AND ?';
 
             // Добавляем фильтр по организации
             if ($request->has('organization') && ! empty($request->organization)) {
@@ -1683,10 +1658,6 @@ class ReportController extends Controller
                 ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
                 ->leftJoin('brigade_members AS bm', 'b.id', '=', 'bm.brigade_id')
                 ->leftJoin('employees AS em', 'bm.employee_id', '=', 'em.id')
-                ->where(function ($query) {
-                    $query->where('b.is_deleted', false)
-                        ->orWhereNull('b.id');
-                })
                 ->where(function ($query) use ($employeeId) {
                     $query->whereExists(function ($q) use ($employeeId) {
                         $q->select(DB::raw(1))

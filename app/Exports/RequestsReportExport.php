@@ -153,10 +153,7 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
             ")
             ->leftJoin('clients as c', 'r.client_id', '=', 'c.id')
             ->leftJoin('brigades as b', 'r.brigade_id', '=', 'b.id')
-            ->leftJoin('employees as e_leader', 'b.leader_id', '=', 'e_leader.id')
-            ->where(function($q) {
-                $q->where('b.is_deleted', false)->orWhereNull('b.id');
-            });
+            ->leftJoin('employees as e_leader', 'b.leader_id', '=', 'e_leader.id');
 
         // Фильтры
         if (!$allPeriod && $startDate && $endDate) {
