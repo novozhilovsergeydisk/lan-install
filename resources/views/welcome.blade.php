@@ -2914,8 +2914,8 @@
     //     }, 5000);
     // }
 
-    // Inline edit: клик по блоку с комментарием в таблице → WYSIWYG
-    document.addEventListener('click', async function(e) {
+    // Inline edit: двойной клик по блоку с комментарием в таблице → WYSIWYG
+    document.addEventListener('dblclick', async function(e) {
         const el = e.target.closest('.comment-preview-text, .last-comment');
         if (!el) return;
         if (e.target.closest('button, a, input, textarea, .wysiwyg-editor, .wysiwyg-toolbar')) return;
