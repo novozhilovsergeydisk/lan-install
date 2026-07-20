@@ -2625,6 +2625,8 @@
                                 hour: '2-digit',
                                 minute: '2-digit'
                             });
+                            const closerName = closingComment.employee_full_name || closingComment.author_name;
+                            const closerColor = closerName === 'Система' ? '#6c757d' : stringToColor(closerName);
                             html += `
                                 <div class="mb-3">
                                     <div class="list-group-item bg-success bg-opacity-10 border-success">
@@ -2633,6 +2635,7 @@
                                                 <div class="mb-1">
                                                     <span class="badge bg-success me-1"><i class="bi bi-check-circle-fill"></i> Комментарий закрытия</span>
                                                 </div>
+                                                <div class="fw-semibold mb-1" style="color:${closerColor}">Закрыл: ${closerName}</div>
                                                 <p class="mb-1">${closingComment.comment}</p>
                                                 <small class="text-muted">${formattedDate}</small>
                                             </div>
