@@ -924,8 +924,9 @@ class HomeController extends Controller
         LEFT JOIN brigade_members bm ON bm.brigade_id = b.id
         LEFT JOIN employees e ON bm.employee_id = e.id
         LEFT JOIN employees el ON b.leader_id = el.id
-        WHERE b.is_deleted = false
-        AND el.is_deleted = false
+        /* НЕ фильтруем по b.is_deleted/el.is_deleted: скрытие бригады не должно
+           прятать её имя/бригадира из уже назначенных заявок (см. handler.js:210,
+           падало в "Не назначена" при скрытой бригаде) */
         ORDER BY b.id, employee_name';
 
             $brigadeMembersWithDetails = DB::select($sql);
@@ -1917,9 +1918,8 @@ class HomeController extends Controller
                     LEFT JOIN employees e ON bm.employee_id = e.id
                     LEFT JOIN employees el ON b.leader_id = el.id
                     WHERE b.id IN (".implode(',', $brigadeIds).')
-                    AND b.is_deleted = false
-                    AND (el.id IS NULL OR el.is_deleted = false)
-                    AND (e.id IS NULL OR e.is_deleted = false)
+                    /* НЕ фильтруем по is_deleted: скрытие бригады не должно прятать
+                       имя/бригадира из уже назначенных заявок (падало в "Не назначена") */
                     ORDER BY b.id, member_name
                 ';
 
