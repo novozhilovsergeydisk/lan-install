@@ -3392,6 +3392,7 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
     // Создаем контейнер для редактора
     const editorContainer = document.createElement('div');
     editorContainer.className = 'mb-3';
+    editorContainer.style.position = 'relative';
     
     // Создаем тулбар редактора
     const toolbar = document.createElement('div');
@@ -3404,14 +3405,15 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
         { cmd: 'bold', title: 'Жирный', content: '<strong>B</strong>' },
         { cmd: 'italic', title: 'Курсив', content: '<em>I</em>' },
         { cmd: 'createLink', title: 'Вставить ссылку', content: 'link' },
-        { cmd: 'unlink', title: 'Убрать ссылку', content: 'unlink' }
+        { cmd: 'unlink', title: 'Убрать ссылку', content: 'unlink' },
+        { cmd: 'foreColor', title: 'Цвет текста', content: '<span class="color-btn-icon"><span class="color-btn-letter">A</span><span class="color-indicator"></span></span>' }
     ];
     
     // Добавляем кнопки в тулбар
     buttons.forEach(btn => {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'btn btn-sm btn-outline-secondary';
+        button.className = 'btn btn-sm btn-outline-secondary' + (btn.cmd === 'foreColor' ? ' color-btn' : '');
         button.setAttribute('data-cmd', btn.cmd);
         button.setAttribute('title', btn.title);
         button.innerHTML = btn.content;
@@ -3471,21 +3473,36 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
     editorContainer.appendChild(editor);
     editorContainer.appendChild(hiddenInput);
     
+    // Создаем палитру цветов
+    var colorPalette = document.createElement('div');
+    colorPalette.className = 'color-palette';
+    colorPalette.id = 'inlineColorPalette';
+    colorPalette.style.position = 'absolute';
+    editorContainer.appendChild(colorPalette);
+
     editContainer.appendChild(editorContainer);
     editContainer.appendChild(buttonContainer);
 
     // Сохраняем ссылку на родительский элемент и сам элемент комментария
     const parentElement = commentElement.parentNode;
-    
+
     // Сохраняем ссылку на элемент комментария, чтобы вернуть его позже
     window.currentEditedComment = {
         element: commentElement,
         parent: parentElement
     };
-    
+
     // Заменяем элемент комментария на контейнер редактирования
     parentElement.replaceChild(editContainer, commentElement);
-    
+
+    // initPalette ищет элемент через document.getElementById — работает только
+    // после вставки в document, поэтому вызываем ПОСЛЕ replaceChild выше
+    // (до этого момента document.getElementById('inlineColorPalette') не находит
+    // ещё не прикреплённый узел, и палитра остаётся пустой без свотчей).
+    if (window.WYSIWYG_ColorPalette) {
+        window.WYSIWYG_ColorPalette.initPalette('inlineColorPalette', editor);
+    }
+
     // Показываем родительский элемент, если он был скрыт
     parentElement.style.display = 'block';
 
@@ -3733,6 +3750,13 @@ function initEditorToolbar(toolbar, editor) {
             } else {
                 document.execCommand('unlink', false, null);
             }
+        }
+        else if (cmd === 'foreColor') {
+            e.stopPropagation();
+            if (window.WYSIWYG_ColorPalette) {
+                window.WYSIWYG_ColorPalette.toggle('inlineColorPalette', button);
+            }
+            return;
         }
         
         // Восстанавливаем фокус на редактор

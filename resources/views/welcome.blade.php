@@ -3071,9 +3071,15 @@
 									<button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="italic" title="Курсив"><em>I</em></button>
 									<button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="createLink" title="Вставить ссылку">link</button>
 									<button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="unlink_" title="Убрать ссылку">unlink</button>
+									<button type="button" class="btn btn-sm btn-outline-secondary color-btn" id="additionalColorBtn" title="Цвет текста">
+										<span class="color-btn-icon"><span class="color-btn-letter">A</span><span class="color-indicator"></span></span>
+									</button>
 									<button type="button" class="btn btn-sm btn-outline-secondary" id="additionalToggleCode" title="HTML">HTML</button>
 									<button type="button" class="btn btn-sm btn-outline-secondary" id="additionalShowHelp" title="Справка"> <i class="bi bi-question-circle"></i> </button>
 								</div>
+
+								<div class="color-palette" id="additionalColorPalette"></div>
+
 								<!-- Визуальный редактор -->
 								<div class="wysiwyg-editor border rounded p-2" contenteditable="true" id="additionalCommentEditor"></div>
 								<!-- Редактор HTML-кода -->
@@ -3429,11 +3435,16 @@
                                     <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="italic" title="Курсив"><em>I</em></button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="createLink" title="Вставить ссылку">link</button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="unlink" title="Убрать ссылку">unlink</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary color-btn" id="color-btn" title="Цвет текста">
+                                        <span class="color-btn-icon"><span class="color-btn-letter">A</span><span class="color-indicator"></span></span>
+                                    </button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="toggle-code" title="HTML">HTML</button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="show-help" title="Справка">
                                         <i class="bi bi-question-circle"></i>
                                     </button>
                                 </div>
+
+                                <div class="color-palette" id="color-palette"></div>
 
                                 <!-- Визуальный редактор -->
                                 <div class="wysiwyg-editor border rounded p-2" contenteditable="true" id="comment_editor"></div>
@@ -3594,11 +3605,16 @@
                                         <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="italic" title="Курсив"><em>I</em></button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="createLink" title="Вставить ссылку">link</button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="unlink" title="Убрать ссылку">unlink</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary color-btn" id="planningColorBtn" title="Цвет текста">
+                                            <span class="color-btn-icon"><span class="color-btn-letter">A</span><span class="color-indicator"></span></span>
+                                        </button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="planningToggleCode" title="HTML">HTML</button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="planningShowHelp" title="Справка">
                                             <i class="bi bi-question-circle"></i>
                                         </button>
                                     </div>
+
+                                    <div class="color-palette" id="planningColorPalette"></div>
 
                                     <!-- Визуальный редактор -->
                                     <div class="wysiwyg-editor border rounded p-2" contenteditable="true" id="planningCommentEditor"></div>

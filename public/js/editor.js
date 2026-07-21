@@ -149,6 +149,8 @@ function initWysiwygEditor() {
                 if (at.name !== 'href' && at.name !== 'target' && at.name !== 'rel') {
                   ch.removeAttribute(at.name);
                 }
+              } else if (ch.tagName.toUpperCase() === 'SPAN' && at.name === 'style') {
+                // keep style on SPAN (used for text color)
               } else {
                 ch.removeAttribute(at.name);
               }
@@ -576,6 +578,19 @@ function initWysiwygEditor() {
   // Инициализация — очистка потенциально опасного HTML в textarea при старте
   textarea.value = sanitizeHTML(textarea.value || '');
   
+  // Инициализация палитры цветов
+  WYSIWYG_ColorPalette.initPalette('color-palette', editor);
+  var colorBtn = document.getElementById('color-btn');
+  if (colorBtn) {
+    colorBtn.addEventListener('mousedown', function(e) {
+      e.preventDefault(); // не даём потерять выделение в редакторе
+    });
+    colorBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      WYSIWYG_ColorPalette.toggle('color-palette', colorBtn);
+    });
+  }
+  
   // Возвращаем методы для управления редактором
   return {
     updateToolbarState: updateToolbarState,
@@ -607,11 +622,16 @@ function resetWysiwygEditor(my_wysiwyg) {
         <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="italic" title="Курсив"><em>I</em></button>
         <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="createLink" title="Вставить ссылку">link</button>
         <button type="button" class="btn btn-sm btn-outline-secondary" data-cmd="unlink" title="Убрать ссылку">unlink</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary color-btn" id="color-btn" title="Цвет текста">
+          <span class="color-btn-icon"><span class="color-btn-letter">A</span><span class="color-indicator"></span></span>
+        </button>
         <button type="button" class="btn btn-sm btn-outline-secondary" id="toggle-code" title="HTML">HTML</button>
         <button type="button" class="btn btn-sm btn-outline-secondary" id="show-help" title="Справка">
           <i class="bi bi-question-circle"></i>
         </button>
       </div>
+
+      <div class="color-palette" id="color-palette"></div>
 
       <!-- Визуальный редактор -->
       <div class="wysiwyg-editor border rounded p-2" contenteditable="true" id="comment_editor"></div>
@@ -816,6 +836,8 @@ function initAdditionalWysiwygEditor() {
                 if (at.name !== 'href' && at.name !== 'target' && at.name !== 'rel') {
                   ch.removeAttribute(at.name);
                 }
+              } else if (ch.tagName.toUpperCase() === 'SPAN' && at.name === 'style') {
+                // keep style on SPAN (used for text color)
               } else {
                 ch.removeAttribute(at.name);
               }
@@ -1221,6 +1243,19 @@ function initAdditionalWysiwygEditor() {
   // Инициализация — очистка потенциально опасного HTML в textarea при старте
   textarea.value = sanitizeHTML(textarea.value || '');
 
+  // Инициализация палитры цветов
+  WYSIWYG_ColorPalette.initPalette('additionalColorPalette', editor);
+  var colorBtn = document.getElementById('additionalColorBtn');
+  if (colorBtn) {
+    colorBtn.addEventListener('mousedown', function(e) {
+      e.preventDefault(); // не даём потерять выделение в редакторе
+    });
+    colorBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      WYSIWYG_ColorPalette.toggle('additionalColorPalette', colorBtn);
+    });
+  }
+
   // Возвращаем методы для управления редактором
   return {
     updateToolbarState: updateToolbarState,
@@ -1353,6 +1388,8 @@ function initPlanningWysiwygEditor() {
                 if (at.name !== 'href' && at.name !== 'target' && at.name !== 'rel') {
                   ch.removeAttribute(at.name);
                 }
+              } else if (ch.tagName.toUpperCase() === 'SPAN' && at.name === 'style') {
+                // keep style on SPAN (used for text color)
               } else {
                 ch.removeAttribute(at.name);
               }
@@ -1566,6 +1603,19 @@ function initPlanningWysiwygEditor() {
 
   // Инициализация
   textarea.value = sanitizeHTML(textarea.value || '');
+
+  // Инициализация палитры цветов
+  WYSIWYG_ColorPalette.initPalette('planningColorPalette', editor);
+  var colorBtn = document.getElementById('planningColorBtn');
+  if (colorBtn) {
+    colorBtn.addEventListener('mousedown', function(e) {
+      e.preventDefault(); // не даём потерять выделение в редакторе
+    });
+    colorBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      WYSIWYG_ColorPalette.toggle('planningColorPalette', colorBtn);
+    });
+  }
   
   return {
     updateToolbarState: updateToolbarState,
@@ -1593,6 +1643,126 @@ window.initPlanningWysiwygEditor = function() {
   return planningWysiwygEditorInstance;
 };
 window.destroyPlanningWysiwygEditor = destroyPlanningWysiwygEditor;
+
+// --- Глобальные утилиты для палитры цветов ---
+(function() {
+  var COLOR_PRESETS = ['#dc3545','#fd7e14','#ffc107','#198754','#0d6efd','#6f42c1','#000000','#6c757d'];
+
+  function buildPaletteHTML() {
+    var html = '<div class="palette-swatches">';
+    for (var i = 0; i < COLOR_PRESETS.length; i++) {
+      html += '<button type="button" class="palette-swatch" data-color="' + COLOR_PRESETS[i] + '" style="background:' + COLOR_PRESETS[i] + '" title="' + COLOR_PRESETS[i] + '"></button>';
+    }
+    html += '</div>';
+    html += '<button type="button" class="palette-custom" data-color="custom" title="Выберите цвет и кликните вне окна, чтобы применить">';
+    html += '<span style="display:inline-block;width:16px;height:16px;border-radius:3px;border:1px solid rgba(128,128,128,0.3);background:linear-gradient(135deg,#dc3545,#0d6efd,#198754);vertical-align:middle;margin-right:6px;"></span>';
+    html += 'Другой...';
+    html += '<input type="color" class="palette-custom-input" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">';
+    html += '</button>';
+    return html;
+  }
+
+  window.WYSIWYG_ColorPalette = {
+    applyColor: function(editor, color) {
+      if (editor) editor.focus();
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand('foreColor', false, color);
+      this.closeAll();
+    },
+
+    toggle: function(paletteId, btnEl) {
+      var palette = document.getElementById(paletteId);
+      if (!palette) return;
+      var isOpen = palette.classList.contains('show');
+      this.closeAll();
+      if (!isOpen) {
+        // Позиционируем через offsetTop/offsetLeft (локальные координаты
+        // родителя), а не getBoundingClientRect+position:fixed — последнее
+        // ломается под transform:scale() из desktop-view.css («десктоп-вид»
+        // на мобильных), который сдвигает систему координат fixed-элементов.
+        if (btnEl) {
+          var parent = palette.parentElement;
+          if (parent && getComputedStyle(parent).position === 'static') {
+            parent.style.position = 'relative';
+          }
+          var top = 0, left = 0, node = btnEl;
+          while (node && node !== parent) {
+            top += node.offsetTop;
+            left += node.offsetLeft;
+            node = node.offsetParent;
+          }
+          palette.style.position = 'absolute';
+          palette.style.top = (top + btnEl.offsetHeight + 4) + 'px';
+          palette.style.left = left + 'px';
+        }
+        palette.classList.add('show');
+      }
+    },
+
+    closeAll: function() {
+      var open = document.querySelectorAll('.color-palette.show');
+      for (var i = 0; i < open.length; i++) {
+        open[i].classList.remove('show');
+      }
+    },
+
+    initPalette: function(paletteId, editor) {
+      var palette = document.getElementById(paletteId);
+      if (!palette || palette.getAttribute('data-initialized') === '1') return;
+      palette.setAttribute('data-initialized', '1');
+      palette.innerHTML = buildPaletteHTML();
+
+      palette.addEventListener('mousedown', function(e) {
+        e.preventDefault(); // не даём потерять выделение в редакторе при клике по свотчу
+      });
+
+      palette.addEventListener('click', function(e) {
+        var swatch = e.target.closest('[data-color]');
+        if (!swatch) return;
+        var color = swatch.getAttribute('data-color');
+        if (color === 'custom') {
+          var input = palette.querySelector('.palette-custom-input');
+          if (input) {
+            // Нативный пикер цвета отбирает фокус надолго — сохраняем
+            // выделение сейчас и восстанавливаем перед применением цвета,
+            // иначе к моменту закрытия пикера оно будет потеряно.
+            var savedRange = null;
+            var curSel = window.getSelection();
+            if (curSel.rangeCount > 0) {
+              var curRange = curSel.getRangeAt(0);
+              if (editor.contains(curRange.commonAncestorContainer)) {
+                savedRange = curRange.cloneRange();
+              }
+            }
+            var onChange = function() {
+              if (savedRange) {
+                editor.focus();
+                var sel2 = window.getSelection();
+                sel2.removeAllRanges();
+                sel2.addRange(savedRange);
+              }
+              window.WYSIWYG_ColorPalette.applyColor(editor, input.value);
+              input.removeEventListener('change', onChange);
+            };
+            input.addEventListener('change', onChange);
+            input.click();
+          }
+        } else {
+          window.WYSIWYG_ColorPalette.applyColor(editor, color);
+        }
+      });
+    }
+  };
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.color-btn, .color-palette')) {
+      var open = document.querySelectorAll('.color-palette.show');
+      for (var i = 0; i < open.length; i++) {
+        open[i].classList.remove('show');
+      }
+    }
+  });
+})();
 
 // Добавляем глобальные методы для управления редактором
 window.resetWysiwygEditor = resetWysiwygEditor;

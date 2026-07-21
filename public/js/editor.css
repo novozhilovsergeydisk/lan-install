@@ -64,3 +64,89 @@ body:not(.theme-light) .wysiwyg-editor {
   transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
 }
 
+/* Кнопка выбора цвета текста: буква "A" с цветной полоской снизу (как в Google Docs/Word) */
+.color-btn {
+  position: relative;
+}
+.color-btn .color-btn-icon {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.color-btn .color-btn-letter {
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.color-btn .color-indicator {
+  display: block;
+  width: 16px;
+  height: 3px;
+  margin-top: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+/* Выпадающая палитра цветов */
+.color-palette {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1060;
+  display: none;
+  min-width: 180px;
+  padding: 6px;
+  background: var(--bs-body-bg, #fff);
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  margin-top: 4px;
+}
+.color-palette.show {
+  display: block;
+}
+.color-palette .palette-swatches {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.color-palette .palette-swatch {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(128,128,128,0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  transition: transform .1s ease, box-shadow .1s ease;
+}
+.color-palette .palette-swatch:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.color-palette .palette-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  width: 100%;
+  color: var(--bs-body-color, #212529);
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.color-palette .palette-custom:hover {
+  background: rgba(128,128,128,0.1);
+}
+.color-palette .palette-custom input[type="color"] {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(128,128,128,0.3);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
