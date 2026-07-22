@@ -1050,9 +1050,7 @@ export function renderReportTable(data) {
                         const date = new Date(comment.created_at).toLocaleString('ru-RU');
                         return `
                             <div class="comment-item mb-2 p-2 bg-white border rounded shadow-sm">
-                                <div class="mb-1 text-break">
-                                    ${comment.comment || 'Система'}
-                                </div>
+                                <div class="mb-1 text-break" style="white-space: pre-wrap;">${comment.comment || 'Система'}</div>
                                 <div class="d-flex justify-content-between border-top pt-1 mt-1" style="font-size: 0.7rem; color: #000;">
                                     <span>${date}</span>
                                     <span>${comment.author_name}</span>

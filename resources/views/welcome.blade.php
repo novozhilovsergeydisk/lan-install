@@ -2636,7 +2636,7 @@
                                                     <span class="badge bg-success me-1"><i class="bi bi-check-circle-fill"></i> Комментарий закрытия</span>
                                                 </div>
                                                 <div class="fw-semibold mb-1" style="color:${closerColor}">Закрыл: ${closerName}</div>
-                                                <p class="mb-1">${closingComment.comment}</p>
+                                                <p class="mb-1" style="white-space: pre-wrap;">${closingComment.comment}</p>
                                                 <small class="text-muted">${formattedDate}</small>
                                             </div>
                                         </div>
@@ -2667,9 +2667,7 @@
                                             <!-- Блок с автором и текстом комментария -->
                                             <div class="me-3 mb-2" style="flex: 1 1 100%; max-width: 100%;">
                                                 <h6 class="fw-semibold mb-1" style="color:${color}">${comment.employee_full_name}</h6>
-                                                <div class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all;">
-                                                    ${(window.utils && typeof window.utils.linkifyPreservingAnchors==='function' ? window.utils.linkifyPreservingAnchors(commentContent) : commentContent)}
-                                                </div>
+                                                <div class="mb-1" data-comment-number="${index + 1}" data-comment-id="${comment.id}" style="word-break: break-all; white-space: pre-wrap;">${(window.utils && typeof window.utils.linkifyPreservingAnchors==='function' ? window.utils.linkifyPreservingAnchors(commentContent) : commentContent)}</div>
                                                 <small class="text-muted">${formattedDate}</small>
                                             </div>
 

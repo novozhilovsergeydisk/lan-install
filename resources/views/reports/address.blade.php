@@ -62,9 +62,7 @@
                                                         <div style="max-height: 250px; overflow-y: auto;">
                                                             @foreach($comments_by_request[$request->id] as $comment)
                                                                 <div class="mb-2 p-2 bg-white border rounded shadow-sm" style="font-size: 0.85rem; line-height: 1.3;">
-                                                                    <div class="mb-1 text-break">
-                                                                        {!! $comment->comment !!}
-                                                                    </div>
+                                                                    <div class="mb-1 text-break" style="white-space: pre-wrap;">{!! $comment->comment !!}</div>
                                                                     <div class="d-flex justify-content-between text-muted border-top pt-1 mt-1" style="font-size: 0.7rem;">
                                                                         <span>{{ \Carbon\Carbon::parse($comment->created_at)->format('d.m.Y H:i') }}</span>
                                                                         <span>{{ $comment->author_name }}</span>
