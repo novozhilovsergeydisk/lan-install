@@ -92,8 +92,7 @@ class CreateRequestArchive extends Command
                 $level1 = $requestInfo->number;
                 
                 $commentText = $commentPhotos[0]->comment ?? 'NoComment';
-                $level2 = preg_replace('/[^a-zA-Zа-яА-Я0-9\s\-_]/u', ' ', $commentText);
-                $level2 = mb_substr(trim($level2), 0, 50);
+                $level2 = $this->buildCommentFolderName($commentText);
                 if (empty($level2)) {
                     $level2 = 'Comment_' . $commentId;
                 }
@@ -175,5 +174,20 @@ class CreateRequestArchive extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Формирует безопасное для файловой системы имя папки из текста комментария.
+     *
+     * "*" используется монтажниками как метка "важно" (напр. "113*") — заменяем на
+     * полноширинную звёздочку "＊" (другой символ юникода, не запрещён в именах папок)
+     * и явно разрешаем её в фильтре ниже, иначе обычный "*" будет заменён на пробел и потерян.
+     */
+    private function buildCommentFolderName(string $commentText): string
+    {
+        $commentText = str_replace('*', '＊', $commentText);
+        $level2 = preg_replace('/[^a-zA-Zа-яА-Я0-9\s\-_＊]/u', ' ', $commentText);
+
+        return mb_substr(trim($level2), 0, 50);
     }
 }
