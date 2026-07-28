@@ -80,10 +80,10 @@ info "Обновляем проект на сервере ($SERVER_PATH)..."
 ssh "$SERVER_PATH" "
   cd $REMOTE_DIR &&
   sudo -u $REMOTE_USER git pull &&
-  sudo -u $REMOTE_USER php artisan config:clear &&
-  sudo -u $REMOTE_USER php artisan cache:clear &&
-  sudo -u $REMOTE_USER php artisan view:clear &&
-  sudo -u $REMOTE_USER php artisan route:clear
+  sudo -u $REMOTE_USER php $REMOTE_DIR/artisan config:clear &&
+  sudo -u $REMOTE_USER php $REMOTE_DIR/artisan cache:clear &&
+  sudo -u $REMOTE_USER php $REMOTE_DIR/artisan view:clear &&
+  sudo -u $REMOTE_USER php $REMOTE_DIR/artisan route:clear
 " || {
   error "Ошибка при обновлении на сервере"
   exit 1
