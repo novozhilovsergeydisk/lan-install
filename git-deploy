@@ -11,9 +11,10 @@ fi
 LOGFILE="$HOME/logs/git-deploy.log"
 PROJECT_DIR="$(pwd)"
 TIMESTAMP=$(date "+%Y-%m-%d %T")
-SSH_KEY="~/.ssh/git_lan_install"
-SERVER_PATH="lan-install"
+SERVER_PATH="lan-install-new"           # .67, боевой сервер (прямой доступ, без ProxyJump через .10)
 REMOTE_DIR="/var/www/lan-install"
+REMOTE_USER="www-data"                   # владелец .git и storage/ на сервере; SSH-ключ для GitHub
+                                          # (deploy-key) настроен в core.sshCommand репозитория на сервере
 
 # === Цвета для вывода ===
 GREEN='\033[32m'
@@ -72,16 +73,32 @@ git commit -m "$COMMENT"
 info "Выполняем git push..."
 git push
 
+LOCAL_COMMIT=$(git rev-parse --short HEAD)
+
 # === Удалённое обновление на сервере ===
 info "Обновляем проект на сервере ($SERVER_PATH)..."
-ssh "$SERVER_PATH" "cd $REMOTE_DIR && GIT_SSH_COMMAND='ssh -i $SSH_KEY' git pull" || {
-  error "Ошибка при выполнении git pull на сервере"
+ssh "$SERVER_PATH" "
+  cd $REMOTE_DIR &&
+  sudo -u $REMOTE_USER git pull &&
+  sudo -u $REMOTE_USER php artisan config:clear &&
+  sudo -u $REMOTE_USER php artisan cache:clear &&
+  sudo -u $REMOTE_USER php artisan view:clear &&
+  sudo -u $REMOTE_USER php artisan route:clear
+" || {
+  error "Ошибка при обновлении на сервере"
   exit 1
 }
 
-php artisan cache:clear
-php artisan view:clear
-php artisan config:clear
+# === Сверка коммита на сервере (чтобы не повторить инцидент 26.07 — код "уехал не туда") ===
+info "Проверяем версию кода на сервере..."
+REMOTE_COMMIT=$(ssh "$SERVER_PATH" "cd $REMOTE_DIR && sudo -u $REMOTE_USER git rev-parse --short HEAD")
+
+if [ "$LOCAL_COMMIT" != "$REMOTE_COMMIT" ]; then
+  error "Коммит на сервере ($REMOTE_COMMIT) не совпадает с локальным ($LOCAL_COMMIT)!"
+  exit 1
+fi
+
+success "Сервер обновлён до коммита $REMOTE_COMMIT ✓"
 
 # === Завершение ===
 success "✅ Все операции успешно завершены!"

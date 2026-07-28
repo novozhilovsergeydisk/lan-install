@@ -52,3 +52,4 @@ storage/duplicates_report.*
 storage/logs/delete-unused-duplicates-*.log
 .mimocode/
 .aider*
+.claude/

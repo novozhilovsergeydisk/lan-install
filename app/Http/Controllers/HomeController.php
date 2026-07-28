@@ -559,6 +559,7 @@ class HomeController extends Controller
                 'new_date' => 'required|date|after_or_equal:today',
                 'reason' => 'required|string|max:1000',
                 'transfer_to_planning' => 'required|boolean',
+                'subtype_id' => 'required_if:transfer_to_planning,true|nullable|integer|exists:request_subtypes,id,is_deleted,false',
             ]);
 
             // Begin transaction
@@ -596,6 +597,7 @@ class HomeController extends Controller
                 ->update([
                     'execution_date' => $validated['new_date'],
                     'status_id' => $validated['transfer_to_planning'] ? 6 : 3, // ID статуса 'перенесена'
+                    'subtype_id' => $validated['transfer_to_planning'] ? $validated['subtype_id'] : null,
                 ]);
 
             // Get comments count (including the one we just added)

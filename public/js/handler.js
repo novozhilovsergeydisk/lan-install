@@ -2736,6 +2736,12 @@ function openTransferModal(requestIds) {
                             <input type="checkbox" id="transferToPlanning" name="transferToPlanning" class="form-check-input">
                             <label for="transferToPlanning" class="form-check-label">Перенести заяв${isMass ? 'ки' : 'ку'} в планирование</label>
                         </div>
+                        <div class="mb-3" id="transferSubtypeGroup" style="display: none;">
+                            <label for="transferSubtype" class="form-label">Тип планирования:</label>
+                            <select class="form-select" id="transferSubtype">
+                                <option value="" disabled selected>Загрузка...</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
@@ -2783,12 +2789,51 @@ function openTransferModal(requestIds) {
         }
     });
 
+    // Показ/скрытие выбора типа планирования по галке "Перенести в планирование"
+    const transferToPlanningCheckbox = modalElement.querySelector('#transferToPlanning');
+    const subtypeGroup = modalElement.querySelector('#transferSubtypeGroup');
+    const subtypeSelect = modalElement.querySelector('#transferSubtype');
+    let subtypesLoaded = false;
+
+    async function loadTransferSubtypes() {
+        if (subtypesLoaded) return;
+        subtypesLoaded = true;
+
+        try {
+            const response = await fetch('/api/planning-types');
+            if (!response.ok) throw new Error('Ошибка загрузки типов планирования');
+            const types = await response.json();
+
+            subtypeSelect.innerHTML = '';
+            types.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type.id;
+                option.textContent = `${type.name} (${type.requests_count || 0})`;
+                if (type.name === 'Стандартное планирование') {
+                    option.selected = true;
+                }
+                subtypeSelect.appendChild(option);
+            });
+        } catch (err) {
+            console.error(err);
+            subtypeSelect.innerHTML = '<option value="" disabled selected>Ошибка загрузки</option>';
+        }
+    }
+
+    transferToPlanningCheckbox.addEventListener('change', function() {
+        subtypeGroup.style.display = this.checked ? '' : 'none';
+        if (this.checked) {
+            loadTransferSubtypes();
+        }
+    });
+
     // Обработчик подтверждения переноса
     const confirmBtn = modalElement.querySelector('#confirmTransfer');
     confirmBtn.addEventListener('click', async () => {
         const selectedDate = dateInput.value;
         const reason = document.getElementById('transferReason').value.trim();
         const transferToPlanning = document.getElementById('transferToPlanning').checked;
+        const subtypeId = transferToPlanning ? subtypeSelect.value : null;
 
         if (!selectedDate) {
             showAlert('Пожалуйста, выберите дату для переноса', 'info');
@@ -2797,6 +2842,11 @@ function openTransferModal(requestIds) {
 
         if (!reason) {
             showAlert('Пожалуйста, укажите причину переноса', 'info');
+            return;
+        }
+
+        if (transferToPlanning && !subtypeId) {
+            showAlert('Пожалуйста, выберите тип планирования', 'info');
             return;
         }
 
@@ -2818,7 +2868,8 @@ function openTransferModal(requestIds) {
                         request_id: requestId,
                         new_date: selectedDate,
                         reason: reason,
-                        transfer_to_planning: transferToPlanning
+                        transfer_to_planning: transferToPlanning,
+                        subtype_id: subtypeId
                     })
                 });
 
@@ -2848,9 +2899,14 @@ function openTransferModal(requestIds) {
             showAlert(`Перенесено: ${okCount} из ${requestIds.length}. Ошибки: ${errors.join('; ')}`, 'warning');
         }
 
-        // Если заявки ушли в планирование — обновляем и его список
-        if (transferToPlanning && okCount > 0 && typeof loadPlanningRequests === 'function') {
-            loadPlanningRequests();
+        // Если заявки ушли в планирование — обновляем его список и счётчики в селектах типов
+        if (transferToPlanning && okCount > 0) {
+            if (typeof loadPlanningRequests === 'function') {
+                loadPlanningRequests();
+            }
+            if (typeof window.updatePlanningSelects === 'function') {
+                window.updatePlanningSelects();
+            }
         }
 
         // Перерисовываем таблицу заявок с актуальными данными
