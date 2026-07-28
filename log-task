@@ -21,7 +21,7 @@ fi
 
 # Подготовка локальной и удаленной команд
 LOCAL_CMD="sudo psql -U postgres -d $DB_NAME"
-REMOTE_CMD="ssh lan-install \"sudo -u postgres psql -d $DB_NAME"
+REMOTE_CMD="ssh lan-install-new \"sudo -u postgres psql -d $DB_NAME"
 
 if [ "$ACTION" == "start" ]; then
     DESC=$2
