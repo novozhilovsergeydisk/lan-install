@@ -151,11 +151,20 @@ VMware ESXi 6.5 (`192.168.88.3`) — новой VM рядом с уже суще
       локальную копию `~/Projects/stock-flow`.
 
 **Чеклист:**
-- [ ] `git-deploy` → `.67`; проверить, что после деплоя `git log -1` на `.67` показывает новый коммит.
+- [x] `git-deploy` → `.67` (28.07). Перенацелен на прямой SSH (порт 2223, без `ProxyJump` через
+      `.10` — NAT-правило #20 `SSH lan-install-new` ведёт прямо на `.67:22`); `~/.ssh/config`
+      обновлён (бэкап `~/.ssh/config.bak-20260728-135003`). Деплой выполняется от `www-data`
+      (владелец `.git`/`storage`), не от `sergey`. Кэш теперь чистится НА СЕРВЕРЕ (раньше по
+      ошибке выполнялось локально на маке). Скрипт сверяет коммит на сервере с локальным после
+      pull. Проверено end-to-end: `feat(planning)` задеплоен, коммит `81f692d` совпал локально/`.67`.
 - [ ] `log-task` → `.67`; решить судьбу записей `ai_tasks`, попавших в БД `.10` за 24–27.07.
-- [ ] Завести deploy-key для `.67` (сейчас у www-data нет доступа к GitHub; обновление возможно
-      только через `git bundle` с `.10`). На `.10` доступ у root через `/root/.ssh/git_lan_install`.
-- [ ] `git config --system --add safe.directory /var/www/lan-install` на `.67` (иначе git от
-      не-www-data ругается `dubious ownership`).
+- [x] Deploy-key для `.67` заведён (28.07): `ssh-ed25519` в `/var/www/.ssh/deploy_key` (владелец
+      `www-data`), добавлен в GitHub как Deploy Key (read-only) репозитория `lan-install`,
+      привязан через `git config core.sshCommand` в самом репо на `.67`. `git fetch/pull` от
+      `www-data` работает без пароля. Sudoers: `/etc/sudoers.d/git-deploy` на `.67` —
+      `sergey ALL=(www-data) NOPASSWD: /usr/bin/git` и `.../php /var/www/lan-install/artisan *`
+      (важно: sudoers matching буквальный — вызывать `artisan` с абсолютным путём, не относительным).
+- [ ] `git config --system --add safe.directory /var/www/lan-install` на `.67` (актуально для
+      прямого `git` от `sergey` без `sudo -u www-data`; сам деплой это не задевает).
 - [ ] Пройтись по остальным скриптам (`update-bot`, `clear-cash`, `show-logs`, `update-pusher`,
       `scripts/*`) — поискать оставшиеся `ssh lan-install` / `192.168.88.10`.
