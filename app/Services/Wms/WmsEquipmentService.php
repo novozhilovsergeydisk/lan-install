@@ -115,6 +115,18 @@ class WmsEquipmentService
      * Опрашивает склад по каждому участнику бригады и возвращает «сырые» строки оборудования
      * со склада: [['kind'=>'tool'|'vehicle','label'=>..,'holder_emp_id'=>..,'holder_fio'=>..,'wms_ref'=>..], ...].
      */
+    private const OFFICE_CATEGORIES = [
+        'Принтеры',
+        'USB накопители',
+        'Клавиатуры',
+        'Моб. Зарядки',
+    ];
+
+    private function isOfficeCategory(string $categoryName): bool
+    {
+        return in_array($categoryName, self::OFFICE_CATEGORIES, true);
+    }
+
     private function fetchWarehouseRows(int $requestId): array
     {
         $rows = [];
@@ -162,6 +174,12 @@ class WmsEquipmentService
                         continue;
                     }
                     $name = $tool['name'] ?? null;
+
+                    $categoryName = $tool['categoryName'] ?? null;
+                    if ($categoryName !== null && $this->isOfficeCategory($categoryName)) {
+                        continue;
+                    }
+
                     $rows[] = [
                         'kind' => 'tool',
                         'label' => $name ? "{$name} ({$inv})" : $inv,

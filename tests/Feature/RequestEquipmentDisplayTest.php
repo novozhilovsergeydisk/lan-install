@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\Wms\WmsEquipmentService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\DB;
@@ -44,18 +45,18 @@ class RequestEquipmentDisplayTest extends TestCase
 
     private function todayRequestWithBrigade()
     {
-        return DB::selectOne("
+        return DB::selectOne('
             SELECT id FROM requests
             WHERE execution_date::date = CURRENT_DATE
               AND status_id NOT IN (5,6,7)
               AND brigade_id IS NOT NULL
             ORDER BY id DESC LIMIT 1
-        ");
+        ');
     }
 
     private function openRequestWithBrigade()
     {
-        return DB::selectOne("
+        return DB::selectOne('
             SELECT r.id
             FROM requests r
             JOIN brigades b ON b.id = r.brigade_id
@@ -63,7 +64,7 @@ class RequestEquipmentDisplayTest extends TestCase
             JOIN users u ON u.id = e.user_id
             WHERE r.status_id != 4 AND e.is_deleted = false AND u.email IS NOT NULL
             ORDER BY r.id DESC LIMIT 1
-        ");
+        ');
     }
 
     private function brigadeMembers($requestId): array
@@ -253,7 +254,7 @@ class RequestEquipmentDisplayTest extends TestCase
     /** Плановая команда обновляет оборудование открытых сегодняшних заявок из склада. */
     public function test_refresh_command_updates_open_today_requests(): void
     {
-        $req = DB::selectOne("
+        $req = DB::selectOne('
             SELECT r.id
             FROM requests r
             JOIN brigades b ON b.id = r.brigade_id
@@ -262,7 +263,7 @@ class RequestEquipmentDisplayTest extends TestCase
             WHERE r.execution_date::date = CURRENT_DATE AND r.status_id NOT IN (4,5,6,7)
               AND e.is_deleted = false AND u.email IS NOT NULL
             ORDER BY r.id DESC LIMIT 1
-        ");
+        ');
         if (! $req) {
             $this->markTestSkipped('Нет открытой сегодняшней заявки с бригадой и email');
         }
@@ -317,14 +318,14 @@ class RequestEquipmentDisplayTest extends TestCase
     public function test_equipment_hidden_for_open_request_on_past_date(): void
     {
         $this->authenticateAdmin();
-        $req = DB::selectOne("
+        $req = DB::selectOne('
             SELECT id, DATE(execution_date) AS d
             FROM requests
             WHERE execution_date::date <> CURRENT_DATE
               AND status_id NOT IN (4,5,6,7)
               AND brigade_id IS NOT NULL
             ORDER BY id DESC LIMIT 1
-        ");
+        ');
         if (! $req) {
             $this->markTestSkipped('Нет открытой заявки на не-сегодняшнюю дату с бригадой');
         }
@@ -346,14 +347,14 @@ class RequestEquipmentDisplayTest extends TestCase
     public function test_equipment_shown_for_closed_request_on_past_date(): void
     {
         $this->authenticateAdmin();
-        $req = DB::selectOne("
+        $req = DB::selectOne('
             SELECT id, DATE(execution_date) AS d
             FROM requests
             WHERE execution_date::date <> CURRENT_DATE
               AND status_id = 4
               AND brigade_id IS NOT NULL
             ORDER BY id DESC LIMIT 1
-        ");
+        ');
         if (! $req) {
             $this->markTestSkipped('Нет закрытой заявки на не-сегодняшнюю дату с бригадой');
         }
@@ -376,7 +377,7 @@ class RequestEquipmentDisplayTest extends TestCase
     /** Живой рефреш «по требованию» обновляет request_equipment открытых сегодняшних заявок из склада. */
     public function test_refresh_today_best_effort_updates_open_requests(): void
     {
-        $req = DB::selectOne("
+        $req = DB::selectOne('
             SELECT r.id
             FROM requests r
             JOIN brigades b ON b.id = r.brigade_id
@@ -385,7 +386,7 @@ class RequestEquipmentDisplayTest extends TestCase
             WHERE r.execution_date::date = CURRENT_DATE AND r.status_id NOT IN (4,5,6,7)
               AND e.is_deleted = false AND u.email IS NOT NULL
             ORDER BY r.id DESC LIMIT 1
-        ");
+        ');
         if (! $req) {
             $this->markTestSkipped('Нет открытой сегодняшней заявки с бригадой и email');
         }
@@ -401,11 +402,44 @@ class RequestEquipmentDisplayTest extends TestCase
         ]);
         DB::table('request_equipment')->where('request_id', $req->id)->delete();
 
-        app(\App\Services\Wms\WmsEquipmentService::class)->refreshTodayBestEffort();
+        app(WmsEquipmentService::class)->refreshTodayBestEffort();
 
         $this->assertDatabaseHas('request_equipment', [
             'request_id' => $req->id, 'kind' => 'tool', 'label' => 'H-RT', 'source' => 'warehouse',
         ]);
+    }
+
+    /** Инструмент с офисной категорией (Клавиатуры) исключается, со строительной — показывается. */
+    public function test_office_category_tools_are_filtered_out(): void
+    {
+        $this->authenticateAdmin();
+        $req = $this->todayRequestWithBrigade();
+        if (! $req) {
+            $this->markTestSkipped('Нет сегодняшней заявки с бригадой');
+        }
+
+        Http::fake([
+            '*/api/external/user-equipment*' => Http::response([
+                'success' => true,
+                'data' => [
+                    'tools' => [
+                        ['inventoryNumber' => 'H-DRILL', 'name' => 'Перфоратор Bosch', 'categoryId' => 1, 'categoryName' => 'Перфоратор'],
+                        ['inventoryNumber' => 'H-KEYB', 'name' => 'Клавиатура Logitech', 'categoryId' => 32, 'categoryName' => 'Клавиатуры'],
+                        ['inventoryNumber' => 'H-USB', 'name' => 'USB накопитель 32GB', 'categoryId' => 31, 'categoryName' => 'USB накопители'],
+                    ],
+                    'vehicles' => [],
+                ],
+            ], 200),
+            '*' => Http::response(['success' => true, 'data' => []], 200),
+        ]);
+
+        DB::table('request_equipment')->where('request_id', $req->id)->delete();
+        app(WmsEquipmentService::class)->captureSnapshotForRequest($req->id);
+
+        $saved = DB::table('request_equipment')->where('request_id', $req->id)->pluck('label')->toArray();
+        $this->assertContains('Перфоратор Bosch (H-DRILL)', $saved);
+        $this->assertNotContains('Клавиатура Logitech (H-KEYB)', $saved);
+        $this->assertNotContains('USB накопитель 32GB (H-USB)', $saved);
     }
 
     /** В пределах 5-секундного окна троттла склад не опрашивается повторно. */
@@ -414,9 +448,8 @@ class RequestEquipmentDisplayTest extends TestCase
         cache()->put('wms_equipment_refreshed_at', now(), 3600);
         Http::fake(['*' => Http::response(['success' => true, 'data' => []], 200)]);
 
-        app(\App\Services\Wms\WmsEquipmentService::class)->refreshTodayBestEffort();
+        app(WmsEquipmentService::class)->refreshTodayBestEffort();
 
         Http::assertNothingSent();
     }
-
 }
