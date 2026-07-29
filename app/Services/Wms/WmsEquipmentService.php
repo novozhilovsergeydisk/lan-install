@@ -161,9 +161,10 @@ class WmsEquipmentService
                     if (! $inv) {
                         continue;
                     }
+                    $name = $tool['name'] ?? null;
                     $rows[] = [
                         'kind' => 'tool',
-                        'label' => $inv,
+                        'label' => $name ? "{$name} ({$inv})" : $inv,
                         'holder_emp_id' => $m->id,
                         'holder_fio' => $m->fio,
                         'wms_ref' => $inv,
