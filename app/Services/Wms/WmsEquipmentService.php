@@ -115,16 +115,33 @@ class WmsEquipmentService
      * Опрашивает склад по каждому участнику бригады и возвращает «сырые» строки оборудования
      * со склада: [['kind'=>'tool'|'vehicle','label'=>..,'holder_emp_id'=>..,'holder_fio'=>..,'wms_ref'=>..], ...].
      */
-    private const OFFICE_CATEGORIES = [
-        'Принтеры',
-        'USB накопители',
-        'Клавиатуры',
-        'Моб. Зарядки',
+    private const EXCLUDED_CATEGORY_IDS = [31, 32, 33];
+
+    private const EXCLUDED_NAME_KEYWORDS = [
+        'зарядка для телефона',
+        'зарядка-банка',
     ];
 
-    private function isOfficeCategory(string $categoryName): bool
+    private function isExcludedTool(?int $categoryId, ?string $name): bool
     {
-        return in_array($categoryName, self::OFFICE_CATEGORIES, true);
+        if ($categoryId === null) {
+            return false;
+        }
+
+        if (in_array($categoryId, self::EXCLUDED_CATEGORY_IDS, true)) {
+            return true;
+        }
+
+        if ($categoryId === 10 && $name !== null) {
+            $lower = mb_strtolower($name);
+            foreach (self::EXCLUDED_NAME_KEYWORDS as $keyword) {
+                if (mb_strpos($lower, $keyword) !== false) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function fetchWarehouseRows(int $requestId): array
@@ -174,9 +191,9 @@ class WmsEquipmentService
                         continue;
                     }
                     $name = $tool['name'] ?? null;
+                    $categoryId = $tool['categoryId'] ?? null;
 
-                    $categoryName = $tool['categoryName'] ?? null;
-                    if ($categoryName !== null && $this->isOfficeCategory($categoryName)) {
+                    if ($this->isExcludedTool($categoryId, $name)) {
                         continue;
                     }
 

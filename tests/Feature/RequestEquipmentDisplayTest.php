@@ -409,7 +409,7 @@ class RequestEquipmentDisplayTest extends TestCase
         ]);
     }
 
-    /** Инструмент с офисной категорией (Клавиатуры) исключается, со строительной — показывается. */
+    /** Инструмент с офисной категорией (31, 32, 33) исключается, со строительной — показывается. */
     public function test_office_category_tools_are_filtered_out(): void
     {
         $this->authenticateAdmin();
@@ -423,9 +423,10 @@ class RequestEquipmentDisplayTest extends TestCase
                 'success' => true,
                 'data' => [
                     'tools' => [
-                        ['inventoryNumber' => 'H-DRILL', 'name' => 'Перфоратор Bosch', 'categoryId' => 1, 'categoryName' => 'Перфоратор'],
-                        ['inventoryNumber' => 'H-KEYB', 'name' => 'Клавиатура Logitech', 'categoryId' => 32, 'categoryName' => 'Клавиатуры'],
-                        ['inventoryNumber' => 'H-USB', 'name' => 'USB накопитель 32GB', 'categoryId' => 31, 'categoryName' => 'USB накопители'],
+                        ['inventoryNumber' => 'H-DRILL', 'name' => 'Перфоратор Bosch', 'categoryId' => 1],
+                        ['inventoryNumber' => 'H-KEYB', 'name' => 'Клавиатура Logitech', 'categoryId' => 32],
+                        ['inventoryNumber' => 'H-USB', 'name' => 'USB накопитель 32GB', 'categoryId' => 31],
+                        ['inventoryNumber' => 'H-POWER', 'name' => 'Мобильный пауэрбанк', 'categoryId' => 33],
                     ],
                     'vehicles' => [],
                 ],
@@ -440,6 +441,44 @@ class RequestEquipmentDisplayTest extends TestCase
         $this->assertContains('Перфоратор Bosch (H-DRILL)', $saved);
         $this->assertNotContains('Клавиатура Logitech (H-KEYB)', $saved);
         $this->assertNotContains('USB накопитель 32GB (H-USB)', $saved);
+        $this->assertNotContains('Мобильный пауэрбанк (H-POWER)', $saved);
+    }
+
+    /** В категории 10 (Зарядки) названия с «зарядка для телефона» и «зарядка-банка» исключаются, зарядные станции для инструмента — нет. */
+    public function test_charge_category_name_filter(): void
+    {
+        $this->authenticateAdmin();
+        $req = $this->todayRequestWithBrigade();
+        if (! $req) {
+            $this->markTestSkipped('Нет сегодняшней заявки с бригадой');
+        }
+
+        Http::fake([
+            '*/api/external/user-equipment*' => Http::response([
+                'success' => true,
+                'data' => [
+                    'tools' => [
+                        ['inventoryNumber' => 'H-BOSCH', 'name' => 'Зарядная станция Bosch 18V', 'categoryId' => 10],
+                        ['inventoryNumber' => 'H-METABO', 'name' => 'Зарядка Metabo 18V', 'categoryId' => 10],
+                        ['inventoryNumber' => 'H-PHONE', 'name' => 'Зарядка для телефона Xiaomi', 'categoryId' => 10],
+                        ['inventoryNumber' => 'H-BANK', 'name' => 'Зарядка-банка 10000mAh', 'categoryId' => 10],
+                        ['inventoryNumber' => 'H-OTHER', 'name' => 'Перфоратор Bosch', 'categoryId' => 1],
+                    ],
+                    'vehicles' => [],
+                ],
+            ], 200),
+            '*' => Http::response(['success' => true, 'data' => []], 200),
+        ]);
+
+        DB::table('request_equipment')->where('request_id', $req->id)->delete();
+        app(WmsEquipmentService::class)->captureSnapshotForRequest($req->id);
+
+        $saved = DB::table('request_equipment')->where('request_id', $req->id)->pluck('label')->toArray();
+        $this->assertContains('Зарядная станция Bosch 18V (H-BOSCH)', $saved);
+        $this->assertContains('Зарядка Metabo 18V (H-METABO)', $saved);
+        $this->assertNotContains('Зарядка для телефона Xiaomi (H-PHONE)', $saved);
+        $this->assertNotContains('Зарядка-банка 10000mAh (H-BANK)', $saved);
+        $this->assertContains('Перфоратор Bosch (H-OTHER)', $saved);
     }
 
     /** В пределах 5-секундного окна троттла склад не опрашивается повторно. */
