@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class BrigadeController extends Controller
 {
@@ -452,11 +453,39 @@ class BrigadeController extends Controller
                 return $member;
             });
 
+            // Получаем оборудование для сегодняшних открытых заявок этой бригады
+            $equipment = ['tools' => [], 'vehicles' => []];
+            if (Schema::hasTable('request_equipment')) {
+                $requestIds = DB::table('requests')
+                    ->where('brigade_id', $id)
+                    ->whereRaw('DATE(execution_date) = CURRENT_DATE')
+                    ->whereNotIn('status_id', [4, 5, 6, 7])
+                    ->pluck('id');
+
+                if ($requestIds->isNotEmpty()) {
+                    $equipRows = DB::table('request_equipment')
+                        ->whereIn('request_id', $requestIds)
+                        ->orderBy('kind')
+                        ->orderBy('label')
+                        ->get();
+
+                    $grouped = [];
+                    foreach ($equipRows as $er) {
+                        $grouped[$er->kind][$er->label] = $er->label;
+                    }
+                    $equipment = [
+                        'tools' => array_values($grouped['tool'] ?? []),
+                        'vehicles' => array_values($grouped['vehicle'] ?? []),
+                    ];
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'brigade' => $brigade,
                 'leader' => $leader,
                 'members' => $members,
+                'equipment' => $equipment,
             ]);
 
         } catch (\Exception $e) {

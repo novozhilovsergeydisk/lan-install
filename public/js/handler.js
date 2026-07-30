@@ -2398,7 +2398,7 @@ export function initializePage() {
     //******* Функция отображения сведений о бригаде в модальном окне *******//
 
     function renderBrigadeDetails(data) {
-        const { brigade, leader, members } = data;
+        const { brigade, leader, members, equipment } = data;
         const detailsContainer = document.getElementById(FILTER_IDS.BRIGADE_DETAILS);
 
         let html = `
@@ -2455,6 +2455,14 @@ export function initializePage() {
             }
                     </div>
                 </div>
+
+                ${equipment && (equipment.tools?.length || equipment.vehicles?.length) ? `
+                <div class="mt-3">
+                    <small class="text-muted">
+                        ${equipment.tools?.length ? `<div><span style="color:#6b7280;">Инструмент:</span> <strong>${equipment.tools.join(', ')}</strong></div>` : ''}
+                        ${equipment.vehicles?.length ? `<div><span style="color:#6b7280;">Авто:</span> <strong>${equipment.vehicles.join(', ')}</strong></div>` : ''}
+                    </small>
+                </div>` : ''}
             </div>`;
 
         detailsContainer.innerHTML = html;
