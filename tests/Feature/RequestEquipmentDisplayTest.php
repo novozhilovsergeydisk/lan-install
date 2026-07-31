@@ -106,6 +106,70 @@ class RequestEquipmentDisplayTest extends TestCase
         $this->assertContains('TEST777 ТестАвто', $row['equipment']['vehicles']);
     }
 
+    /**
+     * В карточке заявки инструмент показывается КОРОТКО — только инвентарный номер (wms_ref),
+     * без полного названия, и дубли одного номера схлопываются в одну подпись.
+     * Полные названия остаются в модалке «Состав бригады» (BrigadeController).
+     */
+    public function test_card_shows_only_inventory_number_for_tools(): void
+    {
+        $this->authenticateAdmin();
+        $req = $this->todayRequestWithBrigade();
+        if (! $req) {
+            $this->markTestSkipped('Нет сегодняшней заявки с бригадой');
+        }
+
+        DB::table('request_equipment')->where('request_id', $req->id)->delete();
+        DB::table('request_equipment')->insert([
+            ['request_id' => $req->id, 'kind' => 'tool', 'label' => 'Bosch GBH 185-LI (Перф) (B-2)', 'wms_ref' => 'B-2', 'source' => 'warehouse', 'created_at' => now()],
+            ['request_id' => $req->id, 'kind' => 'tool', 'label' => 'Hilti SF 2-A (Мелкий шурик) (B-2)', 'wms_ref' => 'B-2', 'source' => 'warehouse', 'created_at' => now()],
+            ['request_id' => $req->id, 'kind' => 'vehicle', 'label' => 'TEST777 ТестАвто', 'wms_ref' => 'TEST777', 'source' => 'warehouse', 'created_at' => now()],
+        ]);
+
+        cache()->put('wms_equipment_refreshed_at', now(), 3600);
+
+        $today = now()->toDateString();
+        $response = $this->getJson("/api/requests/date/{$today}");
+        $response->assertStatus(200);
+
+        $row = collect($response->json('data'))->firstWhere('id', $req->id);
+        $this->assertNotNull($row, 'Заявка должна быть в выдаче');
+
+        // Только инв. номер, два инструмента с одним номером схлопнуты в один пункт.
+        $this->assertSame(['B-2'], $row['equipment']['tools']);
+        $this->assertStringNotContainsString('Bosch', implode(',', $row['equipment']['tools']));
+
+        // Машина по-прежнему с моделью — её формат не меняли.
+        $this->assertContains('TEST777 ТестАвто', $row['equipment']['vehicles']);
+    }
+
+    /** Модалка «Состав бригады» продолжает отдавать ПОЛНЫЕ названия инструмента. */
+    public function test_brigade_modal_keeps_full_tool_names(): void
+    {
+        $this->authenticateAdmin();
+        $req = DB::selectOne('
+            SELECT id, brigade_id FROM requests
+            WHERE execution_date::date = CURRENT_DATE
+              AND status_id NOT IN (4,5,6,7)
+              AND brigade_id IS NOT NULL
+            ORDER BY id DESC LIMIT 1
+        ');
+        if (! $req) {
+            $this->markTestSkipped('Нет сегодняшней открытой заявки с бригадой');
+        }
+
+        DB::table('request_equipment')->where('request_id', $req->id)->delete();
+        DB::table('request_equipment')->insert([
+            ['request_id' => $req->id, 'kind' => 'tool', 'label' => 'Bosch GBH 185-LI (Перф) (B-2)', 'wms_ref' => 'B-2', 'source' => 'warehouse', 'created_at' => now()],
+        ]);
+
+        $response = $this->postJson("/brigade/{$req->brigade_id}");
+        $response->assertStatus(200);
+
+        $tools = $response->json('equipment.tools') ?? [];
+        $this->assertContains('Bosch GBH 185-LI (Перф) (B-2)', $tools, 'В модалке должно остаться полное название');
+    }
+
     /** На главной (welcome.blade) в колонке «Бригада» виден инструмент. */
     public function test_index_page_shows_equipment(): void
     {

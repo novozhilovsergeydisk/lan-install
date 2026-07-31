@@ -1142,13 +1142,16 @@ class HomeController extends Controller
             $equipmentByRequest = [];
             if (! empty($reqIds) && \Schema::hasTable('request_equipment')) {
                 $equipRows = DB::select('
-                    SELECT request_id, kind, label
+                    SELECT request_id, kind, label, wms_ref
                     FROM request_equipment
                     WHERE request_id IN ('.implode(',', $reqIds).')
                     ORDER BY kind, label
                 ');
                 foreach ($equipRows as $er) {
-                    $equipmentByRequest[$er->request_id][$er->kind][$er->label] = $er->label;
+                    // В карточке заявки инструмент показываем коротко — только инвентарный номер
+                    // (полное название видно в модалке «Состав бригады» по кнопке «подробнее»).
+                    $value = $er->kind === 'tool' ? ($er->wms_ref ?: $er->label) : $er->label;
+                    $equipmentByRequest[$er->request_id][$er->kind][$value] = $value;
                 }
             }
             foreach ($requests as $r) {
@@ -2040,14 +2043,17 @@ class HomeController extends Controller
             $equipmentByRequest = [];
             if (! empty($requestIds) && \Schema::hasTable('request_equipment')) {
                 $equipRows = DB::select('
-                    SELECT request_id, kind, label
+                    SELECT request_id, kind, label, wms_ref
                     FROM request_equipment
                     WHERE request_id IN ('.implode(',', $requestIds).')
                     ORDER BY kind, label
                 ');
                 foreach ($equipRows as $er) {
+                    // В карточке заявки инструмент показываем коротко — только инвентарный номер
+                    // (полное название видно в модалке «Состав бригады» по кнопке «подробнее»).
                     // Дедуп по подписи: один и тот же комплект/машину показываем один раз.
-                    $equipmentByRequest[$er->request_id][$er->kind][$er->label] = $er->label;
+                    $value = $er->kind === 'tool' ? ($er->wms_ref ?: $er->label) : $er->label;
+                    $equipmentByRequest[$er->request_id][$er->kind][$value] = $value;
                 }
             }
 
