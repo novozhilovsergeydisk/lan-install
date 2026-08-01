@@ -813,11 +813,17 @@ const filterState = {
 window.refreshRequestsTable = function() {
     // console.log('Обновление таблицы заявок...');
 
-    // Если есть активная дата, используем её для фильтрации
+    // Если дата фильтра не задана (пользователь её не выбирал вручную), берём текущую
+    // отображаемую дату из selectedDateState — по умолчанию это сегодня. Раньше в этом
+    // случае делался location.reload(), из-за чего сбрасывались выбранная дата и вкладка.
+    if (!filterState.date && window.selectedDateState && window.selectedDateState.date) {
+        filterState.date = window.selectedDateState.date;
+    }
+
     if (filterState.date) {
         applyFilters();
     } else {
-        // Иначе просто перезагружаем страницу
+        // Крайний случай: дату определить не удалось — перезагружаем страницу как раньше.
         window.location.reload();
     }
 };
@@ -2688,6 +2694,9 @@ export async function loadTeamsToSelect() {
     }
 }
 window.loadTeamsToSelect = loadTeamsToSelect;
+// Нужна из form-handlers.js: после сохранения заявки обновляем список планирования
+// без перезагрузки страницы (модули грузятся отдельно, поэтому через window).
+window.loadPlanningRequests = loadPlanningRequests;
 
 // Обработчик кнопки 'Назначить бригаду'
 async function handleAssignTeam(button) {

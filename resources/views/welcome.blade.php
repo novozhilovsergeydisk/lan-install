@@ -357,7 +357,7 @@
                         </div>
 
                         <!-- Calendar and Status Buttons -->
-                        <div class="pt-4 ps-4 pb-0 d-flex align-items-center flex-wrap">
+                        <div class="requests-sticky-toolbar pt-4 ps-4 pb-0 d-flex align-items-center flex-wrap">
                             <!-- Mobile Calendar Button -->
                             <button type="button" class="btn btn-outline-secondary d-md-none mb-3 me-2" id="btn-open-calendar-mobile" style="height: 31px; width: 38px; padding: 0; display: flex; align-items: center; justify-content: center;">
                                 <i class="bi bi-calendar"></i>
@@ -451,7 +451,9 @@
                              <table id="requestsTable" class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
                                  <thead class="bg-dark">
                                  <tr>
-                                     <th class="line-height-20 font-smaller"></th>
+                                     <th class="line-height-20 font-smaller">
+                                         <input type="checkbox" id="selectAllRequests" class="form-check-input" style="width: 1.1rem; height: 1.1rem; cursor: pointer;" title="Выбрать все / снять все">
+                                     </th>
                                      <th class="line-height-20 font-smaller">
                                          Адрес
                                          <span class="dropdown-toggle ms-1" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;"></span>

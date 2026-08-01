@@ -389,9 +389,21 @@ async function initEditRequestFormHandler() {
                     modal.hide();
                 }
 
-                // showAlert('Функционал в разработке', 'warning');
+                showAlert('Заявка обновлена', 'success');
 
-                location.reload(); // Или обновить строку таблицы
+                // Обновляем данные без перезагрузки страницы: раньше здесь был location.reload(),
+                // из-за которого сбрасывалась выбранная дата (на сегодня) и активная вкладка.
+                // Обновляем тот список, который сейчас открыт.
+                const planningTab = document.getElementById('planning');
+                const isPlanningActive = planningTab && planningTab.classList.contains('active');
+
+                if (isPlanningActive && typeof window.loadPlanningRequests === 'function') {
+                    window.loadPlanningRequests();
+                } else if (typeof window.refreshRequestsTable === 'function') {
+                    window.refreshRequestsTable();
+                } else {
+                    location.reload(); // крайний случай, если функции обновления недоступны
+                }
             } else {
                 console.error('Ошибка:', data.message || 'Неизвестная ошибка');
                 showAlert(data.message || 'Ошибка', 'danger');
@@ -7794,7 +7806,9 @@ document.addEventListener('change', function(event) {
     }
     if (event.target.id === 'selectAllRequests') {
         const isChecked = event.target.checked;
-        const checkboxes = document.querySelectorAll('.request-checkbox');
+        // Только таблица заявок: на странице есть ещё #requestsPlanningTable со своим
+        // чекбоксом «выбрать все», и без ограничения выделялись бы обе таблицы сразу.
+        const checkboxes = document.querySelectorAll('#requestsTable .request-checkbox');
         checkboxes.forEach(cb => {
             cb.checked = isChecked;
         });
