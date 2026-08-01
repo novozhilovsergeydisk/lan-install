@@ -551,6 +551,40 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
+    /**
+     * SQL-подзапрос: цифра в маркере на карте (и в карточке) — количество панелей по заявке.
+     *
+     * Привязка идёт по ID типа параметра (config/map.php), а НЕ по имени: название типа
+     * заказчик переименовывал («панели» → «Панели (новые)»), и привязка по строке ломалась бы.
+     * Панельных типов в справочнике несколько (исторические дубли) — берём первый найденный.
+     *
+     * Fallback: если у заявки нет ни одного панельного параметра (напр. «Демонтаж МЭШ» —
+     * там ИП/точки доступа), показываем первый параметр заявки, как было раньше.
+     */
+    private function panelQuantitySql(): string
+    {
+        $ids = array_filter(array_map('intval', (array) config('map.panel_parameter_type_ids', [])));
+
+        $firstParam = '(SELECT wp.quantity FROM work_parameters wp WHERE wp.request_id = r.id ORDER BY wp.id ASC LIMIT 1)';
+
+        if (empty($ids)) {
+            return $firstParam;
+        }
+
+        $idList = implode(',', $ids);
+
+        // Берём ПЕРВУЮ запись по id, а не сумму: у заявки может быть две записи одного
+        // параметра — плановая (создаётся с заявкой) и фактическая (дописывается при закрытии,
+        // created_at = closed_at). Флаги is_planning/is_done их не различают (обе f/t),
+        // порядок id — различает. Сумма сложила бы план с фактом (напр. 14 + 17 = 31).
+        return "COALESCE(
+                    (SELECT wp.quantity FROM work_parameters wp
+                      WHERE wp.request_id = r.id AND wp.parameter_type_id IN ({$idList})
+                      ORDER BY wp.id ASC LIMIT 1),
+                    {$firstParam}
+                 )";
+    }
+
     public function transferRequest(Request $request)
     {
         try {
@@ -1037,13 +1071,7 @@ class HomeController extends Controller
                  addr.longitude,
                  ct.name AS city_name,
                  ct.postal_code AS city_postal_code,
-                 (
-                    SELECT quantity
-                    FROM work_parameters wp
-                    WHERE wp.request_id = r.id
-                    ORDER BY wp.id ASC
-                    LIMIT 1
-                 ) AS first_param_quantity
+                 {$this->panelQuantitySql()} AS first_param_quantity
              FROM requests r
              LEFT JOIN clients c ON r.client_id = c.id
              LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1090,13 +1118,7 @@ class HomeController extends Controller
                         addr.longitude,
                         ct.name AS city_name,
                         ct.postal_code AS city_postal_code,
-                        (
-                            SELECT quantity
-                            FROM work_parameters wp
-                            WHERE wp.request_id = r.id
-                            ORDER BY wp.id ASC
-                            LIMIT 1
-                        ) AS first_param_quantity
+                        {$this->panelQuantitySql()} AS first_param_quantity
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1741,13 +1763,7 @@ class HomeController extends Controller
                             FROM request_comments rc
                             WHERE rc.request_id = r.id
                         ) AS comments_count,
-                        (
-                            SELECT quantity
-                            FROM work_parameters wp
-                            WHERE wp.request_id = r.id
-                            ORDER BY wp.id ASC
-                            LIMIT 1
-                        ) AS first_param_quantity
+                        {$this->panelQuantitySql()} AS first_param_quantity
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1802,13 +1818,7 @@ class HomeController extends Controller
                         addr.longitude,
                         ct.name AS city_name,
                         (SELECT COUNT(*) FROM request_comments rc WHERE rc.request_id = r.id) as comments_count,
-                        (
-                            SELECT quantity
-                            FROM work_parameters wp
-                            WHERE wp.request_id = r.id
-                            ORDER BY wp.id ASC
-                            LIMIT 1
-                        ) AS first_param_quantity
+                        {$this->panelQuantitySql()} AS first_param_quantity
                     FROM requests r
                     LEFT JOIN clients c ON r.client_id = c.id
                     LEFT JOIN request_statuses rs ON r.status_id = rs.id
