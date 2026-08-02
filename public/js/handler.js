@@ -1269,7 +1269,10 @@ export async function applyFilters() {
                              </td>
 
                              <!-- Состав бригады -->
-                            <td class="col-brigade" data-col-brigade-id="${request.brigade_id}">
+                            <!-- || '' обязателен: без него при brigade_id = null в атрибут попадёт
+                                 строка "null", и фильтр «Неназначенные бригады» (welcome.blade.php)
+                                 сочтёт бригаду назначенной и скроет все заявки. -->
+                            <td class="col-brigade" data-col-brigade-id="${request.brigade_id || ''}">
                                 <div data-name="brigadeMembers" class="col-brigade__div">
                                     ${brigadeMembers}
                                 </div>
@@ -2288,6 +2291,14 @@ export function initializePage() {
                 allOpt.value = '';
                 allOpt.textContent = 'Все сотрудники';
                 employeesSelect.appendChild(allOpt);
+
+                // «Не назначена бригада» — заменяет прежнюю отдельную кнопку-фильтр.
+                // Список пересобирается здесь целиком (innerHTML = ''), поэтому пункт,
+                // заданный в blade, нужно добавлять и тут — иначе он пропадает.
+                const unassignedOpt = document.createElement('option');
+                unassignedOpt.value = 'unassigned';
+                unassignedOpt.textContent = '— Не назначена бригада —';
+                employeesSelect.appendChild(unassignedOpt);
 
                 data.forEach(employee => {
                     const option = document.createElement('option');

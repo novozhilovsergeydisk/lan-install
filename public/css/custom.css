@@ -110,7 +110,9 @@
     left: 12px !important; /* Стандартный отступ контента в приложении */
     right: 12px !important;
     width: calc(100% - 24px) !important;
-    z-index: 2000 !important; /* Выше всего, включая навбар */
+    /* Выше навбара (1030), но НИЖЕ модалок Bootstrap (backdrop 1050, modal 1055) —
+       иначе залипшая панель перекрывает открытые окна (выбор даты и т.п.). */
+    z-index: 1040 !important;
     padding: 0.5rem 0 !important;
     margin: 0 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
@@ -148,7 +150,8 @@
 
 #requestsPlanningTable thead th.is-sticky {
     position: sticky !important;
-    z-index: 1050 !important;
+    /* Ниже залипшей панели (1040), иначе шапка наезжает на кнопки */
+    z-index: 1035 !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -171,12 +174,22 @@
 .requests-sticky-toolbar.is-sticky {
     position: fixed !important;
     top: 0 !important;
-    z-index: 2000 !important;
+    /* Выше навбара (1030), но НИЖЕ модалок Bootstrap (backdrop 1050, modal 1055) —
+       иначе залипшая панель перекрывает открытые окна (выбор даты и т.п.). */
+    z-index: 1040 !important;
     padding: 0.5rem 0 0.5rem 1.5rem !important;
     margin: 0 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     background-color: var(--bs-body-bg);
     border-radius: 0 !important;
+}
+
+/* Пока открыто модальное окно, залипшие панели прячем совсем: на мобильных они
+   занимают заметную часть экрана и мешают работать с содержимым окна
+   (жалоба 02.08.2026 — «окошко с выбором даты пропадает»). */
+body.modal-open .requests-sticky-toolbar.is-sticky,
+body.modal-open .planning-sticky-toolbar.is-sticky {
+    display: none !important;
 }
 
 /* В залипшем состоянии кнопки уже имеют свой отступ снизу — убираем двойной */
@@ -192,7 +205,8 @@
 
 #requestsTable thead th.is-sticky {
     position: sticky !important;
-    z-index: 1050 !important;
+    /* Ниже залипшей панели (1040), иначе шапка наезжает на кнопки */
+    z-index: 1035 !important;
     background-color: #212529 !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -200,7 +214,34 @@
 @media (max-width: 767.98px) {
     .requests-sticky-toolbar.is-sticky {
         border-radius: 0 !important;
-        padding-left: 0.75rem !important;
+        padding: 0.35rem 0.5rem !important;
+    }
+
+    /* На узком экране в залипшей панели оставляем только кнопки массовых действий:
+       «Календарь», «На карте» и переключатель «Планирование» при прокрутке не нужны
+       и занимают половину экрана (пожелание заказчика 02.08.2026). */
+    .requests-sticky-toolbar.is-sticky > *:not(.mass-actions-group) {
+        display: none !important;
+    }
+
+    /* Кнопки — только иконки, без подписей, в один ряд: экономим место.
+       Текст скрываем через font-size: 0 (он не обёрнут в отдельный элемент). */
+    .requests-sticky-toolbar.is-sticky .mass-actions-group {
+        flex-wrap: nowrap !important;
+        gap: 0.35rem !important;
+        margin: 0 !important;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .requests-sticky-toolbar.is-sticky .mass-actions-group .btn {
+        font-size: 0 !important;
+        padding: 0.35rem 0.6rem !important;
+    }
+
+    .requests-sticky-toolbar.is-sticky .mass-actions-group .btn i {
+        font-size: 1.05rem !important;
+        margin: 0 !important;
     }
 }
 

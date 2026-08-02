@@ -334,11 +334,15 @@
                                     <label id="employeeFilterLabel" for="employeeFilter" class="form-label d-none d-md-block"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-funnel text-slate-400 mr-2 flex-shrink-0" aria-hidden="true"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"></path></svg></label>
                                      <select name="employee_filter" id="employeeFilter" class="form-select w-50 ms-2" style="margin-top: -0.4rem;">
                                          <option value="">Все сотрудники</option>
+                                         <option value="unassigned">— Не назначена бригада —</option>
                                          @foreach ($employeesFilter as $employee)
                                              <option value="{{ $employee->id }}" data-fio="{{ $employee->fio }}">{{ $employee->fio }}</option>
                                          @endforeach
                                      </select>
-                                      <button class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 dark:active:bg-slate-700 ms-3" id="unassignedBrigadesFilter" style="margin-top: -0.4rem;">
+                                      {{-- Кнопка заменена пунктом «Не назначена бригада» в списке выше (пожелание
+                                           заказчика 02.08.2026: не занимать место дважды). Скрыта, а не удалена —
+                                           на неё завязаны обработчики фильтрации ниже по файлу. --}}
+                                      <button class="d-none px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors border bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 dark:active:bg-slate-700 ms-3" id="unassignedBrigadesFilter" style="margin-top: -0.4rem;">
                                           Неназначенные бригады
                                       </button>
                                  </div>
@@ -3855,9 +3859,11 @@
             const noRequestsRow = document.getElementById('no-requests-row');
             let visibleRowsCount = 0;
 
-            const isUnassignedFilterChecked = unassignedBrigadesFilter && unassignedBrigadesFilter.classList.contains('active');
-            console.log('applyFilters: isUnassignedFilterChecked =', isUnassignedFilterChecked);
             const selectedEmployeeValue = employeeFilter ? employeeFilter.value : '';
+            // «Не назначена бригада» теперь выбирается пунктом списка сотрудников; старая
+            // кнопка скрыта, но её состояние продолжаем учитывать (совместимость).
+            const isUnassignedFilterChecked = selectedEmployeeValue === 'unassigned'
+                || (unassignedBrigadesFilter && unassignedBrigadesFilter.classList.contains('active'));
             const selectedOption = employeeFilter ? employeeFilter.options[employeeFilter.selectedIndex] : null;
             const selectedFio = selectedOption ? selectedOption.getAttribute('data-fio') : '';
             const shortenedSelectedFio = shortenNameJs(selectedFio);

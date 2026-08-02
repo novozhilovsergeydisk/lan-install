@@ -5396,6 +5396,13 @@ export function initEmployeeFilter() {
 }
 
 async function handleEmployeeFilterChange(selectedEmployeeId) {
+    // «Не назначена бригада» — не сотрудник, фильтровать по ФИО нечего: этот пункт
+    // обрабатывает applyFilters() в welcome.blade.php (по атрибуту data-col-brigade-id).
+    // Без выхода здесь строился бы шаблон поиска вида «— Н.» и скрывались все заявки.
+    if (selectedEmployeeId === 'unassigned') {
+        return;
+    }
+
     // Получаем выбранный вариант из селекта
     const select = document.getElementById('employeeFilter');
     const selectedOption = select ? select.options[select.selectedIndex] : null;
