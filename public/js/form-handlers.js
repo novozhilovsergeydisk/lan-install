@@ -3611,8 +3611,14 @@ async function handleCommentEdit(commentElement, contentHtml, commentId, comment
                     // Очищаем сохраненную ссылку
                     delete window.currentEditedComment;
 
-                    // Находим и обновляем соответствующий элемент комментария в таблице заявок
-                    const commentInTable = document.querySelector(`[data-comment-request-id="${requestId}"]`);
+                    // Находим и обновляем соответствующий элемент комментария в таблице заявок.
+                    // Ищем по ID КОММЕНТАРИЯ: у одной заявки может быть несколько элементов с
+                    // data-comment-request-id (печатный и последний комментарий), и поиск только
+                    // по заявке затирал чужой комментарий текстом отредактированного.
+                    const commentInTable = (commentId
+                            ? document.querySelector(`[data-comment-id="${commentId}"]`)
+                            : null)
+                        || document.querySelector(`[data-comment-request-id="${requestId}"]`);
                     if (commentInTable) {
                         commentInTable.innerHTML = newText;
                         commentInTable.style.wordBreak = 'normal';

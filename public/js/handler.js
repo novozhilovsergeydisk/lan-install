@@ -93,7 +93,12 @@ export async function loadPlanningRequests() {
                 console.error('Ошибка парсинга комментариев:', e);
             }
 
-            const commentsContent = comments.length > 0 ? linkifyPreservingAnchors(comments[comments.length - 1].comment) : 'Нет комментариев';
+            // Комментарии приходят отсортированными по убыванию даты, поэтому «печатный
+            // комментарий» (самый первый по времени) — это последний элемент массива.
+            // Держим текст и id одним объектом: иначе редактирование по двойному клику
+            // сохраняло правку в ДРУГОЙ комментарий, и на экране она не появлялась.
+            const printedComment = comments.length > 0 ? comments[comments.length - 1] : null;
+            const commentsContent = printedComment ? linkifyPreservingAnchors(printedComment.comment) : 'Нет комментариев';
             const commentsCount = comments.length;
                 
             
@@ -139,6 +144,7 @@ export async function loadPlanningRequests() {
                          <small class="text-black d-block font-size-0-8rem">
                              <i>${request.phone || 'Нет телефона'}</i>
                          </small>
+                         <button type="button" class="btn btn-sm btn-outline-secondary mt-2 other-requests-btn" data-request-id="${request.id}" data-address-id="${request.address_id || ''}" data-bs-toggle="tooltip" title="Все заявки по адресу" data-bs-placement="right">Другие заявки</button>
                      </div>
                  </td>
                    <td class="col-comments">
@@ -147,11 +153,24 @@ export async function loadPlanningRequests() {
                       ${commentsContent.length > 0 ? `
                           <div class="comment-preview small text-dark" data-bs-toggle="tooltip">
                               <p class="comment-preview-title">Печатный комментарий:</p>
-                               <div data-comment-request-id="${request.id}" data-comment-id="${comments[0]?.id || ''}" class="comment-preview-text">${commentsContent}</div>
+                               <div data-comment-request-id="${request.id}" data-comment-id="${printedComment?.id || ''}" class="comment-preview-text">${commentsContent}</div>
                           </div>
                           ${commentsCount >= 1 ? `
                               <div class="mb-0">
-                                  ${(() => { const p = makeEscapedPreview(commentsContent, 4); return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${comments[0].created_at} | ${comments[0].author_fio}<br>${p.html}${p.ellipsis}</p>`; })()}
+                                  ${(() => {
+                                      // Последний комментарий = самый свежий (массив отсортирован по убыванию даты).
+                                      // Раньше сюда подставлялся текст ПЕЧАТНОГО комментария, а дата и автор —
+                                      // от свежего: в блоке оказывались данные от разных комментариев.
+                                      //
+                                      // data-comment-id здесь НЕ ставим (как и на вкладке «Заявки»): это
+                                      // обрезанное превью, а не полный текст. Если сделать его редактируемым,
+                                      // в редактор попадёт «дата | автор + первые слова…», и это превью
+                                      // сохранится в базу вместо самого комментария. Редактируется только
+                                      // печатный комментарий выше, где лежит полный текст.
+                                      const last = comments[0];
+                                      const p = makeEscapedPreview(linkifyPreservingAnchors(last.comment || ''), 4);
+                                      return `<p class="font-size-0-8rem mb-0 pt-1 ps-1 pe-1 last-comment">${last.created_at} | ${last.author_fio}<br>${p.html}${p.ellipsis}</p>`;
+                                  })()}
                               </div>
                               <div class="mt-1 d-flex align-items-center gap-2">
                                   <button type="button"
