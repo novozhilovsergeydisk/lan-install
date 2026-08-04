@@ -269,6 +269,12 @@ Route::prefix('api/users')->middleware('auth')->group(function () {
 });
 
 // Report Routes
+// Правка фактических количеств выполненных работ из отчётов (история — work_parameter_edits)
+Route::get('/api/requests/{requestId}/work-parameters', [\App\Http\Controllers\WorkParameterController::class, 'index'])
+    ->where('requestId', '[0-9]+')->name('work-parameters.index')->middleware('auth');
+Route::patch('/api/requests/{requestId}/work-parameters', [\App\Http\Controllers\WorkParameterController::class, 'update'])
+    ->where('requestId', '[0-9]+')->name('work-parameters.update')->middleware('auth');
+
 Route::prefix('reports')->middleware('auth')->group(function () {
     // Address and employee data
     Route::get('/addresses', [ReportController::class, 'getAddresses'])->name('reports.addresses');

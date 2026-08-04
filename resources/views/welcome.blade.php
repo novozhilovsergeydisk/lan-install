@@ -3534,6 +3534,42 @@
     </div>
 </div>
 
+{{-- Правка фактических объёмов выполненных работ (из отчётов).
+     Монтажники пишут в комментарии «выполнено 7 из 13», а поле не меняют — в выгрузку
+     уходят завышенные объёмы. Здесь правится только колонка «Выполнено», план остаётся
+     для сравнения. Каждое изменение пишется в историю (work_parameter_edits). --}}
+@if($user->isAdmin)
+<div class="modal fade" id="editWorkParametersModal" tabindex="-1" aria-labelledby="editWorkParametersModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editWorkParametersModalLabel">Выполненные объёмы</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editWorkParametersRequestId">
+                <div class="mb-3">
+                    Заявка: <strong id="editWorkParametersRequestNumber"></strong>
+                </div>
+
+                <div id="editWorkParametersContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveWorkParametersBtn" disabled>Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- New Planning Request Modal -->
 <div class="modal fade" id="newPlanningRequestModal" tabindex="-1" aria-labelledby="newPlanningRequestModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -5855,5 +5891,9 @@
     });
 </script>
     <script src="{{ asset('js/sticky-fix.js') }}?v={{ time() }}"></script>
+    @if($user->isAdmin)
+        {{-- Правка выполненных объёмов в отчётах (кнопка «Объёмы») --}}
+        <script src="{{ asset('js/work-parameters.js') }}?v={{ time() }}"></script>
+    @endif
 </body>
 </html>

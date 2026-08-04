@@ -725,6 +725,10 @@ export async function loadReport(changePage = 0) {
     }
 }
 
+// Нужна из work-parameters.js: после правки объёмов перезагружаем отчёт, чтобы
+// новые цифры сразу попали в таблицу (модули грузятся раздельно, поэтому через window).
+window.reloadCurrentReport = () => loadReport(0);
+
 function updatePaginationControls(itemsCount, totalPages) {
     let paginationContainer = document.getElementById('report-pagination-container');
     
@@ -1104,6 +1108,15 @@ export function renderReportTable(data) {
             <div class="brigade-info" style="color: #000;">
                 ${brigadeInfo}
             </div>
+            ${window.App?.user?.isAdmin ? `
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary mt-2 edit-work-parameters-btn"
+                        data-request-id="${request.id}"
+                        data-request-number="${request.number || ''}"
+                        title="Исправить количество выполненных работ">
+                    <i class="bi bi-pencil-square me-1"></i>Объёмы
+                </button>
+            ` : ''}
         `;
         row.appendChild(brigadeCell);
         

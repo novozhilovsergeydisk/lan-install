@@ -203,8 +203,13 @@ class HomeController extends Controller
 
             // 4. Update work parameters
             if (isset($validated['work_parameters'])) {
-                // Delete existing parameters for this request
-                DB::table('work_parameters')->where('request_id', $id)->delete();
+                // Пересобираем ТОЛЬКО плановые записи. Раньше удалялись все параметры заявки,
+                // включая фактические (is_planning = false, пишутся при закрытии) — любое
+                // редактирование закрытой заявки обнуляло выполненные объёмы в отчётах.
+                DB::table('work_parameters')
+                    ->where('request_id', $id)
+                    ->where('is_planning', true)
+                    ->delete();
 
                 // Insert new parameters
                 if (! empty($validated['work_parameters'])) {
