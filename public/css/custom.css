@@ -157,8 +157,62 @@
 
 /* Адаптивность для мобильных */
 @media (max-width: 767.98px) {
+    /* Панель шла в столбик (flex-column в разметке): каждая кнопка растягивалась
+       на всю ширину и втроём они съедали половину экрана (жалоба заказчика
+       05.08.2026). Раскладываем в ряд с переносом — как на вкладке «Заявки». */
     #planning-content {
         padding: 0.75rem;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 0.35rem !important;
+    }
+
+    /* Фильтр планирований оставляем отдельной строкой: названия типов длинные
+       и в ряду с кнопками он сжимается до нечитаемого. */
+    #planning-content > #planningSubtypeFilter {
+        flex: 0 0 100%;
+        width: 100% !important;
+    }
+
+    /* Размер как у btn-sm на «Заявках» — панель умещается в пару строк */
+    #planning-content > .btn {
+        padding: 0.2rem 0.5rem !important;
+        font-size: 0.75rem !important;
+        white-space: nowrap;
+    }
+}
+
+/* В залипшем состоянии на узком экране оставляем только массовые действия:
+   фильтр, «На карте», «Новая заявка» и «Загрузить заявки» при прокрутке не нужны.
+   Зеркалит поведение вкладки «Заявки» (см. .requests-sticky-toolbar выше). */
+@media (max-width: 767.98px) {
+    .planning-sticky-toolbar.is-sticky #planning-content {
+        padding: 0.35rem 0.5rem !important;
+    }
+
+    .planning-sticky-toolbar.is-sticky #planning-content > *:not(.mass-actions-group) {
+        display: none !important;
+    }
+
+    /* Кнопки — только иконки, без подписей, в один ряд: экономим место.
+       Текст скрываем через font-size: 0 (он не обёрнут в отдельный элемент). */
+    .planning-sticky-toolbar.is-sticky .mass-actions-group {
+        flex-wrap: nowrap !important;
+        gap: 0.35rem !important;
+        margin: 0 !important;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .planning-sticky-toolbar.is-sticky .mass-actions-group .btn {
+        font-size: 0 !important;
+        padding: 0.35rem 0.6rem !important;
+    }
+
+    .planning-sticky-toolbar.is-sticky .mass-actions-group .btn i {
+        font-size: 1.05rem !important;
+        margin: 0 !important;
     }
 }
 
