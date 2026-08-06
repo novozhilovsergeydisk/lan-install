@@ -546,7 +546,7 @@ let totalReportPages = 1;
 
 // Функция для загрузки отчёта
 // changePage: 0 = сброс, 1 = вперед, -1 = назад, 'first' = начало, 'last' = конец
-export async function loadReport(changePage = 0) {
+export async function loadReport(changePage = 0, { silent = false } = {}) {
     if (isLoading) return;
 
     let startDate = $('#datepicker-reports-start').datepicker('getFormattedDate');
@@ -557,6 +557,7 @@ export async function loadReport(changePage = 0) {
     const organizationSelect = document.getElementById('report-organizations');
     const requestTypeSelect = document.getElementById('report-request-types');
     const allPeriod = document.getElementById('report-all-period');
+    const searchInput = document.getElementById('report-search');
 
     // Безопасно получаем значения
     const employeeSelectValue = employeeSelect ? employeeSelect.value : 'all_employees';
@@ -564,11 +565,14 @@ export async function loadReport(changePage = 0) {
     const organizationSelectValue = organizationSelect ? organizationSelect.value : 'all_organizations';
     const requestTypeSelectValue = requestTypeSelect ? requestTypeSelect.value : 'all_request_types';
     const allPeriodChecked = allPeriod ? allPeriod.checked : false;
+    const searchValue = searchInput ? searchInput.value.trim() : '';
 
     let url = '';    
     
     if (!startDate || !endDate) {
-        showAlert('Необходимо указать даты', 'warning');
+        // silent — вызов из живого поиска (debounce по вводу): пока даты не заполнены,
+        // просто ничего не делаем, не заваливаем пользователя алертом на каждый символ.
+        if (!silent) showAlert('Необходимо указать даты', 'warning');
         return;
     }
 
@@ -663,6 +667,11 @@ export async function loadReport(changePage = 0) {
     // Добавляем organization только если она выбрана
     if (organizationSelectValue && organizationSelectValue !== 'all_organizations') {
         requestData.organization = organizationSelectValue;
+    }
+
+    // Добавляем search только если поле заполнено
+    if (searchValue) {
+        requestData.search = searchValue;
     }
 
     // Добавляем requestTypeId только если он выбран
@@ -801,6 +810,33 @@ function shortenName(fullName) {
     const parts = fullName.split(' ');
     if (parts.length <= 1) return fullName;
     return parts[0] + ' ' + parts[1][0] + '.' + (parts[2] ? parts[2][0] + '.' : '');
+}
+
+/**
+ * Бейдж «Найдено по: …» — почему заявка попала в выдачу поиска (имя/организация/
+ * телефон/комментарий). Сервер присылает search_match_* только когда search
+ * непустой (см. ReportController::applySearchMatchColumns) — но на всякий случай
+ * дополнительно проверяем активность поля поиска на странице, чтобы бейдж не
+ * рисовался, если данные вдруг остались от предыдущего запроса.
+ */
+function buildMatchReasonBadge(request) {
+    const searchInput = document.getElementById('report-search');
+    if (!searchInput || !searchInput.value.trim()) return '';
+
+    const labels = [];
+    if (request.search_match_fio) labels.push('имени');
+    if (request.search_match_organization) labels.push('организации');
+    if (request.search_match_phone) labels.push('телефону');
+    if (request.search_match_comment) labels.push('комментарию');
+
+    if (!labels.length) return '';
+
+    return `
+        <div class="mt-1">
+            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle" style="font-size: 0.7rem; font-weight: 500;">
+                <i class="bi bi-search"></i> Найдено по: ${labels.join(', ')}
+            </span>
+        </div>`;
 }
 
 /**
@@ -1003,11 +1039,13 @@ export function renderReportTable(data) {
                 ${request.client_fio ? 
                     `<span style="font-size: 0.9rem; color: #000;">${request.client_fio}</span>` : ''}
                 
-                ${request.client_phone ? 
+                ${request.client_phone ?
                     `<small style="color: #000;">
                         <i class="bi bi-telephone"></i> ${request.client_phone}
-                    </small>` : 
+                    </small>` :
                     '<small style="color: #000;"><i>Нет телефона</i></small>'}
+
+                ${buildMatchReasonBadge(request)}
             </div>
         `;
 
@@ -1300,6 +1338,38 @@ export async function initReportHandlers() {
                 await loadReport();
             } catch (error) {
                 console.error('Ошибка при генерации отчёта:', error);
+                showAlert('Произошла ошибка при загрузке отчёта: ' + error, 'danger');
+            }
+        });
+    }
+
+    // Живой поиск: отчёт обновляется сам через паузу после ввода — без задержки
+    // каждое нажатие клавиши слало бы отдельный запрос к серверу и БД.
+    const searchInput = document.getElementById('report-search');
+    if (searchInput) {
+        let searchDebounceTimer = null;
+        const SEARCH_DEBOUNCE_MS = 500;
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(async () => {
+                try {
+                    await loadReport(0, { silent: true });
+                } catch (error) {
+                    console.error('Ошибка при живом поиске в отчёте:', error);
+                }
+            }, SEARCH_DEBOUNCE_MS);
+        });
+
+        // Enter — сразу, без ожидания задержки
+        searchInput.addEventListener('keydown', async (event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            clearTimeout(searchDebounceTimer);
+            try {
+                await loadReport();
+            } catch (error) {
+                console.error('Ошибка при поиске в отчёте:', error);
                 showAlert('Произошла ошибка при загрузке отчёта: ' + error, 'danger');
             }
         });

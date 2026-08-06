@@ -43,6 +43,7 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
         $allPeriod = isset($this->filters['allPeriod']) && ($this->filters['allPeriod'] === true || $this->filters['allPeriod'] === 'true' || $this->filters['allPeriod'] === 1);
         $organization = $this->filters['organization'] ?? null;
         $requestTypeId = $this->filters['requestTypeId'] ?? null;
+        $search = trim((string) ($this->filters['search'] ?? ''));
 
         // request_equipment может отсутствовать (до миграции на сервере / после переката БД) — тогда не ломаем отчёт.
         $hasEquip = \Illuminate\Support\Facades\Schema::hasTable('request_equipment');
@@ -186,6 +187,50 @@ class RequestsReportExport implements FromCollection, WithHeadings, WithMapping,
         }
         if ($requestTypeId) {
             $query->where('r.request_type_id', $requestTypeId);
+        }
+
+        // Сквозной поиск (контакт, телефон без маски, текст комментариев) — та же
+        // логика, что и в ReportController::applySearchFilter, чтобы выгрузка
+        // совпадала с тем, что видно на экране в «Отчётах».
+        if ($search !== '') {
+            $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search).'%';
+
+            // Телефоном считаем строку целиком из цифр/разделителей маски — иначе цифры
+            // внутри обычного текста («выполнено 37/50») ложно матчили бы номера, где
+            // они просто встречаются (см. ReportController::extractPhoneDigits).
+            $phoneDigits = null;
+            if (preg_match('/^[\d\s()+\-]+$/u', $search)) {
+                $digits = preg_replace('/\D/', '', $search);
+
+                // Ведущую «7»/«8» снимаем всегда — иначе «+7 900» и «8 900» дают разные
+                // цифры и находят разное, хотя заказчик имеет в виду один код
+                // (см. ReportController::extractPhoneDigits).
+                if (strlen($digits) >= 2 && in_array($digits[0], ['7', '8'], true)) {
+                    $digits = substr($digits, 1);
+                }
+
+                $phoneDigits = (strlen($digits) >= 10) ? substr($digits, -10)
+                    : ((strlen($digits) >= 3) ? $digits : null);
+            }
+
+            $query->where(function ($q) use ($like, $phoneDigits) {
+                $q->where('c.fio', 'ILIKE', $like)
+                    ->orWhere('c.organization', 'ILIKE', $like)
+                    ->orWhereExists(function ($sub) use ($like) {
+                        $sub->select(DB::raw(1))
+                            ->from('request_comments as rc_search')
+                            ->join('comments as cm_search', 'rc_search.comment_id', '=', 'cm_search.id')
+                            ->whereColumn('rc_search.request_id', 'r.id')
+                            ->where('cm_search.comment', 'ILIKE', $like);
+                    });
+
+                if ($phoneDigits !== null) {
+                    // Матчим только с начала или с конца хвоста номера — не «где угодно
+                    // в середине» (см. ReportController::applySearchFilter).
+                    $q->orWhereRaw("RIGHT(regexp_replace(COALESCE(c.phone, ''), '[^0-9]', '', 'g'), 10) LIKE ?", [$phoneDigits.'%'])
+                        ->orWhereRaw("RIGHT(regexp_replace(COALESCE(c.phone, ''), '[^0-9]', '', 'g'), 10) LIKE ?", ['%'.$phoneDigits]);
+                }
+            });
         }
 
         $query->orderBy('r.execution_date', 'DESC')->orderBy('r.id', 'DESC');

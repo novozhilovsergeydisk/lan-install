@@ -11,6 +11,215 @@ use Maatwebsite\Excel\Facades\Excel;
 class ReportController extends Controller
 {
     /**
+     * Сквозной поиск по отчётам: имя/организация контакта, телефон (с очисткой
+     * от масок с обеих сторон) и текст комментариев заявки.
+     *
+     * Версия для методов на сыром SQL ($sqlBase-паттерн). Возвращает ДВЕ независимые
+     * пары sql/bindings:
+     *  - where_sql/where_bindings — фрагмент ' AND (...)' для фильтрации (как раньше);
+     *  - select_sql/select_bindings — доп. колонки search_match_fio/organization/
+     *    phone/comment (boolean), чтобы фронт мог показать «Найдено по: …».
+     * Порядок важен: select_sql должен оказаться в тексте запроса РАНЬШЕ where_sql
+     * (SELECT предшествует WHERE), поэтому и select_bindings должны идти в массиве
+     * bindings раньше where_bindings — вызывающий код обязан это соблюсти.
+     * Пустой/отсутствующий поисковый запрос — все фрагменты пустые, фильтр не применяется.
+     */
+    private function buildSearchSql(?string $search): array
+    {
+        $search = trim((string) $search);
+        if ($search === '') {
+            return ['where_sql' => '', 'where_bindings' => [], 'select_sql' => '', 'select_bindings' => []];
+        }
+
+        $like = '%'.$this->escapeLikeValue($search).'%';
+        $phoneDigits = $this->extractPhoneDigits($search);
+
+        $commentExistsSql = 'EXISTS (
+                SELECT 1 FROM request_comments rc_search
+                JOIN comments cm_search ON rc_search.comment_id = cm_search.id
+                WHERE rc_search.request_id = r.id AND cm_search.comment ILIKE ?
+            )';
+
+        $whereBindings = [$like, $like, $like];
+        $whereSql = " AND (
+            c.fio ILIKE ?
+            OR c.organization ILIKE ?
+            OR {$commentExistsSql}";
+
+        $selectBindings = [$like, $like, $like];
+        $selectSql = ",
+            (c.fio ILIKE ?) AS search_match_fio,
+            (c.organization ILIKE ?) AS search_match_organization,
+            {$commentExistsSql} AS search_match_comment";
+
+        if ($phoneDigits !== null) {
+            // Матчим только с начала (код/префикс) или с конца (хвост номера) —
+            // не «где угодно в середине»: у 10-значного мобильного номера почти
+            // любая короткая цифровая последовательность случайно где-нибудь да
+            // встретится (см. регресс с «900», найденный заказчиком 05.08.2026).
+            $phoneCmpSql = "RIGHT(regexp_replace(COALESCE(c.phone, ''), '[^0-9]', '', 'g'), 10) LIKE ?"
+                         .' OR RIGHT(regexp_replace(COALESCE(c.phone, \'\'), \'[^0-9]\', \'\', \'g\'), 10) LIKE ?';
+
+            $whereSql .= ' OR '.$phoneCmpSql;
+            $whereBindings[] = $phoneDigits.'%';
+            $whereBindings[] = '%'.$phoneDigits;
+
+            $selectSql .= ",
+            ({$phoneCmpSql}) AS search_match_phone";
+            $selectBindings[] = $phoneDigits.'%';
+            $selectBindings[] = '%'.$phoneDigits;
+        } else {
+            $selectSql .= ', false AS search_match_phone';
+        }
+
+        $whereSql .= ')';
+
+        return [
+            'where_sql' => $whereSql, 'where_bindings' => $whereBindings,
+            'select_sql' => $selectSql, 'select_bindings' => $selectBindings,
+        ];
+    }
+
+    /**
+     * Та же логика поиска для методов на Query Builder — накладывает условие
+     * прямо на переданный $query (алиас клиента везде 'c', заявки — 'r') и
+     * добавляет колонки search_match_* для бейджей «Найдено по: …» на фронте.
+     *
+     * $hasGroupBy — методы со STRING_AGG(brigade_members) группируют по r.id и
+     * колонкам клиента; Postgres не разрешит добавить необёрнутое boolean-выражение
+     * в SELECT такого запроса (потребует добавить его в GROUP BY). bool_or(...)
+     * решает это без изменения GROUP BY: в пределах группы значение и так одно.
+     */
+    private function applySearchFilter($query, ?string $search): void
+    {
+        $search = trim((string) $search);
+        if ($search === '') {
+            return;
+        }
+
+        $like = '%'.$this->escapeLikeValue($search).'%';
+        $phoneDigits = $this->extractPhoneDigits($search);
+
+        $query->where(function ($q) use ($like, $phoneDigits) {
+            $q->where('c.fio', 'ILIKE', $like)
+                ->orWhere('c.organization', 'ILIKE', $like)
+                ->orWhereExists(function ($sub) use ($like) {
+                    $sub->select(DB::raw(1))
+                        ->from('request_comments as rc_search')
+                        ->join('comments as cm_search', 'rc_search.comment_id', '=', 'cm_search.id')
+                        ->whereColumn('rc_search.request_id', 'r.id')
+                        ->where('cm_search.comment', 'ILIKE', $like);
+                });
+
+            if ($phoneDigits !== null) {
+                // Матчим только с начала или с конца хвоста номера — не «где угодно
+                // в середине» (см. buildSearchSql — тот же аргумент).
+                $q->orWhereRaw("RIGHT(regexp_replace(COALESCE(c.phone, ''), '[^0-9]', '', 'g'), 10) LIKE ?", [$phoneDigits.'%'])
+                    ->orWhereRaw("RIGHT(regexp_replace(COALESCE(c.phone, ''), '[^0-9]', '', 'g'), 10) LIKE ?", ['%'.$phoneDigits]);
+            }
+        });
+    }
+
+    /**
+     * Добавляет search_match_fio/organization/phone/comment колонки в $query —
+     * ОТДЕЛЬНО от applySearchFilter() и вызывается ПОСЛЕ расчёта total.
+     *
+     * Почему отдельно: методы с пагинацией считают total через
+     * `DB::table(DB::raw("({$query->toSql()}) as sub"))->mergeBindings($query)->count()`.
+     * Laravel's `count()` внутри вызывает `cloneWithoutBindings(['select'])` — считая,
+     * что select-bindings принадлежат заменяемому списку колонок COUNT-запроса.
+     * Но здесь они на самом деле нужны для плейсхолдеров ВНУТРИ подзапроса, который
+     * подставлен в FROM через DB::raw() как текст, а не для SELECT самого total-запроса.
+     * Laravel их всё равно вырезает — итог: "bind message supplies N, requires N+k"
+     * (поймано именно на этом при тестировании 05.08.2026). Поэтому колонки с
+     * причиной совпадения добавляются только к финальному запросу данных, когда
+     * total уже посчитан и больше не будет пересобираться в подзапрос.
+     */
+    private function applySearchMatchColumns($query, ?string $search, bool $hasGroupBy = false): void
+    {
+        $search = trim((string) $search);
+        if ($search === '') {
+            return;
+        }
+
+        $like = '%'.$this->escapeLikeValue($search).'%';
+        $phoneDigits = $this->extractPhoneDigits($search);
+
+        $commentExistsSql = 'EXISTS (
+            SELECT 1 FROM request_comments rc_search_sel
+            JOIN comments cm_search_sel ON rc_search_sel.comment_id = cm_search_sel.id
+            WHERE rc_search_sel.request_id = r.id AND cm_search_sel.comment ILIKE ?
+        )';
+
+        $fioExpr = 'c.fio ILIKE ?';
+        $orgExpr = 'c.organization ILIKE ?';
+        $commentExpr = $commentExistsSql;
+
+        if ($hasGroupBy) {
+            $fioExpr = "bool_or({$fioExpr})";
+            $orgExpr = "bool_or({$orgExpr})";
+            $commentExpr = "bool_or({$commentExpr})";
+        }
+
+        $query->selectRaw("({$fioExpr}) AS search_match_fio", [$like]);
+        $query->selectRaw("({$orgExpr}) AS search_match_organization", [$like]);
+        $query->selectRaw("{$commentExpr} AS search_match_comment", [$like]);
+
+        if ($phoneDigits !== null) {
+            $phoneCmpSql = "RIGHT(regexp_replace(COALESCE(c.phone, ''), '[^0-9]', '', 'g'), 10) LIKE ?"
+                         .' OR RIGHT(regexp_replace(COALESCE(c.phone, \'\'), \'[^0-9]\', \'\', \'g\'), 10) LIKE ?';
+            $phoneExpr = $hasGroupBy ? "bool_or({$phoneCmpSql})" : $phoneCmpSql;
+            $query->selectRaw("({$phoneExpr}) AS search_match_phone", [$phoneDigits.'%', '%'.$phoneDigits]);
+        } else {
+            $query->selectRaw('false AS search_match_phone');
+        }
+    }
+
+    /**
+     * Цифры телефона из поискового запроса без маски. Возвращает null, если строка
+     * не похожа на телефон целиком (не только цифры и разделители маски) — иначе
+     * цифры внутри обычного текста комментария («выполнено 37/50», «панелей 999»)
+     * ложно матчили бы случайные номера телефонов, где эти цифры просто встречаются
+     * (напр. код оператора +7 999...). Меньше 3 цифр тоже не фильтруем — иначе
+     * 'LIKE %%' совпал бы вообще со всеми записями.
+     *
+     * Ведущую «7» или «8» снимаем ВСЕГДА (не только для полных номеров) — иначе
+     * «+7 900» и «8 900» дают разные цифры (7900 / 8900) и находят разное, хотя
+     * заказчик имеет в виду один и тот же код. Она встречается только как код
+     * страны/выхода — у российского мобильного номера без него первая цифра
+     * национальной части всегда «9», так что ложных срабатываний не будет.
+     * Если после этого цифр 10 и больше — берём хвост в 10 (страховка на случай
+     * полного номера длиннее ожидаемого).
+     */
+    private function extractPhoneDigits(string $search): ?string
+    {
+        if (! preg_match('/^[\d\s()+\-]+$/u', $search)) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D/', '', $search);
+
+        if (strlen($digits) >= 2 && in_array($digits[0], ['7', '8'], true)) {
+            $digits = substr($digits, 1);
+        }
+
+        if (strlen($digits) < 3) {
+            return null;
+        }
+
+        return strlen($digits) >= 10 ? substr($digits, -10) : $digits;
+    }
+
+    /**
+     * Экранирование спецсимволов LIKE/ILIKE (Postgres по умолчанию использует
+     * обратный слеш как escape-символ — отдельный ESCAPE не нужен).
+     */
+    private function escapeLikeValue(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
+
+    /**
      * Экспорт отчета в Excel
      */
     public function export(Request $request)
@@ -24,6 +233,7 @@ class ReportController extends Controller
                 'organization',
                 'requestTypeId',
                 'allPeriod',
+                'search',
             ]);
 
             // Маппинг 'all_employees' и прочих пустых значений в null
@@ -124,8 +334,11 @@ class ReportController extends Controller
                             ->whereColumn('bm2.brigade_id', 'b.id')
                             ->where('bm2.employee_id', $employeeId);
                     })->orWhere('b.leader_id', $employeeId);
-                })
-                ->groupBy([
+                });
+
+            $this->applySearchFilter($query, $request->input('search'));
+
+            $query->groupBy([
                     'r.id', 'c.fio', 'c.phone', 'c.organization',
                     'rs.name', 'rs.color', 'rst.name', 'rt.name', 'rt.color', 'b.name', 'e.fio', 'op.fio',
                     'addr.street', 'addr.houses', 'addr.district',
@@ -136,6 +349,9 @@ class ReportController extends Controller
             $total = DB::table(DB::raw("({$query->toSql()}) as sub"))
                 ->mergeBindings($query)
                 ->count();
+
+            // Колонки search_match_* — ПОСЛЕ total (см. applySearchMatchColumns).
+            $this->applySearchMatchColumns($query, $request->input('search'), hasGroupBy: true);
 
             $query->orderBy('r.execution_date', 'DESC')
                 ->orderBy('r.id', 'DESC');
@@ -300,8 +516,12 @@ class ReportController extends Controller
                             ->whereColumn('bm2.brigade_id', 'b.id')
                             ->where('bm2.employee_id', $employeeId);
                     })->orWhere('b.leader_id', $employeeId);
-                })
-                ->groupBy([
+                });
+
+            $this->applySearchFilter($query, $request->input('search'));
+            $this->applySearchMatchColumns($query, $request->input('search'), hasGroupBy: true);
+
+            $query->groupBy([
                     'r.id', 'c.fio', 'c.phone', 'c.organization',
                     'rs.name', 'rs.color', 'rst.name', 'rt.name', 'rt.color', 'b.name', 'e.fio', 'op.fio',
                     'addr.street', 'addr.houses', 'addr.district',
@@ -359,9 +579,14 @@ class ReportController extends Controller
             LEFT JOIN addresses addr ON ra.address_id = addr.id
             LEFT JOIN cities ct ON addr.city_id = ct.id
             WHERE addr.id = ?';
+            $baseBindings = [$addressId];
 
-            // Calculate total
-            $total = DB::select('SELECT COUNT(*) as total '.$sqlBase, [$addressId])[0]->total;
+            $searchFilter = $this->buildSearchSql($request->input('search'));
+            $sqlBase .= $searchFilter['where_sql'];
+            $baseBindings = array_merge($baseBindings, $searchFilter['where_bindings']);
+
+            // Calculate total (без search_match_* колонок — они не нужны для подсчёта)
+            $total = DB::select('SELECT COUNT(*) as total '.$sqlBase, $baseBindings)[0]->total;
 
             $sql = '
             SELECT
@@ -382,13 +607,19 @@ class ReportController extends Controller
                 addr.district,
                 addr.city_id,
                 ct.name AS city_name,
-                ct.postal_code AS city_postal_code
+                ct.postal_code AS city_postal_code'
+                .$searchFilter['select_sql'].'
             '.$sqlBase.'
             ORDER BY r.execution_date DESC, r.id DESC
             LIMIT ? OFFSET ?
             ';
 
-            $requestsByAddressAndDateRange = DB::select($sql, [$addressId, $limit, $offset]);
+            // select_sql (если есть) стоит в тексте запроса РАНЬШЕ sqlBase (SELECT перед WHERE) —
+            // поэтому select_bindings должны идти в массиве раньше baseBindings.
+            $requestsByAddressAndDateRange = DB::select(
+                $sql,
+                array_merge($searchFilter['select_bindings'], $baseBindings, [$limit, $offset])
+            );
 
             // Optimization: Fetch only relevant brigade members and comments
             $requestIds = array_column($requestsByAddressAndDateRange, 'id');
@@ -564,6 +795,8 @@ class ReportController extends Controller
             $endDate = \DateTime::createFromFormat('d.m.Y', $request->input('endDate'))->format('Y-m-d');
             $addressId = $request->input('addressId');
 
+            $searchFilter = $this->buildSearchSql($request->input('search'));
+
             $sql = '
             SELECT
                 r.*,
@@ -583,7 +816,8 @@ class ReportController extends Controller
                 addr.district,
                 addr.city_id,
                 ct.name AS city_name,
-                ct.postal_code AS city_postal_code
+                ct.postal_code AS city_postal_code'
+                .$searchFilter['select_sql'].'
             FROM requests r
             LEFT JOIN clients c ON r.client_id = c.id
             LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -596,11 +830,18 @@ class ReportController extends Controller
             LEFT JOIN addresses addr ON ra.address_id = addr.id
             LEFT JOIN cities ct ON addr.city_id = ct.id
             WHERE r.execution_date::date BETWEEN ? AND ?
-            AND addr.id = ?
-            ORDER BY r.execution_date DESC, r.id DESC
-        ';
+            AND addr.id = ?';
 
-            $requestsByAddressAndDateRange = DB::select($sql, [$startDate, $endDate, $addressId]);
+            // select_sql стоит в тексте запроса РАНЬШЕ WHERE — поэтому select_bindings
+            // должны идти в массиве раньше bindings диапазона дат/адреса.
+            $bindings = array_merge($searchFilter['select_bindings'], [$startDate, $endDate, $addressId]);
+
+            $sql .= $searchFilter['where_sql'];
+            $bindings = array_merge($bindings, $searchFilter['where_bindings']);
+
+            $sql .= ' ORDER BY r.execution_date DESC, r.id DESC';
+
+            $requestsByAddressAndDateRange = DB::select($sql, $bindings);
 
             $data = [
                 'success' => true,
@@ -1059,6 +1300,8 @@ class ReportController extends Controller
                 $query->where('r.request_type_id', $request->requestTypeId);
             }
 
+            $this->applySearchFilter($query, $request->input('search'));
+
             $query->groupBy([
                 'r.id', 'c.fio', 'c.phone', 'c.organization',
                 'rs.name', 'rs.color', 'rst.name', 'rt.name', 'rt.color', 'b.name', 'e.fio', 'op.fio',
@@ -1070,6 +1313,9 @@ class ReportController extends Controller
             $total = DB::table(DB::raw("({$query->toSql()}) as sub"))
                 ->mergeBindings($query)
                 ->count();
+
+            // Колонки search_match_* — ПОСЛЕ total (см. applySearchMatchColumns).
+            $this->applySearchMatchColumns($query, $request->input('search'), hasGroupBy: true);
 
             $query->orderByDesc('r.execution_date')
                 ->orderByDesc('r.id');
@@ -1233,7 +1479,11 @@ class ReportController extends Controller
                 $bindings[] = $request->requestTypeId;
             }
 
-            // Calculate total
+            $searchFilter = $this->buildSearchSql($request->input('search'));
+            $sqlBase .= $searchFilter['where_sql'];
+            array_push($bindings, ...$searchFilter['where_bindings']);
+
+            // Calculate total (без search_match_* колонок — они не нужны для подсчёта)
             $total = DB::select("SELECT COUNT(*) as total $sqlBase", $bindings)[0]->total;
 
             $sql = "
@@ -1255,22 +1505,25 @@ class ReportController extends Controller
                         addr.city_id,
                         ct.name AS city_name,
                         ct.postal_code AS city_postal_code
+                        {$searchFilter['select_sql']}
                     $sqlBase
                     ORDER BY execution_date DESC
                     LIMIT ? OFFSET ?
                 ";
 
-            $bindings[] = $limit;
-            $bindings[] = $offset;
+            // select_sql стоит в тексте запроса РАНЬШЕ $sqlBase (SELECT перед WHERE) —
+            // поэтому select_bindings должны идти в массиве раньше $bindings (в котором
+            // уже накоплены organization/requestTypeId/where_bindings по порядку их '?').
+            $mainBindings = array_merge($searchFilter['select_bindings'], $bindings, [$limit, $offset]);
 
             // Логируем SQL-запрос для отладки
             \Log::info('SQL Query in getAllPeriod:', [
                 'sql' => $sql,
-                'bindings' => $bindings,
+                'bindings' => $mainBindings,
                 'page' => $page,
             ]);
 
-            $requestsAllPeriod = DB::select($sql, $bindings);
+            $requestsAllPeriod = DB::select($sql, $mainBindings);
 
             // Optimization: Fetch only relevant brigade members and comments
             $requestIds = array_column($requestsAllPeriod, 'id');
@@ -1477,7 +1730,12 @@ class ReportController extends Controller
                 ORDER BY r.execution_date DESC, r.id DESC
             ';
 
-            $bindings = [$startDate, $endDate];
+            $searchFilter = $this->buildSearchSql($request->input('search'));
+
+            // select_sql (search_match_* колонки) должен оказаться в тексте запроса
+            // РАНЬШЕ WHERE (SELECT предшествует WHERE) — поэтому select_bindings идут
+            // в массиве раньше $bindings диапазона дат/organization/requestTypeId.
+            $bindings = array_merge($searchFilter['select_bindings'], [$startDate, $endDate]);
 
             $sql = '
                 SELECT
@@ -1498,7 +1756,8 @@ class ReportController extends Controller
                     addr.district,
                     addr.city_id,
                     ct.name AS city_name,
-                    ct.postal_code AS city_postal_code
+                    ct.postal_code AS city_postal_code'
+                    .$searchFilter['select_sql'].'
                 FROM requests r
                 LEFT JOIN clients c ON r.client_id = c.id
                 LEFT JOIN request_statuses rs ON r.status_id = rs.id
@@ -1523,6 +1782,9 @@ class ReportController extends Controller
                 $sql .= ' AND r.request_type_id = ?';
                 $bindings[] = $request->requestTypeId;
             }
+
+            $sql .= $searchFilter['where_sql'];
+            array_push($bindings, ...$searchFilter['where_bindings']);
 
             $sql .= ' ORDER BY r.execution_date DESC, r.id DESC';
 
@@ -1698,6 +1960,9 @@ class ReportController extends Controller
             if ($request->has('requestTypeId') && ! empty($request->requestTypeId)) {
                 $query->where('r.request_type_id', $request->requestTypeId);
             }
+
+            $this->applySearchFilter($query, $request->input('search'));
+            $this->applySearchMatchColumns($query, $request->input('search'), hasGroupBy: true);
 
             $query->groupBy([
                 'r.id', 'c.fio', 'c.phone', 'c.organization',

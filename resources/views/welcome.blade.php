@@ -1496,7 +1496,19 @@
                                 <!-- Сюда динамически загружаем список типов заявок -->
                             </div>
                         </div>
-                        
+
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <label for="report-search" class="form-label">Поиск</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control" id="report-search"
+                                           placeholder="Имя, телефон или текст комментария">
+                                </div>
+                                <small class="form-text text-muted">Ищет по имени контакта, телефону (в любом формате записи) и тексту комментариев заявки</small>
+                            </div>
+                        </div>
+
                         <div class="row mb-3">
                             <div class="col-md-12">
                                 <div class="form-check form-switch mt-2">

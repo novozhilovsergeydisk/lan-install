@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const organizationSelect = document.getElementById('report-organizations');
             const requestTypeSelect = document.getElementById('report-request-types');
             const allPeriodCheckbox = document.getElementById('report-all-period');
-            
+            const searchInput = document.getElementById('report-search');
+
             const payload = {
                 startDate: startDate,
                 endDate: endDate,
@@ -20,7 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 employeeId: employeeSelect ? employeeSelect.value : null,
                 addressId: addressSelect ? addressSelect.value : null,
                 organization: organizationSelect ? organizationSelect.value : null,
-                requestTypeId: requestTypeSelect ? requestTypeSelect.value : null
+                requestTypeId: requestTypeSelect ? requestTypeSelect.value : null,
+                search: searchInput && searchInput.value.trim() ? searchInput.value.trim() : null
             };
 
             console.log('📤 [Export Debug] Sending payload:', payload);
