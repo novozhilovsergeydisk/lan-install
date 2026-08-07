@@ -455,8 +455,11 @@
                              <table id="requestsTable" class="table table-hover align-middle mb-0" style="margin-bottom: 0;">
                                  <thead class="bg-dark">
                                  <tr>
-                                     <th class="line-height-20 font-smaller">
+                                     <th class="line-height-20 font-smaller th-select-all">
                                          <input type="checkbox" id="selectAllRequests" class="form-check-input" style="width: 1.1rem; height: 1.1rem; cursor: pointer;" title="Выбрать все / снять все">
+                                         {{-- На мобильном шапка таблицы скрыта (строки становятся карточками),
+                                              но чекбокс «выбрать все» нужен — оставляем его отдельной полоской с подписью --}}
+                                         <label for="selectAllRequests" class="d-md-none ms-2 mb-0 select-all-label">Выбрать все</label>
                                      </th>
                                      <th class="line-height-20 font-smaller">
                                          Адрес
@@ -1646,8 +1649,11 @@
                               <table id="requestsPlanningTable" class="table table-hover align-middle mb-0" style="">
                                   <thead class="bg-dark">
                                   <tr>
-                                      <th class="line-height-20 font-smaller">
+                                      <th class="line-height-20 font-smaller th-select-all">
                                           <input type="checkbox" id="selectAllRequestsPlanning" class="form-check-input" style="width: 1.1rem; height: 1.1rem; cursor: pointer;">
+                                          {{-- См. комментарий у #selectAllRequests: подпись нужна, т.к. на мобильном
+                                               шапка таблицы скрыта и без неё чекбокс висел бы без объяснения --}}
+                                          <label for="selectAllRequestsPlanning" class="d-md-none ms-2 mb-0 select-all-label">Выбрать все</label>
                                       </th>
                                       <th class="line-height-20 font-smaller">
                                           Адрес

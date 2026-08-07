@@ -250,21 +250,8 @@
         width: 12rem !important;
     }
 
-    /* Колонка с номером больше не скрывается: в ней теперь чекбокс
-       массового выбора заявок, он должен быть доступен и на мобильных */
-    #requestsTable .col-number {
-        width: 2rem;
-        padding-left: 0.25rem;
-        padding-right: 0.25rem;
-        text-align: center;
-    }
-
     .view-comments-btn i {
         display: none;
-    }
-
-    .col-comments {
-        width: 10rem;
     }
 
     .col-date__date {
@@ -285,14 +272,6 @@
     .th-col {
         font-size: clamp(0.65rem, 1vw, 1rem) !important;
         line-height: clamp(0.65rem, 1vw, 1rem) !important;
-    }
-
-    .col-address {
-        width: 8rem;
-    }
-
-    .col-brigade {
-        width: 8rem;
     }
 
     .col-date {
@@ -428,4 +407,178 @@
 /* Для очень маленьких экранов */
 @media (max-width: 400px) {
 
+}
+
+/* ============================================================================
+   Блок 5 ТЗ (Фурса, 31.07.2026): мобильная вёрстка «Заявок» и «Планирования».
+   Раньше обе таблицы на телефоне оставались таблицами с фиксированными
+   ширинами колонок (8rem + 10rem + 8rem + 2rem ≈ 450px) — шире экрана,
+   отсюда горизонтальная прокрутка и обрезанный текст.
+   Делаем «по образу и подобию вкладки Отчёты» (см. #requestsReportTable выше):
+   строка таблицы разворачивается в карточку, ячейки идут в столбик.
+   ========================================================================= */
+@media (max-width: 768px) {
+    /* Обёртка больше не должна прокручиваться вбок — карточки влезают по ширине */
+    #requests-table-container.table-responsive,
+    #planning-container ~ .table-responsive,
+    .table-responsive.t-custom {
+        overflow-x: visible !important;
+    }
+
+    #requestsTable,
+    #requestsPlanningTable {
+        display: block;
+        width: 100% !important;
+    }
+
+    /* Шапку не прячем целиком (в отличие от отчётов): в первой ячейке живёт
+       чекбокс «выбрать все» из блока 1 ТЗ — без него пропали бы массовые
+       действия. Оставляем от шапки только эту ячейку, отдельной полоской. */
+    #requestsTable thead,
+    #requestsPlanningTable thead {
+        display: block;
+        width: 100%;
+    }
+
+    #requestsTable thead tr,
+    #requestsPlanningTable thead tr {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 0.4rem 0.6rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    #requestsTable thead th,
+    #requestsPlanningTable thead th {
+        display: none;
+    }
+
+    #requestsTable thead th.th-select-all,
+    #requestsPlanningTable thead th.th-select-all {
+        display: flex !important;
+        align-items: center;
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    .select-all-label {
+        cursor: pointer;
+        user-select: none;
+        font-size: 0.85rem;
+    }
+
+    #requestsTable tbody,
+    #requestsPlanningTable tbody {
+        display: block;
+        width: 100%;
+    }
+
+    /* Строка → карточка. Фон берётся из --status-color (класс .status-row),
+       поэтому цветовая маркировка статусов сохраняется как на десктопе. */
+    #requestsTable tbody tr,
+    #requestsPlanningTable tbody tr {
+        display: block;
+        position: relative;
+        width: 100%;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem 0.5rem 0.25rem;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+    }
+
+    #requestsTable tbody td,
+    #requestsPlanningTable tbody td {
+        display: block;
+        width: 100% !important;
+        max-width: 100% !important;
+        border: none !important;
+        padding: 0.3rem 0.15rem;
+        text-align: left;
+        white-space: normal !important;
+        background-color: transparent !important;
+    }
+
+    /* Шапка карточки: номер строки слева, чекбокс — в правом верхнем углу.
+       Расположение выбрано по рекомендации из ТЗ (альтернатива — режим выбора
+       по долгому нажатию — отклонена: скрытый жест не находят, и он конфликтует
+       с системным выделением текста на Android). */
+    #requestsTable tbody td.col-number,
+    #requestsPlanningTable tbody td.col-number {
+        padding-bottom: 0.15rem;
+    }
+
+    #requestsTable tbody td.col-number > div,
+    #requestsPlanningTable tbody td.col-number > div {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100%;
+    }
+
+    #requestsTable tbody td.col-number .row-number,
+    #requestsPlanningTable tbody td.col-number .row-number,
+    #requestsTable tbody td.col-number > div > span,
+    #requestsPlanningTable tbody td.col-number > div > span {
+        font-weight: 600;
+        opacity: 0.55;
+    }
+
+    /* Чекбокс крупнее (перебиваем инлайновый style в разметке и JS-рендере),
+       плюс невидимая зона нажатия 44×44 — требование ТЗ «удобно попадать
+       пальцем» без раздувания самой вёрстки. */
+    #requestsTable tbody .request-checkbox,
+    #requestsPlanningTable tbody .request-checkbox {
+        width: 1.4rem !important;
+        height: 1.4rem !important;
+        position: relative;
+        flex: 0 0 auto;
+        margin-right: 0.15rem !important;
+    }
+
+    #requestsTable tbody .request-checkbox::after,
+    #requestsPlanningTable tbody .request-checkbox::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 44px;
+        height: 44px;
+        transform: translate(-50%, -50%);
+    }
+
+    /* «Бригада» — подвал карточки, как последняя ячейка в отчётах */
+    #requestsTable tbody td.col-brigade,
+    #requestsPlanningTable tbody td.col-brigade {
+        margin-top: 0.25rem;
+        padding-top: 0.4rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.12) !important;
+    }
+
+    /* Комментарии занимают всю ширину карточки: на десктопе колонка узкая,
+       здесь ограничивать нечем и незачем */
+    #requestsTable tbody td.col-comments .comment-preview,
+    #requestsPlanningTable tbody td.col-comments .comment-preview,
+    #requestsTable tbody td.col-comments .comment-preview-text,
+    #requestsPlanningTable tbody td.col-comments .comment-preview-text {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* Тёмная тема: рамки и разделители светлые, иначе на тёмном фоне не видны */
+@media (max-width: 768px) {
+    [data-bs-theme="dark"] #requestsTable tbody tr,
+    [data-bs-theme="dark"] #requestsPlanningTable tbody tr {
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    [data-bs-theme="dark"] #requestsTable tbody td.col-brigade,
+    [data-bs-theme="dark"] #requestsPlanningTable tbody td.col-brigade {
+        border-top-color: rgba(255, 255, 255, 0.15) !important;
+    }
 }
