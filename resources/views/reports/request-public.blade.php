@@ -154,15 +154,27 @@
     </div>
 </div>
 
-<!-- Просмотр фото во весь экран -->
+<!-- Просмотр фото во весь экран. Листается стрелками, с клавиатуры и свайпом
+     (просьба заказчика, видео от 08.08.2026) — листаем ВСЕ фото заявки подряд,
+     чтобы на границе комментария просмотр не упирался в тупик. -->
 <div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw;" data-bs-dismiss="modal">
-        <div class="modal-content bg-transparent border-0 shadow-none" style="cursor: pointer;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw;">
+        <div class="modal-content bg-transparent border-0 shadow-none">
             <div class="modal-body p-0 text-center position-relative">
                 <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Закрыть" style="z-index: 1056;"></button>
+
+                <button type="button" id="photoPrev" class="photo-nav photo-nav--prev" aria-label="Предыдущее фото">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+
                 <img src="" id="modalImage" class="img-fluid rounded shadow-lg"
-                     style="max-height: 95vh; width: auto; max-width: 100%; object-fit: contain;"
-                     data-bs-dismiss="modal">
+                     style="max-height: 90vh; width: auto; max-width: 100%; object-fit: contain;">
+
+                <button type="button" id="photoNext" class="photo-nav photo-nav--next" aria-label="Следующее фото">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+
+                <div id="photoCounter" class="photo-counter"></div>
             </div>
         </div>
     </div>
@@ -170,12 +182,60 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const modalEl = document.getElementById('photoModal');
         const modalImage = document.getElementById('modalImage');
-        document.querySelectorAll('.gallery-image').forEach(img => {
-            img.addEventListener('click', function () {
-                modalImage.src = this.getAttribute('data-src');
-            });
+        const counter = document.getElementById('photoCounter');
+        const btnPrev = document.getElementById('photoPrev');
+        const btnNext = document.getElementById('photoNext');
+
+        // Все фото страницы в порядке следования — источник для листания
+        const photos = Array.from(document.querySelectorAll('.gallery-image'));
+        if (!photos.length) return;
+
+        let current = 0;
+
+        function show(index) {
+            // По кругу: с последнего вперёд попадаем на первое, и наоборот
+            current = (index + photos.length) % photos.length;
+            modalImage.src = photos[current].getAttribute('data-src');
+            modalImage.alt = photos[current].getAttribute('alt') || 'Фото';
+            counter.textContent = (current + 1) + ' / ' + photos.length;
+        }
+
+        photos.forEach((img, i) => {
+            img.addEventListener('click', () => show(i));
         });
+
+        btnPrev.addEventListener('click', (e) => { e.stopPropagation(); show(current - 1); });
+        btnNext.addEventListener('click', (e) => { e.stopPropagation(); show(current + 1); });
+
+        // Стрелки на клавиатуре — когда окно открыто
+        document.addEventListener('keydown', (e) => {
+            if (!modalEl.classList.contains('show')) return;
+            if (e.key === 'ArrowLeft') { e.preventDefault(); show(current - 1); }
+            if (e.key === 'ArrowRight') { e.preventDefault(); show(current + 1); }
+        });
+
+        // Свайп на телефоне
+        let touchStartX = null;
+        modalEl.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        modalEl.addEventListener('touchend', (e) => {
+            if (touchStartX === null) return;
+            const delta = e.changedTouches[0].screenX - touchStartX;
+            touchStartX = null;
+            if (Math.abs(delta) < 50) return;   // короткие движения — не свайп
+            show(delta < 0 ? current + 1 : current - 1);
+        }, { passive: true });
+
+        // Единственное фото — стрелки и счётчик ни к чему
+        if (photos.length < 2) {
+            btnPrev.style.display = 'none';
+            btnNext.style.display = 'none';
+            counter.style.display = 'none';
+        }
     });
 </script>
 
@@ -183,6 +243,57 @@
     #photoModal {
         backdrop-filter: blur(8px);
         background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .photo-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1056;
+        width: 48px;
+        height: 48px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+        font-size: 1.5rem;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .photo-nav:hover {
+        background: rgba(0, 0, 0, 0.75);
+    }
+
+    .photo-nav--prev { left: 0.5rem; }
+    .photo-nav--next { right: 0.5rem; }
+
+    .photo-counter {
+        position: absolute;
+        bottom: 0.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1056;
+        padding: 0.15rem 0.6rem;
+        border-radius: 1rem;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-size: 0.8rem;
+    }
+
+    /* На телефоне кнопки чуть меньше и ближе к краю, чтобы не закрывали фото */
+    @media (max-width: 576px) {
+        .photo-nav {
+            width: 40px;
+            height: 40px;
+            font-size: 1.25rem;
+        }
+        .photo-nav--prev { left: 0.15rem; }
+        .photo-nav--next { right: 0.15rem; }
     }
 </style>
 @endsection

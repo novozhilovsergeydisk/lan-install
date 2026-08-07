@@ -239,4 +239,105 @@ class PublicRequestLinkTest extends TestCase
         $this->get("/public/requests/{$requestId}/".$this->publicToken($requestId))
             ->assertStatus(200);
     }
+
+    /**
+     * Создаёт заявку с 4 комментариями, где закрывающий стоит В СЕРЕДИНЕ
+     * по времени — на нём и проверяем переупорядочивание.
+     */
+    private function createRequestWithClosingInMiddle(): array
+    {
+        $address = DB::table('addresses')->first();
+        $clientId = DB::table('clients')->insertGetId(['fio' => 'Порядок Комментариев']);
+        $requestId = DB::table('requests')->insertGetId([
+            'number' => 'TEST-ORDER-'.uniqid(),
+            'client_id' => $clientId,
+            'request_type_id' => DB::table('request_types')->first()->id ?? 1,
+            'status_id' => 4,
+            'operator_id' => DB::table('employees')->first()->id ?? 1,
+            'execution_date' => now()->toDateString(),
+            'request_date' => now()->toDateString(),
+        ]);
+        DB::table('request_addresses')->insert(['request_id' => $requestId, 'address_id' => $address->id]);
+
+        $plan = [
+            ['ПЕРВЫЙ-задание-что-делать', 0, false],
+            ['ВТОРОЙ-ход-работ',          1, false],
+            ['ТРЕТИЙ-закрытие-итоги',     2, true],   // закрывающий — в середине по времени
+            ['ЧЕТВЁРТЫЙ-после-закрытия',  3, false],
+        ];
+        $ids = [];
+        foreach ($plan as [$text, $offset, $closing]) {
+            $cid = DB::table('comments')->insertGetId([
+                'comment' => $text,
+                'created_at' => now()->addMinutes($offset),
+            ]);
+            DB::table('request_comments')->insert([
+                'request_id' => $requestId,
+                'comment_id' => $cid,
+                'created_at' => now()->addMinutes($offset),
+                'is_closing' => $closing,
+            ]);
+            $ids[$text] = $cid;
+        }
+
+        return [$requestId, $ids];
+    }
+
+    public function test_first_and_closing_comments_are_pinned_to_top()
+    {
+        // Просьба заказчика (видео 08.08.2026): сначала первый комментарий —
+        // в нём ставят задачу, — сразу за ним комментарий закрытия с итогами,
+        // и только потом остальные по хронологии.
+        [$requestId] = $this->createRequestWithClosingInMiddle();
+
+        $html = $this->get("/public/requests/{$requestId}/".$this->publicToken($requestId))
+            ->assertStatus(200)
+            ->getContent();
+
+        $pos = [];
+        foreach (['ПЕРВЫЙ-задание-что-делать', 'ТРЕТИЙ-закрытие-итоги', 'ВТОРОЙ-ход-работ', 'ЧЕТВЁРТЫЙ-после-закрытия'] as $marker) {
+            $p = strpos($html, $marker);
+            $this->assertNotFalse($p, "Комментарий «{$marker}» должен быть на странице");
+            $pos[$marker] = $p;
+        }
+
+        $this->assertLessThan($pos['ТРЕТИЙ-закрытие-итоги'], $pos['ПЕРВЫЙ-задание-что-делать'],
+            'Первый комментарий должен идти раньше закрывающего');
+        $this->assertLessThan($pos['ВТОРОЙ-ход-работ'], $pos['ТРЕТИЙ-закрытие-итоги'],
+            'Закрывающий комментарий должен идти сразу за первым, ДО остальных');
+        $this->assertLessThan($pos['ЧЕТВЁРТЫЙ-после-закрытия'], $pos['ВТОРОЙ-ход-работ'],
+            'Остальные комментарии сохраняют хронологический порядок между собой');
+    }
+
+    public function test_single_comment_is_not_duplicated_when_it_is_also_closing()
+    {
+        // Пограничный случай: единственный комментарий он же закрывающий —
+        // не должен показаться дважды (первый + закрывающий = одна запись).
+        $address = DB::table('addresses')->first();
+        $clientId = DB::table('clients')->insertGetId(['fio' => 'Один Комментарий']);
+        $requestId = DB::table('requests')->insertGetId([
+            'number' => 'TEST-ONE-'.uniqid(),
+            'client_id' => $clientId,
+            'request_type_id' => DB::table('request_types')->first()->id ?? 1,
+            'status_id' => 4,
+            'operator_id' => DB::table('employees')->first()->id ?? 1,
+            'execution_date' => now()->toDateString(),
+            'request_date' => now()->toDateString(),
+        ]);
+        DB::table('request_addresses')->insert(['request_id' => $requestId, 'address_id' => $address->id]);
+
+        $marker = 'ЕДИНСТВЕННЫЙ-ОН-ЖЕ-ЗАКРЫВАЮЩИЙ';
+        $cid = DB::table('comments')->insertGetId(['comment' => $marker, 'created_at' => now()]);
+        DB::table('request_comments')->insert([
+            'request_id' => $requestId, 'comment_id' => $cid,
+            'created_at' => now(), 'is_closing' => true,
+        ]);
+
+        $html = $this->get("/public/requests/{$requestId}/".$this->publicToken($requestId))
+            ->assertStatus(200)
+            ->getContent();
+
+        $this->assertSame(1, substr_count($html, $marker),
+            'Комментарий не должен дублироваться, если он одновременно первый и закрывающий');
+    }
 }

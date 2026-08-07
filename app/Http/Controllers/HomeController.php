@@ -2954,8 +2954,16 @@ class HomeController extends Controller
                         $cleanComment = htmlspecialchars($cleanComment);
                         $typeName = htmlspecialchars($requestDataForNotify->type_name);
 
-                        // Формируем ссылку на заявку
-                        $requestUrl = config('app.url') . '/requests/' . $id;
+                        // Ссылка на заявку для получателей в Telegram. Раньше вела на
+                        // config('app.url')/requests/{id} — это закрытый маршрут под auth,
+                        // и заказчик, не залогиненный в систему, попадал на форму входа.
+                        // Теперь ведёт на публичную страницу заявки (блок 6 ТЗ): та же
+                        // заявка, фото сгруппированы по комментариям, вход не нужен.
+                        // Подпись ссылки в сообщении осталась прежней — «Открыть заявку».
+                        $requestUrl = route('requests.public', [
+                            'requestId' => $id,
+                            'token' => md5($id . config('app.key') . 'request-public'),
+                        ]);
 
                         $notifyMessage = "✅ <b>Заявка #{$id} закрыта ({$typeName})</b>\n\n"
                                        . "🏢 <b>Организация:</b> {$orgName}\n"

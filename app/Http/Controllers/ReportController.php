@@ -1239,6 +1239,12 @@ class ReportController extends Controller
                 ->orderBy('cm.created_at')
                 ->get();
 
+            // Порядок вывода (просьба заказчика, видео от 08.08.2026): сначала первый
+            // комментарий — в нём ставят задачу, «что нужно делать», — сразу за ним
+            // комментарий закрытия с итогами, и только потом остальные по хронологии.
+            // По умолчанию закрывающий шёл строго по времени и терялся в середине ленты.
+            $comments = $this->orderCommentsForPublicPage($comments);
+
             // Фото и файлы — сразу сгруппированы по комментарию, чтобы в шаблоне
             // не делать запрос на каждый комментарий (N+1).
             $commentIds = $comments->pluck('id');
@@ -1288,6 +1294,40 @@ class ReportController extends Controller
             Log::error('Error in ReportController@showRequestPublic: '.$e->getMessage());
             abort(500, 'Произошла ошибка при получении заявки');
         }
+    }
+
+    /**
+     * Порядок комментариев на публичной странице заявки:
+     * 1) самый первый по времени — в нём ставят задачу («что нужно делать»);
+     * 2) комментарий закрытия — итоги работ;
+     * 3) остальные по хронологии.
+     *
+     * Принимает коллекцию, уже отсортированную по created_at.
+     * Если закрывающий комментарий И есть первый — это одна и та же запись
+     * (заявка с единственным комментарием), дубля не будет: отбираем по id.
+     */
+    private function orderCommentsForPublicPage($comments)
+    {
+        if ($comments->count() < 2) {
+            return $comments;
+        }
+
+        $first = $comments->first();
+        $closing = $comments->firstWhere('is_closing', true);
+
+        $pinnedIds = [$first->id];
+        if ($closing && $closing->id !== $first->id) {
+            $pinnedIds[] = $closing->id;
+        }
+
+        $pinned = collect([$first]);
+        if ($closing && $closing->id !== $first->id) {
+            $pinned->push($closing);
+        }
+
+        $rest = $comments->reject(fn ($c) => in_array($c->id, $pinnedIds, true));
+
+        return $pinned->concat($rest)->values();
     }
 
     /**
