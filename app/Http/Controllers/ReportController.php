@@ -1163,6 +1163,134 @@ class ReportController extends Controller
     }
 
     /**
+     * Публичная страница ОДНОЙ заявки — ссылку оператор копирует в окне
+     * комментариев и отправляет заказчику. В отличие от истории по адресу
+     * (showAddressReportsHistory), где фото свалены в общую галерею заявки,
+     * здесь каждое фото показано под своим комментарием — заказчик видит,
+     * к какому именно этапу работ относится снимок (ТЗ Фурсы от 31.07.2026, блок 6).
+     *
+     * Токен считается тем же способом, что и у остальных публичных ссылок проекта
+     * (см. showAddressReportsHistory и HomeController): md5(id + app.key + назначение).
+     * Своё назначение 'request-public' — чтобы токен от одной ссылки не подходил к другой.
+     */
+    public function showRequestPublic($requestId, $token)
+    {
+        $secret = config('app.key');
+        $expectedToken = md5($requestId.$secret.'request-public');
+
+        if (! hash_equals($expectedToken, (string) $token)) {
+            abort(403, 'Неверный токен доступа');
+        }
+
+        try {
+            $request = DB::table('requests as r')
+                ->selectRaw('
+                    r.*,
+                    c.fio AS client_fio,
+                    c.phone AS client_phone,
+                    c.organization AS client_organization,
+                    rs.name AS status_name,
+                    rs.color AS status_color,
+                    rst.name AS subtype_name,
+                    rt.name AS request_type_name,
+                    rt.color AS request_type_color,
+                    b.name AS brigade_name,
+                    e.fio AS brigade_lead,
+                    op.fio AS operator_name,
+                    addr.street,
+                    addr.houses,
+                    addr.district,
+                    ct.name AS city_name
+                ')
+                ->leftJoin('clients AS c', 'r.client_id', '=', 'c.id')
+                ->leftJoin('request_statuses AS rs', 'r.status_id', '=', 'rs.id')
+                ->leftJoin('request_subtypes AS rst', 'r.subtype_id', '=', 'rst.id')
+                ->leftJoin('request_types AS rt', 'r.request_type_id', '=', 'rt.id')
+                ->leftJoin('brigades AS b', 'r.brigade_id', '=', 'b.id')
+                ->leftJoin('employees AS e', 'b.leader_id', '=', 'e.id')
+                ->leftJoin('employees AS op', 'r.operator_id', '=', 'op.id')
+                ->leftJoin('request_addresses AS ra', 'r.id', '=', 'ra.request_id')
+                ->leftJoin('addresses AS addr', 'ra.address_id', '=', 'addr.id')
+                ->leftJoin('cities AS ct', 'addr.city_id', '=', 'ct.id')
+                ->where('r.id', $requestId)
+                ->first();
+
+            if (! $request) {
+                abort(404, 'Заявка не найдена');
+            }
+
+            $comments = DB::table('request_comments as rc')
+                ->join('comments as cm', 'rc.comment_id', '=', 'cm.id')
+                ->leftJoin('users as u', 'rc.user_id', '=', 'u.id')
+                ->leftJoin('employees as e', 'u.id', '=', 'e.user_id')
+                ->where('rc.request_id', $requestId)
+                ->select(
+                    'cm.id',
+                    'cm.comment',
+                    'cm.created_at',
+                    'rc.is_closing',
+                    DB::raw("CASE
+                        WHEN e.fio IS NOT NULL THEN e.fio
+                        WHEN u.name IS NOT NULL THEN u.name
+                        WHEN u.email IS NOT NULL THEN u.email
+                        ELSE 'Система'
+                    END as author_name")
+                )
+                ->orderBy('cm.created_at')
+                ->get();
+
+            // Фото и файлы — сразу сгруппированы по комментарию, чтобы в шаблоне
+            // не делать запрос на каждый комментарий (N+1).
+            $commentIds = $comments->pluck('id');
+
+            $photosByComment = collect();
+            $filesByComment = collect();
+
+            if ($commentIds->isNotEmpty()) {
+                $photosByComment = DB::table('comment_photos as cp')
+                    ->join('photos as p', 'cp.photo_id', '=', 'p.id')
+                    ->whereIn('cp.comment_id', $commentIds)
+                    ->select('cp.comment_id', 'p.id', 'p.path', 'p.original_name')
+                    ->orderBy('p.id')
+                    ->get()
+                    ->groupBy('comment_id');
+
+                $filesByComment = DB::table('comment_files as cf')
+                    ->join('files as f', 'cf.file_id', '=', 'f.id')
+                    ->whereIn('cf.comment_id', $commentIds)
+                    ->select('cf.comment_id', 'f.id', 'f.path', 'f.original_name', 'f.file_size')
+                    ->orderBy('f.id')
+                    ->get()
+                    ->groupBy('comment_id');
+            }
+
+            // Ссылка на архив со всеми вложениями заявки — переиспользуем уже
+            // существующий публичный маршрут (у него своё назначение токена).
+            $downloadUrl = null;
+            if ($photosByComment->isNotEmpty() || $filesByComment->isNotEmpty()) {
+                $downloadUrl = route('photo-report.download.public', [
+                    'requestId' => $requestId,
+                    'token' => md5($requestId.$secret.'telegram-notify'),
+                ]);
+            }
+
+            return view('reports.request-public', [
+                'request' => $request,
+                'comments' => $comments,
+                'photosByComment' => $photosByComment,
+                'filesByComment' => $filesByComment,
+                'downloadUrl' => $downloadUrl,
+            ]);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            // abort() внутри try — пробрасываем как есть, иначе 404 превратится в 500
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Error in ReportController@showRequestPublic: '.$e->getMessage());
+            abort(500, 'Произошла ошибка при получении заявки');
+        }
+    }
+
+    /**
      * Получение списка адресов для отчетов
      */
     public function getAddresses()

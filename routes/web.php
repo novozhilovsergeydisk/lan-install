@@ -132,6 +132,10 @@ Route::get('/public/photo-reports/{requestId}/download/{token}', [PhotoReportCon
 // Публичный просмотр истории по адресу (для Telegram)
 Route::get('/public/reports/address-history/{addressId}/{token}', [ReportController::class, 'showAddressReportsHistory'])->name('reports.address-history.public');
 
+// Публичный просмотр ОДНОЙ заявки: фото сгруппированы по комментариям.
+// Ссылку копирует оператор из окна комментариев и отправляет заказчику.
+Route::get('/public/requests/{requestId}/{token}', [ReportController::class, 'showRequestPublic'])->name('requests.public');
+
 
 // Маршруты для работы со статусами заявок
 Route::prefix('statuses')->middleware('auth')->group(function () {

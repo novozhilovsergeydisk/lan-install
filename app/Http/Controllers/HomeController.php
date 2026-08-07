@@ -2224,18 +2224,32 @@ class HomeController extends Controller
                 ->where('requests.id', $requestId)
                 ->first();
 
+            $secret = config('app.key');
+
             $reportUrl = null;
             // Check if request is completed (status_id = 4) or deleted/closed (status_id = 7) and has address
             if ($requestInfo && in_array($requestInfo->status_id, [4, 7]) && !empty($requestInfo->address_id)) {
-                $secret = config('app.key');
                 $token = md5($requestInfo->address_id . $secret . 'address-history');
                 $reportUrl = route('reports.address-history.public', ['addressId' => $requestInfo->address_id, 'token' => $token]);
+            }
+
+            // Ссылка на публичную страницу самой заявки (фото сгруппированы по
+            // комментариям). По ТЗ — «в интерфейс ЗАКРЫТОЙ заявки, рядом с текущей
+            // ссылкой», поэтому условие по статусу то же, что у истории по адресу.
+            // Адрес здесь не нужен: страница показывает одну заявку, а не адрес.
+            $requestPublicUrl = null;
+            if ($requestInfo && in_array($requestInfo->status_id, [4, 7])) {
+                $requestPublicUrl = route('requests.public', [
+                    'requestId' => $requestId,
+                    'token' => md5($requestId . $secret . 'request-public'),
+                ]);
             }
 
             return response()->json([
                 'comments' => $comments,
                 'meta' => [
-                    'address_history_url' => $reportUrl
+                    'address_history_url' => $reportUrl,
+                    'request_public_url' => $requestPublicUrl,
                 ]
             ]);
         } catch (\Exception $e) {

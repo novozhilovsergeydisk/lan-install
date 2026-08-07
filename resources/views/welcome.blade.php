@@ -2596,7 +2596,7 @@
                             meta = data.meta || {};
                         }
 
-                        if (comments.length === 0 && !meta.address_history_url) {
+                        if (comments.length === 0 && !meta.address_history_url && !meta.request_public_url) {
                             container.innerHTML = '<div class="text-muted text-center py-4">Нет комментариев</div>';
                             resolve(comments);
                             return;
@@ -2616,6 +2616,22 @@
                         }
                         // Оборачивание ссылок вынесено в utils.js -> window.utils.linkifyPreservingAnchors
                         let html = '';
+                        if (meta.request_public_url) {
+                            html += `
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">Ссылка на эту заявку (фото по комментариям):</label>
+                                    <div class="d-flex gap-2">
+                                        <input type="hidden" value="${meta.request_public_url}" id="requestPublicUrlInputInline">
+                                        <button class="btn btn-outline-secondary btn-sm" type="button" id="copyRequestPublicUrlBtnInline">
+                                            <i class="bi bi-clipboard"></i> Скопировать ссылку
+                                        </button>
+                                        <a href="${meta.request_public_url}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-box-arrow-up-right"></i> Открыть
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        }
                         if (meta.address_history_url) {
                             html += `
                                 <div class="mb-4 pb-3 border-bottom">
@@ -2794,25 +2810,33 @@
 
                         container.innerHTML = html;
 
-                        if (meta.address_history_url) {
-                            const copyBtn = container.querySelector('#copyHistoryUrlBtnInline');
-                            const urlInput = container.querySelector('#historyUrlInputInline');
-                            if (copyBtn && urlInput) {
-                                copyBtn.addEventListener('click', () => {
-                                    navigator.clipboard.writeText(urlInput.value).then(() => {
-                                        if (window.utils && window.utils.showAlert) {
-                                            window.utils.showAlert('Ссылка скопирована!');
-                                        } else {
-                                            alert('Ссылка скопирована!');
-                                        }
-                                    }).catch(err => {
-                                        console.error('Ошибка копирования:', err);
-                                        alert('Не удалось скопировать ссылку');
-                                    });
+                        // Копирование публичных ссылок (на заявку и на историю по адресу)
+                        const bindCopyLink = (btnId, inputId) => {
+                            const copyBtn = container.querySelector(btnId);
+                            const urlInput = container.querySelector(inputId);
+                            if (!copyBtn || !urlInput) return;
+
+                            copyBtn.addEventListener('click', () => {
+                                navigator.clipboard.writeText(urlInput.value).then(() => {
+                                    if (window.utils && window.utils.showAlert) {
+                                        window.utils.showAlert('Ссылка скопирована!');
+                                    } else {
+                                        alert('Ссылка скопирована!');
+                                    }
+                                }).catch(err => {
+                                    console.error('Ошибка копирования:', err);
+                                    alert('Не удалось скопировать ссылку');
                                 });
-                            }
+                            });
+                        };
+
+                        if (meta.request_public_url) {
+                            bindCopyLink('#copyRequestPublicUrlBtnInline', '#requestPublicUrlInputInline');
                         }
-                        
+                        if (meta.address_history_url) {
+                            bindCopyLink('#copyHistoryUrlBtnInline', '#historyUrlInputInline');
+                        }
+
                         // Добавляем обработчик для кнопки "Редактировать"
                         const editButtons = container.querySelectorAll('.edit-comment-btn');
                         editButtons.forEach(button => {
